@@ -1,2 +1,1 @@
-# ams
-AMS - Amazon Situation Room
+# AMS - Amazon Situation Room
