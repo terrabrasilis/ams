@@ -1,1 +1,2 @@
 from .deter_repository import DeterRepository
+from .spatial_unit_repository import SpatialUnitRepository
