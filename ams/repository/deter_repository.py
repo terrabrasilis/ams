@@ -2,13 +2,14 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.ext.automap import automap_base
 from geoalchemy2 import Geometry
+from sqlalchemy import Column, Integer, String, Date
+from geoalchemy2.shape import to_shape
+
 
 url = 'postgresql://postgres:postgres@localhost:5432/DETER-B'
 Base = automap_base()
 engine = create_engine(url)
 Session = scoped_session(sessionmaker(bind=engine))   
-
-from sqlalchemy import Column, Integer, String, Date
 
 
 class DeterRepository(Base):
@@ -19,6 +20,13 @@ class DeterRepository(Base):
 	classname = Column(String)
 	date = Column(Date)
 	publish_month = Column(Date)
+	geom = Column(Geometry('POLYGON', srid=5880))
+
+	def get(self, id):
+		session = Session()
+		res = session.query(self.__class__).get(id)
+		session.close()
+		return self._to_dict(res)
 
 	def list(self):
 		session = Session()
@@ -30,7 +38,8 @@ class DeterRepository(Base):
 		return {
 			'gid': alert.gid,
 			'classname': alert.classname,
-			'date': alert.date
+			'date': alert.date,
+			'geom': to_shape(alert.geom)
 		}
 
 Base.prepare(engine, reflect=True)
