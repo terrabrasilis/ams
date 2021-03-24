@@ -1,5 +1,5 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy import create_engine, MetaData
+from sqlalchemy.orm import sessionmaker, scoped_session, clear_mappers
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy_utils import database_exists, create_database, drop_database
 from geoalchemy2 import Geometry
@@ -25,14 +25,11 @@ class AlchemyDataAccess(DataAccess):
 	def engine(self):
 		return self._engine
 
-	def create(self, overwrite=False):
+	def create(self, overwrite: bool=False):
 		if database_exists(self._url):
 			if overwrite:
 				drop_database(self._url)
 				create_database(self._url)
-			else:
-				url = engine._url.make_url(self._url)
-				raise Exception('Database \'{}\' already exists.'.format(url.database))
 		else:
 			create_database(self._url)
 
@@ -43,13 +40,21 @@ class AlchemyDataAccess(DataAccess):
 			conn.execute('CREATE EXTENSION postgis')
 		except Exception as e:
 		    raise e
-		conn.close()		
+		conn.close()
 
 	def exists(self):
 		return database_exists(self._url)
 
 	def drop(self):
-		drop_database(self._url)		
+		drop_database(self._url)	
+
+	def create_all_tables(self):
+		Base.metadata.create_all(self._engine)
+
+	def create_all(self, overwrite: bool=False):
+		self.create(overwrite)
+		#self.create_engine()
+		self.create_all_tables()			
 	
 
 class SessionProxy():

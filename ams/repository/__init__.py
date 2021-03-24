@@ -1,2 +1,3 @@
 from .deter_repository import DeterRepository
 from .spatial_unit_repository import SpatialUnitRepository
+from .risk_indicators_repository import RiskIndicatorsRepository

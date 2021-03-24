@@ -1,9 +1,12 @@
+import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.ext.automap import automap_base
 from geoalchemy2 import Geometry
 from sqlalchemy import Column, Integer, String, Date
 from geoalchemy2.shape import to_shape
+from ams.gis import ShapelyGeometry
+from ams.domain.entities import DeterAlert, DeterAlerts
 
 
 url = 'postgresql://postgres:postgres@localhost:5432/DETER-B'
@@ -11,35 +14,41 @@ Base = automap_base()
 engine = create_engine(url)
 Session = scoped_session(sessionmaker(bind=engine))   
 
+# https://stackoverflow.com/a/28727066/3050042
+class DeterRepositoryMeta(type(Base), type(DeterAlerts)):
+	pass
 
-class DeterRepository(Base):
+
+class DeterRepository(Base, DeterAlerts, metaclass=DeterRepositoryMeta):
 	__tablename__ = 'deter_table'
 	__table_args__ = {'schema': 'terrabrasilis'}
 
 	gid = Column(Integer, primary_key=True)
-	classname = Column(String)
-	date = Column(Date)
-	publish_month = Column(Date)
-	geom = Column(Geometry('POLYGON', srid=5880))
+	classname = Column(String, nullable=False)
+	date = Column(Date, nullable=False)
+	geom = Column(Geometry('POLYGON', srid=5880), nullable=False)
 
-	def get(self, id):
+	def get(self, id: int) -> DeterAlert:
 		session = Session()
-		res = session.query(self.__class__).get(id)
+		alert = session.query(self.__class__).get(id)
 		session.close()
-		return self._to_dict(res)
+		return self._to_deter_alert(alert)
 
-	def list(self):
+	def list(self, start: datetime.date=None, end: datetime.date=None) -> 'list[DeterAlert]':
 		session = Session()
-		all_alerts = session.query(self.__class__).all()
+		alerts = None
+		if start and end:
+			alerts = session.query(self.__class__)\
+						.filter(self.__class__.date >= end)\
+						.filter(self.__class__.date <= start)\
+						.order_by(self.__class__.date.desc())
+		else:
+			alerts = session.query(self.__class__).all()
 		session.close()
-		return [self._to_dict(alert) for alert in all_alerts]
+		return [self._to_deter_alert(alert) for alert in alerts]
 
-	def _to_dict(self, alert):
-		return {
-			'gid': alert.gid,
-			'classname': alert.classname,
-			'date': alert.date,
-			'geom': to_shape(alert.geom)
-		}
+	def _to_deter_alert(self, alert):
+		geom = ShapelyGeometry(to_shape(alert.geom))
+		return DeterAlert(alert.gid, alert.classname, alert.date, geom)
 
 Base.prepare(engine, reflect=True)
