@@ -1,11 +1,7 @@
 import os
 from ams.dataaccess import AlchemyDataAccess
-from ams.repository import SpatialUnitRepository, DeterRepository
+from ams.repository import DeterRepository
 from ams.gis import Geoprocessing
-from shapely import wkb
-from binascii import unhexlify
-from geoalchemy2.shape import to_shape
-from shapely.geometry.polygon import Polygon
 from ams.repository import SpatialUnitDynamicMapperFactory
 
 

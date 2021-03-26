@@ -1,8 +1,7 @@
 import os
 from ams.dataaccess import AlchemyDataAccess
 from ams.gis import Geoprocessing
-from ams.repository import (SpatialUnitsRepository, SpatialUnitRepository,
-							SpatialUnitDynamicMapperFactory)
+from ams.repository import SpatialUnitsRepository, SpatialUnitDynamicMapperFactory
 from ams.usecases import AddSpatialUnit
 
 

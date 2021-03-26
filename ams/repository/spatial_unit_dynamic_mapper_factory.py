@@ -1,7 +1,6 @@
 from sqlalchemy import (MetaData, Table, Column, ForeignKey, 
-						Integer, String, Float, Date)
-from sqlalchemy.orm import (mapper, sessionmaker, scoped_session, relationship,
-							class_mapper)
+						Integer, Float, Date)
+from sqlalchemy.orm import mapper, relationship
 from .spatial_unit_repository import SpatialUnitRepository
 from .alchemy_orm import RiskIndicator
 
@@ -28,7 +27,7 @@ class SpatialUnitDynamicMapperFactory:
 	@engine.setter
 	def engine(self, value):
 		self._engine = value
-		
+
 	def add_class_mapper(self, tablename):
 		su_clas = type(tablename, (SpatialUnitRepository,), {})
 		self._types[tablename] = su_clas
@@ -50,7 +49,7 @@ class SpatialUnitDynamicMapperFactory:
 		)		
 
 		mapper(su_clas, su_table, properties={
-			'indicator' : relationship(ri_clas, backref='su', uselist=False)
+			'indicator': relationship(ri_clas, backref='su', uselist=False)
 		})	
 		mapper(ri_clas, ri_table)	
 		metadata.create_all(bind=self._engine)	

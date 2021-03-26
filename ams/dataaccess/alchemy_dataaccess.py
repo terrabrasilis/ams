@@ -1,8 +1,7 @@
-from sqlalchemy import create_engine, MetaData
-from sqlalchemy.orm import sessionmaker, scoped_session, clear_mappers
+from sqlalchemy import create_engine, MetaData, exc
+from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy_utils import database_exists, create_database, drop_database
-from geoalchemy2 import Geometry
 from .dataaccess import DataAccess
 
 
@@ -25,7 +24,7 @@ class AlchemyDataAccess(DataAccess):
 	def engine(self):
 		return self._engine
 
-	def create(self, overwrite: bool=False):
+	def create(self, overwrite: bool = False):
 		if database_exists(self._url):
 			if overwrite:
 				drop_database(self._url)
@@ -39,7 +38,7 @@ class AlchemyDataAccess(DataAccess):
 		try:
 			conn.execute('CREATE EXTENSION postgis')
 		except Exception as e:
-		    raise e
+			raise e
 		conn.close()
 
 	def exists(self):
@@ -51,11 +50,10 @@ class AlchemyDataAccess(DataAccess):
 	def create_all_tables(self):
 		Base.metadata.create_all(self._engine)
 
-	def create_all(self, overwrite: bool=False):
+	def create_all(self, overwrite: bool = False):
 		self.create(overwrite)
-		#self.create_engine()
 		self.create_all_tables()			
-	
+
 
 class SessionProxy():
 	def __init__(self, session):
@@ -85,4 +83,8 @@ class SessionProxy():
 		self._session.close()
 
 	def query(self, object):
-		return self._session.query(object)        
+		return self._session.query(object)     
+
+
+class NotNullViolationException(Exception):
+	pass

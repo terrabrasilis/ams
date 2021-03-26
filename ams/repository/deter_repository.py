@@ -14,6 +14,7 @@ Base = automap_base()
 engine = create_engine(url)
 Session = scoped_session(sessionmaker(bind=engine))   
 
+
 # https://stackoverflow.com/a/28727066/3050042
 class DeterRepositoryMeta(type(Base), type(DeterAlerts)):
 	pass
@@ -34,7 +35,7 @@ class DeterRepository(Base, DeterAlerts, metaclass=DeterRepositoryMeta):
 		session.close()
 		return self._to_deter_alert(alert)
 
-	def list(self, start: datetime.date=None, end: datetime.date=None) -> 'list[DeterAlert]':
+	def list(self, start: datetime.date = None, end: datetime.date = None) -> 'list[DeterAlert]':
 		session = Session()
 		alerts = None
 		if start and end:
@@ -50,5 +51,6 @@ class DeterRepository(Base, DeterAlerts, metaclass=DeterRepositoryMeta):
 	def _to_deter_alert(self, alert):
 		geom = ShapelyGeometry(to_shape(alert.geom))
 		return DeterAlert(alert.gid, alert.classname, alert.date, geom)
+
 
 Base.prepare(engine, reflect=True)

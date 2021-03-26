@@ -1,10 +1,5 @@
-from sqlalchemy import (MetaData, Table, Column, ForeignKey, 
-						Integer, String, Float, Date)
-from sqlalchemy.orm import (mapper, sessionmaker, scoped_session, relationship,
-							class_mapper)
-from sqlalchemy.orm.exc import UnmappedClassError
+from sqlalchemy.orm import sessionmaker, scoped_session
 from ams.domain.entities import RiskIndicator
-from .spatial_unit_repository import SpatialUnitRepository
 from .spatial_unit_dynamic_mapper_factory import SpatialUnitDynamicMapperFactory
 
 
@@ -44,5 +39,3 @@ class RiskIndicatorsRepository:
 			session.add(ri)
 		session.commit()
 		session.close()
-
-

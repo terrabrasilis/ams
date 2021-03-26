@@ -1,11 +1,4 @@
-from sqlalchemy import (MetaData, Table, Column, ForeignKey, 
-						Integer, String)
-from sqlalchemy.orm import mapper, relationship, class_mapper
-from sqlalchemy.ext.automap import automap_base
-from sqlalchemy.orm.exc import UnmappedClassError
-from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
-from geoalchemy2 import Geometry
 from geoalchemy2.shape import to_shape
 from ams.domain.entities import SpatialUnitFeature, SpatialUnit
 from ams.gis import ShapelyGeometry
@@ -39,7 +32,7 @@ class SpatialUnitRepository:
 		session.close()
 		return self._to_su_feature(feat)		
 
-	def list(self):
+	def list(self) -> 'list[SpatialUnitFeature]':
 		Session = scoped_session(sessionmaker(bind=self._engine))  
 		session = Session()
 		all_data = session.query(self.__class__).all()
@@ -49,4 +42,3 @@ class SpatialUnitRepository:
 	def _to_su_feature(self, dat) -> SpatialUnitFeature:
 		geom = ShapelyGeometry(to_shape(dat.geometry))
 		return SpatialUnitFeature(dat.suid, dat.id, geom)
-		

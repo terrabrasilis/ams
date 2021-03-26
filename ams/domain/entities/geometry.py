@@ -15,4 +15,4 @@ class Geometry(ABC):
 
 	@abstractmethod
 	def intersection(self, other: 'Geometry') -> 'Geometry':
-		pass		
+		pass	

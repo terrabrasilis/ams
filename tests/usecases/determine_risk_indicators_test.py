@@ -1,15 +1,15 @@
 import os
 import datetime
+import sys
 from ams.dataaccess import AlchemyDataAccess
 from ams.gis import Geoprocessing
-from ams.repository import (SpatialUnitRepository, DeterRepository,
-						RiskIndicatorsRepository, SpatialUnitDynamicMapperFactory)
+from ams.repository import (DeterRepository, RiskIndicatorsRepository, 
+							SpatialUnitDynamicMapperFactory)
 from ams.usecases import DetermineRiskIndicators
 
 
-import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from data import determine_risk_indicators_result
+from data import determine_risk_indicators_result  # noqa: E402
 
 
 def test_uc():
@@ -30,14 +30,13 @@ def test_uc():
 	startdate = datetime.date(2021, 1, 1)
 	uc = DetermineRiskIndicators(su, deter_alerts, startdate)
 	model_indicators = uc.execute()
-	repo_indicators = []
 	rirepo = RiskIndicatorsRepository(sutablename, db.engine)
 	rirepo.save(model_indicators)
 	indicators = rirepo.list()
 	assert len(model_indicators) == len(indicators) == 132
 	expected = determine_risk_indicators_result.result
 	for i in range(len(indicators)):
-		#print(f'{{\'id\': {i.feature.id}, \'percentage\': {i.percentage}}},')
+		# print(f'{{\'id\': {i.feature.id}, \'percentage\': {i.percentage}}},')
 		assert expected[i]['id'] == indicators[i].feature.id
 		assert round(expected[i]['percentage'], 5) == round(indicators[i].percentage, 5)
 	db.drop()

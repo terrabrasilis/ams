@@ -13,4 +13,3 @@ class DeterAlerts(ABC):
 	@abstractmethod
 	def list(self, start: datetime.date, end: datetime.date) -> 'list[DeterAlert]':
 		pass
-		

@@ -17,4 +17,3 @@ class ShapelyGeometry(Geometry):
 
 	def intersection(self, other: Geometry) -> Geometry:
 		return ShapelyGeometry(self._geom.intersection(other._geom))		
-	

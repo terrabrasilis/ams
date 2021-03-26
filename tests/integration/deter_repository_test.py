@@ -1,5 +1,4 @@
 import datetime
-from ams.dataaccess import AlchemyDataAccess
 from ams.repository import DeterRepository
 
 
@@ -11,6 +10,7 @@ def test_list():
 	assert alerts[-1].date.isoformat() == '2021-02-24'	
 	assert alerts[0].classname == 'DESMATAMENTO_CR'
 	assert alerts[-1].classname == 'MINERACAO'
+
 
 def test_list_period():
 	deter = DeterRepository()

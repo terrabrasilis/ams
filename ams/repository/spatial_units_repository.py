@@ -1,7 +1,4 @@
-from sqlalchemy import (MetaData, Table, Column, ForeignKey, 
-						Integer, String, Float, Date)
-from sqlalchemy.orm import mapper, sessionmaker, scoped_session
-from ams.dataaccess import Base
+from sqlalchemy.orm import sessionmaker, scoped_session
 from ams.domain import entities
 from .alchemy_orm import SpatialUnits
 from .spatial_unit_dynamic_mapper_factory import SpatialUnitDynamicMapperFactory
@@ -32,6 +29,5 @@ class SpatialUnitsRepository:
 		session = Session()
 		all_data = session.query(SpatialUnits).all()
 		session.close()
-		return [{'name': d.name, 'as_attribute_name': d.as_attribute_name}\
-		 		for d in all_data]	
-		
+		return [{'name': d.name, 'as_attribute_name': d.as_attribute_name}
+				for d in all_data]	

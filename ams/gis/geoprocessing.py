@@ -1,5 +1,4 @@
 import geopandas
-from sqlalchemy import MetaData
 from ams.domain.entities import Geometry
 
 
@@ -17,4 +16,4 @@ class Geoprocessing:
 			con.execute(f'ALTER TABLE "{tablename}" ADD PRIMARY KEY ("{id_label}");')			
 
 	def percentage_of_area(self, geomA: Geometry, geomB: Geometry) -> float:
-		return (geomA.intersection(geomB).area/geomA.area)*100
+		return (geomA.intersection(geomB).area / geomA.area) * 100

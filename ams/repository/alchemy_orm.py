@@ -1,5 +1,4 @@
-from sqlalchemy import (MetaData, Table, Column, ForeignKey, 
-						Integer, String)
+from sqlalchemy import Column, Integer, String
 from ams.dataaccess import Base
 
 
@@ -15,4 +14,3 @@ class SpatialUnits(Base):
 	id = Column(Integer, primary_key=True)
 	name = Column(String, nullable=False, unique=True)
 	as_attribute_name = Column(String, nullable=False)
-		

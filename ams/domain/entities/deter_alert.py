@@ -1,3 +1,4 @@
+import datetime
 from .geometry import Geometry
 
 
@@ -10,18 +11,17 @@ class DeterAlert:
 		self._geom = geom
 
 	@property
-	def id(self):
+	def id(self) -> int:
 		return self._id
 
 	@property
-	def classname(self):
+	def classname(self) -> str:
 		return self._classname
 	
 	@property
-	def date(self):
+	def date(self) -> datetime.date:
 		return self._date		
 	
 	@property
-	def geom(self):
+	def geom(self) -> Geometry:
 		return self._geom
-		
