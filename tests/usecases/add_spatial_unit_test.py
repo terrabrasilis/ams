@@ -21,7 +21,7 @@ def test_add_two_spatial_units():
 	uc2 = AddSpatialUnit(tablename2, shpfilepath2, gp)	
 	su1 = uc1.execute(db)
 	su2 = uc2.execute(db)
-	SpatialUnitDynamicMapperFactory.instance().engine = db.engine
+	SpatialUnitDynamicMapperFactory.instance().dataaccess = db
 	SpatialUnitDynamicMapperFactory.instance().add_class_mapper(tablename1)
 	SpatialUnitDynamicMapperFactory.instance().add_class_mapper(tablename2)	
 	sus1 = SpatialUnitsRepository(db.engine)

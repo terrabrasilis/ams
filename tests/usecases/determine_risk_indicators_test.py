@@ -22,7 +22,7 @@ def test_uc():
 	shpfilepath = os.path.join(os.path.dirname(__file__), '../data', 'csAmz_150km_epsg_4326.shp')	
 	geoprocess = Geoprocessing()
 	geoprocess.export_shp_to_postgis(shpfilepath, sutablename, 'suid', db.engine, True)
-	SpatialUnitDynamicMapperFactory.instance().engine = db.engine
+	SpatialUnitDynamicMapperFactory.instance().dataaccess = db
 	SpatialUnitDynamicMapperFactory.instance().add_class_mapper(sutablename)	
 	surepo = SpatialUnitDynamicMapperFactory.instance().create_spatial_unit(sutablename)
 	su = surepo.get()
@@ -30,7 +30,7 @@ def test_uc():
 	startdate = datetime.date(2021, 1, 1)
 	uc = DetermineRiskIndicators(su, deter_alerts, startdate)
 	model_indicators = uc.execute()
-	rirepo = RiskIndicatorsRepository(sutablename, db.engine)
+	rirepo = RiskIndicatorsRepository(sutablename, db)
 	rirepo.save(model_indicators)
 	indicators = rirepo.list()
 	assert len(model_indicators) == len(indicators) == 132

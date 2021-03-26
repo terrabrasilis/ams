@@ -11,7 +11,7 @@ class SpatialUnitDynamicMapperFactory:
 
 	def __init__(self):
 		self._types = {}
-		self._engine = None
+		self._dataaccess = None
 		self._risk_indicator_suffix = '_risk_indicators'
 
 	@classmethod
@@ -21,12 +21,12 @@ class SpatialUnitDynamicMapperFactory:
 		return cls._instance
 
 	@property
-	def engine(self):
-		return self._engine
+	def dataaccess(self):
+		return self._dataaccess
 
-	@engine.setter
-	def engine(self, value):
-		self._engine = value
+	@dataaccess.setter
+	def dataaccess(self, value):
+		self._dataaccess = value
 
 	def add_class_mapper(self, tablename):
 		su_clas = type(tablename, (SpatialUnitRepository,), {})
@@ -35,7 +35,7 @@ class SpatialUnitDynamicMapperFactory:
 		su_table = Table(tablename, metadata,
 			Column('suid', Integer, primary_key=True),
 			autoload=True, 
-			autoload_with=self._engine
+			autoload_with=self._dataaccess.engine
 		)
 
 		ri_tablename = f'{tablename}{self._risk_indicator_suffix}'
@@ -52,10 +52,10 @@ class SpatialUnitDynamicMapperFactory:
 			'indicator': relationship(ri_clas, backref='su', uselist=False)
 		})	
 		mapper(ri_clas, ri_table)	
-		metadata.create_all(bind=self._engine)	
+		metadata.create_all(bind=self._dataaccess.engine)	
 
 	def create_spatial_unit(self, tablename) -> SpatialUnitRepository:
-		return self._types[tablename](tablename, self._engine)	
+		return self._types[tablename](tablename, self.dataaccess)	
 
 	def create_risk_indicator(self, spatial_unit_tablename: str) -> RiskIndicator:
 		tablename = f'{spatial_unit_tablename}{self._risk_indicator_suffix}'

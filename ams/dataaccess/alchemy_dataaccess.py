@@ -17,9 +17,6 @@ class AlchemyDataAccess(DataAccess):
 	def create_session(self):
 		return SessionProxy(self._session)
 
-	def metadata(self, schema: str):
-		return MetaData(self._engine, schema=schema)
-
 	@property
 	def engine(self):
 		return self._engine

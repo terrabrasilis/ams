@@ -1,19 +1,20 @@
 from sqlalchemy.orm import sessionmaker, scoped_session
 from ams.domain.entities import RiskIndicator
+from ams.dataaccess import DataAccess
 from .spatial_unit_dynamic_mapper_factory import SpatialUnitDynamicMapperFactory
 
 
 class RiskIndicatorsRepository:
 	"""RiskIndicatorsRepository"""
 
-	def __init__(self, spatial_unit_tablename: str, engine):
-		self._engine = engine
+	def __init__(self, spatial_unit_tablename: str, dataaccess: DataAccess):
+		self._dataaccess = dataaccess
+		self._engine = dataaccess.engine
 		self._spatial_unit_tablename = spatial_unit_tablename
 		self._tablename = f'{spatial_unit_tablename}_risk_indicators'
 
-	def list(self) -> 'list[RiskIndicator]':
-		Session = scoped_session(sessionmaker(bind=self._engine))  
-		session = Session()
+	def list(self) -> 'list[RiskIndicator]': 
+		session = self._dataaccess.create_session()
 		riclass = SpatialUnitDynamicMapperFactory.instance().\
 						risk_indicator_class(self._spatial_unit_tablename)
 		all_data = session.query(riclass).all()
@@ -28,8 +29,7 @@ class RiskIndicatorsRepository:
 		return RiskIndicator(indicator.date, indicator.percentage, su, None)		
 
 	def save(self, indicators):
-		Session = scoped_session(sessionmaker(bind=self._engine))  
-		session = Session()
+		session = self._dataaccess.create_session()
 		for i in indicators:
 			ri = SpatialUnitDynamicMapperFactory.instance().\
 							create_risk_indicator(self._spatial_unit_tablename)

@@ -2,18 +2,19 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from geoalchemy2.shape import to_shape
 from ams.domain.entities import SpatialUnitFeature, SpatialUnit
 from ams.gis import ShapelyGeometry
+from ams.dataaccess import DataAccess
 
 
 class SpatialUnitRepository:
 	"""SpatialUnitRepository"""
 
-	def __init__(self, tablename, engine):
+	def __init__(self, tablename: str, dataaccess: DataAccess):
 		self._tablename = tablename
-		self._engine = engine
+		self._dataaccess = dataaccess
+		self._engine = dataaccess.engine
 
 	def _add_features(self):
-		Session = scoped_session(sessionmaker(bind=self._engine))  
-		session = Session()
+		session = self._dataaccess.create_session()
 		all_data = session.query(self.__class__).all()
 		session.close()
 		for d in all_data:
@@ -26,15 +27,13 @@ class SpatialUnitRepository:
 		return self._spatial_unit
 
 	def get_feature(self, suid) -> SpatialUnitFeature:
-		Session = scoped_session(sessionmaker(bind=self._engine))  
-		session = Session()
+		session = self._dataaccess.create_session()
 		feat = session.query(self.__class__).get(suid)
 		session.close()
 		return self._to_su_feature(feat)		
 
 	def list(self) -> 'list[SpatialUnitFeature]':
-		Session = scoped_session(sessionmaker(bind=self._engine))  
-		session = Session()
+		session = self._dataaccess.create_session()
 		all_data = session.query(self.__class__).all()
 		session.close()
 		return [self._to_su_feature(d) for d in all_data]		
