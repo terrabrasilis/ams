@@ -12,6 +12,10 @@ class SpatialUnit:
 		self._features.append(feature)
 
 	@property
+	def name(self):
+		return self._name
+	
+	@property
 	def features(self) -> 'list[SpatialUnitFeature]':
 		return self._features.copy()
 	

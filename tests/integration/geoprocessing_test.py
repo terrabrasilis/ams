@@ -6,6 +6,7 @@ from shapely import wkb
 from binascii import unhexlify
 from geoalchemy2.shape import to_shape
 from shapely.geometry.polygon import Polygon
+from ams.repository import SpatialUnitDynamicMapperFactory
 
 
 def test_export_shp_to_postgis():
@@ -17,8 +18,9 @@ def test_export_shp_to_postgis():
 	shpfilepath = os.path.join(os.path.dirname(__file__), '../data', 'csAmz_150km_epsg_4326.shp')
 	geoprocess = Geoprocessing()
 	geoprocess.export_shp_to_postgis(shpfilepath, 'csAmz_150km', 'suid', db.engine, True)
-	sunit = SpatialUnitRepository('csAmz_150km', db.engine)
-	sunit.create_table()
+	SpatialUnitDynamicMapperFactory.instance().engine = db.engine
+	SpatialUnitDynamicMapperFactory.instance().add_class_mapper('csAmz_150km')	
+	sunit = SpatialUnitDynamicMapperFactory.instance().create_spatial_unit('csAmz_150km')
 	cells = sunit.list()
 	assert len(cells) == 240
 	assert cells[0].id == 0
@@ -35,8 +37,9 @@ def test_percentage_of_area():
 	shpfilepath = os.path.join(os.path.dirname(__file__), '../data', 'csAmz_150km_epsg_4326.shp')
 	geoprocess = Geoprocessing()
 	geoprocess.export_shp_to_postgis(shpfilepath, 'csAmz_150km', 'suid', db.engine, True)
-	sunit = SpatialUnitRepository('csAmz_150km', db.engine)	
-	sunit.create_table()
+	SpatialUnitDynamicMapperFactory.instance().engine = db.engine
+	SpatialUnitDynamicMapperFactory.instance().add_class_mapper('csAmz_150km')
+	sunit = SpatialUnitDynamicMapperFactory.instance().create_spatial_unit('csAmz_150km')	
 	feats = sunit.list()
 	deter = DeterRepository()
 	a1 = deter.get(1)

@@ -9,7 +9,6 @@ from geoalchemy2 import Geometry
 from geoalchemy2.shape import to_shape
 from ams.domain.entities import SpatialUnitFeature, SpatialUnit
 from ams.gis import ShapelyGeometry
-#from .risk_indicators_repository import RiskIndicatorsRepository
 
 
 class SpatialUnitRepository:
@@ -18,29 +17,6 @@ class SpatialUnitRepository:
 	def __init__(self, tablename, engine):
 		self._tablename = tablename
 		self._engine = engine
-
-	def create_table(self):
-		metadata = MetaData()
-		#metadata.reflect(bind=self._engine)
-		#table = metadata.tables.get(self._tablename)
-		#if table is None:
-		# 	metadata.remove(table)
-		table = Table(self._tablename, metadata,
-			Column('suid', Integer, primary_key=True),
-			autoload=True, 
-			autoload_with=self._engine
-		)
-		try:	
-			class_mapper(self.__class__)
-		except UnmappedClassError:
-			mapper(self.__class__, table)	
-		metadata.create_all(bind=self._engine)
-		# mapper(self.__class__, table, properties={
-		# 	'su': relationship(RiskIndicatorsRepository, uselist=False)
-		# })
-		#self._engine = engine
-		self._spatial_unit = SpatialUnit(self._tablename)
-		self._add_features()
 
 	def _add_features(self):
 		Session = scoped_session(sessionmaker(bind=self._engine))  
@@ -52,6 +28,8 @@ class SpatialUnitRepository:
 			self._spatial_unit.add(feat)
 
 	def get(self) -> SpatialUnit:
+		self._spatial_unit = SpatialUnit(self._tablename)
+		self._add_features()		
 		return self._spatial_unit
 
 	def get_feature(self, suid) -> SpatialUnitFeature:
@@ -71,3 +49,4 @@ class SpatialUnitRepository:
 	def _to_su_feature(self, dat) -> SpatialUnitFeature:
 		geom = ShapelyGeometry(to_shape(dat.geometry))
 		return SpatialUnitFeature(dat.suid, dat.id, geom)
+		

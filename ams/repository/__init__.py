@@ -1,3 +1,5 @@
 from .deter_repository import DeterRepository
 from .spatial_unit_repository import SpatialUnitRepository
+from .spatial_units_repository import SpatialUnitsRepository
 from .risk_indicators_repository import RiskIndicatorsRepository
+from .spatial_unit_dynamic_mapper_factory import SpatialUnitDynamicMapperFactory
