@@ -5,8 +5,8 @@ from ams.repository import DeterRepository
 def test_list():
 	deter = DeterRepository()
 	alerts = deter.list()
-	assert len(alerts) == 175085
-	assert alerts[0].date.isoformat() == '2019-08-02'
+	assert len(alerts) == 111158
+	assert alerts[0].date.isoformat() == '2020-02-01'
 	assert alerts[-1].date.isoformat() == '2021-02-24'	
 	assert alerts[0].classname == 'DESMATAMENTO_CR'
 	assert alerts[-1].classname == 'MINERACAO'

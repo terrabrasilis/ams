@@ -38,12 +38,12 @@ def test_percentage_of_area():
 	sunit = SpatialUnitDynamicMapperFactory.instance().create_spatial_unit('csAmz_150km')	
 	feats = sunit.list()
 	deter = DeterRepository()
-	a1 = deter.get(1)
+	a1 = deter.get(59241)
 	a1geom = a1.geom
 	for f in feats:
 		fgeom = f.geom
 		if fgeom.intersects(a1geom):
-			assert geoprocess.percentage_of_area(fgeom, a1geom) == 0.0005461506800423614
+			assert geoprocess.percentage_of_area(fgeom, a1geom) == 0.001008271044465656
 			assert geoprocess.percentage_of_area(a1geom, fgeom) == 100
 			assert fgeom.intersection(a1geom).area == a1geom.area
 	db.drop()
