@@ -4,6 +4,9 @@ python:
 - '3.8.5'
 addons:
   postgresql: '13'
+  apt:
+    packages:
+    - postgresql-13-postgis-3
 env:
 - PYTHONPATH=$PYTHONPATH:$(pwd)
 install:
@@ -12,6 +15,7 @@ branches:
   only:
   - master
 before_script:
+- psql -c "create extension postgis" -U postgres;
 - createdb -h localhost -p 5432 -U postgres DETER-B
 - pg_restore --host "localhost" --port "5432" --username "postgres" --no-password --dbname "DETER-B" --verbose "data/deter-b-2019-2021.backup"
 - psql -c "ALTER USER postgres WITH PASSWORD 'postgres'" -U postgres;
