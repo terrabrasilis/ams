@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, MetaData, exc
+from sqlalchemy import create_engine, exc
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy_utils import database_exists, create_database, drop_database

@@ -1,4 +1,3 @@
-from sqlalchemy.orm import sessionmaker, scoped_session
 from geoalchemy2.shape import to_shape
 from ams.domain.entities import SpatialUnitFeature, SpatialUnit
 from ams.gis import ShapelyGeometry
