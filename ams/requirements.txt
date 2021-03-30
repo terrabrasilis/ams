@@ -1,4 +1,4 @@
-sqlalchemy
+sqlalchemy < 1.4.0
 sqlalchemy-utils
 psycopg2-binary
 geoalchemy2
