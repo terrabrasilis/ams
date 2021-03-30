@@ -1,0 +1,7 @@
+[run]
+source = 
+    ../ams
+[report]
+exclude_lines =
+    pragma: no cover
+    @abstract
