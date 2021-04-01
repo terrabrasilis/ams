@@ -1,5 +1,5 @@
 from sqlalchemy import (MetaData, Table, Column, ForeignKey, 
-						Integer, Float, Date)
+						Integer, Float, Date, String)
 from sqlalchemy.orm import mapper, relationship
 from .spatial_unit_repository import SpatialUnitRepository
 from .alchemy_orm import RiskIndicator
@@ -44,6 +44,7 @@ class SpatialUnitDynamicMapperFactory:
 		ri_table = Table(ri_tablename, metadata,
 			Column('id', Integer, primary_key=True, autoincrement=True),
 			Column('percentage', Float),
+			Column('classname', String),
 			Column('date', Date),
 			Column('suid', Integer, ForeignKey(f'{su_table}.suid'), nullable=False),
 		)		

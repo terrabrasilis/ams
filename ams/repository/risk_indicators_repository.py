@@ -23,9 +23,9 @@ class RiskIndicatorsRepository:
 	def _to_risk_indicator(self, indicator):
 		su_repo = SpatialUnitDynamicMapperFactory.instance().\
 							create_spatial_unit(self._spatial_unit_tablename)
-		su = su_repo.get_feature(indicator.suid)
+		sufeat = su_repo.get_feature(indicator.suid)
 		# TODO: get alerts with intersection
-		return RiskIndicator(indicator.date, indicator.percentage, su, None)		
+		return RiskIndicator(indicator.date, indicator.percentage, indicator.classname, sufeat)		
 
 	def save(self, indicators):
 		session = self._dataaccess.create_session()
@@ -34,6 +34,7 @@ class RiskIndicatorsRepository:
 							create_risk_indicator(self._spatial_unit_tablename)
 			ri.percentage = i.percentage
 			ri.date = i.date
+			ri.classname = i.classname
 			ri.suid = i.feature.id
 			session.add(ri)
 		session.commit()
