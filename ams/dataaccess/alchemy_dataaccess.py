@@ -65,7 +65,7 @@ class SessionProxy():
 			if 'NotNullViolation' in str(e):
 				raise NotNullViolationException('Object violates not-null constraint.')
 			else:
-				raise
+				raise e
 
 	def add(self, object):
 		self._session.add(object)

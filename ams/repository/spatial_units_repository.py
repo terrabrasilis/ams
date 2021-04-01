@@ -1,5 +1,5 @@
-from sqlalchemy.orm import sessionmaker, scoped_session
 from ams.domain import entities
+from ams.dataaccess import DataAccess
 from .alchemy_orm import SpatialUnits
 from .spatial_unit_dynamic_mapper_factory import SpatialUnitDynamicMapperFactory
 
@@ -7,14 +7,13 @@ from .spatial_unit_dynamic_mapper_factory import SpatialUnitDynamicMapperFactory
 class SpatialUnitsRepository:
 	"""SpatialUnitsRepository"""
 
-	def __init__(self, engine):
-		self._engine = engine
+	def __init__(self, dataaccess: DataAccess):
+		self._dataaccess = dataaccess
 
-	def add(self, su: entities.SpatialUnit, as_attribute_name: str):
-		Session = scoped_session(sessionmaker(bind=self._engine))  
-		session = Session()
+	def add(self, su: entities.SpatialUnit, as_attribute_name: str): 
+		session = self._dataaccess.create_session()
 		su_orm = SpatialUnits()
-		su_orm.name = su.name
+		su_orm.dataname = su.name
 		su_orm_class = SpatialUnitDynamicMapperFactory.instance().\
 						spatial_unit_class(su.name)
 		if not hasattr(su_orm_class, as_attribute_name):
@@ -25,9 +24,8 @@ class SpatialUnitsRepository:
 		session.close()		
 
 	def list(self):
-		Session = scoped_session(sessionmaker(bind=self._engine))  
-		session = Session()
+		session = self._dataaccess.create_session()
 		all_data = session.query(SpatialUnits).all()
 		session.close()
-		return [{'name': d.name, 'as_attribute_name': d.as_attribute_name}
+		return [{'dataname': d.dataname, 'as_attribute_name': d.as_attribute_name}
 				for d in all_data]	

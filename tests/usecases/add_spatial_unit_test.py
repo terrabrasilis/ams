@@ -24,14 +24,14 @@ def test_add_two_spatial_units():
 	SpatialUnitDynamicMapperFactory.instance().dataaccess = db
 	SpatialUnitDynamicMapperFactory.instance().add_class_mapper(tablename1)
 	SpatialUnitDynamicMapperFactory.instance().add_class_mapper(tablename2)	
-	sus1 = SpatialUnitsRepository(db.engine)
+	sus1 = SpatialUnitsRepository(db)
 	sus1.add(su1, 'id')
 	sus1.add(su2, 'id')
-	sus2 = SpatialUnitsRepository(db.engine)
+	sus2 = SpatialUnitsRepository(db)
 	sus_list = sus2.list()
 	assert len(sus_list) == 2
-	assert sus_list[0]['name'] == tablename1
-	assert sus_list[1]['name'] == tablename2
+	assert sus_list[0]['dataname'] == tablename1
+	assert sus_list[1]['dataname'] == tablename2
 	assert sus_list[1]['as_attribute_name'] == 'id'
 	assert sus_list[1]['as_attribute_name'] == 'id'
 	surepo1 = SpatialUnitDynamicMapperFactory.instance().create_spatial_unit(tablename1)
