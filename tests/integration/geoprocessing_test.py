@@ -11,7 +11,7 @@ def test_export_shp_to_postgis():
 	db.connect(url)
 	db.create(True)
 	db.add_postgis_extension()
-	shpfilepath = os.path.join(os.path.dirname(__file__), '../data', 'csAmz_150km_epsg_4326.shp')
+	shpfilepath = os.path.join(os.path.dirname(__file__), '../../data', 'csAmz_150km_epsg_4326.shp')
 	geoprocess = Geoprocessing()
 	geoprocess.export_shp_to_postgis(shpfilepath, 'csAmz_150km', 'suid', db.engine, True)
 	SpatialUnitDynamicMapperFactory.instance().dataaccess = db
@@ -30,7 +30,7 @@ def test_percentage_of_area():
 	db.connect(url)
 	db.create(True)
 	db.add_postgis_extension()
-	shpfilepath = os.path.join(os.path.dirname(__file__), '../data', 'csAmz_150km_epsg_4326.shp')
+	shpfilepath = os.path.join(os.path.dirname(__file__), '../../data', 'csAmz_150km_epsg_4326.shp')
 	geoprocess = Geoprocessing()
 	geoprocess.export_shp_to_postgis(shpfilepath, 'csAmz_150km', 'suid', db.engine, True)
 	SpatialUnitDynamicMapperFactory.instance().dataaccess = db

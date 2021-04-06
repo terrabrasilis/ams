@@ -110,7 +110,7 @@ def setdb(url):
 
 def set_spatial_units(db):	
 	sutablename = 'csAmz_150km'
-	shpfilepath = os.path.join(os.path.dirname(__file__), '../data', 'csAmz_150km_epsg_4326.shp')	
+	shpfilepath = os.path.join(os.path.dirname(__file__), '../../data', 'csAmz_150km_epsg_4326.shp')	
 	geoprocess = Geoprocessing()
 	geoprocess.export_shp_to_postgis(shpfilepath, sutablename, 'suid', db.engine, True)
 	SpatialUnitDynamicMapperFactory.instance().dataaccess = db

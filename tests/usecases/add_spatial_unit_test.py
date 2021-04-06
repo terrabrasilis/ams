@@ -14,8 +14,8 @@ def test_add_two_spatial_units():
 	db.create_all_tables()
 	tablename1 = 'csAmz_150km'
 	tablename2 = 'csAmz_300km'
-	shpfilepath1 = os.path.join(os.path.dirname(__file__), '../data', 'csAmz_150km_epsg_4326.shp')
-	shpfilepath2 = os.path.join(os.path.dirname(__file__), '../data', 'csAmz_300km_epsg_4326.shp')
+	shpfilepath1 = os.path.join(os.path.dirname(__file__), '../../data', 'csAmz_150km_epsg_4326.shp')
+	shpfilepath2 = os.path.join(os.path.dirname(__file__), '../../data', 'csAmz_300km_epsg_4326.shp')
 	gp = Geoprocessing()
 	uc1 = AddSpatialUnit(tablename1, shpfilepath1, gp)
 	uc2 = AddSpatialUnit(tablename2, shpfilepath2, gp)	
