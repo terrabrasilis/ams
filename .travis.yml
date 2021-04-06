@@ -1,0 +1,33 @@
+dist: focal
+language: python
+python:
+- '3.8.5'
+addons:
+  postgresql: '13'
+  apt:
+    packages:
+    - postgresql-13
+env:
+- PYTHONPATH=$PYTHONPATH:$(pwd)
+before_install:
+- sudo apt -y install vim bash-completion wget
+- wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+- echo "deb [arch=amd64] http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+- sudo apt update
+- sudo apt install postgresql-13-postgis-3
+install:
+- pip install -r requirements.txt
+branches:
+  only:
+  - master
+before_script:
+- psql -c "create extension postgis" -U postgres;
+- createdb -h localhost -p 5432 -U postgres DETER-B
+- pg_restore --host "localhost" --port "5432" --username "postgres" --no-password --dbname "DETER-B" --verbose "data/deter-b-2019-2021.backup"
+- psql -c "ALTER USER postgres WITH PASSWORD 'postgres'" -U postgres;
+- cd tests
+script:
+- flake8 ..
+- pytest -v --cov
+after_success:
+- codecov -t a8884db9-2073-467d-8620-78f4426a3ddf

@@ -1,0 +1,2 @@
+-r ams/requirements.txt
+-r tests/requirements.txt
