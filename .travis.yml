@@ -15,6 +15,12 @@ before_install:
 - echo "deb [arch=amd64] http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
 - sudo apt update
 - sudo apt install postgresql-13-postgis-3
+- sudo add-apt-repository ppa:ubuntugis/ppa
+- sudo apt update -y
+- sudo apt install python3-dev
+- sudo apt install g++
+- sudo apt install libgnutls28-dev
+- sudo apt install gdal-bin libgdal-dev python3-pycurl
 install:
 - pip install -r requirements.txt
 branches:
