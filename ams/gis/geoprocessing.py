@@ -1,5 +1,6 @@
 import geopandas
-from ams.domain.entities import Geometry
+import fiona
+from ams.domain.entities import Geometry, Centroid
 
 
 class Geoprocessing:
@@ -14,3 +15,14 @@ class Geoprocessing:
 
 	def percentage_of_area(self, geomA: Geometry, geomB: Geometry) -> float:
 		return (geomA.intersection(geomB).area / geomA.area) * 100
+
+	def centroid(self, filepath: str) -> Centroid:
+		shp = fiona.open(filepath)
+		bbox = shp.bounds
+		minx = bbox[0]
+		miny = bbox[1]
+		maxx = bbox[2]
+		maxy = bbox[3]
+		cx = (minx + maxx) / 2
+		cy = (miny + maxy) / 2
+		return Centroid(cy, cx)

@@ -21,8 +21,8 @@ class AddSpatialUnit:
 					self._tablename, 'suid', da.engine, True)	
 		self._add_suid(da.engine)
 		self._su_dynamic_factory.add_class_mapper(self._tablename)
-		# su = SpatialUnit(self._tablename)
-		suinfo = SpatialUnitInfo(self._tablename, 'id')
+		centroid = self._geoprocessing.centroid(self._shpfilepath)
+		suinfo = SpatialUnitInfo(self._tablename, 'id', centroid)
 		self._sunits_repo.add(suinfo)
 
 	def _add_suid(self, engine):

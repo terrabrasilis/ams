@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, String
+from sqlalchemy import Column, ForeignKey, Integer, String, Float
 from sqlalchemy.orm import relationship
 from ams.dataaccess import Base
 
@@ -15,6 +15,8 @@ class SpatialUnitInfo(Base):
 	id = Column(Integer, primary_key=True)
 	dataname = Column(String, nullable=False, unique=True)
 	as_attribute_name = Column(String, nullable=False)
+	center_lat = Column(Float, nullable=False)
+	center_lng = Column(Float, nullable=False)
 
 
 class DeterClassGroup(Base):

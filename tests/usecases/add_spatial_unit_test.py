@@ -28,8 +28,12 @@ def test_add_two_spatial_units():
 	assert len(sus_list) == 2
 	assert sus_list[0].dataname == tablename1
 	assert sus_list[1].dataname == tablename2
+	assert sus_list[0].as_attribute_name == 'id'
 	assert sus_list[1].as_attribute_name == 'id'
-	assert sus_list[1].as_attribute_name == 'id'
+	assert sus_list[0].centroid.lat == -5.491382969006503
+	assert sus_list[0].centroid.lng == -58.467185764253415
+	assert sus_list[1].centroid.lat == -5.491382969006503
+	assert sus_list[1].centroid.lng == -57.792239759933764	
 	surepo1 = SpatialUnitDynamicMapperFactory.instance().create_spatial_unit(tablename1)
 	surepo2 = SpatialUnitDynamicMapperFactory.instance().create_spatial_unit(tablename2)
 	su1 = surepo1.get()

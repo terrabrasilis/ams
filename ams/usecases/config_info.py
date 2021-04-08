@@ -3,9 +3,14 @@ from ams.domain.entities import SpatialUnitInfo
 
 class ConfigInfo:
 	"""ConfigInfo"""
-	def __init__(self, spatial_units: 'list[SpatialUnitInfo]', workspace: str):
-		self.spatial_units = spatial_units
-		self.workspace = workspace
+	def __init__(self, spatial_units_info: 'list[SpatialUnitInfo]', workspace: str):
+		self._spatial_units_info = spatial_units_info
+		self._workspace = workspace
 		
-	def spatial_units_str(self):
-		return [{'dataname': info.dataname} for info in self.spatial_units]
+	@property
+	def spatial_units_info(self) -> 'list[SpatialUnitInfo]':
+		return self._spatial_units_info
+
+	@property
+	def workspace(self) -> str:
+		return self._workspace

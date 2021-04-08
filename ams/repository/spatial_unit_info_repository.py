@@ -20,6 +20,8 @@ class SpatialUnitInfoRepository:
 		if not hasattr(su_orm_class, as_attribute_name):
 			raise Exception(f'Class doesn\'t have attribute \'{as_attribute_name}\'')
 		su_orm.as_attribute_name = as_attribute_name
+		su_orm.center_lat = suinfo.centroid.lat
+		su_orm.center_lng = suinfo.centroid.lng
 		session.add(su_orm)
 		session.commit()
 		session.close()		
@@ -31,4 +33,5 @@ class SpatialUnitInfoRepository:
 		return [self._to_spatial_unit_info(d) for d in all_data]	
 
 	def _to_spatial_unit_info(self, info):
-		return entities.SpatialUnitInfo(info.dataname, info.as_attribute_name)
+		c = entities.Centroid(info.center_lat, info.center_lng)
+		return entities.SpatialUnitInfo(info.dataname, info.as_attribute_name, c)

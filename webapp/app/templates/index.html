@@ -33,10 +33,10 @@
 
 <script type="text/javascript">
 	var gsWorkspace = "{{workspace}}"; 
-	var spatialUnits = {{spatial_units|safe}};
+	var spatialUnits = {{spatial_units_info|safe}};
 	var defaultSpatialUnit = spatialUnits[0];
 
-	var map = new L.Map("map").setView([-3.1010, -60.025], 5);
+	var map = new L.Map("map").setView([defaultSpatialUnit.center_lat, defaultSpatialUnit.center_lng], 5);
 
 	var osm = new L.TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 		attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -49,11 +49,12 @@
 		"transparent": true, 
 		"tiled": true, 
 		"format": "image/png", 
-		"identify": false
+		// "identify": false
 	};
 	var source = L.WMS.source(wmsUrl, wmsOptions);
+	var layer1Name = gsWorkspace + ":" + defaultSpatialUnit.dataname;
 	var layer1 = source.getLayer(gsWorkspace + ":" + defaultSpatialUnit.dataname);
-	layer1.addTo(map);
+	layer1.addTo(map);	
 
 	var layers = {};
 	layers[defaultSpatialUnit.dataname] = layer1;

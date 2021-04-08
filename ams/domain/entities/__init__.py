@@ -6,3 +6,4 @@ from .geometry import Geometry
 from .risk_indicator import RiskIndicator
 from .deter_class_group import DeterClassGroup
 from .spatial_unit_info import SpatialUnitInfo
+from .centroid import Centroid
