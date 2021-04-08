@@ -3,7 +3,7 @@ import datetime
 from ams.dataaccess import AlchemyDataAccess
 from ams.gis import Geoprocessing
 from ams.usecases import AddSpatialUnit, DetermineRiskIndicators
-from ams.repository import (SpatialUnitDynamicMapperFactory, SpatialUnitsRepository,
+from ams.repository import (SpatialUnitDynamicMapperFactory, SpatialUnitInfoRepository,
 							DeterClassGroupRepository, DeterRepository,
 							RiskIndicatorsRepository)
 from ams.domain.entities import DeterClassGroup
@@ -30,7 +30,7 @@ def set_spatial_units(db):
 	SpatialUnitDynamicMapperFactory.instance().dataaccess = db
 	SpatialUnitDynamicMapperFactory.instance().add_class_mapper(tablename1)
 	SpatialUnitDynamicMapperFactory.instance().add_class_mapper(tablename2)	
-	sus1 = SpatialUnitsRepository(db)
+	sus1 = SpatialUnitInfoRepository(db)
 	sus1.add(su1, 'id')
 	sus1.add(su2, 'id')
 
@@ -57,7 +57,7 @@ def determine_risk_indicators(db):
 	enddate = datetime.date(2020, 10, 1)
 	groups_repo = DeterClassGroupRepository(db)
 	class_groups = groups_repo.list()	
-	units_repo = SpatialUnitsRepository(db)
+	units_repo = SpatialUnitInfoRepository(db)
 	units = units_repo.list()
 	for u in units:
 		sutablename = u['dataname']

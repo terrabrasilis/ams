@@ -9,8 +9,8 @@ class RiskIndicator:
 	pass
 
 
-class SpatialUnits(Base):
-	"""SpatialUnitsRepository"""
+class SpatialUnitInfo(Base):
+	"""SpatialUnitInfo"""
 	__tablename__ = 'spatial_units'
 	id = Column(Integer, primary_key=True)
 	dataname = Column(String, nullable=False, unique=True)

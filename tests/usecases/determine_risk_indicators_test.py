@@ -7,8 +7,8 @@ from ams.repository import (DeterRepository,
 							RiskIndicatorsRepository, 
 							SpatialUnitDynamicMapperFactory, 
 							DeterClassGroupRepository,
-							SpatialUnitsRepository)
-from ams.usecases import DetermineRiskIndicators
+							SpatialUnitInfoRepository)
+from ams.usecases import DetermineRiskIndicators, AddSpatialUnit
 from ams.domain.entities import DeterClassGroup
 
 
@@ -18,9 +18,9 @@ from data import determine_risk_indicators_results  # noqa: E402
 
 def test_uc_basic():	
 	db = setdb('postgresql://postgres:postgres@localhost:5432/det_risk_uc_basic')
-	units_repo = SpatialUnitsRepository(db)
+	units_repo = SpatialUnitInfoRepository(db)
 	units = units_repo.list()
-	sutablename = units[0]['dataname']
+	sutablename = units[0].dataname
 	surepo = SpatialUnitDynamicMapperFactory.instance().create_spatial_unit(sutablename)
 	su = surepo.get()	
 	deter_alerts = DeterRepository()
@@ -58,9 +58,9 @@ def test_uc_basic():
 def test_uc_classes():
 	db = setdb('postgresql://postgres:postgres@localhost:5432/det_risk_uc_classes')
 	deter_alerts = DeterRepository()
-	units_repo = SpatialUnitsRepository(db)
+	units_repo = SpatialUnitInfoRepository(db)
 	units = units_repo.list()
-	sutablename = units[0]['dataname']
+	sutablename = units[0].dataname
 	surepo = SpatialUnitDynamicMapperFactory.instance().create_spatial_unit(sutablename)
 	su = surepo.get()
 	startdate = datetime.date(2021, 1, 1)
@@ -112,13 +112,11 @@ def set_spatial_units(db):
 	sutablename = 'csAmz_150km'
 	shpfilepath = os.path.join(os.path.dirname(__file__), '../../data', 'csAmz_150km_epsg_4326.shp')	
 	geoprocess = Geoprocessing()
-	geoprocess.export_shp_to_postgis(shpfilepath, sutablename, 'suid', db.engine, True)
 	SpatialUnitDynamicMapperFactory.instance().dataaccess = db
+	sunits = SpatialUnitInfoRepository(db)
+	uc1 = AddSpatialUnit(sutablename, shpfilepath, sunits, SpatialUnitDynamicMapperFactory.instance(), geoprocess)
+	su1 = uc1.execute(db)
 	SpatialUnitDynamicMapperFactory.instance().add_class_mapper(sutablename)
-	sunits = SpatialUnitsRepository(db)
-	surepo = SpatialUnitDynamicMapperFactory.instance().create_spatial_unit(sutablename)
-	su = surepo.get()
-	sunits.add(su, 'id')
 
 
 def set_class_groups(db):

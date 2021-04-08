@@ -1,21 +1,22 @@
 from ams.domain import entities
 from ams.dataaccess import DataAccess
-from .alchemy_orm import SpatialUnits
+from .alchemy_orm import SpatialUnitInfo
 from .spatial_unit_dynamic_mapper_factory import SpatialUnitDynamicMapperFactory
 
 
-class SpatialUnitsRepository:
-	"""SpatialUnitsRepository"""
+class SpatialUnitInfoRepository:
+	"""SpatialUnitInfoRepository"""
 
 	def __init__(self, dataaccess: DataAccess):
 		self._dataaccess = dataaccess
 
-	def add(self, su: entities.SpatialUnit, as_attribute_name: str): 
+	def add(self, suinfo: entities.SpatialUnitInfo): 
 		session = self._dataaccess.create_session()
-		su_orm = SpatialUnits()
-		su_orm.dataname = su.name
+		su_orm = SpatialUnitInfo()
+		su_orm.dataname = suinfo.dataname
 		su_orm_class = SpatialUnitDynamicMapperFactory.instance().\
-						spatial_unit_class(su.name)
+						spatial_unit_class(suinfo.dataname)
+		as_attribute_name = suinfo.as_attribute_name
 		if not hasattr(su_orm_class, as_attribute_name):
 			raise Exception(f'Class doesn\'t have attribute \'{as_attribute_name}\'')
 		su_orm.as_attribute_name = as_attribute_name
@@ -23,9 +24,11 @@ class SpatialUnitsRepository:
 		session.commit()
 		session.close()		
 
-	def list(self):
+	def list(self) -> 'list[entities.SpatialUnitInfo]':
 		session = self._dataaccess.create_session()
-		all_data = session.query(SpatialUnits).all()
+		all_data = session.query(SpatialUnitInfo).all()
 		session.close()
-		return [{'dataname': d.dataname, 'as_attribute_name': d.as_attribute_name}
-				for d in all_data]	
+		return [self._to_spatial_unit_info(d) for d in all_data]	
+
+	def _to_spatial_unit_info(self, info):
+		return entities.SpatialUnitInfo(info.dataname, info.as_attribute_name)
