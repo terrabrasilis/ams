@@ -9,6 +9,7 @@ class GetConfigController:
 		config = uc.execute(da)
 		self._workspace = config.workspace
 		self._spatial_units = config.spatial_units_info
+		self._deter_class_groups = config.deter_class_groups
 
 	@property
 	def workspace(self) -> str:
@@ -24,5 +25,12 @@ class GetConfigController:
 			'center_lat': suinfo.centroid.lat,
 			'center_lng': suinfo.centroid.lng
 		}
-	
-		
+
+	@property
+	def deter_class_groups(self) -> list:
+		return [self._deter_class_groups_to_dict(group) for group in self._deter_class_groups]
+
+	def _deter_class_groups_to_dict(self, group):
+		return {
+			'name': group.name,
+		}		

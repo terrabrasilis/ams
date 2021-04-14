@@ -15,6 +15,8 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="{{url_for('static', filename='css/leaflet.wmslegend.css')}}"/>
     <script type="text/javascript" src="{{url_for('static', filename='js/lib/leaflet.wmslegend.js')}}"></script>
+    <link rel="stylesheet" href="{{url_for('static', filename='css/leaflet.groupedlayercontrol.css')}}"/>
+    <script type="text/javascript" src="{{url_for('static', filename='js/lib/leaflet.groupedlayercontrol.js')}}"></script>    
 
 	<style>
 		html, body {
@@ -37,17 +39,73 @@
 <div id="map"></div>
 
 <script type="text/javascript">
+	function updateMap(source, viewParams) {
+		source.options["viewparams"] = viewParams.toWmsFormat();
+		source._overlay.setParams({
+			"viewparams": viewParams.toWmsFormat(),
+		});		
+	}
+
+	const ViewParams = function(classname, date, limit) {
+		this.classname = classname;
+		this.date = date;
+		this.limit = limit;
+		this.toWmsFormat = function() {
+			return "classname:"+this.classname+";date:"+this.date+";limit:"+this.limit;
+		}
+	}
+
+	const SpatialUnits = function(spatialUnits, suDefaultName) {
+		this.spatialUnits = spatialUnits;
+		this.default = this.getSpatialUnit(suDefaultName);
+		this.isSpatialUnit = function(name) {
+			for(var i = 0; i < this.spatialUnits.length; i++) {
+				if(this.spatialUnits[i].dataname == name) {
+					return true;
+				}
+			}
+			return false;			
+		}
+		this.length = function() {
+			return this.spatialUnits.length;
+		}
+		this.at = function(pos) {
+			return this.spatialUnits[pos];
+		}
+		this.getSpatialUnit = function getSpatialUnit(name) {
+			for(var i = 0; i < this.spatialUnits.length; i++) {
+				if(this.spatialUnits[i].dataname == name) {
+					return this.spatialUnits[i];
+				}
+			}
+			return null;				
+		}		
+	}
+
+	const DeterClassGroups = function(groups) {
+		this.groups = groups;
+		this.length = function() {
+			return this.groups.length;
+		}
+		this.at = function(pos) {
+			return this.groups[pos];
+		}		
+	}
+
 	var gsWorkspace = "{{workspace}}"; 
-	var spatialUnits = {{spatial_units_info|safe}};
-	var defaultSpatialUnit = spatialUnits[0];
+	var sus = {{spatial_units_info|safe}};
+	var spatialUnits = new SpatialUnits(sus, sus[0].dataname);
+	var deterClassGroups = new DeterClassGroups({{deter_class_groups|safe}});
 
-	var map = new L.Map("map").setView([defaultSpatialUnit.center_lat, defaultSpatialUnit.center_lng], 5);
+	var map = new L.Map("map").setView([spatialUnits.default.center_lat, spatialUnits.default.center_lng], 5);
 
-	var osm = new L.TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+	var osmLayer = new L.TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 		attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
 		maxZoom: 18,
 		crs: L.CRS.EPSG4326
 	}).addTo(map);
+
+	var viewParams = new ViewParams(deterClassGroups.at(0).name, "2021-01-01", "20");
 
 	var wmsUrl = "http://localhost:8080/geoserver/wms?"
 	var wmsOptions = {
@@ -55,28 +113,84 @@
 		"tiled": true, 
 		"format": "image/png", 
 		// "identify": false
-		"opacity": 0.6,
+		// "opacity": 0.6,
+		// "noRedraw": false,
 		"styles": "ams:ams_percentage",
 		"env": "v0:0;v1:0.008;v2:0.009;v3:0.1;v4:0.02;v5:1",
-		"viewparams": "classname:DS;date:2020-11-01;limit:ALL",
+		"viewparams": viewParams.toWmsFormat(),
 	};
 	var source = L.WMS.source(wmsUrl, wmsOptions);
-	var layer1Name = gsWorkspace + ":" + defaultSpatialUnit.dataname + "_view";
+	var layer1Name = gsWorkspace + ":" + spatialUnits.default.dataname + "_view";
 	var layer1 = source.getLayer(layer1Name);
+	var currentLayer = layer1;
 	layer1.addTo(map);	
 
-	var layers = {};
-	layers[defaultSpatialUnit.dataname] = layer1;
-	
-	for(var i = 1; i < spatialUnits.length; i++) {
-		var layer = source.getLayer(gsWorkspace + ":" + spatialUnits[i].dataname);
-		layers[spatialUnits[i].dataname] = layer;
-	}
-	
-	var control = L.control.layers(layers, null, {"collapsed": false, "name": "spatial Units"});
-	control.addTo(map);
+	var suLayers = {};
+	suLayers[spatialUnits.default.dataname] = layer1;
 
-	$('<label id="spatial-unit-title">Spatial Units</label>').insertBefore('div.leaflet-control-layers-base');
+	var groupedOverlays = {
+		"Spatial Unit": {
+			[spatialUnits.default.dataname]: layer1
+		},
+		"Indicator": {},
+		"Class": {},
+	};	
+	
+	for(var i = 1; i < spatialUnits.length(); i++) {
+		var layer = source.getLayer(gsWorkspace + ":" + spatialUnits.at(i).dataname);
+		suLayers[spatialUnits.at(i).dataname] = layer;
+		groupedOverlays["Spatial Unit"][spatialUnits.at(i).dataname] = layer;
+	}
+
+	var layer2 = new L.WMS.Layer(wmsUrl, "percentage", wmsOptions).addTo(map);	
+	groupedOverlays["Indicator"]["Area"] = layer2;
+	
+	var layer3 = new L.WMS.Layer(wmsUrl, deterClassGroups.at(0).name, wmsOptions).addTo(map);	
+	groupedOverlays["Class"][deterClassGroups.at(0).name] = layer3;	
+	
+	for(var i = 1; i < deterClassGroups.length(); i++)
+	{
+		let layer = new L.WMS.Layer(wmsUrl, deterClassGroups.at(i).name, wmsOptions);	
+		groupedOverlays["Class"][deterClassGroups.at(i).name] = layer;
+	}
+
+	var groupControl = L.control.groupedLayers(null, groupedOverlays, {
+		exclusiveGroups: ["Spatial Unit", "Indicator", "Class"],
+		collapsed: false,
+	});
+	
+	groupControl.addTo(map);
+
+	map.on('overlayadd', function(e) {
+		console.log(e);
+		if(!spatialUnits.isSpatialUnit(e.name)) {
+			viewParams.classname = e.name;
+			updateMap(source, viewParams);
+		}
+		else {
+			console.log(e);
+			source.options["styles"] = '';
+			source.options["viewparams"] = '';
+			source.options["env"] = '';
+			source._overlay.setParams({
+				"styles": '',
+				"viewparams": '',
+				"env": '',
+			});					
+		}
+	});	
+
+	$('<div class="leaflet-control-layers-group" id="prioritization-control-layers-group-name"><label class="leaflet-control-layers-group-name"><span class="leaflet-control-layers-group-name">Prioritization </span><input type="number" id="prioritization-input" min="1" max="50" value=' 
+		+ viewParams.limit + ' /></label></div>').insertAfter('#leaflet-control-layers-group-2');	
+
+	$("#prioritization-input").keypress(function(e) {
+		if (e.which == 13) {
+			let limit = document.getElementById("prioritization-input").value;
+			viewParams.limit = limit;
+			updateMap(source, viewParams);	
+			return false;
+		}
+	});
 
 	var legendUrl = wmsUrl + "REQUEST=GetLegendGraphic&VERSION=1.0.0&FORMAT=image/png&WIDTH=20&HEIGHT=20&LAYER=ams:csAmz_150km_view&STYLE=ams:ams_percentage"
 	var wmsLegendControl = new L.Control.WMSLegend;
