@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="{{url_for('static', filename='css/leaflet.wmslegend.css')}}"/>
     <script type="text/javascript" src="{{url_for('static', filename='js/lib/leaflet.wmslegend.js')}}"></script>
     <link rel="stylesheet" href="{{url_for('static', filename='css/leaflet.groupedlayercontrol.css')}}"/>
-    <script type="text/javascript" src="{{url_for('static', filename='js/lib/leaflet.groupedlayercontrol.js')}}"></script>    
+    <script type="text/javascript" src="{{url_for('static', filename='js/lib/leaflet.groupedlayercontrol.js')}}"></script>      
 
 	<style>
 		html, body {
@@ -56,6 +56,14 @@
 	}
 
 	const SpatialUnits = function(spatialUnits, suDefaultName) {
+		this.getSpatialUnit = function getSpatialUnit(name) {
+			for(var i = 0; i < this.spatialUnits.length; i++) {
+				if(this.spatialUnits[i].dataname == name) {
+					return this.spatialUnits[i];
+				}
+			}
+			return null;				
+		}			
 		this.spatialUnits = spatialUnits;
 		this.default = this.getSpatialUnit(suDefaultName);
 		this.isSpatialUnit = function(name) {
@@ -71,15 +79,7 @@
 		}
 		this.at = function(pos) {
 			return this.spatialUnits[pos];
-		}
-		this.getSpatialUnit = function getSpatialUnit(name) {
-			for(var i = 0; i < this.spatialUnits.length; i++) {
-				if(this.spatialUnits[i].dataname == name) {
-					return this.spatialUnits[i];
-				}
-			}
-			return null;				
-		}		
+		}	
 	}
 
 	const DeterClassGroups = function(groups) {
@@ -91,6 +91,83 @@
 			return this.groups[pos];
 		}		
 	}
+
+	const PercentageStyle = function(layerName) {
+		this.sld = `
+	<?xml version="1.0" encoding="ISO-8859-1"?>
+	<StyledLayerDescriptor version="1.0.0" 
+	    xsi:schemaLocation="http://www.opengis.net/sld StyledLayerDescriptor.xsd" 
+	    xmlns="http://www.opengis.net/sld" 
+	    xmlns:ogc="http://www.opengis.net/ogc" 
+	    xmlns:xlink="http://www.w3.org/1999/xlink" 
+	    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	  <NamedLayer>
+	    <Name>${layerName}</Name>
+	    <UserStyle>
+	      <Title>SLD Cook Book: Attribute-based polygon</Title>
+	      <FeatureTypeStyle>
+	        <Rule>
+	          <Name>Small</Name>
+	          <Title>Less Than 0.001</Title>
+	          <ogc:Filter>
+	            <ogc:PropertyIsLessThan>
+	              <ogc:PropertyName>percentage</ogc:PropertyName>
+	              <ogc:Literal>0.001</ogc:Literal>
+	            </ogc:PropertyIsLessThan>
+	          </ogc:Filter>
+	          <PolygonSymbolizer>
+	            <Fill>
+	              <CssParameter name="fill">#ffe3e3</CssParameter>
+	            </Fill>
+	          </PolygonSymbolizer>
+	        </Rule>
+	        <Rule>
+	          <Name>Medium</Name>
+	          <Title>0.001 - 0.005</Title>
+	          <ogc:Filter>
+	            <ogc:And>
+	              <ogc:PropertyIsGreaterThanOrEqualTo>
+	                <ogc:PropertyName>percentage</ogc:PropertyName>
+	                <ogc:Literal>0.001</ogc:Literal>
+	              </ogc:PropertyIsGreaterThanOrEqualTo>
+	              <ogc:PropertyIsLessThan>
+	                <ogc:PropertyName>percentage</ogc:PropertyName>
+	                <ogc:Literal>0.005</ogc:Literal>
+	              </ogc:PropertyIsLessThan>
+	            </ogc:And>
+	          </ogc:Filter>
+	          <PolygonSymbolizer>
+	            <Fill>
+	              <CssParameter name="fill">#ff7171</CssParameter>
+	            </Fill>
+	          </PolygonSymbolizer>
+	        </Rule>
+	        <Rule>
+	          <Name>LargePop</Name>
+	          <Title>Greater Than 0.005</Title>
+	          <ogc:Filter>
+	            <ogc:PropertyIsGreaterThan>
+	              <ogc:PropertyName>percentage</ogc:PropertyName>
+	              <ogc:Literal>0.005</ogc:Literal>
+	            </ogc:PropertyIsGreaterThan>
+	          </ogc:Filter>
+	          <PolygonSymbolizer>
+	            <Fill>
+	              <CssParameter name="fill">#ff0000</CssParameter>
+	            </Fill>
+	          </PolygonSymbolizer>
+	        </Rule>
+	      </FeatureTypeStyle>
+	    </UserStyle>
+	  </NamedLayer>
+	</StyledLayerDescriptor>`;	
+		this.getSLD = function() {
+			return this.sld;
+		}
+		this.getEncodeURI = function() {
+			return encodeURIComponent(this.sld);
+		}
+	}	
 
 	var gsWorkspace = "{{workspace}}"; 
 	var sus = {{spatial_units_info|safe}};
@@ -105,8 +182,9 @@
 		crs: L.CRS.EPSG4326
 	}).addTo(map);
 
-	var viewParams = new ViewParams(deterClassGroups.at(0).name, "2021-01-01", "20");
-
+	var viewParams = new ViewParams(deterClassGroups.at(0).name, "2020-10-01", "240");
+	var layer1Name = gsWorkspace + ":" + spatialUnits.default.dataname + "_view";
+	var layer1Style = new PercentageStyle(layer1Name);
 	var wmsUrl = "http://localhost:8080/geoserver/wms?"
 	var wmsOptions = {
 		"transparent": true, 
@@ -115,12 +193,12 @@
 		// "identify": false
 		// "opacity": 0.6,
 		// "noRedraw": false,
-		"styles": "ams:ams_percentage",
+		// "styles": "ams:ams_percentage",
 		"env": "v0:0;v1:0.008;v2:0.009;v3:0.1;v4:0.02;v5:1",
 		"viewparams": viewParams.toWmsFormat(),
+		"sld_body": layer1Style.getSLD(),
 	};
 	var source = L.WMS.source(wmsUrl, wmsOptions);
-	var layer1Name = gsWorkspace + ":" + spatialUnits.default.dataname + "_view";
 	var layer1 = source.getLayer(layer1Name);
 	var currentLayer = layer1;
 	layer1.addTo(map);	
@@ -192,7 +270,9 @@
 		}
 	});
 
-	var legendUrl = wmsUrl + "REQUEST=GetLegendGraphic&VERSION=1.0.0&FORMAT=image/png&WIDTH=20&HEIGHT=20&LAYER=ams:csAmz_150km_view&STYLE=ams:ams_percentage"
+	var legendUrl = wmsUrl 
+					+ "REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20&LAYER=ams:csAmz_150km_view&sld_body="
+					+ layer1Style.getEncodeURI(); 
 	var wmsLegendControl = new L.Control.WMSLegend;
     wmsLegendControl.options.uri = legendUrl;
     wmsLegendControl.options.position = "bottomright";
