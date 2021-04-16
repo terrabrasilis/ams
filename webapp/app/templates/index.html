@@ -92,7 +92,21 @@
 		}		
 	}
 
-	const PercentageStyle = function(layerName) {
+	const PercentageStyle = function(layerName, onlyStroke) {
+		this.setStroke = function(onlyStroke) {
+			if(onlyStroke) {
+				this.fillOpacity = 0;
+	            this.stroke = `<Stroke>
+                  <CssParameter name="stroke">#ff0000</CssParameter>
+                  <CssParameter name="stroke-width">2</CssParameter>
+                  <CssParameter name="stroke-linejoin">bevel</CssParameter>
+                </Stroke>`;			
+
+			}
+		}
+		this.stroke = "";
+		this.fillOpacity = 1;
+		this.setStroke(onlyStroke);
 		this.sld = `
 	<?xml version="1.0" encoding="ISO-8859-1"?>
 	<StyledLayerDescriptor version="1.0.0" 
@@ -118,7 +132,9 @@
 	          <PolygonSymbolizer>
 	            <Fill>
 	              <CssParameter name="fill">#ffe3e3</CssParameter>
+	              <CssParameter name="fill-opacity">${this.fillOpacity}</CssParameter>
 	            </Fill>
+	            ${this.stroke}
 	          </PolygonSymbolizer>
 	        </Rule>
 	        <Rule>
@@ -139,7 +155,9 @@
 	          <PolygonSymbolizer>
 	            <Fill>
 	              <CssParameter name="fill">#ff7171</CssParameter>
+	              <CssParameter name="fill-opacity">${this.fillOpacity}</CssParameter>
 	            </Fill>
+	            ${this.stroke}
 	          </PolygonSymbolizer>
 	        </Rule>
 	        <Rule>
@@ -153,8 +171,10 @@
 	          </ogc:Filter>
 	          <PolygonSymbolizer>
 	            <Fill>
-	              <CssParameter name="fill">#ff0000</CssParameter>
+	              <CssParameter name="fill">#ff3838</CssParameter>
+	              <CssParameter name="fill-opacity">${this.fillOpacity}</CssParameter>
 	            </Fill>
+	            ${this.stroke}
 	          </PolygonSymbolizer>
 	        </Rule>
 	      </FeatureTypeStyle>
@@ -182,7 +202,7 @@
 		crs: L.CRS.EPSG4326
 	}).addTo(map);
 
-	var viewParams = new ViewParams(deterClassGroups.at(0).name, "2020-10-01", "240");
+	var suViewParams = new ViewParams(deterClassGroups.at(0).name, "2020-10-01", "ALL");
 	var layer1Name = gsWorkspace + ":" + spatialUnits.default.dataname + "_view";
 	var layer1Style = new PercentageStyle(layer1Name);
 	var wmsUrl = "http://localhost:8080/geoserver/wms?"
@@ -191,17 +211,37 @@
 		"tiled": true, 
 		"format": "image/png", 
 		// "identify": false
-		// "opacity": 0.6,
+		"opacity": 0.6,
 		// "noRedraw": false,
 		// "styles": "ams:ams_percentage",
 		"env": "v0:0;v1:0.008;v2:0.009;v3:0.1;v4:0.02;v5:1",
-		"viewparams": viewParams.toWmsFormat(),
+		"viewparams": suViewParams.toWmsFormat(),
 		"sld_body": layer1Style.getSLD(),
 	};
 	var source = L.WMS.source(wmsUrl, wmsOptions);
 	var layer1 = source.getLayer(layer1Name);
 	var currentLayer = layer1;
 	layer1.addTo(map);	
+
+	var priorLayerName = layer1Name;
+	var priorLayerStyle = new PercentageStyle(layer1Name, true);
+	var priorViewParams = new ViewParams(deterClassGroups.at(0).name, "2020-10-01", "15");	
+	var priorWmsOptions = {
+		"transparent": true, 
+		"tiled": true, 
+		"format": "image/png", 
+		// "identify": false
+		// "opacity": 0.6,
+		// "noRedraw": false,
+		// "styles": "ams:ams_percentage",
+		"env": "v0:0;v1:0.008;v2:0.009;v3:0.1;v4:0.02;v5:1",
+		"viewparams": priorViewParams.toWmsFormat(),
+		"sld_body": priorLayerStyle.getSLD(),
+	};
+	var priorSource = L.WMS.source(wmsUrl, priorWmsOptions);
+	var priorLayer = priorSource.getLayer(layer1Name);
+	priorLayer.addTo(map);
+	// updateMap(priorSource, priorViewParams);
 
 	var suLayers = {};
 	suLayers[spatialUnits.default.dataname] = layer1;
@@ -242,8 +282,10 @@
 	map.on('overlayadd', function(e) {
 		console.log(e);
 		if(!spatialUnits.isSpatialUnit(e.name)) {
-			viewParams.classname = e.name;
-			updateMap(source, viewParams);
+			suViewParams.classname = e.name;
+			priorViewParams.classname = e.name;
+			updateMap(priorSource, priorViewParams);
+			updateMap(source, suViewParams);
 		}
 		else {
 			console.log(e);
@@ -259,13 +301,13 @@
 	});	
 
 	$('<div class="leaflet-control-layers-group" id="prioritization-control-layers-group-name"><label class="leaflet-control-layers-group-name"><span class="leaflet-control-layers-group-name">Prioritization </span><input type="number" id="prioritization-input" min="1" max="50" value=' 
-		+ viewParams.limit + ' /></label></div>').insertAfter('#leaflet-control-layers-group-2');	
+		+ priorViewParams.limit + ' /></label></div>').insertAfter('#leaflet-control-layers-group-2');	
 
 	$("#prioritization-input").keypress(function(e) {
 		if (e.which == 13) {
 			let limit = document.getElementById("prioritization-input").value;
-			viewParams.limit = limit;
-			updateMap(source, viewParams);	
+			priorViewParams.limit = limit;
+			updateMap(priorSource, priorViewParams);	
 			return false;
 		}
 	});
