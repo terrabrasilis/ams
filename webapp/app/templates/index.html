@@ -17,6 +17,7 @@
     <script type="text/javascript" src="{{url_for('static', filename='js/lib/leaflet.wmslegend.js')}}"></script>
     <link rel="stylesheet" href="{{url_for('static', filename='css/leaflet.groupedlayercontrol.css')}}"/>
     <script type="text/javascript" src="{{url_for('static', filename='js/lib/leaflet.groupedlayercontrol.js')}}"></script>      
+    <script src="https://d3js.org/d3.v6.min.js"></script>
 
 	<style>
 		html, body {
@@ -39,11 +40,20 @@
 <div id="map"></div>
 
 <script type="text/javascript">
-	function updateMap(source, viewParams) {
+	function updateMap(source, viewParams, layerStyle) {
 		source.options["viewparams"] = viewParams.toWmsFormat();
-		source._overlay.setParams({
-			"viewparams": viewParams.toWmsFormat(),
-		});		
+		if(layerStyle) {
+			source.options["sld_body"] = layerStyle.getSLD();
+			source._overlay.setParams({
+				"viewparams": viewParams.toWmsFormat(),
+				"sld_body": layerStyle.getSLD(),
+			});				
+		}
+		else {
+			source._overlay.setParams({
+				"viewparams": viewParams.toWmsFormat(),
+			});	
+		}	
 	}
 
 	const ViewParams = function(classname, date, limit) {
@@ -92,95 +102,59 @@
 		}		
 	}
 
-	const PercentageStyle = function(layerName, onlyStroke) {
-		this.setStroke = function(onlyStroke) {
-			if(onlyStroke) {
+	const PercentageStyle = function(layerName, maxValue, onlyStrokes) {
+		this.setStroke = function(onlyStrokes) {
+			if(onlyStrokes) {
 				this.fillOpacity = 0;
-	            this.stroke = `<Stroke>
-                  <CssParameter name="stroke">#ff0000</CssParameter>
-                  <CssParameter name="stroke-width">2</CssParameter>
-                  <CssParameter name="stroke-linejoin">bevel</CssParameter>
-                </Stroke>`;			
-
+	            this.stroke = `<Stroke><CssParameter name="stroke">#ff0000</CssParameter><CssParameter name="stroke-width">2</CssParameter><CssParameter name="stroke-linejoin">bevel</CssParameter></Stroke>`;			
 			}
 		}
 		this.stroke = "";
 		this.fillOpacity = 1;
-		this.setStroke(onlyStroke);
-		this.sld = `
-	<?xml version="1.0" encoding="ISO-8859-1"?>
-	<StyledLayerDescriptor version="1.0.0" 
-	    xsi:schemaLocation="http://www.opengis.net/sld StyledLayerDescriptor.xsd" 
-	    xmlns="http://www.opengis.net/sld" 
-	    xmlns:ogc="http://www.opengis.net/ogc" 
-	    xmlns:xlink="http://www.w3.org/1999/xlink" 
-	    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-	  <NamedLayer>
-	    <Name>${layerName}</Name>
-	    <UserStyle>
-	      <Title>SLD Cook Book: Attribute-based polygon</Title>
-	      <FeatureTypeStyle>
-	        <Rule>
-	          <Name>Small</Name>
-	          <Title>Less Than 0.001</Title>
-	          <ogc:Filter>
-	            <ogc:PropertyIsLessThan>
-	              <ogc:PropertyName>percentage</ogc:PropertyName>
-	              <ogc:Literal>0.001</ogc:Literal>
-	            </ogc:PropertyIsLessThan>
-	          </ogc:Filter>
-	          <PolygonSymbolizer>
-	            <Fill>
-	              <CssParameter name="fill">#ffe3e3</CssParameter>
-	              <CssParameter name="fill-opacity">${this.fillOpacity}</CssParameter>
-	            </Fill>
-	            ${this.stroke}
-	          </PolygonSymbolizer>
-	        </Rule>
-	        <Rule>
-	          <Name>Medium</Name>
-	          <Title>0.001 - 0.005</Title>
-	          <ogc:Filter>
-	            <ogc:And>
-	              <ogc:PropertyIsGreaterThanOrEqualTo>
-	                <ogc:PropertyName>percentage</ogc:PropertyName>
-	                <ogc:Literal>0.001</ogc:Literal>
-	              </ogc:PropertyIsGreaterThanOrEqualTo>
-	              <ogc:PropertyIsLessThan>
-	                <ogc:PropertyName>percentage</ogc:PropertyName>
-	                <ogc:Literal>0.005</ogc:Literal>
-	              </ogc:PropertyIsLessThan>
-	            </ogc:And>
-	          </ogc:Filter>
-	          <PolygonSymbolizer>
-	            <Fill>
-	              <CssParameter name="fill">#ff7171</CssParameter>
-	              <CssParameter name="fill-opacity">${this.fillOpacity}</CssParameter>
-	            </Fill>
-	            ${this.stroke}
-	          </PolygonSymbolizer>
-	        </Rule>
-	        <Rule>
-	          <Name>LargePop</Name>
-	          <Title>Greater Than 0.005</Title>
-	          <ogc:Filter>
-	            <ogc:PropertyIsGreaterThan>
-	              <ogc:PropertyName>percentage</ogc:PropertyName>
-	              <ogc:Literal>0.005</ogc:Literal>
-	            </ogc:PropertyIsGreaterThan>
-	          </ogc:Filter>
-	          <PolygonSymbolizer>
-	            <Fill>
-	              <CssParameter name="fill">#ff3838</CssParameter>
-	              <CssParameter name="fill-opacity">${this.fillOpacity}</CssParameter>
-	            </Fill>
-	            ${this.stroke}
-	          </PolygonSymbolizer>
-	        </Rule>
-	      </FeatureTypeStyle>
-	    </UserStyle>
-	  </NamedLayer>
-	</StyledLayerDescriptor>`;	
+		this.setStroke(onlyStrokes);
+		this.maxValue = maxValue;
+		this.createRule = function(v1, v2, color) {
+			color = d3.color(color).formatHex();
+			let fill = "";
+			if(!onlyStrokes) {
+				fill = `<Fill><CssParameter name="fill">${color}</CssParameter></Fill>`;
+			}
+	       return `<Rule><Title> ${v1}% - ${v2}% </Title><ogc:Filter><ogc:PropertyIsGreaterThanOrEqualTo><ogc:PropertyName>percentage</ogc:PropertyName><ogc:Literal>${v1}</ogc:Literal></ogc:PropertyIsGreaterThanOrEqualTo><ogc:PropertyIsLessThan><ogc:PropertyName>percentage</ogc:PropertyName><ogc:Literal>${v2}</ogc:Literal></ogc:PropertyIsLessThan></ogc:Filter><PolygonSymbolizer>${fill}${this.stroke}</PolygonSymbolizer></Rule>`;				
+		} 
+		this.getMaxLength = function(values) {
+  			let vMaxLength = 0;
+  			let vMax = 0;
+  			for(let i = 0; i < values.length - 1; i++) {
+  				let v2 = values[i+1];
+  				let vlength = v2.toString().length;
+  				if(vlength > vMaxLength) {
+  					vMaxLength = vlength;
+  					vMax = v2.toString();
+  				}
+  			}
+  			if(vMax.includes(".")) {
+  				vMaxLength = vMax.split(".")[1].length;
+  			}
+  			return vMaxLength;
+		}
+		this.createRules = function(numOfRanges) {
+			let legend = d3.scaleLinear()
+				.domain([0, this.maxValue])
+  				.range(["#f0f0f0", "#ff0000"])
+  				.nice(numOfRanges);
+  			let ticks = legend.ticks(numOfRanges);
+  			let rules = "";
+  			let vMaxLength = this.getMaxLength(ticks);
+  			for(let i = 0; i < ticks.length - 1; i++) {
+  				let v1 = ticks[i];
+  				let v2 = ticks[i+1];
+  				let color = legend(v1);
+				rules = `${rules}${this.createRule(v1.toFixed(vMaxLength), v2.toFixed(vMaxLength), color)}`;
+  			} 			
+  			
+  			return rules;						
+		}
+		this.sld = `<?xml version="1.0" encoding="ISO-8859-1"?>	<StyledLayerDescriptor version="1.0.0" xsi:schemaLocation="http://www.opengis.net/sld StyledLayerDescriptor.xsd" xmlns="http://www.opengis.net/sld" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><NamedLayer><Name>${layerName}</Name><UserStyle><Title>SLD Cook Book: Attribute-based polygon</Title><FeatureTypeStyle>${this.createRules(6)}</FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>`;	
 		this.getSLD = function() {
 			return this.sld;
 		}
@@ -189,10 +163,34 @@
 		}
 	}	
 
+	const WFS = function(url) {
+		this.url = url;
+		this.getMax = function(layerName, propertyName, classname, date) {
+			let wfsUrl = this.url 
+						+ "&typeName=" + layerName
+						+ "&propertyName=" + propertyName
+						+ "&outputFormat=json"
+						+ "&viewparams=classname:"+classname+";date:"+date+";limit:1";
+			var res;
+			$.ajax({
+				dataType: "json",
+				url: wfsUrl,
+				async: false, 
+				success: function(data) {
+					res = data["features"][0]["properties"][propertyName];
+				}
+			});		
+			return res;			
+		}	
+	}
+
 	var gsWorkspace = "{{workspace}}"; 
 	var sus = {{spatial_units_info|safe}};
 	var spatialUnits = new SpatialUnits(sus, sus[0].dataname);
 	var deterClassGroups = new DeterClassGroups({{deter_class_groups|safe}});
+
+	var wfsUrl = "http://localhost:8080/geoserver/ows?SERVICE=WFS&REQUEST=GetFeature"
+	var wfs = new WFS(wfsUrl);
 
 	var map = new L.Map("map").setView([spatialUnits.default.center_lat, spatialUnits.default.center_lng], 5);
 
@@ -203,8 +201,9 @@
 	}).addTo(map);
 
 	var suViewParams = new ViewParams(deterClassGroups.at(0).name, "2020-10-01", "ALL");
-	var layer1Name = gsWorkspace + ":" + spatialUnits.default.dataname + "_view";
-	var layer1Style = new PercentageStyle(layer1Name);
+	var suLayerName = gsWorkspace + ":" + spatialUnits.default.dataname + "_view";
+	var suLayerMaxPercentage = wfs.getMax(suLayerName, "percentage", suViewParams.classname, suViewParams.date) 
+	var suLayerStyle = new PercentageStyle(suLayerName, suLayerMaxPercentage);
 	var wmsUrl = "http://localhost:8080/geoserver/wms?"
 	var wmsOptions = {
 		"transparent": true, 
@@ -214,18 +213,18 @@
 		"opacity": 0.6,
 		// "noRedraw": false,
 		// "styles": "ams:ams_percentage",
-		"env": "v0:0;v1:0.008;v2:0.009;v3:0.1;v4:0.02;v5:1",
+		// "env": "v0:0;v1:0.008;v2:0.009;v3:0.1;v4:0.02;v5:1",
 		"viewparams": suViewParams.toWmsFormat(),
-		"sld_body": layer1Style.getSLD(),
+		"sld_body": suLayerStyle.getSLD(),
 	};
-	var source = L.WMS.source(wmsUrl, wmsOptions);
-	var layer1 = source.getLayer(layer1Name);
-	var currentLayer = layer1;
-	layer1.addTo(map);	
+	var suSource = L.WMS.source(wmsUrl, wmsOptions);
+	var suLayer = suSource.getLayer(suLayerName);
+	var currentLayer = suLayer;
+	suLayer.addTo(map);	
 
-	var priorLayerName = layer1Name;
-	var priorLayerStyle = new PercentageStyle(layer1Name, true);
-	var priorViewParams = new ViewParams(deterClassGroups.at(0).name, "2020-10-01", "15");	
+	var priorLayerName = suLayerName;
+	var priorLayerStyle = new PercentageStyle(suLayerName, suLayerMaxPercentage, true);
+	var priorViewParams = new ViewParams(deterClassGroups.at(0).name, "2020-07-01", "15");	
 	var priorWmsOptions = {
 		"transparent": true, 
 		"tiled": true, 
@@ -234,37 +233,37 @@
 		// "opacity": 0.6,
 		// "noRedraw": false,
 		// "styles": "ams:ams_percentage",
-		"env": "v0:0;v1:0.008;v2:0.009;v3:0.1;v4:0.02;v5:1",
+		// "env": "v0:0;v1:0.008;v2:0.009;v3:0.1;v4:0.02;v5:1",
 		"viewparams": priorViewParams.toWmsFormat(),
 		"sld_body": priorLayerStyle.getSLD(),
+
 	};
 	var priorSource = L.WMS.source(wmsUrl, priorWmsOptions);
-	var priorLayer = priorSource.getLayer(layer1Name);
+	var priorLayer = priorSource.getLayer(suLayerName);
 	priorLayer.addTo(map);
-	// updateMap(priorSource, priorViewParams);
 
 	var suLayers = {};
-	suLayers[spatialUnits.default.dataname] = layer1;
+	suLayers[spatialUnits.default.dataname] = suLayer;
 
 	var groupedOverlays = {
 		"Spatial Unit": {
-			[spatialUnits.default.dataname]: layer1
+			[spatialUnits.default.dataname]: suLayer
 		},
 		"Indicator": {},
 		"Class": {},
 	};	
 	
 	for(var i = 1; i < spatialUnits.length(); i++) {
-		var layer = source.getLayer(gsWorkspace + ":" + spatialUnits.at(i).dataname);
+		var layer = suSource.getLayer(gsWorkspace + ":" + spatialUnits.at(i).dataname);
 		suLayers[spatialUnits.at(i).dataname] = layer;
 		groupedOverlays["Spatial Unit"][spatialUnits.at(i).dataname] = layer;
 	}
 
-	var layer2 = new L.WMS.Layer(wmsUrl, "percentage", wmsOptions).addTo(map);	
-	groupedOverlays["Indicator"]["Area"] = layer2;
+	var indicatorLayer = new L.WMS.Layer(wmsUrl, "percentage", wmsOptions).addTo(map);	
+	groupedOverlays["Indicator"]["Area"] = indicatorLayer;
 	
-	var layer3 = new L.WMS.Layer(wmsUrl, deterClassGroups.at(0).name, wmsOptions).addTo(map);	
-	groupedOverlays["Class"][deterClassGroups.at(0).name] = layer3;	
+	var classLayer = new L.WMS.Layer(wmsUrl, deterClassGroups.at(0).name, wmsOptions).addTo(map);	
+	groupedOverlays["Class"][deterClassGroups.at(0).name] = classLayer;	
 	
 	for(var i = 1; i < deterClassGroups.length(); i++)
 	{
@@ -279,20 +278,41 @@
 	
 	groupControl.addTo(map);
 
+	var legendUrl = wmsUrl 
+					+ "REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20"
+					+ "&LAYER=" + suLayerName
+					+ "&sld_body=" + suLayerStyle.getEncodeURI(); 
+	var wmsLegendControl = new L.Control.WMSLegend;
+    wmsLegendControl.options.uri = legendUrl;
+    wmsLegendControl.options.position = "bottomright";
+    map.addControl(wmsLegendControl);	
+
 	map.on('overlayadd', function(e) {
-		console.log(e);
 		if(!spatialUnits.isSpatialUnit(e.name)) {
 			suViewParams.classname = e.name;
 			priorViewParams.classname = e.name;
-			updateMap(priorSource, priorViewParams);
-			updateMap(source, suViewParams);
+			var maxPercentage = wfs.getMax(suLayerName, "percentage", suViewParams.classname, suViewParams.date);
+			suLayerStyle = new PercentageStyle(suLayerName, maxPercentage);
+			
+			var priorLayerStyle = new PercentageStyle(suLayerName, maxPercentage, true);
+			legendUrl = wmsUrl 
+						+ "REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20"
+						+ "&LAYER=" + suLayerName
+						+ "&sld_body=" + suLayerStyle.getEncodeURI();
+		    wmsLegendControl.options.uri = legendUrl;
+		    wmsLegendControl.options.position = "bottomright";
+		    map.removeControl(wmsLegendControl);
+		    map.addControl(wmsLegendControl);	
+
+			updateMap(priorSource, priorViewParams, priorLayerStyle);
+			updateMap(suSource, suViewParams, suLayerStyle);					
 		}
 		else {
 			console.log(e);
-			source.options["styles"] = '';
-			source.options["viewparams"] = '';
-			source.options["env"] = '';
-			source._overlay.setParams({
+			suSource.options["styles"] = '';
+			suSource.options["viewparams"] = '';
+			suSource.options["env"] = '';
+			suSource._overlay.setParams({
 				"styles": '',
 				"viewparams": '',
 				"env": '',
@@ -311,14 +331,6 @@
 			return false;
 		}
 	});
-
-	var legendUrl = wmsUrl 
-					+ "REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20&LAYER=ams:csAmz_150km_view&sld_body="
-					+ layer1Style.getEncodeURI(); 
-	var wmsLegendControl = new L.Control.WMSLegend;
-    wmsLegendControl.options.uri = legendUrl;
-    wmsLegendControl.options.position = "bottomright";
-    map.addControl(wmsLegendControl);
  
 </script>
 </body>
