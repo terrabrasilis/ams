@@ -40,8 +40,9 @@
 <div id="map"></div>
 
 <script type="text/javascript">
-	function updateMap(source, viewParams, layerStyle) {
+	function updateMap(source, layerName, viewParams, layerStyle) {
 		source.options["viewparams"] = viewParams.toWmsFormat();
+		source._overlay.wmsParams.layers = layerName;
 		if(layerStyle) {
 			source.options["sld_body"] = layerStyle.getSLD();
 			source._overlay.setParams({
@@ -114,17 +115,17 @@
 		this.setStroke(onlyStrokes);
 		this.maxValue = maxValue;
 		this.createRule = function(v1, v2, color) {
-			color = d3.color(color).formatHex();
 			let fill = "";
-			if(!onlyStrokes) {
+			if(color) {
+				color = d3.color(color).formatHex();
 				fill = `<Fill><CssParameter name="fill">${color}</CssParameter></Fill>`;
 			}
-	       return `<Rule><Title> ${v1}% - ${v2}% </Title><ogc:Filter><ogc:PropertyIsGreaterThanOrEqualTo><ogc:PropertyName>percentage</ogc:PropertyName><ogc:Literal>${v1}</ogc:Literal></ogc:PropertyIsGreaterThanOrEqualTo><ogc:PropertyIsLessThan><ogc:PropertyName>percentage</ogc:PropertyName><ogc:Literal>${v2}</ogc:Literal></ogc:PropertyIsLessThan></ogc:Filter><PolygonSymbolizer>${fill}${this.stroke}</PolygonSymbolizer></Rule>`;				
+			return `<Rule><Title> ${v1}% - ${v2}% </Title><ogc:Filter><ogc:PropertyIsGreaterThanOrEqualTo><ogc:PropertyName>percentage</ogc:PropertyName><ogc:Literal>${v1}</ogc:Literal></ogc:PropertyIsGreaterThanOrEqualTo><ogc:PropertyIsLessThan><ogc:PropertyName>percentage</ogc:PropertyName><ogc:Literal>${v2}</ogc:Literal></ogc:PropertyIsLessThan></ogc:Filter><PolygonSymbolizer>${fill}${this.stroke}</PolygonSymbolizer></Rule>`;				
 		} 
 		this.getMaxLength = function(values) {
-  			let vMaxLength = 0;
-  			let vMax = 0;
-  			for(let i = 0; i < values.length - 1; i++) {
+  			let vMax = values[0].toString();
+  			let vMaxLength = vMax.length;
+  			for(let i = 1; i < values.length - 1; i++) {
   				let v2 = values[i+1];
   				let vlength = v2.toString().length;
   				if(vlength > vMaxLength) {
@@ -144,15 +145,20 @@
   				.nice(numOfRanges);
   			let ticks = legend.ticks(numOfRanges);
   			let rules = "";
-  			let vMaxLength = this.getMaxLength(ticks);
-  			for(let i = 0; i < ticks.length - 1; i++) {
-  				let v1 = ticks[i];
-  				let v2 = ticks[i+1];
-  				let color = legend(v1);
-				rules = `${rules}${this.createRule(v1.toFixed(vMaxLength), v2.toFixed(vMaxLength), color)}`;
-  			} 			
-  			
-  			return rules;						
+  			if(!onlyStrokes) {
+	  			let vMaxLength = this.getMaxLength(ticks);
+	  			for(let i = 0; i < ticks.length - 1; i++) {
+	  				let v1 = ticks[i];
+	  				let v2 = ticks[i+1];
+	  				let color = legend(v1);
+					rules = `${rules}${this.createRule(v1.toFixed(vMaxLength), v2.toFixed(vMaxLength), color)}`;
+	  			} 			
+	  		}
+	  		else {
+	  			rules = `${rules}${this.createRule(ticks[0], ticks[ticks.length - 1])}`;
+	  		}				
+
+	  		return rules;		
 		}
 		this.sld = `<?xml version="1.0" encoding="ISO-8859-1"?>	<StyledLayerDescriptor version="1.0.0" xsi:schemaLocation="http://www.opengis.net/sld StyledLayerDescriptor.xsd" xmlns="http://www.opengis.net/sld" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><NamedLayer><Name>${layerName}</Name><UserStyle><Title>SLD Cook Book: Attribute-based polygon</Title><FeatureTypeStyle>${this.createRules(6)}</FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>`;	
 		this.getSLD = function() {
@@ -202,7 +208,7 @@
 
 	var suViewParams = new ViewParams(deterClassGroups.at(0).name, "2020-10-01", "ALL");
 	var suLayerName = gsWorkspace + ":" + spatialUnits.default.dataname + "_view";
-	var suLayerMaxPercentage = wfs.getMax(suLayerName, "percentage", suViewParams.classname, suViewParams.date) 
+	var suLayerMaxPercentage = wfs.getMax(suLayerName, "percentage", suViewParams.classname, suViewParams.date); 
 	var suLayerStyle = new PercentageStyle(suLayerName, suLayerMaxPercentage);
 	var wmsUrl = "http://localhost:8080/geoserver/wms?"
 	var wmsOptions = {
@@ -210,7 +216,7 @@
 		"tiled": true, 
 		"format": "image/png", 
 		// "identify": false
-		"opacity": 0.6,
+		"opacity": 0.7,
 		// "noRedraw": false,
 		// "styles": "ams:ams_percentage",
 		// "env": "v0:0;v1:0.008;v2:0.009;v3:0.1;v4:0.02;v5:1",
@@ -254,7 +260,8 @@
 	};	
 	
 	for(var i = 1; i < spatialUnits.length(); i++) {
-		var layer = suSource.getLayer(gsWorkspace + ":" + spatialUnits.at(i).dataname);
+		let layerName = gsWorkspace + ":" + spatialUnits.at(i).dataname + "_view";
+		var layer = suSource.getLayer(layerName);
 		suLayers[spatialUnits.at(i).dataname] = layer;
 		groupedOverlays["Spatial Unit"][spatialUnits.at(i).dataname] = layer;
 	}
@@ -288,36 +295,29 @@
     map.addControl(wmsLegendControl);	
 
 	map.on('overlayadd', function(e) {
-		if(!spatialUnits.isSpatialUnit(e.name)) {
-			suViewParams.classname = e.name;
-			priorViewParams.classname = e.name;
-			var maxPercentage = wfs.getMax(suLayerName, "percentage", suViewParams.classname, suViewParams.date);
-			suLayerStyle = new PercentageStyle(suLayerName, maxPercentage);
-			
-			var priorLayerStyle = new PercentageStyle(suLayerName, maxPercentage, true);
-			legendUrl = wmsUrl 
-						+ "REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20"
-						+ "&LAYER=" + suLayerName
-						+ "&sld_body=" + suLayerStyle.getEncodeURI();
-		    wmsLegendControl.options.uri = legendUrl;
-		    wmsLegendControl.options.position = "bottomright";
-		    map.removeControl(wmsLegendControl);
-		    map.addControl(wmsLegendControl);	
-
-			updateMap(priorSource, priorViewParams, priorLayerStyle);
-			updateMap(suSource, suViewParams, suLayerStyle);					
+		if(spatialUnits.isSpatialUnit(e.name)) {
+			suLayerName = gsWorkspace + ":" + e.name + "_view"; 
 		}
 		else {
-			console.log(e);
-			suSource.options["styles"] = '';
-			suSource.options["viewparams"] = '';
-			suSource.options["env"] = '';
-			suSource._overlay.setParams({
-				"styles": '',
-				"viewparams": '',
-				"env": '',
-			});					
+			suViewParams.classname = e.name;
+			priorViewParams.classname = e.name;
 		}
+		
+		suLayerMaxPercentage = wfs.getMax(suLayerName, "percentage", suViewParams.classname, suViewParams.date);
+		suLayerStyle = new PercentageStyle(suLayerName, suLayerMaxPercentage);
+
+		var priorLayerStyle = new PercentageStyle(suLayerName, suLayerMaxPercentage, true);
+		legendUrl = wmsUrl 
+					+ "REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20"
+					+ "&LAYER=" + suLayerName
+					+ "&sld_body=" + suLayerStyle.getEncodeURI();
+	    wmsLegendControl.options.uri = legendUrl;
+	    wmsLegendControl.options.position = "bottomright";
+	    map.removeControl(wmsLegendControl);
+	    map.addControl(wmsLegendControl);	
+
+		updateMap(priorSource, suLayerName, priorViewParams, priorLayerStyle);
+		updateMap(suSource, suLayerName, suViewParams, suLayerStyle);					
 	});	
 
 	$('<div class="leaflet-control-layers-group" id="prioritization-control-layers-group-name"><label class="leaflet-control-layers-group-name"><span class="leaflet-control-layers-group-name">Prioritization </span><input type="number" id="prioritization-input" min="1" max="50" value=' 
@@ -327,9 +327,13 @@
 		if (e.which == 13) {
 			let limit = document.getElementById("prioritization-input").value;
 			priorViewParams.limit = limit;
-			updateMap(priorSource, priorViewParams);	
+			updateMap(priorSource, suLayerName, priorViewParams);	
 			return false;
 		}
+	});
+
+	$(function() {
+		$("#prioritization-input").dblclick(false);
 	});
  
 </script>
