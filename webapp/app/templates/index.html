@@ -57,12 +57,16 @@
 		}	
 	}
 
-	const ViewParams = function(classname, date, limit) {
+	const ViewParams = function(classname, startdate, enddate, limit) {
 		this.classname = classname;
-		this.date = date;
+		this.startdate = startdate;
+		this.enddate = enddate;
 		this.limit = limit;
 		this.toWmsFormat = function() {
-			return "classname:"+this.classname+";date:"+this.date+";limit:"+this.limit;
+			return "classname:"+this.classname
+					+";startdate:"+this.startdate
+					+";enddate:"+this.enddate
+					+";limit:"+this.limit;
 		}
 	}
 
@@ -171,12 +175,15 @@
 
 	const WFS = function(url) {
 		this.url = url;
-		this.getMax = function(layerName, propertyName, classname, date) {
+		this.getMax = function(layerName, propertyName, viewParams) {
 			let wfsUrl = this.url 
 						+ "&typeName=" + layerName
 						+ "&propertyName=" + propertyName
 						+ "&outputFormat=json"
-						+ "&viewparams=classname:"+classname+";date:"+date+";limit:1";
+						+ "&viewparams=classname:" + viewParams.classname
+										+ ";startdate:" + viewParams.startdate
+										+ ";enddate:" + viewParams.enddate
+										+ ";limit:1";
 			var res;
 			$.ajax({
 				dataType: "json",
@@ -190,10 +197,72 @@
 		}	
 	}
 
+	const TemporalUnits = function() {
+		this.aggregates = {		
+			0: {"key": "15d", "value": "15 Days"},
+			1: {"key": "1m", "value": "Month"},
+			2: {"key": "3m", "value": "3 Months"},
+			3: {"key": "1y", "value": "Year"},
+		};
+
+		this.getAggregates = function() {
+			return this.aggregates;
+		}
+
+		this.isAggregate = function(name) {
+			for(let i = 0; i < Object.keys(this.aggregates).length; i++) {
+				console.log(this.aggregates[i]);
+				if(this.aggregates[i].value == name) {
+					return true;
+				} 
+			}
+			return false;
+		}
+
+	}
+
+	const DateController = function() {
+		this.startdate;
+		this.enddate;
+
+		this.toUTCDate = function(date) {
+			let uday = date.getUTCDate();
+			let day = uday < 10 ? "0" + uday : uday;
+			let umonth = date.getUTCMonth() + 1;
+			let month = umonth < 10 ? "0" + umonth : umonth;
+			return `${date.getUTCFullYear()}-${month}-${day}`; 
+		}
+
+		this.setPeriod = function(startdate, period) {
+			this.startdate = startdate;
+			let enddate = new Date(startdate + "T00:00:00");
+			if(period == "15d") {
+				enddate.setDate(enddate.getDate() - 15);
+			}
+			else if(period == "1m") {
+				let day = enddate.getUTCDate();
+				enddate.setDate(enddate.getDate() - 31);
+				enddate.setUTCDate(day);
+			}
+			else if(period == "3m") {
+				let day = enddate.getUTCDate();
+				enddate.setDate(enddate.getDate() - 3*31);
+				enddate.setUTCDate(day);
+			}			
+			else if(period == "1y") {
+				enddate.setUTCFullYear(enddate.getUTCFullYear() - 1);
+			}						
+			this.enddate = this.toUTCDate(enddate);
+		}
+	}
+
 	var gsWorkspace = "{{workspace}}"; 
 	var sus = {{spatial_units_info|safe}};
 	var spatialUnits = new SpatialUnits(sus, sus[0].dataname);
 	var deterClassGroups = new DeterClassGroups({{deter_class_groups|safe}});
+	var temporalUnits = new TemporalUnits();
+	var dateControll = new DateController();
+	dateControll.setPeriod("2021-02-01", temporalUnits.getAggregates()[0].key);
 
 	var wfsUrl = "http://localhost:8080/geoserver/ows?SERVICE=WFS&REQUEST=GetFeature"
 	var wfs = new WFS(wfsUrl);
@@ -206,9 +275,9 @@
 		crs: L.CRS.EPSG4326
 	}).addTo(map);
 
-	var suViewParams = new ViewParams(deterClassGroups.at(0).name, "2020-10-01", "ALL");
+	var suViewParams = new ViewParams(deterClassGroups.at(0).name, dateControll.startdate, dateControll.enddate, "ALL");
 	var suLayerName = gsWorkspace + ":" + spatialUnits.default.dataname + "_view";
-	var suLayerMaxPercentage = wfs.getMax(suLayerName, "percentage", suViewParams.classname, suViewParams.date); 
+	var suLayerMaxPercentage = wfs.getMax(suLayerName, "percentage", suViewParams); 
 	var suLayerStyle = new PercentageStyle(suLayerName, suLayerMaxPercentage);
 	var wmsUrl = "http://localhost:8080/geoserver/wms?"
 	var wmsOptions = {
@@ -230,7 +299,8 @@
 
 	var priorLayerName = suLayerName;
 	var priorLayerStyle = new PercentageStyle(suLayerName, suLayerMaxPercentage, true);
-	var priorViewParams = new ViewParams(deterClassGroups.at(0).name, "2020-07-01", "15");	
+	var priorViewParams = new ViewParams(deterClassGroups.at(0).name, 
+							dateControll.startdate, dateControll.enddate, "15");	
 	var priorWmsOptions = {
 		"transparent": true, 
 		"tiled": true, 
@@ -257,6 +327,8 @@
 		},
 		"Indicator": {},
 		"Class": {},
+		"Temporal Unit": {},
+		"Aggregate": {},
 	};	
 	
 	for(var i = 1; i < spatialUnits.length(); i++) {
@@ -278,8 +350,18 @@
 		groupedOverlays["Class"][deterClassGroups.at(i).name] = layer;
 	}
 
+	var temporalUnitAggregates = temporalUnits.getAggregates();
+	var tempUnitLayer = new L.WMS.Layer(wmsUrl, temporalUnitAggregates[0].key, wmsOptions).addTo(map);	
+	groupedOverlays["Aggregate"][temporalUnitAggregates[0].value] = tempUnitLayer;	
+	
+	for(var i = 1; i < Object.keys(temporalUnitAggregates).length; i++)
+	{
+		let layer = new L.WMS.Layer(wmsUrl, temporalUnitAggregates[i].key, wmsOptions);	
+		groupedOverlays["Aggregate"][temporalUnitAggregates[i].value] = layer;
+	}	
+
 	var groupControl = L.control.groupedLayers(null, groupedOverlays, {
-		exclusiveGroups: ["Spatial Unit", "Indicator", "Class"],
+		exclusiveGroups: ["Spatial Unit", "Indicator", "Class", "Temporal Unit", "Aggregate"],
 		collapsed: false,
 	});
 	
@@ -294,16 +376,27 @@
     wmsLegendControl.options.position = "bottomright";
     map.addControl(wmsLegendControl);	
 
+	$('<div class="leaflet-control-layers-group" id="prioritization-control-layers-group"><label class="leaflet-control-layers-group-name"><span class="leaflet-control-layers-group-name">Prioritization </span><input type="number" id="prioritization-input" min="1" max="50" value=' 
+		+ priorViewParams.limit + ' /></label></div>').insertAfter("#leaflet-control-layers-group-2");
+
 	map.on('overlayadd', function(e) {
 		if(spatialUnits.isSpatialUnit(e.name)) {
 			suLayerName = gsWorkspace + ":" + e.name + "_view"; 
+		}
+		else if(temporalUnits.isAggregate(e.name)) {
+			console.log(e);
+			dateControll.setPeriod(dateControll.startdate, e.layer._name)
+			suViewParams.startdate = dateControll.startdate;
+			suViewParams.enddate = dateControll.enddate;
+			priorViewParams.startdate = dateControll.startdate;
+			priorViewParams.enddate = dateControll.enddate;
 		}
 		else {
 			suViewParams.classname = e.name;
 			priorViewParams.classname = e.name;
 		}
 		
-		suLayerMaxPercentage = wfs.getMax(suLayerName, "percentage", suViewParams.classname, suViewParams.date);
+		suLayerMaxPercentage = wfs.getMax(suLayerName, "percentage", suViewParams);
 		suLayerStyle = new PercentageStyle(suLayerName, suLayerMaxPercentage);
 
 		var priorLayerStyle = new PercentageStyle(suLayerName, suLayerMaxPercentage, true);
@@ -319,9 +412,6 @@
 		updateMap(priorSource, suLayerName, priorViewParams, priorLayerStyle);
 		updateMap(suSource, suLayerName, suViewParams, suLayerStyle);					
 	});	
-
-	$('<div class="leaflet-control-layers-group" id="prioritization-control-layers-group-name"><label class="leaflet-control-layers-group-name"><span class="leaflet-control-layers-group-name">Prioritization </span><input type="number" id="prioritization-input" min="1" max="50" value=' 
-		+ priorViewParams.limit + ' /></label></div>').insertAfter('#leaflet-control-layers-group-2');	
 
 	$("#prioritization-input").keypress(function(e) {
 		if (e.which == 13) {

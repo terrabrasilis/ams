@@ -1,6 +1,7 @@
 -- name: default - regex
 -- classname: DS - \b[A-Z]{2}\b
--- date: 2021-01-01 - \d{4}-\d{2}-\d{2}
+-- startdate: 2021-01-01 - \d{4}-\d{2}-\d{2}
+-- enddate: 2020-12-01 - \d{4}-\d{2}-\d{2}
 -- limit: ALL - (ALL|\d+)
 
 SELECT 
@@ -20,7 +21,9 @@ ON
 	AND 
 	ri.classname = '%classname%' 
 	AND
-	ri.date >= '%date%'::date
+	ri.date >= '%enddate%'::date
+	AND
+	ri.date <= '%startdate%'::date
 ORDER BY 
 	percentage DESC
 LIMIT
