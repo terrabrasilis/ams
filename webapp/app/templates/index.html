@@ -57,16 +57,18 @@
 		}	
 	}
 
-	const ViewParams = function(classname, startdate, enddate, limit) {
+	const ViewParams = function(classname, dateControll, limit) {
 		this.classname = classname;
-		this.startdate = startdate;
-		this.enddate = enddate;
+		this.startdate = dateControll.startdate;
+		this.enddate = dateControll.enddate;
+		this.prevdate = dateControll.prevdate;
 		this.limit = limit;
 		this.toWmsFormat = function() {
-			return "classname:"+this.classname
-					+";startdate:"+this.startdate
-					+";enddate:"+this.enddate
-					+";limit:"+this.limit;
+			return "classname:" + this.classname
+					+ ";startdate:" + this.startdate
+					+ ";enddate:" + this.enddate
+					+ ";prevdate:" + this.prevdate
+					+ ";limit:" + this.limit;
 		}
 	}
 
@@ -107,17 +109,32 @@
 		}		
 	}
 
-	const PercentageStyle = function(layerName, maxValue, onlyStrokes) {
+	const PercentageStyle = function(layerName, minValue, maxValue, onlyStrokes) {
 		this.setStroke = function(onlyStrokes) {
 			if(onlyStrokes) {
 				this.fillOpacity = 0;
 	            this.stroke = `<Stroke><CssParameter name="stroke">#ff0000</CssParameter><CssParameter name="stroke-width">2</CssParameter><CssParameter name="stroke-linejoin">bevel</CssParameter></Stroke>`;			
 			}
 		}
+
+		this.setLegendDomainAndRange = function() {
+			if(this.minValue < 0) {
+				 this.colorRange = ["#add8e6", "#f0f0f0", "#ff3838"];
+				 this.colorDomain = [this.minValue, 0, this.maxValue];
+
+			}
+			else {
+				this.colorRange = ["#f0f0f0", "#ff3838"];
+				this.colorDomain = [this.minValue, this.maxValue];
+			}
+		}
 		this.stroke = "";
 		this.fillOpacity = 1;
 		this.setStroke(onlyStrokes);
 		this.maxValue = maxValue;
+		this.minValue = minValue;
+		this.colorRange;
+		this.colorDomain;
 		this.createRule = function(v1, v2, color) {
 			let fill = "";
 			if(color) {
@@ -143,9 +160,10 @@
   			return vMaxLength;
 		}
 		this.createRules = function(numOfRanges) {
+			this.setLegendDomainAndRange();
 			let legend = d3.scaleLinear()
-				.domain([0, this.maxValue])
-  				.range(["#f0f0f0", "#ff0000"])
+				.domain(this.colorDomain)
+  				.range(this.colorRange)
   				.nice(numOfRanges);
   			let ticks = legend.ticks(numOfRanges);
   			let rules = "";
@@ -175,7 +193,7 @@
 
 	const WFS = function(url) {
 		this.url = url;
-		this.getMax = function(layerName, propertyName, viewParams) {
+		this.getMinOrMax = function(layerName, propertyName, viewParams, isMin) {
 			let wfsUrl = this.url 
 						+ "&typeName=" + layerName
 						+ "&propertyName=" + propertyName
@@ -183,6 +201,8 @@
 						+ "&viewparams=classname:" + viewParams.classname
 										+ ";startdate:" + viewParams.startdate
 										+ ";enddate:" + viewParams.enddate
+										+ ";prevdate:" + viewParams.prevdate
+										+ ";order:" + (isMin ? 'ASC' : 'DESC')
 										+ ";limit:1";
 			var res;
 			$.ajax({
@@ -193,8 +213,15 @@
 					res = data["features"][0]["properties"][propertyName];
 				}
 			});		
-			return res;			
+			return res;	
+		}		
+		this.getMax = function(layerName, propertyName, viewParams) {		
+			return this.getMinOrMax(layerName, propertyName, viewParams, false);
 		}	
+
+		this.getMin = function(layerName, propertyName, viewParams) {
+			return this.getMinOrMax(layerName, propertyName, viewParams, true);
+		}
 	}
 
 	const TemporalUnits = function() {
@@ -205,13 +232,22 @@
 			3: {"key": "1y", "value": "Year"},
 		};
 
+		this.differeces = {
+			0: {"key": "none", "value": "Current"},
+			1: {"key": "1m", "value": "Previous"},
+			2: {"key": "1y", "value": "Previous Year"},
+		}
+
 		this.getAggregates = function() {
 			return this.aggregates;
 		}
 
+		this.getDifferences = function() {
+			return this.differeces;
+		}
+
 		this.isAggregate = function(name) {
 			for(let i = 0; i < Object.keys(this.aggregates).length; i++) {
-				console.log(this.aggregates[i]);
 				if(this.aggregates[i].value == name) {
 					return true;
 				} 
@@ -219,11 +255,21 @@
 			return false;
 		}
 
+		this.isDifference = function(name) {
+			for(let i = 0; i < Object.keys(this.differeces).length; i++) {
+				if(this.differeces[i].value == name) {
+					return true;
+				} 
+			}
+			return false;
+		}		
+
 	}
 
 	const DateController = function() {
 		this.startdate;
 		this.enddate;
+		this.prevdate;
 
 		this.toUTCDate = function(date) {
 			let uday = date.getUTCDate();
@@ -233,26 +279,55 @@
 			return `${date.getUTCFullYear()}-${month}-${day}`; 
 		}
 
+		this.isLastDay =function(date) {
+			let last = new Date(date);
+			let month = date.getMonth();
+			last.setDate(last.getDate() + 1);
+			return last.getMonth() != month; 
+		}
+
 		this.setPeriod = function(startdate, period) {
 			this.startdate = startdate;
 			let enddate = new Date(startdate + "T00:00:00");
+			let prevdate = new Date(startdate + "T00:00:00");
 			if(period == "15d") {
-				enddate.setDate(enddate.getDate() - 15);
+				enddate.setUTCDate(enddate.getUTCDate() - 15);
+				prevdate.setUTCDate(prevdate.getUTCDate() - 30);
 			}
 			else if(period == "1m") {
-				let day = enddate.getUTCDate();
-				enddate.setDate(enddate.getDate() - 31);
-				enddate.setUTCDate(day);
+				if(this.isLastDay(enddate)) {
+					enddate.setUTCDate(0);
+					prevdate.setUTCDate(0);
+					prevdate.setUTCDate(0);
+				}
+				else {
+					let day = enddate.getUTCDate();
+					enddate.setUTCDate(enddate.getUTCDate() - 32);
+					prevdate.setUTCDate(enddate.getUTCDate() - 32);
+					prevdate.setUTCDate(day);
+					enddate.setUTCDate(day);
+				}
 			}
 			else if(period == "3m") {
-				let day = enddate.getUTCDate();
-				enddate.setDate(enddate.getDate() - 3*31);
-				enddate.setUTCDate(day);
+				if(this.isLastDay(enddate)) {
+					enddate.setUTCDate(enddate.getUTCDate() - 2*32);
+					enddate.setUTCDate(0);
+					prevdate.setUTCDate(prevdate.getUTCDate() - 5*32);
+					prevdate.setUTCDate(0);
+				}
+				else {
+					let day = enddate.getUTCDate();
+					enddate.setUTCDate(enddate.getUTCDate() - 2*32);
+					prevdate.setUTCDate(prevdate.getUTCDate() - 5*32);
+					enddate.setUTCDate(day);
+					prevdate.setUTCDate(day);
+				}
 			}			
 			else if(period == "1y") {
 				enddate.setUTCFullYear(enddate.getUTCFullYear() - 1);
 			}						
 			this.enddate = this.toUTCDate(enddate);
+			this.prevdate = this.toUTCDate(prevdate);
 		}
 	}
 
@@ -262,7 +337,7 @@
 	var deterClassGroups = new DeterClassGroups({{deter_class_groups|safe}});
 	var temporalUnits = new TemporalUnits();
 	var dateControll = new DateController();
-	dateControll.setPeriod("2021-02-01", temporalUnits.getAggregates()[0].key);
+	dateControll.setPeriod("2021-01-31", temporalUnits.getAggregates()[0].key);
 
 	var wfsUrl = "http://localhost:8080/geoserver/ows?SERVICE=WFS&REQUEST=GetFeature"
 	var wfs = new WFS(wfsUrl);
@@ -275,10 +350,11 @@
 		crs: L.CRS.EPSG4326
 	}).addTo(map);
 
-	var suViewParams = new ViewParams(deterClassGroups.at(0).name, dateControll.startdate, dateControll.enddate, "ALL");
-	var suLayerName = gsWorkspace + ":" + spatialUnits.default.dataname + "_view";
-	var suLayerMaxPercentage = wfs.getMax(suLayerName, "percentage", suViewParams); 
-	var suLayerStyle = new PercentageStyle(suLayerName, suLayerMaxPercentage);
+	var suViewParams = new ViewParams(deterClassGroups.at(0).name, dateControll, "ALL");
+	var suLayerName = gsWorkspace + ":" + spatialUnits.default.dataname;
+	var currSuLayerName = suLayerName + "_view";
+	var suLayerMaxPercentage = wfs.getMax(currSuLayerName, "percentage", suViewParams); 
+	var suLayerStyle = new PercentageStyle(currSuLayerName, 0, suLayerMaxPercentage);
 	var wmsUrl = "http://localhost:8080/geoserver/wms?"
 	var wmsOptions = {
 		"transparent": true, 
@@ -286,36 +362,29 @@
 		"format": "image/png", 
 		// "identify": false
 		"opacity": 0.7,
-		// "noRedraw": false,
-		// "styles": "ams:ams_percentage",
-		// "env": "v0:0;v1:0.008;v2:0.009;v3:0.1;v4:0.02;v5:1",
 		"viewparams": suViewParams.toWmsFormat(),
 		"sld_body": suLayerStyle.getSLD(),
 	};
 	var suSource = L.WMS.source(wmsUrl, wmsOptions);
-	var suLayer = suSource.getLayer(suLayerName);
+	var suLayer = suSource.getLayer(currSuLayerName);
 	var currentLayer = suLayer;
 	suLayer.addTo(map);	
 
-	var priorLayerName = suLayerName;
-	var priorLayerStyle = new PercentageStyle(suLayerName, suLayerMaxPercentage, true);
-	var priorViewParams = new ViewParams(deterClassGroups.at(0).name, 
-							dateControll.startdate, dateControll.enddate, "15");	
+	var priorLayerName = currSuLayerName;
+	var priorLayerStyle = new PercentageStyle(currSuLayerName, 0, suLayerMaxPercentage, true);
+	var priorViewParams = new ViewParams(deterClassGroups.at(0).name, dateControll, "15");	
 	var priorWmsOptions = {
 		"transparent": true, 
 		"tiled": true, 
 		"format": "image/png", 
 		// "identify": false
 		// "opacity": 0.6,
-		// "noRedraw": false,
-		// "styles": "ams:ams_percentage",
-		// "env": "v0:0;v1:0.008;v2:0.009;v3:0.1;v4:0.02;v5:1",
 		"viewparams": priorViewParams.toWmsFormat(),
 		"sld_body": priorLayerStyle.getSLD(),
 
 	};
 	var priorSource = L.WMS.source(wmsUrl, priorWmsOptions);
-	var priorLayer = priorSource.getLayer(suLayerName);
+	var priorLayer = priorSource.getLayer(currSuLayerName);
 	priorLayer.addTo(map);
 
 	var suLayers = {};
@@ -329,6 +398,7 @@
 		"Class": {},
 		"Temporal Unit": {},
 		"Aggregate": {},
+		"Difference": {},
 	};	
 	
 	for(var i = 1; i < spatialUnits.length(); i++) {
@@ -360,8 +430,17 @@
 		groupedOverlays["Aggregate"][temporalUnitAggregates[i].value] = layer;
 	}	
 
+	var temporalUnitsDifferences = temporalUnits.getDifferences();
+	var diffLayer = new L.WMS.Layer(wmsUrl, temporalUnitAggregates[0].value, wmsOptions).addTo(map);
+	groupedOverlays["Difference"][temporalUnitsDifferences[0].value] = diffLayer;		
+	for(var i = 1; i < Object.keys(temporalUnitsDifferences).length; i++)
+	{
+		let layer = new L.WMS.Layer(wmsUrl, temporalUnitAggregates[i].value, wmsOptions);	
+		groupedOverlays["Difference"][temporalUnitsDifferences[i].value] = layer;
+	}
+
 	var groupControl = L.control.groupedLayers(null, groupedOverlays, {
-		exclusiveGroups: ["Spatial Unit", "Indicator", "Class", "Temporal Unit", "Aggregate"],
+		exclusiveGroups: ["Spatial Unit", "Indicator", "Class", "Aggregate", "Difference"],
 		collapsed: false,
 	});
 	
@@ -369,7 +448,7 @@
 
 	var legendUrl = wmsUrl 
 					+ "REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20"
-					+ "&LAYER=" + suLayerName
+					+ "&LAYER=" + currSuLayerName
 					+ "&sld_body=" + suLayerStyle.getEncodeURI(); 
 	var wmsLegendControl = new L.Control.WMSLegend;
     wmsLegendControl.options.uri = legendUrl;
@@ -379,45 +458,69 @@
 	$('<div class="leaflet-control-layers-group" id="prioritization-control-layers-group"><label class="leaflet-control-layers-group-name"><span class="leaflet-control-layers-group-name">Prioritization </span><input type="number" id="prioritization-input" min="1" max="50" value=' 
 		+ priorViewParams.limit + ' /></label></div>').insertAfter("#leaflet-control-layers-group-2");
 
+	var suLayerMinPercentage = 0;
+	var diffON = false;
+
 	map.on('overlayadd', function(e) {
 		if(spatialUnits.isSpatialUnit(e.name)) {
-			suLayerName = gsWorkspace + ":" + e.name + "_view"; 
+			suLayerName = gsWorkspace + ":" + e.name;
+			if(diffON) {
+				currSuLayerName =  suLayerName + "_diff_view"; 
+				suLayerMinPercentage = wfs.getMin(currSuLayerName, "percentage", suViewParams);				
+			} 
+			else {
+				currSuLayerName = suLayerName + "_view";
+				suLayerMinPercentage = 0
+			}
 		}
 		else if(temporalUnits.isAggregate(e.name)) {
-			console.log(e);
 			dateControll.setPeriod(dateControll.startdate, e.layer._name)
 			suViewParams.startdate = dateControll.startdate;
 			suViewParams.enddate = dateControll.enddate;
+			suViewParams.prevdate = dateControll.prevdate;
 			priorViewParams.startdate = dateControll.startdate;
-			priorViewParams.enddate = dateControll.enddate;
+			priorViewParams.enddate = dateControll.enddate;			
+			priorViewParams.prevdate = dateControll.prevdate;	
+		}	
+		else if(temporalUnits.isDifference(e.name)) {
+			if(e.name == "Current") {
+				currSuLayerName = suLayerName + "_view";
+				suLayerMinPercentage = 0;
+				diffON = false;
+			}
+			else {
+				currSuLayerName =  suLayerName + "_diff_view"; 
+				suLayerMinPercentage = wfs.getMin(currSuLayerName, "percentage", suViewParams);
+				diffON = true;
+			}
 		}
 		else {
 			suViewParams.classname = e.name;
 			priorViewParams.classname = e.name;
 		}
 		
-		suLayerMaxPercentage = wfs.getMax(suLayerName, "percentage", suViewParams);
-		suLayerStyle = new PercentageStyle(suLayerName, suLayerMaxPercentage);
+		suLayerMaxPercentage = wfs.getMax(currSuLayerName, "percentage", suViewParams);
+		suLayerStyle = new PercentageStyle(currSuLayerName, suLayerMinPercentage, suLayerMaxPercentage);
 
-		var priorLayerStyle = new PercentageStyle(suLayerName, suLayerMaxPercentage, true);
+		priorLayerStyle = new PercentageStyle(currSuLayerName, suLayerMinPercentage, suLayerMaxPercentage, true);
 		legendUrl = wmsUrl 
 					+ "REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20"
-					+ "&LAYER=" + suLayerName
+					+ "&LAYER=" + currSuLayerName
 					+ "&sld_body=" + suLayerStyle.getEncodeURI();
 	    wmsLegendControl.options.uri = legendUrl;
 	    wmsLegendControl.options.position = "bottomright";
 	    map.removeControl(wmsLegendControl);
 	    map.addControl(wmsLegendControl);	
 
-		updateMap(priorSource, suLayerName, priorViewParams, priorLayerStyle);
-		updateMap(suSource, suLayerName, suViewParams, suLayerStyle);					
+		updateMap(priorSource, currSuLayerName, priorViewParams, priorLayerStyle);
+		updateMap(suSource, currSuLayerName, suViewParams, suLayerStyle);		
 	});	
 
 	$("#prioritization-input").keypress(function(e) {
 		if (e.which == 13) {
 			let limit = document.getElementById("prioritization-input").value;
 			priorViewParams.limit = limit;
-			updateMap(priorSource, suLayerName, priorViewParams);	
+			updateMap(priorSource, currSuLayerName, priorViewParams);	
 			return false;
 		}
 	});

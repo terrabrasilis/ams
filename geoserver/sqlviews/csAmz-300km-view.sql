@@ -7,12 +7,12 @@
 SELECT 
 	su.suid, su.id, su.geometry, ri.classname, ri.date, COALESCE(ri.total, 0) AS percentage
 FROM 
-	public."csAmz_150km" su
+	public."csAmz_300km" su
 LEFT JOIN (
 	SELECT 
 		suid, classname, MAX(date) AS date, SUM(percentage) AS total  
 	FROM 
-		public."csAmz_150km_risk_indicators" 
+		public."csAmz_300km_risk_indicators" 
 	GROUP BY 
 	 	suid, classname
 ) AS ri
