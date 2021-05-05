@@ -1,4 +1,4 @@
-from flask import render_template, url_for, request
+from flask import render_template
 from .controllers import GetConfigController
 from . import bp as app
 from . import db

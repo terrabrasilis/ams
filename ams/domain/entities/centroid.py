@@ -11,4 +11,3 @@ class Centroid:
 	@property
 	def lng(self):
 		return self._lng
-		

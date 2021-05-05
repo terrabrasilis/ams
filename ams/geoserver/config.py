@@ -6,5 +6,3 @@ class Config:
 	@property
 	def workspace(self):
 		return self._workspace
-	
-		

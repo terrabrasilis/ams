@@ -15,8 +15,7 @@ class SpatialUnitInfo:
 	@property
 	def as_attribute_name(self):
 		return self._as_attribute_name
-		
+
 	@property
 	def centroid(self):
 		return self._centroid
-	

@@ -19,8 +19,10 @@ def test_add_two_spatial_units():
 	shpfilepath2 = os.path.join(os.path.dirname(__file__), '../../data', 'csAmz_300km_epsg_4326.shp')
 	gp = Geoprocessing()
 	sus1 = SpatialUnitInfoRepository(db)
-	uc1 = AddSpatialUnit(tablename1, shpfilepath1, sus1, SpatialUnitDynamicMapperFactory.instance(), gp)
-	uc2 = AddSpatialUnit(tablename2, shpfilepath2, sus1, SpatialUnitDynamicMapperFactory.instance(), gp)	
+	uc1 = AddSpatialUnit(tablename1, shpfilepath1, sus1, 
+		SpatialUnitDynamicMapperFactory.instance(), gp)
+	uc2 = AddSpatialUnit(tablename2, shpfilepath2, sus1, 
+		SpatialUnitDynamicMapperFactory.instance(), gp)	
 	su1 = uc1.execute(db)
 	su2 = uc2.execute(db)
 	sus2 = SpatialUnitInfoRepository(db)
