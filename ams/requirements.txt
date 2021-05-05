@@ -3,5 +3,3 @@ sqlalchemy-utils
 psycopg2-binary
 geoalchemy2
 geopandas
-pygdal == 3.2.1.6 
-geoserver-rest
