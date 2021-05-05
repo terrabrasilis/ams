@@ -114,8 +114,9 @@ def set_spatial_units(db):
 	geoprocess = Geoprocessing()
 	SpatialUnitDynamicMapperFactory.instance().dataaccess = db
 	sunits = SpatialUnitInfoRepository(db)
-	uc1 = AddSpatialUnit(sutablename, shpfilepath, sunits, SpatialUnitDynamicMapperFactory.instance(), geoprocess)
-	su1 = uc1.execute(db)
+	uc1 = AddSpatialUnit(sutablename, shpfilepath, sunits, 
+			     SpatialUnitDynamicMapperFactory.instance(), geoprocess)
+	uc1.execute(db)
 	SpatialUnitDynamicMapperFactory.instance().add_class_mapper(sutablename)
 
 
