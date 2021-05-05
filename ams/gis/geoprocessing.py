@@ -1,5 +1,6 @@
 import geopandas
-from ams.domain.entities import Geometry
+import fiona
+from ams.domain.entities import Geometry, Centroid
 
 
 class Geoprocessing:
@@ -10,10 +11,18 @@ class Geoprocessing:
 		shp = geopandas.read_file(filepath)
 		shp.to_postgis(tablename, engine, 
 					if_exists='replace' if overwrite else None,
-					index=True, index_label=id_label)
-		with engine.connect() as con:
-			con.execute('commit')
-			con.execute(f'ALTER TABLE "{tablename}" ADD PRIMARY KEY ("{id_label}");')			
+					index=True, index_label=id_label)	
 
-	def percentage_of_area(self, geomA: Geometry, geomB: Geometry) -> float:
-		return (geomA.intersection(geomB).area / geomA.area) * 100
+	def percentage_of_area(self, geom_ref: Geometry, geom_over: Geometry) -> float:
+		return (geom_ref.intersection(geom_over).area / geom_ref.area) * 100
+
+	def centroid(self, filepath: str) -> Centroid:
+		shp = fiona.open(filepath)
+		bbox = shp.bounds
+		minx = bbox[0]
+		miny = bbox[1]
+		maxx = bbox[2]
+		maxy = bbox[3]
+		cx = (minx + maxx) / 2
+		cy = (miny + maxy) / 2
+		return Centroid(cy, cx)

@@ -1,2 +1,3 @@
 -r ams/requirements.txt
+-r webapp/requirements.txt
 -r tests/requirements.txt

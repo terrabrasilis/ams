@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html>
+<head>
+	
+	<title>AMS - Amazon Situation Room</title>
+
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	
+	<!-- <link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" /> -->
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+    <script type="text/javascript" src="{{url_for('static', filename='js/lib/leaflet.wms.js')}}"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="{{url_for('static', filename='css/leaflet.wmslegend.css')}}"/>
+    <script type="text/javascript" src="{{url_for('static', filename='js/lib/leaflet.wmslegend.js')}}"></script>
+    <link rel="stylesheet" href="{{url_for('static', filename='css/leaflet.groupedlayercontrol.css')}}"/>
+    <script type="text/javascript" src="{{url_for('static', filename='js/lib/leaflet.groupedlayercontrol.js')}}"></script>      
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+
+	<style>
+		html, body {
+			height: 100%;
+			margin: 0;
+		}
+		#map {
+			width: 100%;
+			height: 100%;
+		}
+		#spatial-unit-title {
+			font-weight: bold;
+		}
+	</style>
+
+	
+</head>
+<body>
+
+<div id="map"></div>
+
+<script type="text/javascript">
+	function updateMap(source, layerName, viewParams, layerStyle) {
+		source.options["viewparams"] = viewParams.toWmsFormat();
+		source._overlay.wmsParams.layers = layerName;
+		if(layerStyle) {
+			source.options["sld_body"] = layerStyle.getSLD();
+			source._overlay.setParams({
+				"viewparams": viewParams.toWmsFormat(),
+				"sld_body": layerStyle.getSLD(),
+			});				
+		}
+		else {
+			source._overlay.setParams({
+				"viewparams": viewParams.toWmsFormat(),
+			});	
+		}	
+	}
+
+	const ViewParams = function(classname, dateControll, limit) {
+		this.classname = classname;
+		this.startdate = dateControll.startdate;
+		this.enddate = dateControll.enddate;
+		this.prevdate = dateControll.prevdate;
+		this.limit = limit;
+		this.toWmsFormat = function() {
+			return "classname:" + this.classname
+					+ ";startdate:" + this.startdate
+					+ ";enddate:" + this.enddate
+					+ ";prevdate:" + this.prevdate
+					+ ";limit:" + this.limit;
+		}
+	}
+
+	const SpatialUnits = function(spatialUnits, suDefaultName) {
+		this.getSpatialUnit = function getSpatialUnit(name) {
+			for(var i = 0; i < this.spatialUnits.length; i++) {
+				if(this.spatialUnits[i].dataname == name) {
+					return this.spatialUnits[i];
+				}
+			}
+			return null;				
+		}			
+		this.spatialUnits = spatialUnits;
+		this.default = this.getSpatialUnit(suDefaultName);
+		this.isSpatialUnit = function(name) {
+			for(var i = 0; i < this.spatialUnits.length; i++) {
+				if(this.spatialUnits[i].dataname == name) {
+					return true;
+				}
+			}
+			return false;			
+		}
+		this.length = function() {
+			return this.spatialUnits.length;
+		}
+		this.at = function(pos) {
+			return this.spatialUnits[pos];
+		}	
+	}
+
+	const DeterClassGroups = function(groups) {
+		this.groups = groups;
+		this.length = function() {
+			return this.groups.length;
+		}
+		this.at = function(pos) {
+			return this.groups[pos];
+		}		
+	}
+
+	const PercentageStyle = function(layerName, minValue, maxValue, onlyStrokes) {
+		this.setStroke = function(onlyStrokes) {
+			if(onlyStrokes) {
+				this.fillOpacity = 0;
+	            this.stroke = `<Stroke><CssParameter name="stroke">#ff0000</CssParameter><CssParameter name="stroke-width">2</CssParameter><CssParameter name="stroke-linejoin">bevel</CssParameter></Stroke>`;			
+			}
+		}
+
+		this.setLegendDomainAndRange = function() {
+			if(this.minValue < 0) {
+				 this.colorRange = ["#add8e6", "#f0f0f0", "#ff3838"];
+				 this.colorDomain = [this.minValue, 0, this.maxValue];
+
+			}
+			else {
+				this.colorRange = ["#f0f0f0", "#ff3838"];
+				this.colorDomain = [this.minValue, this.maxValue];
+			}
+		}
+		this.stroke = "";
+		this.fillOpacity = 1;
+		this.setStroke(onlyStrokes);
+		this.maxValue = maxValue;
+		this.minValue = minValue;
+		this.colorRange;
+		this.colorDomain;
+		this.createRule = function(v1, v2, color) {
+			let fill = "";
+			if(color) {
+				color = d3.color(color).formatHex();
+				fill = `<Fill><CssParameter name="fill">${color}</CssParameter></Fill>`;
+			}
+			return `<Rule><Title> ${v1}% - ${v2}% </Title><ogc:Filter><ogc:PropertyIsGreaterThanOrEqualTo><ogc:PropertyName>percentage</ogc:PropertyName><ogc:Literal>${v1}</ogc:Literal></ogc:PropertyIsGreaterThanOrEqualTo><ogc:PropertyIsLessThan><ogc:PropertyName>percentage</ogc:PropertyName><ogc:Literal>${v2}</ogc:Literal></ogc:PropertyIsLessThan></ogc:Filter><PolygonSymbolizer>${fill}${this.stroke}</PolygonSymbolizer></Rule>`;				
+		} 
+		this.getMaxLength = function(values) {
+  			let vMax = values[0].toString();
+  			let vMaxLength = vMax.length;
+  			for(let i = 1; i < values.length - 1; i++) {
+  				let v2 = values[i+1];
+  				let vlength = v2.toString().length;
+  				if(vlength > vMaxLength) {
+  					vMaxLength = vlength;
+  					vMax = v2.toString();
+  				}
+  			}
+  			if(vMax.includes(".")) {
+  				vMaxLength = vMax.split(".")[1].length;
+  			}
+  			return vMaxLength;
+		}
+		this.createRules = function(numOfRanges) {
+			this.setLegendDomainAndRange();
+			let legend = d3.scaleLinear()
+				.domain(this.colorDomain)
+  				.range(this.colorRange)
+  				.nice(numOfRanges);
+  			let ticks = legend.ticks(numOfRanges);
+  			let rules = "";
+  			if(!onlyStrokes) {
+	  			let vMaxLength = this.getMaxLength(ticks);
+	  			for(let i = 0; i < ticks.length - 1; i++) {
+	  				let v1 = ticks[i];
+	  				let v2 = ticks[i+1];
+	  				let color = legend(v1);
+					rules = `${rules}${this.createRule(v1.toFixed(vMaxLength), v2.toFixed(vMaxLength), color)}`;
+	  			} 			
+	  		}
+	  		else {
+	  			rules = `${rules}${this.createRule(ticks[0], ticks[ticks.length - 1])}`;
+	  		}				
+
+	  		return rules;		
+		}
+		this.sld = `<?xml version="1.0" encoding="ISO-8859-1"?>	<StyledLayerDescriptor version="1.0.0" xsi:schemaLocation="http://www.opengis.net/sld StyledLayerDescriptor.xsd" xmlns="http://www.opengis.net/sld" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><NamedLayer><Name>${layerName}</Name><UserStyle><Title>SLD Cook Book: Attribute-based polygon</Title><FeatureTypeStyle>${this.createRules(6)}</FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>`;	
+		this.getSLD = function() {
+			return this.sld;
+		}
+		this.getEncodeURI = function() {
+			return encodeURIComponent(this.sld);
+		}
+	}	
+
+	const WFS = function(url) {
+		this.url = url;
+		this.getMinOrMax = function(layerName, propertyName, viewParams, isMin) {
+			let wfsUrl = this.url 
+						+ "&typeName=" + layerName
+						+ "&propertyName=" + propertyName
+						+ "&outputFormat=json"
+						+ "&viewparams=classname:" + viewParams.classname
+										+ ";startdate:" + viewParams.startdate
+										+ ";enddate:" + viewParams.enddate
+										+ ";prevdate:" + viewParams.prevdate
+										+ ";order:" + (isMin ? 'ASC' : 'DESC')
+										+ ";limit:1";
+			var res;
+			$.ajax({
+				dataType: "json",
+				url: wfsUrl,
+				async: false, 
+				success: function(data) {
+					res = data["features"][0]["properties"][propertyName];
+				}
+			});		
+			return res;	
+		}		
+		this.getMax = function(layerName, propertyName, viewParams) {		
+			return this.getMinOrMax(layerName, propertyName, viewParams, false);
+		}	
+
+		this.getMin = function(layerName, propertyName, viewParams) {
+			return this.getMinOrMax(layerName, propertyName, viewParams, true);
+		}
+	}
+
+	const TemporalUnits = function() {
+		this.aggregates = {		
+			0: {"key": "15d", "value": "15 Days"},
+			1: {"key": "1m", "value": "Month"},
+			2: {"key": "3m", "value": "3 Months"},
+			3: {"key": "1y", "value": "Year"},
+		};
+
+		this.differeces = {
+			0: {"key": "none", "value": "Current"},
+			1: {"key": "1m", "value": "Previous"},
+			2: {"key": "1y", "value": "Previous Year"},
+		}
+
+		this.getAggregates = function() {
+			return this.aggregates;
+		}
+
+		this.getDifferences = function() {
+			return this.differeces;
+		}
+
+		this.isAggregate = function(name) {
+			for(let i = 0; i < Object.keys(this.aggregates).length; i++) {
+				if(this.aggregates[i].value == name) {
+					return true;
+				} 
+			}
+			return false;
+		}
+
+		this.isDifference = function(name) {
+			for(let i = 0; i < Object.keys(this.differeces).length; i++) {
+				if(this.differeces[i].value == name) {
+					return true;
+				} 
+			}
+			return false;
+		}		
+
+	}
+
+	const DateController = function() {
+		this.startdate;
+		this.enddate;
+		this.prevdate;
+
+		this.toUTCDate = function(date) {
+			let uday = date.getUTCDate();
+			let day = uday < 10 ? "0" + uday : uday;
+			let umonth = date.getUTCMonth() + 1;
+			let month = umonth < 10 ? "0" + umonth : umonth;
+			return `${date.getUTCFullYear()}-${month}-${day}`; 
+		}
+
+		this.isLastDay =function(date) {
+			let last = new Date(date);
+			let month = date.getMonth();
+			last.setDate(last.getDate() + 1);
+			return last.getMonth() != month; 
+		}
+
+		this.setPeriod = function(startdate, period) {
+			this.startdate = startdate;
+			let enddate = new Date(startdate + "T00:00:00");
+			let prevdate = new Date(startdate + "T00:00:00");
+			if(period == "15d") {
+				enddate.setUTCDate(enddate.getUTCDate() - 15);
+				prevdate.setUTCDate(prevdate.getUTCDate() - 30);
+			}
+			else if(period == "1m") {
+				if(this.isLastDay(enddate)) {
+					enddate.setUTCDate(0);
+					prevdate.setUTCDate(0);
+					prevdate.setUTCDate(0);
+				}
+				else {
+					let day = enddate.getUTCDate();
+					enddate.setUTCDate(enddate.getUTCDate() - 32);
+					prevdate.setUTCDate(enddate.getUTCDate() - 32);
+					prevdate.setUTCDate(day);
+					enddate.setUTCDate(day);
+				}
+			}
+			else if(period == "3m") {
+				if(this.isLastDay(enddate)) {
+					enddate.setUTCDate(enddate.getUTCDate() - 2*32);
+					enddate.setUTCDate(0);
+					prevdate.setUTCDate(prevdate.getUTCDate() - 5*32);
+					prevdate.setUTCDate(0);
+				}
+				else {
+					let day = enddate.getUTCDate();
+					enddate.setUTCDate(enddate.getUTCDate() - 2*32);
+					prevdate.setUTCDate(prevdate.getUTCDate() - 5*32);
+					enddate.setUTCDate(day);
+					prevdate.setUTCDate(day);
+				}
+			}			
+			else if(period == "1y") {
+				enddate.setUTCFullYear(enddate.getUTCFullYear() - 1);
+			}						
+			this.enddate = this.toUTCDate(enddate);
+			this.prevdate = this.toUTCDate(prevdate);
+		}
+	}
+
+	var gsWorkspace = "{{workspace}}"; 
+	var sus = {{spatial_units_info|safe}};
+	var spatialUnits = new SpatialUnits(sus, sus[0].dataname);
+	var deterClassGroups = new DeterClassGroups({{deter_class_groups|safe}});
+	var temporalUnits = new TemporalUnits();
+	var dateControll = new DateController();
+	dateControll.setPeriod("2021-01-31", temporalUnits.getAggregates()[0].key);
+
+	var wfsUrl = "http://localhost:8080/geoserver/ows?SERVICE=WFS&REQUEST=GetFeature"
+	var wfs = new WFS(wfsUrl);
+
+	var map = new L.Map("map").setView([spatialUnits.default.center_lat, spatialUnits.default.center_lng], 5);
+
+	var osmLayer = new L.TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+		maxZoom: 18,
+		crs: L.CRS.EPSG4326
+	}).addTo(map);
+
+	var suViewParams = new ViewParams(deterClassGroups.at(0).name, dateControll, "ALL");
+	var suLayerName = gsWorkspace + ":" + spatialUnits.default.dataname;
+	var currSuLayerName = suLayerName + "_view";
+	var suLayerMaxPercentage = wfs.getMax(currSuLayerName, "percentage", suViewParams); 
+	var suLayerStyle = new PercentageStyle(currSuLayerName, 0, suLayerMaxPercentage);
+	var wmsUrl = "http://localhost:8080/geoserver/wms?"
+	var wmsOptions = {
+		"transparent": true, 
+		"tiled": true, 
+		"format": "image/png", 
+		// "identify": false
+		"opacity": 0.7,
+		"viewparams": suViewParams.toWmsFormat(),
+		"sld_body": suLayerStyle.getSLD(),
+	};
+	var suSource = L.WMS.source(wmsUrl, wmsOptions);
+	var suLayer = suSource.getLayer(currSuLayerName);
+	var currentLayer = suLayer;
+	suLayer.addTo(map);	
+
+	var priorLayerName = currSuLayerName;
+	var priorLayerStyle = new PercentageStyle(currSuLayerName, 0, suLayerMaxPercentage, true);
+	var priorViewParams = new ViewParams(deterClassGroups.at(0).name, dateControll, "15");	
+	var priorWmsOptions = {
+		"transparent": true, 
+		"tiled": true, 
+		"format": "image/png", 
+		// "identify": false
+		// "opacity": 0.6,
+		"viewparams": priorViewParams.toWmsFormat(),
+		"sld_body": priorLayerStyle.getSLD(),
+
+	};
+	var priorSource = L.WMS.source(wmsUrl, priorWmsOptions);
+	var priorLayer = priorSource.getLayer(currSuLayerName);
+	priorLayer.addTo(map);
+
+	var suLayers = {};
+	suLayers[spatialUnits.default.dataname] = suLayer;
+
+	var groupedOverlays = {
+		"Spatial Unit": {
+			[spatialUnits.default.dataname]: suLayer
+		},
+		"Indicator": {},
+		"Class": {},
+		"Temporal Unit": {},
+		"Aggregate": {},
+		"Difference": {},
+	};	
+	
+	for(var i = 1; i < spatialUnits.length(); i++) {
+		let layerName = gsWorkspace + ":" + spatialUnits.at(i).dataname + "_view";
+		var layer = suSource.getLayer(layerName);
+		suLayers[spatialUnits.at(i).dataname] = layer;
+		groupedOverlays["Spatial Unit"][spatialUnits.at(i).dataname] = layer;
+	}
+
+	var indicatorLayer = new L.WMS.Layer(wmsUrl, "percentage", wmsOptions).addTo(map);	
+	groupedOverlays["Indicator"]["Area"] = indicatorLayer;
+	
+	var classLayer = new L.WMS.Layer(wmsUrl, deterClassGroups.at(0).name, wmsOptions).addTo(map);	
+	groupedOverlays["Class"][deterClassGroups.at(0).name] = classLayer;	
+	
+	for(var i = 1; i < deterClassGroups.length(); i++)
+	{
+		let layer = new L.WMS.Layer(wmsUrl, deterClassGroups.at(i).name, wmsOptions);	
+		groupedOverlays["Class"][deterClassGroups.at(i).name] = layer;
+	}
+
+	var temporalUnitAggregates = temporalUnits.getAggregates();
+	var tempUnitLayer = new L.WMS.Layer(wmsUrl, temporalUnitAggregates[0].key, wmsOptions).addTo(map);	
+	groupedOverlays["Aggregate"][temporalUnitAggregates[0].value] = tempUnitLayer;	
+	
+	for(var i = 1; i < Object.keys(temporalUnitAggregates).length; i++)
+	{
+		let layer = new L.WMS.Layer(wmsUrl, temporalUnitAggregates[i].key, wmsOptions);	
+		groupedOverlays["Aggregate"][temporalUnitAggregates[i].value] = layer;
+	}	
+
+	var temporalUnitsDifferences = temporalUnits.getDifferences();
+	var diffLayer = new L.WMS.Layer(wmsUrl, temporalUnitAggregates[0].value, wmsOptions).addTo(map);
+	groupedOverlays["Difference"][temporalUnitsDifferences[0].value] = diffLayer;		
+	for(var i = 1; i < Object.keys(temporalUnitsDifferences).length; i++)
+	{
+		let layer = new L.WMS.Layer(wmsUrl, temporalUnitAggregates[i].value, wmsOptions);	
+		groupedOverlays["Difference"][temporalUnitsDifferences[i].value] = layer;
+	}
+
+	var groupControl = L.control.groupedLayers(null, groupedOverlays, {
+		exclusiveGroups: ["Spatial Unit", "Indicator", "Class", "Aggregate", "Difference"],
+		collapsed: false,
+	});
+	
+	groupControl.addTo(map);
+
+	var legendUrl = wmsUrl 
+					+ "REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20"
+					+ "&LAYER=" + currSuLayerName
+					+ "&sld_body=" + suLayerStyle.getEncodeURI(); 
+	var wmsLegendControl = new L.Control.WMSLegend;
+    wmsLegendControl.options.uri = legendUrl;
+    wmsLegendControl.options.position = "bottomright";
+    map.addControl(wmsLegendControl);	
+
+	$('<div class="leaflet-control-layers-group" id="prioritization-control-layers-group"><label class="leaflet-control-layers-group-name"><span class="leaflet-control-layers-group-name">Prioritization </span><input type="number" id="prioritization-input" min="1" max="50" value=' 
+		+ priorViewParams.limit + ' /></label></div>').insertAfter("#leaflet-control-layers-group-2");
+
+	var suLayerMinPercentage = 0;
+	var diffON = false;
+
+	map.on('overlayadd', function(e) {
+		if(spatialUnits.isSpatialUnit(e.name)) {
+			suLayerName = gsWorkspace + ":" + e.name;
+			if(diffON) {
+				currSuLayerName =  suLayerName + "_diff_view"; 
+				suLayerMinPercentage = wfs.getMin(currSuLayerName, "percentage", suViewParams);				
+			} 
+			else {
+				currSuLayerName = suLayerName + "_view";
+				suLayerMinPercentage = 0
+			}
+		}
+		else if(temporalUnits.isAggregate(e.name)) {
+			dateControll.setPeriod(dateControll.startdate, e.layer._name)
+			suViewParams.startdate = dateControll.startdate;
+			suViewParams.enddate = dateControll.enddate;
+			suViewParams.prevdate = dateControll.prevdate;
+			priorViewParams.startdate = dateControll.startdate;
+			priorViewParams.enddate = dateControll.enddate;			
+			priorViewParams.prevdate = dateControll.prevdate;	
+		}	
+		else if(temporalUnits.isDifference(e.name)) {
+			if(e.name == "Current") {
+				currSuLayerName = suLayerName + "_view";
+				suLayerMinPercentage = 0;
+				diffON = false;
+			}
+			else {
+				currSuLayerName =  suLayerName + "_diff_view"; 
+				suLayerMinPercentage = wfs.getMin(currSuLayerName, "percentage", suViewParams);
+				diffON = true;
+			}
+		}
+		else {
+			suViewParams.classname = e.name;
+			priorViewParams.classname = e.name;
+		}
+		
+		suLayerMaxPercentage = wfs.getMax(currSuLayerName, "percentage", suViewParams);
+		suLayerStyle = new PercentageStyle(currSuLayerName, suLayerMinPercentage, suLayerMaxPercentage);
+
+		priorLayerStyle = new PercentageStyle(currSuLayerName, suLayerMinPercentage, suLayerMaxPercentage, true);
+		legendUrl = wmsUrl 
+					+ "REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20"
+					+ "&LAYER=" + currSuLayerName
+					+ "&sld_body=" + suLayerStyle.getEncodeURI();
+	    wmsLegendControl.options.uri = legendUrl;
+	    wmsLegendControl.options.position = "bottomright";
+	    map.removeControl(wmsLegendControl);
+	    map.addControl(wmsLegendControl);	
+
+		updateMap(priorSource, currSuLayerName, priorViewParams, priorLayerStyle);
+		updateMap(suSource, currSuLayerName, suViewParams, suLayerStyle);		
+	});	
+
+	$("#prioritization-input").keypress(function(e) {
+		if (e.which == 13) {
+			let limit = document.getElementById("prioritization-input").value;
+			priorViewParams.limit = limit;
+			updateMap(priorSource, currSuLayerName, priorViewParams);	
+			return false;
+		}
+	});
+
+	$(function() {
+		$("#prioritization-input").dblclick(false);
+	});
+ 
+</script>
+</body>
+</html>

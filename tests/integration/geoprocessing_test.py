@@ -11,9 +11,10 @@ def test_export_shp_to_postgis():
 	db.connect(url)
 	db.create(True)
 	db.add_postgis_extension()
-	shpfilepath = os.path.join(os.path.dirname(__file__), '../data', 'csAmz_150km_epsg_4326.shp')
+	shpfilepath = os.path.join(os.path.dirname(__file__), '../../data', 'csAmz_150km_epsg_4326.shp')
 	geoprocess = Geoprocessing()
 	geoprocess.export_shp_to_postgis(shpfilepath, 'csAmz_150km', 'suid', db.engine, True)
+	add_suid('csAmz_150km', db.engine)
 	SpatialUnitDynamicMapperFactory.instance().dataaccess = db
 	SpatialUnitDynamicMapperFactory.instance().add_class_mapper('csAmz_150km')	
 	sunit = SpatialUnitDynamicMapperFactory.instance().create_spatial_unit('csAmz_150km')
@@ -30,9 +31,10 @@ def test_percentage_of_area():
 	db.connect(url)
 	db.create(True)
 	db.add_postgis_extension()
-	shpfilepath = os.path.join(os.path.dirname(__file__), '../data', 'csAmz_150km_epsg_4326.shp')
+	shpfilepath = os.path.join(os.path.dirname(__file__), '../../data', 'csAmz_150km_epsg_4326.shp')
 	geoprocess = Geoprocessing()
 	geoprocess.export_shp_to_postgis(shpfilepath, 'csAmz_150km', 'suid', db.engine, True)
+	add_suid('csAmz_150km', db.engine)
 	SpatialUnitDynamicMapperFactory.instance().dataaccess = db
 	SpatialUnitDynamicMapperFactory.instance().add_class_mapper('csAmz_150km')
 	sunit = SpatialUnitDynamicMapperFactory.instance().create_spatial_unit('csAmz_150km')	
@@ -47,3 +49,9 @@ def test_percentage_of_area():
 			assert geoprocess.percentage_of_area(a1geom, fgeom) == 100
 			assert fgeom.intersection(a1geom).area == a1geom.area
 	db.drop()
+
+
+def add_suid(tablename, engine):
+	with engine.connect() as con:
+		con.execute('commit')
+		con.execute(f'ALTER TABLE "{tablename}" ADD PRIMARY KEY ("suid");')			
