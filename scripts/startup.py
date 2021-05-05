@@ -25,27 +25,32 @@ def set_spatial_units(db):
 	shpfilepath2 = os.path.join(os.path.dirname(__file__), '../data', 'csAmz_300km_epsg_4326.shp')
 	gp = Geoprocessing()
 	sus1 = SpatialUnitInfoRepository(db)
-	uc1 = AddSpatialUnit(tablename1, shpfilepath1, sus1, SpatialUnitDynamicMapperFactory.instance(), gp)
-	uc2 = AddSpatialUnit(tablename2, shpfilepath2, sus1, SpatialUnitDynamicMapperFactory.instance(), gp)		
-	su1 = uc1.execute(db)
-	su2 = uc2.execute(db)
+	uc1 = AddSpatialUnit(tablename1, shpfilepath1, sus1, 
+		SpatialUnitDynamicMapperFactory.instance(), gp)
+	uc2 = AddSpatialUnit(tablename2, shpfilepath2, sus1, 
+		SpatialUnitDynamicMapperFactory.instance(), gp)		
+	uc1.execute(db)
+	uc2.execute(db)
 
 
 def set_class_groups(db):
+	group_ds = DeterClassGroup('DS')
+	group_ds.add_class('DESMATAMENTO_CR')
+	group_ds.add_class('DESMATAMENTO_VEG')	
 	group_dg = DeterClassGroup('DG')
 	group_dg.add_class('CICATRIZ_DE_QUEIMADA')
 	group_dg.add_class('DEGRADACAO')
-	group_ds = DeterClassGroup('DS')
-	group_ds.add_class('MINERACAO')
-	group_ds.add_class('DESMATAMENTO_CR')
-	group_ds.add_class('DESMATAMENTO_VEG')
 	group_cs = DeterClassGroup('CS')
 	group_cs.add_class('CS_DESORDENADO')
 	group_cs.add_class('CS_GEOMETRICO')
+	group_mn = DeterClassGroup('MN')
+	group_mn.add_class('MINERACAO')
 	group_repo = DeterClassGroupRepository(db)
-	group_repo.add(group_dg)	
 	group_repo.add(group_ds)	
+	group_repo.add(group_dg)	
 	group_repo.add(group_cs)	
+	group_repo.add(group_mn)	
+
 
 def determine_risk_indicators(db):
 	deter_alerts = DeterRepository()
