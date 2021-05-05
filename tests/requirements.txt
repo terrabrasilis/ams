@@ -2,3 +2,6 @@ pytest
 pytest-cov
 codecov
 flake8-tabs
+pytest-flask
+blinker
+pep8-naming
