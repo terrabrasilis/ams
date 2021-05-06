@@ -1,3 +1,4 @@
+import os
 import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
@@ -9,7 +10,8 @@ from ams.gis import ShapelyGeometry
 from ams.domain.entities import DeterAlert, DeterAlerts
 
 
-url = 'postgresql://postgres:postgres@localhost:5432/DETER-B'
+url = os.environ.get('DETER_DATABASE_URL') or\
+	'postgresql://postgres:postgres@localhost:5432/DETER-B'
 Base = automap_base()
 engine = create_engine(url)
 Session = scoped_session(sessionmaker(bind=engine))   
@@ -27,7 +29,7 @@ class DeterRepository(Base, DeterAlerts, metaclass=DeterRepositoryMeta):
 	gid = Column(Integer, primary_key=True)
 	classname = Column(String, nullable=False)
 	date = Column(Date, nullable=False)
-	geom = Column(Geometry('POLYGON', srid=5880), nullable=False)
+	geom = Column(Geometry('POLYGON', srid=4326), nullable=False)
 
 	def get(self, id: int) -> DeterAlert:
 		session = Session()
@@ -44,13 +46,26 @@ class DeterRepository(Base, DeterAlerts, metaclass=DeterRepositoryMeta):
 						.filter(self.__class__.date <= start)\
 						.order_by(self.__class__.date.desc())
 		else:
-			alerts = session.query(self.__class__).all()
+			alerts = session.query(self.__class__).order_by(self.__class__.date.desc()).all()
 		session.close()
 		return [self._to_deter_alert(alert) for alert in alerts]
 
 	def _to_deter_alert(self, alert):
 		geom = ShapelyGeometry(to_shape(alert.geom))
 		return DeterAlert(alert.gid, alert.classname, alert.date, geom)
+
+
+class DeterHistoricalRepository(DeterRepository):
+	__tablename__ = 'deter_history'
+
+	gid = Column(Integer, primary_key=True)
+	classname = Column(String, nullable=False)
+	date = Column(Date, nullable=False)
+	geom = Column(Geometry('POLYGON', srid=4326), nullable=False)
+
+	__mapper_args__ = {
+		'concrete': True
+	}	
 
 
 Base.prepare(engine, reflect=True)
