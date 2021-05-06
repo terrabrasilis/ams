@@ -41,6 +41,8 @@
 
 <script type="text/javascript">
 	function updateMap(source, layerName, viewParams, layerStyle) {
+		source._subLayers = {};
+		source._subLayers[currSuLayerName] = true;		
 		source.options["viewparams"] = viewParams.toWmsFormat();
 		source._overlay.wmsParams.layers = layerName;
 		if(layerStyle) {
@@ -121,7 +123,6 @@
 			if(this.minValue < 0) {
 				 this.colorRange = ["#add8e6", "#f0f0f0", "#ff3838"];
 				 this.colorDomain = [this.minValue, 0, this.maxValue];
-
 			}
 			else {
 				this.colorRange = ["#f0f0f0", "#ff3838"];
@@ -235,7 +236,7 @@
 		this.differeces = {
 			0: {"key": "none", "value": "Current"},
 			1: {"key": "1m", "value": "Previous"},
-			2: {"key": "1y", "value": "Previous Year"},
+			// 2: {"key": "1y", "value": "Previous Year"}, TODO
 		}
 
 		this.getAggregates = function() {
@@ -325,6 +326,7 @@
 			}			
 			else if(period == "1y") {
 				enddate.setUTCFullYear(enddate.getUTCFullYear() - 1);
+				prevdate.setUTCFullYear(prevdate.getUTCFullYear() - 2);
 			}						
 			this.enddate = this.toUTCDate(enddate);
 			this.prevdate = this.toUTCDate(prevdate);
@@ -337,12 +339,14 @@
 	var deterClassGroups = new DeterClassGroups({{deter_class_groups|safe}});
 	var temporalUnits = new TemporalUnits();
 	var dateControll = new DateController();
-	dateControll.setPeriod("2021-01-31", temporalUnits.getAggregates()[0].key);
+	var currStartdate = "2020-12-01";
+	dateControll.setPeriod(currStartdate, temporalUnits.getAggregates()[0].key);
 
 	var wfsUrl = "http://localhost:8080/geoserver/ows?SERVICE=WFS&REQUEST=GetFeature"
 	var wfs = new WFS(wfsUrl);
 
-	var map = new L.Map("map").setView([spatialUnits.default.center_lat, spatialUnits.default.center_lng], 5);
+	var map = new L.Map("map").setView([spatialUnits.default.center_lat, 
+								spatialUnits.default.center_lng], 5);
 
 	var osmLayer = new L.TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 		attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -361,13 +365,12 @@
 		"tiled": true, 
 		"format": "image/png", 
 		// "identify": false
-		"opacity": 0.7,
+		"opacity": 0.8,
 		"viewparams": suViewParams.toWmsFormat(),
 		"sld_body": suLayerStyle.getSLD(),
 	};
 	var suSource = L.WMS.source(wmsUrl, wmsOptions);
 	var suLayer = suSource.getLayer(currSuLayerName);
-	var currentLayer = suLayer;
 	suLayer.addTo(map);	
 
 	var priorLayerName = currSuLayerName;
@@ -378,7 +381,6 @@
 		"tiled": true, 
 		"format": "image/png", 
 		// "identify": false
-		// "opacity": 0.6,
 		"viewparams": priorViewParams.toWmsFormat(),
 		"sld_body": priorLayerStyle.getSLD(),
 
@@ -386,9 +388,6 @@
 	var priorSource = L.WMS.source(wmsUrl, priorWmsOptions);
 	var priorLayer = priorSource.getLayer(currSuLayerName);
 	priorLayer.addTo(map);
-
-	var suLayers = {};
-	suLayers[spatialUnits.default.dataname] = suLayer;
 
 	var groupedOverlays = {
 		"Spatial Unit": {
@@ -403,8 +402,7 @@
 	
 	for(var i = 1; i < spatialUnits.length(); i++) {
 		let layerName = gsWorkspace + ":" + spatialUnits.at(i).dataname + "_view";
-		var layer = suSource.getLayer(layerName);
-		suLayers[spatialUnits.at(i).dataname] = layer;
+		let layer = suSource.getLayer(layerName);
 		groupedOverlays["Spatial Unit"][spatialUnits.at(i).dataname] = layer;
 	}
 
@@ -461,12 +459,12 @@
 	var suLayerMinPercentage = 0;
 	var diffON = false;
 
-	map.on('overlayadd', function(e) {
+	map.on('overlayadd', function(e) {	
 		if(spatialUnits.isSpatialUnit(e.name)) {
 			suLayerName = gsWorkspace + ":" + e.name;
 			if(diffON) {
-				currSuLayerName =  suLayerName + "_diff_view"; 
-				suLayerMinPercentage = wfs.getMin(currSuLayerName, "percentage", suViewParams);				
+				currSuLayerName = suLayerName + "_diff_view"; 
+				suLayerMinPercentage = wfs.getMin(currSuLayerName, "percentage", suViewParams);
 			} 
 			else {
 				currSuLayerName = suLayerName + "_view";
@@ -502,7 +500,6 @@
 		suLayerMaxPercentage = wfs.getMax(currSuLayerName, "percentage", suViewParams);
 		suLayerStyle = new PercentageStyle(currSuLayerName, suLayerMinPercentage, suLayerMaxPercentage);
 
-		priorLayerStyle = new PercentageStyle(currSuLayerName, suLayerMinPercentage, suLayerMaxPercentage, true);
 		legendUrl = wmsUrl 
 					+ "REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20"
 					+ "&LAYER=" + currSuLayerName
@@ -512,8 +509,10 @@
 	    map.removeControl(wmsLegendControl);
 	    map.addControl(wmsLegendControl);	
 
-		updateMap(priorSource, currSuLayerName, priorViewParams, priorLayerStyle);
-		updateMap(suSource, currSuLayerName, suViewParams, suLayerStyle);		
+		updateMap(suSource, currSuLayerName, suViewParams, suLayerStyle);	
+
+		priorLayerStyle = new PercentageStyle(currSuLayerName, suLayerMinPercentage, suLayerMaxPercentage, true);
+		updateMap(priorSource, currSuLayerName, priorViewParams, priorLayerStyle);	
 	});	
 
 	$("#prioritization-input").keypress(function(e) {
