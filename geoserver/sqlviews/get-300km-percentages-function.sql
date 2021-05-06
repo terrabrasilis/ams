@@ -14,7 +14,7 @@ begin
 SELECT 
 	su.suid AS suid, su.id AS id, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.total, 0) AS percentage
 FROM 
-	public."csAmz_3000km" su
+	public."csAmz_300km" su
 LEFT JOIN (
 	SELECT 
 		rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS total  
@@ -49,3 +49,8 @@ ORDER BY
 	percentage %order%
 LIMIT 
 	%limit%	
+
+-73.9909439086914
+-16.290519038120973
+-41.59353565626206
+5.307753100107966
