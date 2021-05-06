@@ -6,18 +6,23 @@ from ams.gis import Geoprocessing
 
 class DetermineRiskIndicators:
 	def __init__(self, su: SpatialUnit, 
-				deter_alerts: DeterAlerts, 
+				deter_alerts: DeterAlerts,
+				deter_historical: DeterAlerts, 
 				class_groups: 'list[DeterClassGroup]',
 				startdate: datetime.date, enddate: datetime.date = None):
 		self._su = su
 		self._startdate = startdate
 		self._enddate = enddate if enddate else startdate
-		self._deter_alerts = deter_alerts
+		self._deter_alerts = deter_alerts 
+		self._deter_historical = deter_historical
 		self._class_groups = class_groups
 		self._class_group_mapper = self._mapper_class_groups()
 
 	def execute(self):
 		alerts = self._deter_alerts.list(start=self._startdate, end=self._enddate)
+		if self._deter_historical:
+			hist_alerts = self._deter_historical.list(start=self._startdate, end=self._enddate)
+			alerts = hist_alerts + alerts
 		sufeats = self._su.features
 		return self._calc_percentage_of_area(sufeats, alerts)
 

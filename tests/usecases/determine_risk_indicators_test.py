@@ -4,6 +4,7 @@ import sys
 from ams.dataaccess import AlchemyDataAccess
 from ams.gis import Geoprocessing
 from ams.repository import (DeterRepository, 
+							DeterHistoricalRepository,
 							RiskIndicatorsRepository, 
 							SpatialUnitDynamicMapperFactory, 
 							DeterClassGroupRepository,
@@ -26,7 +27,7 @@ def test_uc_basic():
 	deter_alerts = DeterRepository()
 	startdate = datetime.date(2021, 1, 1)
 	enddate = datetime.date(2020, 12, 1)
-	uc = DetermineRiskIndicators(su, deter_alerts, [], startdate, enddate)
+	uc = DetermineRiskIndicators(su, deter_alerts, None, [], startdate, enddate)
 	model_indicators = uc.execute()
 	rirepo = RiskIndicatorsRepository(sutablename, db)
 	rirepo.save(model_indicators)
@@ -67,7 +68,7 @@ def test_uc_classes():
 	enddate = datetime.date(2020, 12, 1)
 	groups_repo = DeterClassGroupRepository(db)
 	class_groups = groups_repo.list()
-	uc = DetermineRiskIndicators(su, deter_alerts, class_groups, startdate, enddate)	
+	uc = DetermineRiskIndicators(su, deter_alerts, None, class_groups, startdate, enddate)	
 	model_indicators = uc.execute()
 	rirepo = RiskIndicatorsRepository(sutablename, db)
 	rirepo.save(model_indicators)
@@ -98,6 +99,51 @@ def test_uc_classes():
 	db.drop()
 
 
+def test_uc_historical():
+	db = setdb('postgresql://postgres:postgres@localhost:5432/det_risk_uc_historic')
+	deter_alerts = DeterRepository()
+	deter_hist = DeterHistoricalRepository()
+	units_repo = SpatialUnitInfoRepository(db)
+	units = units_repo.list()
+	sutablename = units[0].dataname
+	surepo = SpatialUnitDynamicMapperFactory.instance().create_spatial_unit(sutablename)
+	su = surepo.get()
+	startdate = datetime.date(2020, 2, 1)
+	enddate = datetime.date(2019, 11, 1)
+	groups_repo = DeterClassGroupRepository(db)
+	class_groups = groups_repo.list()
+	uc = DetermineRiskIndicators(su, deter_alerts, deter_hist, class_groups, startdate, enddate)	
+	model_indicators = uc.execute()
+	rirepo = RiskIndicatorsRepository(sutablename, db)
+	rirepo.save(model_indicators)
+	indicators = rirepo.list()
+	indicators_per_feature = {}
+	expected_total_per_feature = determine_risk_indicators_results.total_per_feature_historical
+	for ind in indicators:
+		if ind.feature.id not in indicators_per_feature:
+			indicators_per_feature[ind.feature.id] = 0	
+		indicators_per_feature[ind.feature.id] += ind.percentage 
+	assert len(model_indicators) == len(indicators) == 1350
+	assert (len(indicators_per_feature) 
+			== len(expected_total_per_feature) 
+			== 177)
+	# for i in indicators_per_feature:
+	# 	print(f'{{\'id\': {i}, \'percentage\': {indicators_per_feature[i]}}},')	
+	for i in range(len(expected_total_per_feature)):
+		assert expected_total_per_feature[i]['id'] in indicators_per_feature
+		assert (round(expected_total_per_feature[i]['percentage'], 5) 
+				== round(indicators_per_feature[expected_total_per_feature[i]['id']], 5))		
+	# for i in indicators:
+	# 	print(f'{{\'id\': {i.feature.id}, \'percentage\': {i.percentage},' 
+	# 			+ f'\'classname\': \'{i.classname}\', \'date\': \'{i.date}\'}},')	
+	expected_classname = determine_risk_indicators_results.deter_historical
+	for i in range(len(indicators)):
+		assert expected_classname[i]['id'] == indicators[i].feature.id
+		assert round(expected_classname[i]['percentage'], 5) == round(indicators[i].percentage, 5)
+		assert expected_classname[i]['date'] == str(indicators[i].date)
+	db.drop()	
+
+
 def setdb(url):
 	db = AlchemyDataAccess()
 	db.connect(url)
@@ -115,7 +161,7 @@ def set_spatial_units(db):
 	SpatialUnitDynamicMapperFactory.instance().dataaccess = db
 	sunits = SpatialUnitInfoRepository(db)
 	uc1 = AddSpatialUnit(sutablename, shpfilepath, sunits, 
-			     SpatialUnitDynamicMapperFactory.instance(), geoprocess)
+		SpatialUnitDynamicMapperFactory.instance(), geoprocess)
 	uc1.execute(db)
 	SpatialUnitDynamicMapperFactory.instance().add_class_mapper(sutablename)
 

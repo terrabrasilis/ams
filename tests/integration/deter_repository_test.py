@@ -6,10 +6,8 @@ def test_list_all():
 	deter = DeterRepository()
 	alerts = deter.list()
 	assert len(alerts) == 111158
-	assert alerts[0].date.isoformat() == '2020-02-01'
-	assert alerts[-1].date.isoformat() == '2021-02-24'	
-	assert alerts[0].classname == 'DESMATAMENTO_CR'
-	assert alerts[-1].classname == 'MINERACAO'
+	assert alerts[0].date.isoformat() == '2021-02-28'
+	assert alerts[-1].date.isoformat() == '2020-01-01'
 
 
 def test_list_period():

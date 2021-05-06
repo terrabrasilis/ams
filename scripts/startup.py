@@ -5,7 +5,7 @@ from ams.gis import Geoprocessing
 from ams.usecases import AddSpatialUnit, DetermineRiskIndicators
 from ams.repository import (SpatialUnitDynamicMapperFactory, SpatialUnitInfoRepository,
 							DeterClassGroupRepository, DeterRepository,
-							RiskIndicatorsRepository)
+							DeterHistoricalRepository, RiskIndicatorsRepository)
 from ams.domain.entities import DeterClassGroup
 
 
@@ -54,8 +54,9 @@ def set_class_groups(db):
 
 def determine_risk_indicators(db):
 	deter_alerts = DeterRepository()
-	startdate = datetime.date(2021, 1, 31)
-	enddate = datetime.date(2020, 10, 1)
+	deter_hist = DeterHistoricalRepository()
+	startdate = datetime.date(2021, 2, 28)
+	enddate = datetime.date(2019, 8, 1)
 	groups_repo = DeterClassGroupRepository(db)
 	class_groups = groups_repo.list()	
 	units_repo = SpatialUnitInfoRepository(db)
@@ -64,7 +65,7 @@ def determine_risk_indicators(db):
 		sutablename = u.dataname
 		surepo = SpatialUnitDynamicMapperFactory.instance().create_spatial_unit(sutablename)
 		su = surepo.get()	
-		uc = DetermineRiskIndicators(su, deter_alerts, class_groups, startdate, enddate)	
+		uc = DetermineRiskIndicators(su, deter_alerts, deter_hist, class_groups, startdate, enddate)	
 		model_indicators = uc.execute()
 		rirepo = RiskIndicatorsRepository(sutablename, db)
 		rirepo.save(model_indicators)	
