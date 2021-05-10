@@ -20,6 +20,7 @@
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <script type="text/javascript" src="{{url_for('static', filename='js/ams/map.js')}}"></script>
     <script type="text/javascript" src="{{url_for('static', filename='js/ams/sld.styles.js')}}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='js/ams/date.js')}}"></script>
 
 	<style>
 		html, body {
@@ -47,7 +48,7 @@
 	var spatialUnits = new ams.Map.SpatialUnits(sus, sus[0].dataname);
 	var deterClassGroups = new ams.Map.DeterClassGroups({{deter_class_groups|safe}});
 	var temporalUnits = new ams.Map.TemporalUnits();
-	var dateControll = new ams.Map.DateController();
+	var dateControll = new ams.Date.DateController();
 	var currStartdate = "2020-12-01";
 	dateControll.setPeriod(currStartdate, temporalUnits.getAggregates()[0].key);
 
