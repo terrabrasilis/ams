@@ -26,7 +26,9 @@ before_script:
 - pg_restore --host "localhost" --port "5432" --username "postgres" --no-password --dbname "DETER-B" --verbose "data/deter-b-2019-2021.backup"
 - psql -c "ALTER USER postgres WITH PASSWORD 'postgres'" -U postgres;
 - cd tests
+- npm install -g jest
 script:
+- npm test
 - flake8 ..
 - pytest -v --cov
 after_success:

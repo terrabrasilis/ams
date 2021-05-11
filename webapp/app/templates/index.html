@@ -18,6 +18,9 @@
     <link rel="stylesheet" href="{{url_for('static', filename='css/leaflet.groupedlayercontrol.css')}}"/>
     <script type="text/javascript" src="{{url_for('static', filename='js/lib/leaflet.groupedlayercontrol.js')}}"></script>      
     <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='js/ams/map.js')}}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='js/ams/sld.styles.js')}}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='js/ams/date.js')}}"></script>
 
 	<style>
 		html, body {
@@ -40,310 +43,17 @@
 <div id="map"></div>
 
 <script type="text/javascript">
-	function updateMap(source, layerName, viewParams, layerStyle) {
-		source._subLayers = {};
-		source._subLayers[currSuLayerName] = true;		
-		source.options["viewparams"] = viewParams.toWmsFormat();
-		source._overlay.wmsParams.layers = layerName;
-		if(layerStyle) {
-			source.options["sld_body"] = layerStyle.getSLD();
-			source._overlay.setParams({
-				"viewparams": viewParams.toWmsFormat(),
-				"sld_body": layerStyle.getSLD(),
-			});				
-		}
-		else {
-			source._overlay.setParams({
-				"viewparams": viewParams.toWmsFormat(),
-			});	
-		}	
-	}
-
-	const ViewParams = function(classname, dateControll, limit) {
-		this.classname = classname;
-		this.startdate = dateControll.startdate;
-		this.enddate = dateControll.enddate;
-		this.prevdate = dateControll.prevdate;
-		this.limit = limit;
-		this.toWmsFormat = function() {
-			return "classname:" + this.classname
-					+ ";startdate:" + this.startdate
-					+ ";enddate:" + this.enddate
-					+ ";prevdate:" + this.prevdate
-					+ ";limit:" + this.limit;
-		}
-	}
-
-	const SpatialUnits = function(spatialUnits, suDefaultName) {
-		this.getSpatialUnit = function getSpatialUnit(name) {
-			for(var i = 0; i < this.spatialUnits.length; i++) {
-				if(this.spatialUnits[i].dataname == name) {
-					return this.spatialUnits[i];
-				}
-			}
-			return null;				
-		}			
-		this.spatialUnits = spatialUnits;
-		this.default = this.getSpatialUnit(suDefaultName);
-		this.isSpatialUnit = function(name) {
-			for(var i = 0; i < this.spatialUnits.length; i++) {
-				if(this.spatialUnits[i].dataname == name) {
-					return true;
-				}
-			}
-			return false;			
-		}
-		this.length = function() {
-			return this.spatialUnits.length;
-		}
-		this.at = function(pos) {
-			return this.spatialUnits[pos];
-		}	
-	}
-
-	const DeterClassGroups = function(groups) {
-		this.groups = groups;
-		this.length = function() {
-			return this.groups.length;
-		}
-		this.at = function(pos) {
-			return this.groups[pos];
-		}		
-	}
-
-	const PercentageStyle = function(layerName, minValue, maxValue, onlyStrokes) {
-		this.setStroke = function(onlyStrokes) {
-			if(onlyStrokes) {
-				this.fillOpacity = 0;
-	            this.stroke = `<Stroke><CssParameter name="stroke">#ff0000</CssParameter><CssParameter name="stroke-width">2</CssParameter><CssParameter name="stroke-linejoin">bevel</CssParameter></Stroke>`;			
-			}
-		}
-
-		this.setLegendDomainAndRange = function() {
-			if(this.minValue < 0) {
-				 this.colorRange = ["#add8e6", "#f0f0f0", "#ff3838"];
-				 this.colorDomain = [this.minValue, 0, this.maxValue];
-			}
-			else {
-				this.colorRange = ["#f0f0f0", "#ff3838"];
-				this.colorDomain = [this.minValue, this.maxValue];
-			}
-		}
-		this.stroke = "";
-		this.fillOpacity = 1;
-		this.setStroke(onlyStrokes);
-		this.maxValue = maxValue;
-		this.minValue = minValue;
-		this.colorRange;
-		this.colorDomain;
-		this.createRule = function(v1, v2, color) {
-			let fill = "";
-			if(color) {
-				color = d3.color(color).formatHex();
-				fill = `<Fill><CssParameter name="fill">${color}</CssParameter></Fill>`;
-			}
-			return `<Rule><Title> ${v1}% - ${v2}% </Title><ogc:Filter><ogc:PropertyIsGreaterThanOrEqualTo><ogc:PropertyName>percentage</ogc:PropertyName><ogc:Literal>${v1}</ogc:Literal></ogc:PropertyIsGreaterThanOrEqualTo><ogc:PropertyIsLessThan><ogc:PropertyName>percentage</ogc:PropertyName><ogc:Literal>${v2}</ogc:Literal></ogc:PropertyIsLessThan></ogc:Filter><PolygonSymbolizer>${fill}${this.stroke}</PolygonSymbolizer></Rule>`;				
-		} 
-		this.getMaxLength = function(values) {
-  			let vMax = values[0].toString();
-  			let vMaxLength = vMax.length;
-  			for(let i = 1; i < values.length - 1; i++) {
-  				let v2 = values[i+1];
-  				let vlength = v2.toString().length;
-  				if(vlength > vMaxLength) {
-  					vMaxLength = vlength;
-  					vMax = v2.toString();
-  				}
-  			}
-  			if(vMax.includes(".")) {
-  				vMaxLength = vMax.split(".")[1].length;
-  			}
-  			return vMaxLength;
-		}
-		this.createRules = function(numOfRanges) {
-			this.setLegendDomainAndRange();
-			let legend = d3.scaleLinear()
-				.domain(this.colorDomain)
-  				.range(this.colorRange)
-  				.nice(numOfRanges);
-  			let ticks = legend.ticks(numOfRanges);
-  			let rules = "";
-  			if(!onlyStrokes) {
-	  			let vMaxLength = this.getMaxLength(ticks);
-	  			for(let i = 0; i < ticks.length - 1; i++) {
-	  				let v1 = ticks[i];
-	  				let v2 = ticks[i+1];
-	  				let color = legend(v1);
-					rules = `${rules}${this.createRule(v1.toFixed(vMaxLength), v2.toFixed(vMaxLength), color)}`;
-	  			} 			
-	  		}
-	  		else {
-	  			rules = `${rules}${this.createRule(ticks[0], ticks[ticks.length - 1])}`;
-	  		}				
-
-	  		return rules;		
-		}
-		this.sld = `<?xml version="1.0" encoding="ISO-8859-1"?>	<StyledLayerDescriptor version="1.0.0" xsi:schemaLocation="http://www.opengis.net/sld StyledLayerDescriptor.xsd" xmlns="http://www.opengis.net/sld" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><NamedLayer><Name>${layerName}</Name><UserStyle><Title>SLD Cook Book: Attribute-based polygon</Title><FeatureTypeStyle>${this.createRules(6)}</FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>`;	
-		this.getSLD = function() {
-			return this.sld;
-		}
-		this.getEncodeURI = function() {
-			return encodeURIComponent(this.sld);
-		}
-	}	
-
-	const WFS = function(url) {
-		this.url = url;
-		this.getMinOrMax = function(layerName, propertyName, viewParams, isMin) {
-			let wfsUrl = this.url 
-						+ "&typeName=" + layerName
-						+ "&propertyName=" + propertyName
-						+ "&outputFormat=json"
-						+ "&viewparams=classname:" + viewParams.classname
-										+ ";startdate:" + viewParams.startdate
-										+ ";enddate:" + viewParams.enddate
-										+ ";prevdate:" + viewParams.prevdate
-										+ ";order:" + (isMin ? 'ASC' : 'DESC')
-										+ ";limit:1";
-			var res;
-			$.ajax({
-				dataType: "json",
-				url: wfsUrl,
-				async: false, 
-				success: function(data) {
-					res = data["features"][0]["properties"][propertyName];
-				}
-			});		
-			return res;	
-		}		
-		this.getMax = function(layerName, propertyName, viewParams) {		
-			return this.getMinOrMax(layerName, propertyName, viewParams, false);
-		}	
-
-		this.getMin = function(layerName, propertyName, viewParams) {
-			return this.getMinOrMax(layerName, propertyName, viewParams, true);
-		}
-	}
-
-	const TemporalUnits = function() {
-		this.aggregates = {		
-			0: {"key": "15d", "value": "15 Days"},
-			1: {"key": "1m", "value": "Month"},
-			2: {"key": "3m", "value": "3 Months"},
-			3: {"key": "1y", "value": "Year"},
-		};
-
-		this.differeces = {
-			0: {"key": "none", "value": "Current"},
-			1: {"key": "1m", "value": "Previous"},
-			// 2: {"key": "1y", "value": "Previous Year"}, TODO
-		}
-
-		this.getAggregates = function() {
-			return this.aggregates;
-		}
-
-		this.getDifferences = function() {
-			return this.differeces;
-		}
-
-		this.isAggregate = function(name) {
-			for(let i = 0; i < Object.keys(this.aggregates).length; i++) {
-				if(this.aggregates[i].value == name) {
-					return true;
-				} 
-			}
-			return false;
-		}
-
-		this.isDifference = function(name) {
-			for(let i = 0; i < Object.keys(this.differeces).length; i++) {
-				if(this.differeces[i].value == name) {
-					return true;
-				} 
-			}
-			return false;
-		}		
-
-	}
-
-	const DateController = function() {
-		this.startdate;
-		this.enddate;
-		this.prevdate;
-
-		this.toUTCDate = function(date) {
-			let uday = date.getUTCDate();
-			let day = uday < 10 ? "0" + uday : uday;
-			let umonth = date.getUTCMonth() + 1;
-			let month = umonth < 10 ? "0" + umonth : umonth;
-			return `${date.getUTCFullYear()}-${month}-${day}`; 
-		}
-
-		this.isLastDay =function(date) {
-			let last = new Date(date);
-			let month = date.getMonth();
-			last.setDate(last.getDate() + 1);
-			return last.getMonth() != month; 
-		}
-
-		this.setPeriod = function(startdate, period) {
-			this.startdate = startdate;
-			let enddate = new Date(startdate + "T00:00:00");
-			let prevdate = new Date(startdate + "T00:00:00");
-			if(period == "15d") {
-				enddate.setUTCDate(enddate.getUTCDate() - 15);
-				prevdate.setUTCDate(prevdate.getUTCDate() - 30);
-			}
-			else if(period == "1m") {
-				if(this.isLastDay(enddate)) {
-					enddate.setUTCDate(0);
-					prevdate.setUTCDate(0);
-					prevdate.setUTCDate(0);
-				}
-				else {
-					let day = enddate.getUTCDate();
-					enddate.setUTCDate(enddate.getUTCDate() - 32);
-					prevdate.setUTCDate(enddate.getUTCDate() - 32);
-					prevdate.setUTCDate(day);
-					enddate.setUTCDate(day);
-				}
-			}
-			else if(period == "3m") {
-				if(this.isLastDay(enddate)) {
-					enddate.setUTCDate(enddate.getUTCDate() - 2*32);
-					enddate.setUTCDate(0);
-					prevdate.setUTCDate(prevdate.getUTCDate() - 5*32);
-					prevdate.setUTCDate(0);
-				}
-				else {
-					let day = enddate.getUTCDate();
-					enddate.setUTCDate(enddate.getUTCDate() - 2*32);
-					prevdate.setUTCDate(prevdate.getUTCDate() - 5*32);
-					enddate.setUTCDate(day);
-					prevdate.setUTCDate(day);
-				}
-			}			
-			else if(period == "1y") {
-				enddate.setUTCFullYear(enddate.getUTCFullYear() - 1);
-				prevdate.setUTCFullYear(prevdate.getUTCFullYear() - 2);
-			}						
-			this.enddate = this.toUTCDate(enddate);
-			this.prevdate = this.toUTCDate(prevdate);
-		}
-	}
-
 	var gsWorkspace = "{{workspace}}"; 
 	var sus = {{spatial_units_info|safe}};
-	var spatialUnits = new SpatialUnits(sus, sus[0].dataname);
-	var deterClassGroups = new DeterClassGroups({{deter_class_groups|safe}});
-	var temporalUnits = new TemporalUnits();
-	var dateControll = new DateController();
+	var spatialUnits = new ams.Map.SpatialUnits(sus, sus[0].dataname);
+	var deterClassGroups = new ams.Map.DeterClassGroups({{deter_class_groups|safe}});
+	var temporalUnits = new ams.Map.TemporalUnits();
+	var dateControll = new ams.Date.DateController();
 	var currStartdate = "2020-12-01";
 	dateControll.setPeriod(currStartdate, temporalUnits.getAggregates()[0].key);
 
 	var wfsUrl = "http://localhost:8080/geoserver/ows?SERVICE=WFS&REQUEST=GetFeature"
-	var wfs = new WFS(wfsUrl);
+	var wfs = new ams.Map.WFS(wfsUrl);
 
 	var map = new L.Map("map").setView([spatialUnits.default.center_lat, 
 								spatialUnits.default.center_lng], 5);
@@ -354,11 +64,11 @@
 		crs: L.CRS.EPSG4326
 	}).addTo(map);
 
-	var suViewParams = new ViewParams(deterClassGroups.at(0).name, dateControll, "ALL");
+	var suViewParams = new ams.Map.ViewParams(deterClassGroups.at(0).name, dateControll, "ALL");
 	var suLayerName = gsWorkspace + ":" + spatialUnits.default.dataname;
 	var currSuLayerName = suLayerName + "_view";
 	var suLayerMaxPercentage = wfs.getMax(currSuLayerName, "percentage", suViewParams); 
-	var suLayerStyle = new PercentageStyle(currSuLayerName, 0, suLayerMaxPercentage);
+	var suLayerStyle = new ams.SLDStyles.PercentageStyle(currSuLayerName, 0, suLayerMaxPercentage);
 	var wmsUrl = "http://localhost:8080/geoserver/wms?"
 	var wmsOptions = {
 		"transparent": true, 
@@ -374,8 +84,8 @@
 	suLayer.addTo(map);	
 
 	var priorLayerName = currSuLayerName;
-	var priorLayerStyle = new PercentageStyle(currSuLayerName, 0, suLayerMaxPercentage, true);
-	var priorViewParams = new ViewParams(deterClassGroups.at(0).name, dateControll, "15");	
+	var priorLayerStyle = new ams.SLDStyles.PercentageStyle(currSuLayerName, 0, suLayerMaxPercentage, true);
+	var priorViewParams = new ams.Map.ViewParams(deterClassGroups.at(0).name, dateControll, "15");	
 	var priorWmsOptions = {
 		"transparent": true, 
 		"tiled": true, 
@@ -399,7 +109,7 @@
 		"Aggregate": {},
 		"Difference": {},
 	};	
-	
+
 	for(var i = 1; i < spatialUnits.length(); i++) {
 		let layerName = gsWorkspace + ":" + spatialUnits.at(i).dataname + "_view";
 		let layer = suSource.getLayer(layerName);
@@ -408,10 +118,10 @@
 
 	var indicatorLayer = new L.WMS.Layer(wmsUrl, "percentage", wmsOptions).addTo(map);	
 	groupedOverlays["Indicator"]["Area"] = indicatorLayer;
-	
+
 	var classLayer = new L.WMS.Layer(wmsUrl, deterClassGroups.at(0).name, wmsOptions).addTo(map);	
 	groupedOverlays["Class"][deterClassGroups.at(0).name] = classLayer;	
-	
+
 	for(var i = 1; i < deterClassGroups.length(); i++)
 	{
 		let layer = new L.WMS.Layer(wmsUrl, deterClassGroups.at(i).name, wmsOptions);	
@@ -421,7 +131,7 @@
 	var temporalUnitAggregates = temporalUnits.getAggregates();
 	var tempUnitLayer = new L.WMS.Layer(wmsUrl, temporalUnitAggregates[0].key, wmsOptions).addTo(map);	
 	groupedOverlays["Aggregate"][temporalUnitAggregates[0].value] = tempUnitLayer;	
-	
+
 	for(var i = 1; i < Object.keys(temporalUnitAggregates).length; i++)
 	{
 		let layer = new L.WMS.Layer(wmsUrl, temporalUnitAggregates[i].key, wmsOptions);	
@@ -441,7 +151,7 @@
 		exclusiveGroups: ["Spatial Unit", "Indicator", "Class", "Aggregate", "Difference"],
 		collapsed: false,
 	});
-	
+
 	groupControl.addTo(map);
 
 	var legendUrl = wmsUrl 
@@ -449,9 +159,9 @@
 					+ "&LAYER=" + currSuLayerName
 					+ "&sld_body=" + suLayerStyle.getEncodeURI(); 
 	var wmsLegendControl = new L.Control.WMSLegend;
-    wmsLegendControl.options.uri = legendUrl;
-    wmsLegendControl.options.position = "bottomright";
-    map.addControl(wmsLegendControl);	
+	wmsLegendControl.options.uri = legendUrl;
+	wmsLegendControl.options.position = "bottomright";
+	map.addControl(wmsLegendControl);	
 
 	$('<div class="leaflet-control-layers-group" id="prioritization-control-layers-group"><label class="leaflet-control-layers-group-name"><span class="leaflet-control-layers-group-name">Prioritization </span><input type="number" id="prioritization-input" min="1" max="50" value=' 
 		+ priorViewParams.limit + ' /></label></div>').insertAfter("#leaflet-control-layers-group-2");
@@ -498,7 +208,7 @@
 		}
 		
 		suLayerMaxPercentage = wfs.getMax(currSuLayerName, "percentage", suViewParams);
-		suLayerStyle = new PercentageStyle(currSuLayerName, suLayerMinPercentage, suLayerMaxPercentage);
+		suLayerStyle = new ams.SLDStyles.PercentageStyle(currSuLayerName, suLayerMinPercentage, suLayerMaxPercentage);
 
 		legendUrl = wmsUrl 
 					+ "REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20"
@@ -509,17 +219,17 @@
 	    map.removeControl(wmsLegendControl);
 	    map.addControl(wmsLegendControl);	
 
-		updateMap(suSource, currSuLayerName, suViewParams, suLayerStyle);	
+		ams.Map.update(suSource, currSuLayerName, suViewParams, suLayerStyle);	
 
-		priorLayerStyle = new PercentageStyle(currSuLayerName, suLayerMinPercentage, suLayerMaxPercentage, true);
-		updateMap(priorSource, currSuLayerName, priorViewParams, priorLayerStyle);	
+		priorLayerStyle = new ams.SLDStyles.PercentageStyle(currSuLayerName, suLayerMinPercentage, suLayerMaxPercentage, true);
+		ams.Map.update(priorSource, currSuLayerName, priorViewParams, priorLayerStyle);	
 	});	
 
 	$("#prioritization-input").keypress(function(e) {
 		if (e.which == 13) {
 			let limit = document.getElementById("prioritization-input").value;
 			priorViewParams.limit = limit;
-			updateMap(priorSource, currSuLayerName, priorViewParams);	
+			ams.Map.update(priorSource, currSuLayerName, priorViewParams);	
 			return false;
 		}
 	});
