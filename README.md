@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.com/avancinirodrigo/ams.svg?branch=master)](https://travis-ci.com/avancinirodrigo/ams)
-[![codecov](https://codecov.io/gh/avancinirodrigo/ams/branch/master/graph/badge.svg?token=RM6BDOL70Y)](https://codecov.io/gh/avancinirodrigo/ams)
+[![Build Status](https://travis-ci.com/AmazonSR/ams.svg?branch=master)](https://travis-ci.com/AmazonSR/ams)
+[![codecov](https://codecov.io/gh/AmazonSR/ams/branch/master/graph/badge.svg?token=RM6BDOL70Y)](https://codecov.io/gh/AmazonSR/ams)
 
 # AMS - Amazon Situation Room
 
@@ -32,7 +32,7 @@ sudo -u postgres psql
 cd ~
 mkdir ams
 mkdir git
-git clone [TODO FORK][https://github.com/avancinirodrigo/ams.git] git/ams
+git clone https://github.com/$GitHub_User/ams.git git/ams #note: it must be your fork for development
 sudo apt-get install python3-venv
 python3 -m venv v
 source venv/bin/activate
