@@ -34,7 +34,7 @@ mkdir ams
 mkdir git
 git clone https://github.com/$GitHub_User/ams.git git/ams #note: it must be your fork for development
 sudo apt-get install python3-venv
-python3 -m venv v
+python3 -m venv venv
 source venv/bin/activate
 pip install -r git/ams/requirements.txt
 createdb -h localhost -p 5432 -U postgres DETER-B
