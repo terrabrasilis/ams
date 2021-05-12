@@ -38,7 +38,7 @@ python3 -m venv venv
 source venv/bin/activate
 pip install -r git/ams/requirements.txt
 createdb -h localhost -p 5432 -U postgres DETER-B
-pg_restore --host "localhost" --port "5432" --username "postgres" --no-password --dbname "DETER-B" --verbose  git/ams/data/deter-b-2019-2021.backup
+pg_restore --host "localhost" --port "5432" --username "postgres" --dbname "DETER-B" --verbose  git/ams/data/deter-b-2019-2021.backup
 cd git/ams/tests
 export PYTHONPATH=../../ams
 pytest -v --cov
