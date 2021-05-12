@@ -63,7 +63,7 @@ Create a file `.env` whith folling content:
 export FLASK_APP=../webapp/main.py 
 export FLASK_DEBUG=1
 export PYTHONPATH=../../ams
-source ams/venv/bin/activate
+source ~/ams/venv/bin/activate
 ```
 Then
 ```bash
