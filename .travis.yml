@@ -32,4 +32,4 @@ script:
 - flake8 ..
 - pytest -v --cov
 after_success:
-- codecov -t a8884db9-2073-467d-8620-78f4426a3ddf
+- codecov -t b8e83b37-037c-4197-99d8-cc91536b6cdb
