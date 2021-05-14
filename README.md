@@ -2,7 +2,7 @@
 [![codecov](https://codecov.io/gh/AmazonSR/ams/branch/master/graph/badge.svg?token=RM6BDOL70Y)](https://codecov.io/gh/AmazonSR/ams)
 
 # AMS - Amazon Situation Room
-AMS is a Web Mapping GIS application, which integrates with web services that provide spatial data on deforestation of Brazil Amazon rainforest obtained by satellites. In this way, the application provides visualization of the areas that are being deforested in different spatial resolutions and periods. In addition, the application provides graphs and reports to help analyze the data.
+AMS is a Web Mapping GIS application, which integrates with REST and OGC web services that provide spatial data on deforestation of Brazil Amazon rainforest obtained by satellites. In this way, the application provides visualization of the areas that are being deforested in different spatial resolutions and periods. In addition, the application provides graphs and reports to help analyze the data.
 
 ## Environment
 * **Ubuntu** >= 20.04
