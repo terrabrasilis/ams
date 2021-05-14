@@ -27,3 +27,11 @@ def test_list_one_day():
 	assert len(alerts) == 50
 	assert alerts[0].date == startdate
 	assert alerts[-1].date == startdate	
+
+
+def test_list_limit_last_date():
+	deter = DeterRepository()
+	alerts = deter.list(limit=1)
+	assert len(alerts) == 1
+	assert alerts[0].date.isoformat() == '2021-02-28'	
+	assert alerts[0].id == 163955

@@ -31,13 +31,19 @@ class DeterRepository(Base, DeterAlerts, metaclass=DeterRepositoryMeta):
 	date = Column(Date, nullable=False)
 	geom = Column(Geometry('POLYGON', srid=4326), nullable=False)
 
+	@property
+	def id(self):
+		return self._gid
+
 	def get(self, id: int) -> DeterAlert:
 		session = Session()
 		alert = session.query(self.__class__).get(id)
 		session.close()
 		return self._to_deter_alert(alert)
 
-	def list(self, start: datetime.date = None, end: datetime.date = None) -> 'list[DeterAlert]':
+	def list(self, start: datetime.date = None, 
+				end: datetime.date = None, 
+				limit: int = None) -> 'list[DeterAlert]':
 		session = Session()
 		alerts = None
 		if start and end:
@@ -46,7 +52,8 @@ class DeterRepository(Base, DeterAlerts, metaclass=DeterRepositoryMeta):
 						.filter(self.__class__.date <= start)\
 						.order_by(self.__class__.date.desc())
 		else:
-			alerts = session.query(self.__class__).order_by(self.__class__.date.desc()).all()
+			alerts = session.query(self.__class__).order_by(
+				self.__class__.date.desc()).limit(limit).all()
 		session.close()
 		return [self._to_deter_alert(alert) for alert in alerts]
 

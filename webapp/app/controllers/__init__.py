@@ -1,1 +1,2 @@
 from .get_config_controller import GetConfigController
+from .deter_daily_update_controller import DeterDailyUpdateController

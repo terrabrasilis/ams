@@ -1,3 +1,4 @@
+import datetime
 from ams.domain.entities import RiskIndicator
 from ams.dataaccess import DataAccess
 from .spatial_unit_dynamic_mapper_factory import SpatialUnitDynamicMapperFactory
@@ -39,3 +40,11 @@ class RiskIndicatorsRepository:
 			session.add(ri)
 		session.commit()
 		session.close()
+
+	def delete(self, from_date: datetime.date):
+		session = self._dataaccess.create_session()
+		riclass = SpatialUnitDynamicMapperFactory.instance().\
+						risk_indicator_class(self._spatial_unit_tablename)
+		session.query(riclass).filter(riclass.date >= from_date).\
+								delete()
+		session.commit() 		
