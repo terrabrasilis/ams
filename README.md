@@ -30,8 +30,8 @@ sudo -u postgres psql
 #### Core 
 ```bash
 cd ~
-mkdir ams
-mkdir git
+mkdir -p ams/git
+cd ams
 git clone https://github.com/$GitHub_User/ams.git git/ams #note: it must be your fork for development
 sudo apt-get install python3-venv
 python3 -m venv venv
@@ -58,7 +58,7 @@ source ~/.profile
 ##### GeoServer Views [TODO]
 
 #### Web App
-Create a file `.env` whith folling content:
+Create a file `.env` within `~/ams/git/ams/tests` whith folling content:
 ```
 export FLASK_APP=../webapp/main.py 
 export FLASK_DEBUG=1
@@ -67,7 +67,7 @@ source ~/ams/venv/bin/activate
 ```
 Then
 ```bash
-cd git/ams/tests
-source .venv
+cd ~/ams/git/ams/tests
+source .env
 flask run
 ```
