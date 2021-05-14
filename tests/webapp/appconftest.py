@@ -1,6 +1,5 @@
 from contextlib import contextmanager
 from flask import template_rendered
-from webapp.app.config import Config
 import os
 import datetime
 from ams.dataaccess import AlchemyDataAccess
@@ -10,6 +9,7 @@ from ams.repository import (SpatialUnitDynamicMapperFactory, SpatialUnitInfoRepo
                             DeterClassGroupRepository, DeterRepository,
                             RiskIndicatorsRepository)
 from ams.domain.entities import DeterClassGroup
+from webapp.app.config import Config
 
 
 class TestConfig(Config):

@@ -24,10 +24,10 @@ def test_uc_basic():
 	sutablename = units[0].dataname
 	surepo = SpatialUnitDynamicMapperFactory.instance().create_spatial_unit(sutablename)
 	su = surepo.get()	
-	deter_alerts = DeterRepository()
+	deter_repo = DeterRepository()
 	startdate = datetime.date(2021, 1, 1)
 	enddate = datetime.date(2020, 12, 1)
-	uc = DetermineRiskIndicators(su, deter_alerts, None, [], startdate, enddate)
+	uc = DetermineRiskIndicators(su, deter_repo, None, [], startdate, enddate)
 	model_indicators = uc.execute()
 	rirepo = RiskIndicatorsRepository(sutablename, db)
 	rirepo.save(model_indicators)
@@ -53,12 +53,16 @@ def test_uc_basic():
 		assert expected_per_day[i]['id'] == indicators[i].feature.id
 		assert round(expected_per_day[i]['percentage'], 5) == round(indicators[i].percentage, 5)
 		assert expected_per_day[i]['date'] == str(indicators[i].date)
+	deter_alerts = deter_repo.list()
+	rirepo.delete(deter_alerts[-1].date)
+	deter_empty = rirepo.list()
+	assert len(deter_empty) == 0
 	db.drop()
 
 
 def test_uc_classes():
 	db = setdb('postgresql://postgres:postgres@localhost:5432/det_risk_uc_classes')
-	deter_alerts = DeterRepository()
+	deter_repo = DeterRepository()
 	units_repo = SpatialUnitInfoRepository(db)
 	units = units_repo.list()
 	sutablename = units[0].dataname
@@ -68,7 +72,7 @@ def test_uc_classes():
 	enddate = datetime.date(2020, 12, 1)
 	groups_repo = DeterClassGroupRepository(db)
 	class_groups = groups_repo.list()
-	uc = DetermineRiskIndicators(su, deter_alerts, None, class_groups, startdate, enddate)	
+	uc = DetermineRiskIndicators(su, deter_repo, None, class_groups, startdate, enddate)	
 	model_indicators = uc.execute()
 	rirepo = RiskIndicatorsRepository(sutablename, db)
 	rirepo.save(model_indicators)
@@ -101,7 +105,7 @@ def test_uc_classes():
 
 def test_uc_historical():
 	db = setdb('postgresql://postgres:postgres@localhost:5432/det_risk_uc_historic')
-	deter_alerts = DeterRepository()
+	deter_repo = DeterRepository()
 	deter_hist = DeterHistoricalRepository()
 	units_repo = SpatialUnitInfoRepository(db)
 	units = units_repo.list()
@@ -112,7 +116,7 @@ def test_uc_historical():
 	enddate = datetime.date(2019, 11, 1)
 	groups_repo = DeterClassGroupRepository(db)
 	class_groups = groups_repo.list()
-	uc = DetermineRiskIndicators(su, deter_alerts, deter_hist, class_groups, startdate, enddate)	
+	uc = DetermineRiskIndicators(su, deter_repo, deter_hist, class_groups, startdate, enddate)	
 	model_indicators = uc.execute()
 	rirepo = RiskIndicatorsRepository(sutablename, db)
 	rirepo.save(model_indicators)
