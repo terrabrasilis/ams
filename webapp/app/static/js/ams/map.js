@@ -3,7 +3,7 @@ var ams = ams || {};
 ams.Map = {
 	update: function(source, layerName, viewParams, layerStyle) {
 		source._subLayers = {};
-		source._subLayers[currSuLayerName] = true;		
+		source._subLayers[layerName] = true;		
 		source.options["viewparams"] = viewParams.toWmsFormat();
 		source._overlay.wmsParams.layers = layerName;
 		if(layerStyle) {

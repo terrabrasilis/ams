@@ -72,5 +72,5 @@ ams.Date = {
 	}
 };
 
-module.exports.ams = ams
-module.exports.ams.Date.DateController = ams.Date.DateController
+module.exports.ams = ams;
+module.exports.ams.Date.DateController = ams.Date.DateController;
