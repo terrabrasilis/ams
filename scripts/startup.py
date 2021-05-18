@@ -19,18 +19,27 @@ def setdb(url):
 
 
 def set_spatial_units(db):	
-	tablename1 = 'csAmz_150km'
-	tablename2 = 'csAmz_300km'
-	shpfilepath1 = os.path.join(os.path.dirname(__file__), '../data', 'csAmz_150km_epsg_4326.shp')
-	shpfilepath2 = os.path.join(os.path.dirname(__file__), '../data', 'csAmz_300km_epsg_4326.shp')
+	data_path = os.path.join(os.path.dirname(__file__), '../data')
+	sus = [
+		{'tablename': 'csAmz_150km', 
+			'shpfile': f'{data_path}/csAmz_150km_epsg_4326.shp', 
+			'as_attribute_name': 'id'},
+		{'tablename': 'csAmz_300km', 
+			'shpfile': f'{data_path}/csAmz_300km_epsg_4326.shp', 
+			'as_attribute_name': 'id'},
+		{'tablename': 'amz_states', 
+			'shpfile': f'{data_path}/amz_states_epsg_4326.shp', 
+			'as_attribute_name': 'NM_ESTADO'},
+		{'tablename': 'amz_municipalities', 
+			'shpfile': f'{data_path}/amz_municipalities_epsg_4326.shp', 
+			'as_attribute_name': 'nm_municip'}
+	]
 	gp = Geoprocessing()
-	sus1 = SpatialUnitInfoRepository(db)
-	uc1 = AddSpatialUnit(tablename1, shpfilepath1, sus1, 
-		SpatialUnitDynamicMapperFactory.instance(), gp)
-	uc2 = AddSpatialUnit(tablename2, shpfilepath2, sus1, 
-		SpatialUnitDynamicMapperFactory.instance(), gp)		
-	uc1.execute(db)
-	uc2.execute(db)
+	sus_info_repo = SpatialUnitInfoRepository(db)
+	for su in sus:
+		uc = AddSpatialUnit(su['tablename'], su['shpfile'], su['as_attribute_name'],
+						sus_info_repo, SpatialUnitDynamicMapperFactory.instance(), gp)		
+		uc.execute(db)
 
 
 def set_class_groups(db):
@@ -55,19 +64,22 @@ def set_class_groups(db):
 def determine_risk_indicators(db):
 	deter_alerts = DeterRepository()
 	deter_hist = DeterHistoricalRepository()
-	startdate = datetime.date(2021, 2, 28)
-	enddate = datetime.date(2019, 8, 1)
+	startdate = datetime.datetime.now().date()
+	enddate = datetime.date(2017, 1, 1)
 	groups_repo = DeterClassGroupRepository(db)
 	class_groups = groups_repo.list()	
 	units_repo = SpatialUnitInfoRepository(db)
 	units = units_repo.list()
 	for u in units:
 		sutablename = u.dataname
-		surepo = SpatialUnitDynamicMapperFactory.instance().create_spatial_unit(sutablename)
+		as_attribute_name = u.as_attribute_name
+		surepo = SpatialUnitDynamicMapperFactory.instance()\
+				.create_spatial_unit(sutablename, as_attribute_name)
 		su = surepo.get()	
-		uc = DetermineRiskIndicators(su, deter_alerts, deter_hist, class_groups, startdate, enddate)	
+		uc = DetermineRiskIndicators(su, deter_alerts, deter_hist, 
+									class_groups, startdate, enddate)	
 		model_indicators = uc.execute()
-		rirepo = RiskIndicatorsRepository(sutablename, db)
+		rirepo = RiskIndicatorsRepository(sutablename, as_attribute_name, db)
 		rirepo.save(model_indicators)	
 
 

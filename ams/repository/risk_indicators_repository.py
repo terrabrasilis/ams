@@ -7,10 +7,13 @@ from .spatial_unit_dynamic_mapper_factory import SpatialUnitDynamicMapperFactory
 class RiskIndicatorsRepository:
 	"""RiskIndicatorsRepository"""
 
-	def __init__(self, spatial_unit_tablename: str, dataaccess: DataAccess):
+	def __init__(self, spatial_unit_tablename: str, 
+						spatial_unit_as_attribute_name: str,
+						dataaccess: DataAccess):
 		self._dataaccess = dataaccess
 		self._engine = dataaccess.engine
 		self._spatial_unit_tablename = spatial_unit_tablename
+		self._spatial_unit_as_attribute_name = spatial_unit_as_attribute_name
 		self._tablename = f'{spatial_unit_tablename}_risk_indicators'
 
 	def list(self) -> 'list[RiskIndicator]': 
@@ -23,7 +26,8 @@ class RiskIndicatorsRepository:
 
 	def _to_risk_indicator(self, indicator):
 		su_repo = SpatialUnitDynamicMapperFactory.instance().\
-							create_spatial_unit(self._spatial_unit_tablename)
+							create_spatial_unit(self._spatial_unit_tablename,
+												self._spatial_unit_as_attribute_name)
 		sufeat = su_repo.get_feature(indicator.suid)
 		# TODO: get alerts with intersection
 		return RiskIndicator(indicator.date, indicator.percentage, indicator.classname, sufeat)		

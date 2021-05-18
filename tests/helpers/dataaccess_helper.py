@@ -26,13 +26,14 @@ class DataAccessHelper:
 
 	@staticmethod
 	def add_spatial_unit(db: DataAccess, sutablename: str = 'csAmz_150km', 
-							shpfilename: str = 'csAmz_150km_epsg_4326'):	
+							shpfilename: str = 'csAmz_150km_epsg_4326',
+							as_attribute_name: str = 'id'):	
 		shpfilepath = os.path.join(os.path.dirname(__file__), '../../data', f'{shpfilename}.shp')	
 		geoprocess = Geoprocessing()
 		SpatialUnitDynamicMapperFactory.instance().dataaccess = db
 		sunits = SpatialUnitInfoRepository(db)
-		uc1 = AddSpatialUnit(sutablename, shpfilepath, sunits, 
-			SpatialUnitDynamicMapperFactory.instance(), geoprocess)
+		uc1 = AddSpatialUnit(sutablename, shpfilepath, as_attribute_name,
+						sunits, SpatialUnitDynamicMapperFactory.instance(), geoprocess)
 		uc1.execute(db)
 		SpatialUnitDynamicMapperFactory.instance().add_class_mapper(sutablename)
 
@@ -64,11 +65,13 @@ class DataAccessHelper:
 		units = units_repo.list()
 		for u in units:
 			sutablename = u.dataname
-			surepo = SpatialUnitDynamicMapperFactory.instance().create_spatial_unit(sutablename)
+			as_attribute_name = u.as_attribute_name
+			surepo = SpatialUnitDynamicMapperFactory.instance()\
+						.create_spatial_unit(sutablename, as_attribute_name)
 			su = surepo.get()	
 			uc = DetermineRiskIndicators(su, deter_alerts, [], class_groups, startdate, enddate)	
 			model_indicators = uc.execute()
-			rirepo = RiskIndicatorsRepository(sutablename, db)
+			rirepo = RiskIndicatorsRepository(sutablename, as_attribute_name, db)
 			rirepo.save(model_indicators)	
 
 	@staticmethod

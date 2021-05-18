@@ -7,10 +7,17 @@ from ams.dataaccess import DataAccess
 class SpatialUnitRepository:
 	"""SpatialUnitRepository"""
 
-	def __init__(self, tablename: str, dataaccess: DataAccess):
+	def __init__(self, tablename: str, 
+					as_attribute_name: str, 
+					dataaccess: DataAccess):
 		self._tablename = tablename
+		self._as_attribute_name = as_attribute_name
 		self._dataaccess = dataaccess
 		self._engine = dataaccess.engine
+
+	@property
+	def as_attribute_name(self):
+		return self._as_attribute_name	
 
 	def _add_features(self):
 		session = self._dataaccess.create_session()
@@ -39,4 +46,4 @@ class SpatialUnitRepository:
 
 	def _to_su_feature(self, dat) -> SpatialUnitFeature:
 		geom = ShapelyGeometry(to_shape(dat.geometry))
-		return SpatialUnitFeature(dat.suid, dat.id, geom)
+		return SpatialUnitFeature(dat.suid, dat.__dict__[self._as_attribute_name], geom)

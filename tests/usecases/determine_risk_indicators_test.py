@@ -22,14 +22,16 @@ def test_uc_basic():
 	units_repo = SpatialUnitInfoRepository(db)
 	units = units_repo.list()
 	sutablename = units[0].dataname
-	surepo = SpatialUnitDynamicMapperFactory.instance().create_spatial_unit(sutablename)
+	as_attribute_name = units[0].as_attribute_name
+	surepo = SpatialUnitDynamicMapperFactory.instance()\
+				.create_spatial_unit(sutablename, as_attribute_name)
 	su = surepo.get()	
 	deter_repo = DeterRepository()
 	startdate = datetime.date(2021, 1, 1)
 	enddate = datetime.date(2020, 12, 1)
 	uc = DetermineRiskIndicators(su, deter_repo, None, [], startdate, enddate)
 	model_indicators = uc.execute()
-	rirepo = RiskIndicatorsRepository(sutablename, db)
+	rirepo = RiskIndicatorsRepository(sutablename, as_attribute_name, db)
 	rirepo.save(model_indicators)
 	indicators = rirepo.list()
 	indicators_per_feature = {}
@@ -66,7 +68,9 @@ def test_uc_classes():
 	units_repo = SpatialUnitInfoRepository(db)
 	units = units_repo.list()
 	sutablename = units[0].dataname
-	surepo = SpatialUnitDynamicMapperFactory.instance().create_spatial_unit(sutablename)
+	as_attribute_name = units[0].as_attribute_name
+	surepo = SpatialUnitDynamicMapperFactory.instance()\
+				.create_spatial_unit(sutablename, as_attribute_name)
 	su = surepo.get()
 	startdate = datetime.date(2021, 1, 1)
 	enddate = datetime.date(2020, 12, 1)
@@ -74,7 +78,7 @@ def test_uc_classes():
 	class_groups = groups_repo.list()
 	uc = DetermineRiskIndicators(su, deter_repo, None, class_groups, startdate, enddate)	
 	model_indicators = uc.execute()
-	rirepo = RiskIndicatorsRepository(sutablename, db)
+	rirepo = RiskIndicatorsRepository(sutablename, as_attribute_name, db)
 	rirepo.save(model_indicators)
 	indicators = rirepo.list()
 	indicators_per_feature = {}
@@ -110,7 +114,9 @@ def test_uc_historical():
 	units_repo = SpatialUnitInfoRepository(db)
 	units = units_repo.list()
 	sutablename = units[0].dataname
-	surepo = SpatialUnitDynamicMapperFactory.instance().create_spatial_unit(sutablename)
+	as_attribute_name = units[0].as_attribute_name
+	surepo = SpatialUnitDynamicMapperFactory.instance()\
+				.create_spatial_unit(sutablename, as_attribute_name)
 	su = surepo.get()
 	startdate = datetime.date(2020, 2, 1)
 	enddate = datetime.date(2019, 11, 1)
@@ -118,7 +124,7 @@ def test_uc_historical():
 	class_groups = groups_repo.list()
 	uc = DetermineRiskIndicators(su, deter_repo, deter_hist, class_groups, startdate, enddate)	
 	model_indicators = uc.execute()
-	rirepo = RiskIndicatorsRepository(sutablename, db)
+	rirepo = RiskIndicatorsRepository(sutablename, as_attribute_name, db)
 	rirepo.save(model_indicators)
 	indicators = rirepo.list()
 	indicators_per_feature = {}
@@ -161,11 +167,12 @@ def setdb(url):
 def set_spatial_units(db):	
 	sutablename = 'csAmz_150km'
 	shpfilepath = os.path.join(os.path.dirname(__file__), '../../data', 'csAmz_150km_epsg_4326.shp')	
+	as_attribute_name = 'id'
 	geoprocess = Geoprocessing()
 	SpatialUnitDynamicMapperFactory.instance().dataaccess = db
 	sunits = SpatialUnitInfoRepository(db)
-	uc1 = AddSpatialUnit(sutablename, shpfilepath, sunits, 
-		SpatialUnitDynamicMapperFactory.instance(), geoprocess)
+	uc1 = AddSpatialUnit(sutablename, shpfilepath, as_attribute_name,
+					sunits, SpatialUnitDynamicMapperFactory.instance(), geoprocess)
 	uc1.execute(db)
 	SpatialUnitDynamicMapperFactory.instance().add_class_mapper(sutablename)
 
