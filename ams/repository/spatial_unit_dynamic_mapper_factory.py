@@ -55,8 +55,8 @@ class SpatialUnitDynamicMapperFactory:
 		mapper(ri_clas, ri_table)	
 		metadata.create_all(bind=self._dataaccess.engine)	
 
-	def create_spatial_unit(self, tablename) -> SpatialUnitRepository:
-		return self._types[tablename](tablename, self.dataaccess)	
+	def create_spatial_unit(self, tablename: str, as_attribute_name: str) -> SpatialUnitRepository:
+		return self._types[tablename](tablename, as_attribute_name, self.dataaccess)	
 
 	def create_risk_indicator(self, spatial_unit_tablename: str) -> RiskIndicator:
 		tablename = f'{spatial_unit_tablename}{self._risk_indicator_suffix}'
