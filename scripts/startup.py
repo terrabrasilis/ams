@@ -76,9 +76,10 @@ def determine_risk_indicators(db):
 		surepo = SpatialUnitDynamicMapperFactory.instance()\
 				.create_spatial_unit(sutablename, as_attribute_name)
 		su = surepo.get()	
-		uc = DetermineRiskIndicators(su, deter_alerts, deter_hist, class_groups, startdate, enddate)	
+		uc = DetermineRiskIndicators(su, deter_alerts, deter_hist, 
+									class_groups, startdate, enddate)	
 		model_indicators = uc.execute()
-		rirepo = RiskIndicatorsRepository(sutablename, db)
+		rirepo = RiskIndicatorsRepository(sutablename, as_attribute_name, db)
 		rirepo.save(model_indicators)	
 
 
