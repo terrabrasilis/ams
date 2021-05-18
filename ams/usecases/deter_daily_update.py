@@ -58,9 +58,11 @@ class DeterDailyUpdate:
 		class_groups = groups_repo.list()
 		for su_info in sus_info:
 			sutablename = su_info.dataname
-			surepo = SpatialUnitDynamicMapperFactory.instance().create_spatial_unit(sutablename)
+			as_attribute_name = su_info.as_attribute_name
+			surepo = SpatialUnitDynamicMapperFactory.instance()\
+						.create_spatial_unit(sutablename, as_attribute_name)
 			su = surepo.get()
-			rirepo = RiskIndicatorsRepository(sutablename, self._dataaccess)
+			rirepo = RiskIndicatorsRepository(sutablename, as_attribute_name, self._dataaccess)
 			rirepo.delete(enddate)
 			uc = DetermineRiskIndicators(su, self._deter_repo, [], class_groups, startdate, enddate)	
 			indicators = uc.execute()

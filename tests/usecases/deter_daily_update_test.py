@@ -10,7 +10,9 @@ from tests.helpers.dataaccess_helper import DataAccessHelper
 def test_basic(mocker):
 	db = DataAccessHelper.createdb('postgresql://postgres:postgres@localhost:5432/det_auto_up')
 	DataAccessHelper.add_class_groups(db)
-	susdata = [{'tablename': 'csAmz_150km', 'shpname': 'csAmz_150km_epsg_4326'}]
+	susdata = [{'tablename': 'csAmz_150km', 
+				'shpname': 'csAmz_150km_epsg_4326', 
+				'as_attribute_name': 'id'}]
 	for sudata in susdata:
 		DataAccessHelper.add_spatial_unit(db, sudata['tablename'], sudata['shpname'])
 	startdate = date(2021, 2, 28)
@@ -21,7 +23,7 @@ def test_basic(mocker):
 	at = (date_now + timedelta(minutes=1)).strftime('%H:%M')
 	deter_url = 'postgresql://postgres:postgres@localhost:5432/DETER-B'
 	DataAccessHelper.del_deter_data(deter_url, date_now)
-	rirepo = RiskIndicatorsRepository(susdata[0]['tablename'], db)	
+	rirepo = RiskIndicatorsRepository(susdata[0]['tablename'], susdata[0]['as_attribute_name'], db)	
 	indicators_1 = rirepo.list()
 	assert len(indicators_1) == 357
 	assert indicators_1[0].date.isoformat() == '2021-02-28'

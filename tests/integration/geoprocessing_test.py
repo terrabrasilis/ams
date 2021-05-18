@@ -17,7 +17,7 @@ def test_export_shp_to_postgis():
 	add_suid('csAmz_150km', db.engine)
 	SpatialUnitDynamicMapperFactory.instance().dataaccess = db
 	SpatialUnitDynamicMapperFactory.instance().add_class_mapper('csAmz_150km')	
-	sunit = SpatialUnitDynamicMapperFactory.instance().create_spatial_unit('csAmz_150km')
+	sunit = SpatialUnitDynamicMapperFactory.instance().create_spatial_unit('csAmz_150km', 'id')
 	cells = sunit.list()
 	assert len(cells) == 240
 	assert cells[0].id == 0
@@ -37,7 +37,7 @@ def test_percentage_of_area():
 	add_suid('csAmz_150km', db.engine)
 	SpatialUnitDynamicMapperFactory.instance().dataaccess = db
 	SpatialUnitDynamicMapperFactory.instance().add_class_mapper('csAmz_150km')
-	sunit = SpatialUnitDynamicMapperFactory.instance().create_spatial_unit('csAmz_150km')	
+	sunit = SpatialUnitDynamicMapperFactory.instance().create_spatial_unit('csAmz_150km', 'id')	
 	feats = sunit.list()
 	deter = DeterRepository()
 	a1 = deter.get(59241)

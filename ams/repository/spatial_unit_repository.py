@@ -15,6 +15,10 @@ class SpatialUnitRepository:
 		self._dataaccess = dataaccess
 		self._engine = dataaccess.engine
 
+	@property
+	def as_attribute_name(self):
+		return self._as_attribute_name	
+
 	def _add_features(self):
 		session = self._dataaccess.create_session()
 		all_data = session.query(self.__class__).all()
