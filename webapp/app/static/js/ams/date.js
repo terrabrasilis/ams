@@ -26,7 +26,11 @@ ams.Date = {
 			startdate = new Date(startdate + "T00:00:00");
 			let enddate = new Date(startdate);
 			let prevdate = new Date(startdate);
-			if(period == "15d") {
+			if(period == "7d") {
+				enddate.setUTCDate(enddate.getUTCDate() - 7);
+				prevdate.setUTCDate(prevdate.getUTCDate() - 14);
+			}			
+			else if(period == "15d") {
 				enddate.setUTCDate(enddate.getUTCDate() - 15);
 				prevdate.setUTCDate(prevdate.getUTCDate() - 30);
 			}

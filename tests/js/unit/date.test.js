@@ -1,5 +1,20 @@
 const date = require("../../../webapp/app/static/js/ams/date");
 
+
+test('One Week period (day 1)', () => {
+	let controll = new date.ams.Date.DateController();
+	let startdate = "2021-01-01";
+	controll.setPeriod(startdate, "7d");
+	expect(controll.startdate).toBe(startdate);
+	expect(controll.enddate).toBe("2020-12-25");
+	expect(controll.prevdate).toBe("2020-12-18");
+	sDate = new Date(controll.startdate + "T00:00:00");
+	eDate = new Date(controll.enddate + "T00:00:00");
+	pDate = new Date(controll.prevdate + "T00:00:00");
+	expect(sDate.getDay()).toBe(eDate.getDay());
+	expect(sDate.getDay()).toBe(pDate.getDay());
+});
+
 test('Fifteen days period (day 1)', () => {
 	let controll = new date.ams.Date.DateController();
 	let startdate = "2021-01-01";

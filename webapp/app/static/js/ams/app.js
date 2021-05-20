@@ -1,15 +1,15 @@
 var ams = ams || {};
 
 ams.App = {
-	run: function(gsWorkspace, sus, spatialUnits, deterClassGroups) {
+	run: function(geoserverUrl, gsWorkspace, sus, spatialUnits, deterClassGroups) {
 		var temporalUnits = new ams.Map.TemporalUnits();
 		var dateControll = new ams.Date.DateController();
-		var currStartdate = "2020-12-01";
-		dateControll.setPeriod(currStartdate, temporalUnits.getAggregates()[0].key);
+		var currStartdate = spatialUnits.default.last_date;
+		var currAggregate = temporalUnits.getAggregates()[0].key;
+		dateControll.setPeriod(currStartdate, currAggregate);
 
-		var wfsUrl = "http://localhost:8080/geoserver/ows?SERVICE=WFS&REQUEST=GetFeature"
-		var wfs = new ams.Map.WFS(wfsUrl);
-
+		var wfs = new ams.Map.WFS(geoserverUrl);
+		
 		var map = new L.Map("map").setView([spatialUnits.default.center_lat, 
 									spatialUnits.default.center_lng], 5);
 
@@ -24,7 +24,7 @@ ams.App = {
 		var currSuLayerName = suLayerName + "_view";
 		var suLayerMaxPercentage = wfs.getMax(currSuLayerName, "percentage", suViewParams); 
 		var suLayerStyle = new ams.SLDStyles.PercentageStyle(currSuLayerName, 0, suLayerMaxPercentage);
-		var wmsUrl = "http://localhost:8080/geoserver/wms?"
+		var wmsUrl = geoserverUrl + "/wms?"
 		var wmsOptions = {
 			"transparent": true, 
 			"tiled": true, 
@@ -110,17 +110,13 @@ ams.App = {
 
 		groupControl.addTo(map);
 
-		var legendUrl = wmsUrl 
-						+ "REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20"
-						+ "&LAYER=" + currSuLayerName
-						+ "&sld_body=" + suLayerStyle.getEncodeURI(); 
-		var wmsLegendControl = new L.Control.WMSLegend;
-		wmsLegendControl.options.uri = legendUrl;
-		wmsLegendControl.options.position = "bottomright";
-		map.addControl(wmsLegendControl);	
+		var legendControl = new ams.Map.LegendController(map, wmsUrl);
+		legendControl.init(currSuLayerName, suLayerStyle);
+
+		$('<div class="leaflet-control-layers-group" id="datepicker-control-layers-group"><label class="leaflet-control-layers-group-name"><span class="leaflet-control-layers-group-name">Date </span><input type="text" id="datepicker" size="7" /></label></div>').insertAfter("#leaflet-control-layers-group-2");
 
 		$('<div class="leaflet-control-layers-group" id="prioritization-control-layers-group"><label class="leaflet-control-layers-group-name"><span class="leaflet-control-layers-group-name">Prioritization </span><input type="number" id="prioritization-input" min="1" max="50" value=' 
-			+ priorViewParams.limit + ' /></label></div>').insertAfter("#leaflet-control-layers-group-2");
+			+ priorViewParams.limit + ' /></label></div>').insertAfter("#datepicker-control-layers-group");		
 
 		var suLayerMinPercentage = 0;
 		var diffON = false;
@@ -138,13 +134,10 @@ ams.App = {
 				}
 			}
 			else if(temporalUnits.isAggregate(e.name)) {
-				dateControll.setPeriod(dateControll.startdate, e.layer._name)
-				suViewParams.startdate = dateControll.startdate;
-				suViewParams.enddate = dateControll.enddate;
-				suViewParams.prevdate = dateControll.prevdate;
-				priorViewParams.startdate = dateControll.startdate;
-				priorViewParams.enddate = dateControll.enddate;			
-				priorViewParams.prevdate = dateControll.prevdate;	
+				currAggregate = e.layer._name;
+				dateControll.setPeriod(dateControll.startdate, currAggregate);
+				suViewParams.updateDates(dateControll);
+				priorViewParams.updateDates(dateControll);
 			}	
 			else if(temporalUnits.isDifference(e.name)) {
 				if(e.name == "Current") {
@@ -164,23 +157,69 @@ ams.App = {
 			}
 			
 			suLayerMaxPercentage = wfs.getMax(currSuLayerName, "percentage", suViewParams);
-			suLayerStyle = new ams.SLDStyles.PercentageStyle(currSuLayerName, suLayerMinPercentage, suLayerMaxPercentage);
-
-			legendUrl = wmsUrl 
-						+ "REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20"
-						+ "&LAYER=" + currSuLayerName
-						+ "&sld_body=" + suLayerStyle.getEncodeURI();
-		    wmsLegendControl.options.uri = legendUrl;
-		    wmsLegendControl.options.position = "bottomright";
-		    map.removeControl(wmsLegendControl);
-		    map.addControl(wmsLegendControl);	
-
+			suLayerStyle = new ams.SLDStyles.PercentageStyle(currSuLayerName, suLayerMinPercentage, 
+															suLayerMaxPercentage);	
+		 	legendControl.update(currSuLayerName, suLayerStyle);
 			ams.Map.update(suSource, currSuLayerName, suViewParams, suLayerStyle);	
-
-			priorLayerStyle = new ams.SLDStyles.PercentageStyle(currSuLayerName, suLayerMinPercentage, suLayerMaxPercentage, true);
+			priorLayerStyle = new ams.SLDStyles.PercentageStyle(currSuLayerName, suLayerMinPercentage, 
+															suLayerMaxPercentage, true);
 			ams.Map.update(priorSource, currSuLayerName, priorViewParams, priorLayerStyle);	
 			priorLayer.bringToFront();
 		});	
+
+		var defaultDate = new Date(currStartdate + "T00:00:00")
+
+		$.datepicker.regional['br'] = {
+			closeText: 'Fechar',
+			currentText: 'Hoje',
+			monthNames: ['Janeiro','Fevereiro','Março','Abril','Maio','Junho', 
+						'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],
+			monthNamesShort: ['Jan','Fev','Mar','Abr','Mai','Jun',
+							'Jul','Ago','Set','Out','Nov','Dez'],
+			dayNames: ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sabado'],
+			dayNamesShort: ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'],
+			dayNamesMin: ['D','S','T','Q','Q','S','S'],
+			dateFormat: 'dd/mm/yy',
+		};
+
+		$.datepicker.setDefaults($.datepicker.regional["br"]);
+
+		$('#datepicker').datepicker({
+			showButtonPanel: true,
+			defaultDate: new Date(currStartdate + "T00:00:00"),
+			minDate: new Date("2017-01-01T00:00:00"),
+			maxDate: defaultDate,
+			changeMonth: true,
+			changeYear: true,			
+			onSelect: function() {
+				let selected = $(this).val().split("/");
+				let date = selected[2] + "-" + selected[1] + "-" + selected[0];
+				dateControll.setPeriod(date, currAggregate);
+				suViewParams.updateDates(dateControll);
+				priorViewParams.updateDates(dateControll);
+				if(currSuLayerName.includes("diff")) {
+					suLayerMinPercentage = wfs.getMin(currSuLayerName, "percentage", suViewParams);	
+				}
+				else {
+					suLayerMinPercentage = 0;
+				}	
+
+				suLayerMaxPercentage = wfs.getMax(currSuLayerName, "percentage", suViewParams);	
+				suLayerStyle = new ams.SLDStyles.PercentageStyle(currSuLayerName, suLayerMinPercentage, 
+																suLayerMaxPercentage);
+				legendControl.update(currSuLayerName, suLayerStyle);
+				ams.Map.update(suSource, currSuLayerName, suViewParams, suLayerStyle);	
+				priorLayerStyle = new ams.SLDStyles.PercentageStyle(currSuLayerName, suLayerMinPercentage, 
+																suLayerMaxPercentage, true);
+				ams.Map.update(priorSource, currSuLayerName, priorViewParams, priorLayerStyle);	
+				priorLayer.bringToFront();				
+			},
+			beforeShow: function() {
+				setTimeout(function() {
+					$('.ui-datepicker').css('z-index', 99999999999999);
+				}, 0);
+			}
+		}).val(defaultDate.toLocaleDateString("pt-BR"));		
 
 		$("#prioritization-input").keypress(function(e) {
 			if (e.which == 13) {
@@ -193,6 +232,6 @@ ams.App = {
 
 		$(function() {
 			$("#prioritization-input").dblclick(false);
-		});
+		});			
 	}
 };

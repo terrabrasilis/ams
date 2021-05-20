@@ -12,7 +12,9 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
     <script type="text/javascript" src="{{url_for('static', filename='js/lib/leaflet.wms.js')}}"></script>
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <link rel="stylesheet" href="{{url_for('static', filename='css/leaflet.wmslegend.css')}}"/>
     <script type="text/javascript" src="{{url_for('static', filename='js/lib/leaflet.wmslegend.js')}}"></script>
     <link rel="stylesheet" href="{{url_for('static', filename='css/leaflet.groupedlayercontrol.css')}}"/>
@@ -48,7 +50,8 @@ var gsWorkspace = "{{workspace}}";
 var sus = {{spatial_units_info|safe}};
 var spatialUnits = new ams.Map.SpatialUnits(sus, sus[0].dataname);
 var deterClassGroups = new ams.Map.DeterClassGroups({{deter_class_groups|safe}});
-ams.App.run(gsWorkspace, sus, spatialUnits, deterClassGroups);
+var geoserverUrl = "{{geoserver_url}}";
+ams.App.run(geoserverUrl, gsWorkspace, sus, spatialUnits, deterClassGroups);
 </script>
 
 </body>

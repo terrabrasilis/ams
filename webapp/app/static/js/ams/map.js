@@ -33,6 +33,12 @@ ams.Map = {
 					+ ";prevdate:" + this.prevdate
 					+ ";limit:" + this.limit;
 		}
+
+		this.updateDates = function(dateControll) {
+			this.startdate = dateControll.startdate;
+			this.enddate = dateControll.enddate;
+			this.prevdate = dateControll.prevdate;
+		}
 	},
 
 	SpatialUnits: function(spatialUnits, suDefaultName) {
@@ -72,8 +78,8 @@ ams.Map = {
 		}		
 	},
 
-	WFS: function(url) {
-		this.url = url;
+	WFS: function(wmsUrl) {
+		this.url = wmsUrl + "/ows?SERVICE=WFS&REQUEST=GetFeature";
 		this.getMinOrMax = function(layerName, propertyName, viewParams, isMin) {
 			let wfsUrl = this.url 
 						+ "&typeName=" + layerName
@@ -107,10 +113,11 @@ ams.Map = {
 
 	TemporalUnits: function() {
 		this.aggregates = {		
-			0: {"key": "15d", "value": "15 Days"},
-			1: {"key": "1m", "value": "Month"},
-			2: {"key": "3m", "value": "3 Months"},
-			3: {"key": "1y", "value": "Year"},
+			0: {"key": "7d", "value": "Week"},
+			1: {"key": "15d", "value": "15 Days"},
+			2: {"key": "1m", "value": "Month"},
+			3: {"key": "3m", "value": "3 Months"},
+			4: {"key": "1y", "value": "Year"},
 		};
 
 		this.differeces = {
@@ -145,4 +152,35 @@ ams.Map = {
 			return false;
 		}		
 	},
+
+	LegendController: function(map, wmsUrl) {
+		this._wmsLegendControl = new L.Control.WMSLegend;
+		this._url;
+		this._wmsUrl = wmsUrl;
+		this._map = map;
+
+		this.setUrl = function(layerName, layerStyle) {
+			this._url = this._wmsUrl 
+						+ "REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20"
+						+ "&LAYER=" + layerName
+						+ "&sld_body=" + layerStyle.getEncodeURI(); 			
+		}
+
+		this.init = function(layerName, layerStyle)	{
+			this._setWMSControl(layerName, layerStyle);
+			this._map.addControl(this._wmsLegendControl);
+		}
+
+		this.update = function(layerName, layerStyle) {
+			this._setWMSControl(layerName, layerStyle);
+			this._map.removeControl(this._wmsLegendControl);
+			this._map.addControl(this._wmsLegendControl);
+		}	
+
+		this._setWMSControl = function(layerName, layerStyle) {
+			this.setUrl(layerName, layerStyle);
+			this._wmsLegendControl.options.uri = this._url;
+			this._wmsLegendControl.options.position = "bottomright";
+		}
+	}
 };

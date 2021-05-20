@@ -7,13 +7,9 @@ class GetConfigController:
 	def __init__(self, da: DataAccess):
 		uc = GetConfig()
 		config = uc.execute(da)
-		self._workspace = config.workspace
 		self._spatial_units = config.spatial_units_info
 		self._deter_class_groups = config.deter_class_groups
-
-	@property
-	def workspace(self) -> str:
-		return self._workspace
+		self._most_recent_risk_indicators = config.most_recent_risk_indicators
 	
 	@property
 	def spatial_units_info(self) -> list:
@@ -23,7 +19,8 @@ class GetConfigController:
 		return {
 			'dataname': suinfo.dataname,
 			'center_lat': suinfo.centroid.lat,
-			'center_lng': suinfo.centroid.lng
+			'center_lng': suinfo.centroid.lng,
+			'last_date': self._most_recent_risk_indicators[suinfo.dataname].date.isoformat()
 		}
 
 	@property
