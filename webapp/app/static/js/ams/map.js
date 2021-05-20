@@ -113,10 +113,11 @@ ams.Map = {
 
 	TemporalUnits: function() {
 		this.aggregates = {		
-			0: {"key": "15d", "value": "15 Days"},
-			1: {"key": "1m", "value": "Month"},
-			2: {"key": "3m", "value": "3 Months"},
-			3: {"key": "1y", "value": "Year"},
+			0: {"key": "7d", "value": "Week"},
+			1: {"key": "15d", "value": "15 Days"},
+			2: {"key": "1m", "value": "Month"},
+			3: {"key": "3m", "value": "3 Months"},
+			4: {"key": "1y", "value": "Year"},
 		};
 
 		this.differeces = {
