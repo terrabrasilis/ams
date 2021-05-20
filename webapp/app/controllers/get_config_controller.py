@@ -10,6 +10,7 @@ class GetConfigController:
 		self._workspace = config.workspace
 		self._spatial_units = config.spatial_units_info
 		self._deter_class_groups = config.deter_class_groups
+		self._most_recent_risk_indicators = config.most_recent_risk_indicators
 
 	@property
 	def workspace(self) -> str:
@@ -23,7 +24,8 @@ class GetConfigController:
 		return {
 			'dataname': suinfo.dataname,
 			'center_lat': suinfo.centroid.lat,
-			'center_lng': suinfo.centroid.lng
+			'center_lng': suinfo.centroid.lng,
+			'last_date': self._most_recent_risk_indicators[suinfo.dataname].date.isoformat()
 		}
 
 	@property

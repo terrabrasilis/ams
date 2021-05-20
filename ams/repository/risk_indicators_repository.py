@@ -1,4 +1,5 @@
 import datetime
+from sqlalchemy import desc
 from ams.domain.entities import RiskIndicator
 from ams.dataaccess import DataAccess
 from .spatial_unit_dynamic_mapper_factory import SpatialUnitDynamicMapperFactory
@@ -52,3 +53,12 @@ class RiskIndicatorsRepository:
 		session.query(riclass).filter(riclass.date >= from_date).\
 								delete()
 		session.commit() 		
+
+	def get_most_recent(self) -> RiskIndicator:
+		session = self._dataaccess.create_session()
+		riclass = SpatialUnitDynamicMapperFactory.instance().\
+						risk_indicator_class(self._spatial_unit_tablename)		
+		last = session.query(riclass).order_by(desc('date')).first()
+		rilast = self._to_risk_indicator(last)
+		session.close()
+		return rilast

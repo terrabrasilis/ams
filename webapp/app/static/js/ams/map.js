@@ -33,6 +33,12 @@ ams.Map = {
 					+ ";prevdate:" + this.prevdate
 					+ ";limit:" + this.limit;
 		}
+
+		this.updateDates = function(dateControll) {
+			this.startdate = dateControll.startdate;
+			this.enddate = dateControll.enddate;
+			this.prevdate = dateControll.prevdate;
+		}
 	},
 
 	SpatialUnits: function(spatialUnits, suDefaultName) {
@@ -145,4 +151,35 @@ ams.Map = {
 			return false;
 		}		
 	},
+
+	LegendController: function(map, wmsUrl) {
+		this._wmsLegendControl = new L.Control.WMSLegend;
+		this._url;
+		this._wmsUrl = wmsUrl;
+		this._map = map;
+
+		this.setUrl = function(layerName, layerStyle) {
+			this._url = this._wmsUrl 
+						+ "REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20"
+						+ "&LAYER=" + layerName
+						+ "&sld_body=" + layerStyle.getEncodeURI(); 			
+		}
+
+		this.init = function(layerName, layerStyle)	{
+			this._setWMSControl(layerName, layerStyle);
+			this._map.addControl(this._wmsLegendControl);
+		}
+
+		this.update = function(layerName, layerStyle) {
+			this._setWMSControl(layerName, layerStyle);
+			this._map.removeControl(this._wmsLegendControl);
+			this._map.addControl(this._wmsLegendControl);
+		}	
+
+		this._setWMSControl = function(layerName, layerStyle) {
+			this.setUrl(layerName, layerStyle);
+			this._wmsLegendControl.options.uri = this._url;
+			this._wmsLegendControl.options.position = "bottomright";
+		}
+	}
 };

@@ -33,6 +33,8 @@ def test_uc_basic():
 	model_indicators = uc.execute()
 	rirepo = RiskIndicatorsRepository(sutablename, as_attribute_name, db)
 	rirepo.save(model_indicators)
+	rilast = rirepo.get_most_recent()
+	assert rilast.date == startdate
 	indicators = rirepo.list()
 	indicators_per_feature = {}
 	expected_total_per_feature = determine_risk_indicators_results.total_per_feature
