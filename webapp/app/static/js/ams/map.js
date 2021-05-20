@@ -78,8 +78,8 @@ ams.Map = {
 		}		
 	},
 
-	WFS: function(url) {
-		this.url = url;
+	WFS: function(wmsUrl) {
+		this.url = wmsUrl + "/ows?SERVICE=WFS&REQUEST=GetFeature";
 		this.getMinOrMax = function(layerName, propertyName, viewParams, isMin) {
 			let wfsUrl = this.url 
 						+ "&typeName=" + layerName

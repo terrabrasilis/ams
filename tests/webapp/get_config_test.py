@@ -5,6 +5,7 @@ def test_get_config(app, client, app_startup):
 	with get_context_variables(app) as context:
 		client.get('/')
 		context = next(context)
+		assert context['geoserver_url'] != ''
 		assert context['workspace'] == 'ams'
 		sus = context['spatial_units_info']
 		assert sus[0]['dataname'] == 'csAmz_150km'

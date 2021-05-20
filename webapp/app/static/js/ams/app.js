@@ -1,16 +1,15 @@
 var ams = ams || {};
 
 ams.App = {
-	run: function(gsWorkspace, sus, spatialUnits, deterClassGroups) {
+	run: function(geoserverUrl, gsWorkspace, sus, spatialUnits, deterClassGroups) {
 		var temporalUnits = new ams.Map.TemporalUnits();
 		var dateControll = new ams.Date.DateController();
 		var currStartdate = spatialUnits.default.last_date;
 		var currAggregate = temporalUnits.getAggregates()[0].key;
 		dateControll.setPeriod(currStartdate, currAggregate);
 
-		var wfsUrl = "http://localhost:8080/geoserver/ows?SERVICE=WFS&REQUEST=GetFeature"
-		var wfs = new ams.Map.WFS(wfsUrl);
-
+		var wfs = new ams.Map.WFS(geoserverUrl);
+		
 		var map = new L.Map("map").setView([spatialUnits.default.center_lat, 
 									spatialUnits.default.center_lng], 5);
 
@@ -25,7 +24,7 @@ ams.App = {
 		var currSuLayerName = suLayerName + "_view";
 		var suLayerMaxPercentage = wfs.getMax(currSuLayerName, "percentage", suViewParams); 
 		var suLayerStyle = new ams.SLDStyles.PercentageStyle(currSuLayerName, 0, suLayerMaxPercentage);
-		var wmsUrl = "http://localhost:8080/geoserver/wms?"
+		var wmsUrl = geoserverUrl + "/wms?"
 		var wmsOptions = {
 			"transparent": true, 
 			"tiled": true, 

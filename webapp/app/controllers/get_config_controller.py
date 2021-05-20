@@ -7,14 +7,9 @@ class GetConfigController:
 	def __init__(self, da: DataAccess):
 		uc = GetConfig()
 		config = uc.execute(da)
-		self._workspace = config.workspace
 		self._spatial_units = config.spatial_units_info
 		self._deter_class_groups = config.deter_class_groups
 		self._most_recent_risk_indicators = config.most_recent_risk_indicators
-
-	@property
-	def workspace(self) -> str:
-		return self._workspace
 	
 	@property
 	def spatial_units_info(self) -> list:
