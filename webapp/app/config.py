@@ -2,7 +2,7 @@ import os
 
 
 class Config:
-	GEOSERVER_URL = os.environ.get('SERVER_URL') or \
+	GEOSERVER_URL = os.environ.get('GEOSERVER_URL') or \
 			'http://localhost:8080/geoserver'
 	GEOSERVER_WORKSPACE = os.environ.get('GEOSERVER_WORKSPACE') or 'ams'
 	DATABASE_URL = os.environ.get('DATABASE_URL') or \
