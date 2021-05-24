@@ -31,7 +31,7 @@ sudo -u postgres psql
 #### Core 
 ```bash
 cd ~
-mkdir -p ams/git
+mkdir -p git/ams
 cd ams
 git clone https://github.com/$GitHub_User/ams.git git/ams #note: it must be your fork for development
 sudo apt-get install python3-venv
@@ -41,11 +41,14 @@ pip install -r git/ams/requirements.txt
 createdb -h localhost -p 5432 -U postgres DETER-B
 pg_restore --host "localhost" --port "5432" --username "postgres" --dbname "DETER-B" --verbose  git/ams/data/deter-b-2019-2021.backup
 cd git/ams/tests
-export PYTHONPATH=../../ams
+export PYTHONPATH=~/ams/git/ams/
 pytest -v --cov
 flake8 ..
 ```
-#### GeoServer
+### GeoServer
+
+#### Install and start
+
 ```bash
 cd ~
 wget http://sourceforge.net/projects/geoserver/files/GeoServer/2.19.0/geoserver-2.19.0-bin.zip
@@ -56,19 +59,92 @@ echo "export GEOSERVER_HOME=/home/$USER*/geoserver" >> ~/.profile #note: $USER h
 source ~/.profile
 ~/geoserver/bin/startup.sh &
 ```
-##### GeoServer Views [TODO]
+##### Config
 
-#### Web App
-Create a file `.env` within `~/ams/git/ams/tests` whith folling content:
+###### Accessing GeoServer Context Path to create the objects:
+
+http://**[geoserverip]**:8080/geoserver/web/?7 
+
+###### Click Workspaces/Add new workspace
+
+**Name:** ams
+
+Click **Save**
+
+###### Click Stores/Add 
+**Note:** A store is a data repository, a Postgres database f.e.
+
+**Workspace:** ams
+
+**Data Source Name:** AMS
+
+**host:** locallhost (or another valid Postgres server IP)
+
+**port:** 5432
+
+**database:** AMS
+
+**schema:** public
+
+**user:** postgres
+
+**passwd:** postgres
+
+Click **Save**
+
+###### Click Layers/Add a new Layer
+
+In **Add layer from** choose ams:AMS
+
+Click in **Publish** to publish a table in the list that appears below.
+
+Publish the following tables:
+csAmz_150km, csAmz_300km, csAmz_150km_risk_indicators, csAmz_300km_risk_indicators
+
+###### Click Layers/Add a new Layer
+
+**Note:** Before that, check if the functions that are shown in **~/git/ams/geoserver/sqlviews** folder exists in AMS database. If they don't, you should create it.
+
+In **Add layer from** choose ams:AMS
+
+Click **Configure a new SQL view...**
+
+**View Name:** csAmz_150km_diff_view
+
+**SQL statement:** get the corresponding (by name) SQL statement in **~/git/ams/geoserver/sqlviews** folder. 
+**Note:** remove comments and any other text than the SQL itself.
+
+Click **Guess parameters from SQL** link
+
+Copy the values for **Default value** and **Validation regular expression** from the original SQL statement comments.
+
+Marck checkbox **Get geometry type and SRID**
+
+In **Atributes**, click **Refresh** 
+
+Click **Save**
+
+In the next form:
+
+In **Bounding Boxes\Native Bounding Box**, click **Compute from data**
+
+In **Bounding Boxes\Lat/Lon Bounding Box**, click **Compute from native bounds**
+
+Click **Save**
+
+You must create the other views you find in **~/git/ams/geoserver/sqlviews** folder.
+
+##### Web App
+Create a file `.env` within `~/git/ams/tests` whith following content:
 ```
-export FLASK_APP=../webapp/main.py 
+export FLASK_APP=~/git/ams/webapp/main.py 
 export FLASK_DEBUG=1
-export PYTHONPATH=../../ams
-source ~/ams/venv/bin/activate
+export PYTHONPATH=~/git/ams
+source ~/git/ams/venv/bin/activate
 ```
 Then
 ```bash
-cd ~/ams/git/ams/tests
+cd ~/git/ams/tests
 source .env
 flask run
 ```
