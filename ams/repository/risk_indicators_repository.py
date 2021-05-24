@@ -33,8 +33,24 @@ class RiskIndicatorsRepository:
 		# TODO: get alerts with intersection
 		return RiskIndicator(indicator.date, indicator.percentage, indicator.classname, sufeat)		
 
-	def save(self, indicators):
+	def save(self, indicators: 'list[RiskIndicator]'):
 		session = self._dataaccess.create_session()
+		self._mark_to_add(session, indicators)
+		session.commit()
+		session.close()
+
+	def overwrite_from_date(self, indicators: 'list[RiskIndicator]', 
+							from_date: datetime.date):
+		session = self._dataaccess.create_session()
+		try:
+			self._mark_to_delete(from_date)
+			self._mark_to_add(session, indicators)
+			session.commit()
+		except Exception:
+			session.rollback()
+		session.close()		
+
+	def _mark_to_add(self, session, indicators):
 		for i in indicators:
 			ri = SpatialUnitDynamicMapperFactory.instance().\
 							create_risk_indicator(self._spatial_unit_tablename)
@@ -42,17 +58,13 @@ class RiskIndicatorsRepository:
 			ri.date = i.date
 			ri.classname = i.classname
 			ri.suid = i.feature.id
-			session.add(ri)
-		session.commit()
-		session.close()
+			session.add(ri)			
 
-	def delete(self, from_date: datetime.date):
+	def _mark_to_delete(self, from_date):
 		session = self._dataaccess.create_session()
 		riclass = SpatialUnitDynamicMapperFactory.instance().\
 						risk_indicator_class(self._spatial_unit_tablename)
-		session.query(riclass).filter(riclass.date >= from_date).\
-								delete()
-		session.commit() 		
+		session.query(riclass).filter(riclass.date >= from_date).delete()	
 
 	def get_most_recent(self) -> RiskIndicator:
 		session = self._dataaccess.create_session()

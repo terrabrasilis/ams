@@ -57,10 +57,6 @@ def test_uc_basic():
 		assert expected_per_day[i]['id'] == indicators[i].feature.id
 		assert round(expected_per_day[i]['percentage'], 5) == round(indicators[i].percentage, 5)
 		assert expected_per_day[i]['date'] == str(indicators[i].date)
-	deter_alerts = deter_repo.list()
-	rirepo.delete(deter_alerts[-1].date)
-	deter_empty = rirepo.list()
-	assert len(deter_empty) == 0
 	db.drop()
 
 
