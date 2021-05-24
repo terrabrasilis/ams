@@ -2,6 +2,27 @@ var ams = ams || {};
 
 ams.App = {
 	run: function(geoserverUrl, gsWorkspace, sus, spatialUnits, deterClassGroups) {
+		const updateAll = function(suSource, currSuLayerName, suViewParams, 
+								suLayerMinPercentage, priorSource, priorViewParams, 
+								legendControl) {
+			let suLayerMaxPercentage = wfs.getMax(currSuLayerName, "percentage", suViewParams);
+			if(suLayerMaxPercentage == suLayerMinPercentage) 
+			{
+				alert("Não existem dados para o periodo selecionado!");
+				return;
+			}
+			let suLayerStyle = new ams.SLDStyles.PercentageStyle(currSuLayerName, 
+																suLayerMinPercentage, 
+																suLayerMaxPercentage);	
+		 	legendControl.update(currSuLayerName, suLayerStyle);
+			ams.Map.update(suSource, currSuLayerName, suViewParams, suLayerStyle);	
+			priorLayerStyle = new ams.SLDStyles.PercentageStyle(currSuLayerName, 
+															suLayerMinPercentage, 
+															suLayerMaxPercentage, true);
+			ams.Map.update(priorSource, currSuLayerName, priorViewParams, priorLayerStyle);	
+			priorLayer.bringToFront();		
+		}
+
 		var temporalUnits = new ams.Map.TemporalUnits();
 		var dateControll = new ams.Date.DateController();
 		var currStartdate = spatialUnits.default.last_date;
@@ -19,18 +40,21 @@ ams.App = {
 			crs: L.CRS.EPSG4326
 		}).addTo(map);
 
-		var suViewParams = new ams.Map.ViewParams(deterClassGroups.at(0).name, dateControll, "ALL");
+		var suViewParams = new ams.Map.ViewParams(deterClassGroups.at(0).name, 
+												dateControll, "ALL");
 		var suLayerName = gsWorkspace + ":" + spatialUnits.default.dataname;
 		var currSuLayerName = suLayerName + "_view";
-		var suLayerMaxPercentage = wfs.getMax(currSuLayerName, "percentage", suViewParams); 
-		var suLayerStyle = new ams.SLDStyles.PercentageStyle(currSuLayerName, 0, suLayerMaxPercentage);
+		var suLayerMaxPercentage = wfs.getMax(currSuLayerName, "percentage", 
+											suViewParams); 
+		var suLayerStyle = new ams.SLDStyles.PercentageStyle(currSuLayerName, 0, 
+															suLayerMaxPercentage);
 		var wmsUrl = geoserverUrl + "/wms?"
 		var wmsOptions = {
 			"transparent": true, 
 			"tiled": true, 
 			"format": "image/png", 
 			// "identify": false
-			"opacity": 0.9,
+			"opacity": 0.8,
 			"viewparams": suViewParams.toWmsFormat(),
 			"sld_body": suLayerStyle.getSLD(),
 		};
@@ -39,8 +63,10 @@ ams.App = {
 		suLayer.addTo(map);	
 
 		var priorLayerName = currSuLayerName;
-		var priorLayerStyle = new ams.SLDStyles.PercentageStyle(currSuLayerName, 0, suLayerMaxPercentage, true);
-		var priorViewParams = new ams.Map.ViewParams(deterClassGroups.at(0).name, dateControll, "15");	
+		var priorLayerStyle = new ams.SLDStyles.PercentageStyle(currSuLayerName, 0, 
+															suLayerMaxPercentage, true);
+		var priorViewParams = new ams.Map.ViewParams(deterClassGroups.at(0).name, 
+															dateControll, "10");	
 		var priorWmsOptions = {
 			"transparent": true, 
 			"tiled": true, 
@@ -75,7 +101,8 @@ ams.App = {
 		var indicatorLayer = new L.WMS.Layer(wmsUrl, "percentage", wmsOptions).addTo(map);	
 		groupedOverlays["Indicator"]["Area"] = indicatorLayer;
 
-		var classLayer = new L.WMS.Layer(wmsUrl, deterClassGroups.at(0).name, wmsOptions).addTo(map);	
+		var classLayer = new L.WMS.Layer(wmsUrl, deterClassGroups.at(0).name, 
+										wmsOptions).addTo(map);	
 		groupedOverlays["Class"][deterClassGroups.at(0).name] = classLayer;	
 
 		for(var i = 1; i < deterClassGroups.length(); i++)
@@ -85,7 +112,8 @@ ams.App = {
 		}
 
 		var temporalUnitAggregates = temporalUnits.getAggregates();
-		var tempUnitLayer = new L.WMS.Layer(wmsUrl, temporalUnitAggregates[0].key, wmsOptions).addTo(map);	
+		var tempUnitLayer = new L.WMS.Layer(wmsUrl, temporalUnitAggregates[0].key,
+											wmsOptions).addTo(map);	
 		groupedOverlays["Aggregate"][temporalUnitAggregates[0].value] = tempUnitLayer;	
 
 		for(var i = 1; i < Object.keys(temporalUnitAggregates).length; i++)
@@ -95,7 +123,8 @@ ams.App = {
 		}	
 
 		var temporalUnitsDifferences = temporalUnits.getDifferences();
-		var diffLayer = new L.WMS.Layer(wmsUrl, temporalUnitAggregates[0].value, wmsOptions).addTo(map);
+		var diffLayer = new L.WMS.Layer(wmsUrl, temporalUnitAggregates[0].value, 
+										wmsOptions).addTo(map);
 		groupedOverlays["Difference"][temporalUnitsDifferences[0].value] = diffLayer;		
 		for(var i = 1; i < Object.keys(temporalUnitsDifferences).length; i++)
 		{
@@ -113,10 +142,18 @@ ams.App = {
 		var legendControl = new ams.Map.LegendController(map, wmsUrl);
 		legendControl.init(currSuLayerName, suLayerStyle);
 
-		$('<div class="leaflet-control-layers-group" id="datepicker-control-layers-group"><label class="leaflet-control-layers-group-name"><span class="leaflet-control-layers-group-name">Date </span><input type="text" id="datepicker" size="7" /></label></div>').insertAfter("#leaflet-control-layers-group-2");
+		$('<div class="leaflet-control-layers-group" id="datepicker-control-layers-group">'
+			+ '<label class="leaflet-control-layers-group-name">'
+			+ '<span class="leaflet-control-layers-group-name">Date </span>'
+			+ '<input type="text" id="datepicker" size="7" />'
+			+ '</label></div>').insertAfter("#leaflet-control-layers-group-2");
 
-		$('<div class="leaflet-control-layers-group" id="prioritization-control-layers-group"><label class="leaflet-control-layers-group-name"><span class="leaflet-control-layers-group-name">Prioritization </span><input type="number" id="prioritization-input" min="1" max="50" value=' 
-			+ priorViewParams.limit + ' /></label></div>').insertAfter("#datepicker-control-layers-group");		
+		$('<div class="leaflet-control-layers-group" id="prioritization-control-layers-group">'
+			+ '<label class="leaflet-control-layers-group-name">'
+			+ '<span class="leaflet-control-layers-group-name">Prioritization </span>'
+			+ '<input type="number" id="prioritization-input" min="1" max="50" value=' 
+			+ priorViewParams.limit + ' />'
+			+ '</label></div>').insertAfter("#datepicker-control-layers-group");		
 
 		var suLayerMinPercentage = 0;
 		var diffON = false;
@@ -156,15 +193,8 @@ ams.App = {
 				priorViewParams.classname = e.name;
 			}
 			
-			suLayerMaxPercentage = wfs.getMax(currSuLayerName, "percentage", suViewParams);
-			suLayerStyle = new ams.SLDStyles.PercentageStyle(currSuLayerName, suLayerMinPercentage, 
-															suLayerMaxPercentage);	
-		 	legendControl.update(currSuLayerName, suLayerStyle);
-			ams.Map.update(suSource, currSuLayerName, suViewParams, suLayerStyle);	
-			priorLayerStyle = new ams.SLDStyles.PercentageStyle(currSuLayerName, suLayerMinPercentage, 
-															suLayerMaxPercentage, true);
-			ams.Map.update(priorSource, currSuLayerName, priorViewParams, priorLayerStyle);	
-			priorLayer.bringToFront();
+			updateAll(suSource, currSuLayerName, suViewParams, suLayerMinPercentage, 
+					priorSource, priorViewParams, legendControl); 			
 		});	
 
 		var defaultDate = new Date(currStartdate + "T00:00:00")
@@ -204,15 +234,8 @@ ams.App = {
 					suLayerMinPercentage = 0;
 				}	
 
-				suLayerMaxPercentage = wfs.getMax(currSuLayerName, "percentage", suViewParams);	
-				suLayerStyle = new ams.SLDStyles.PercentageStyle(currSuLayerName, suLayerMinPercentage, 
-																suLayerMaxPercentage);
-				legendControl.update(currSuLayerName, suLayerStyle);
-				ams.Map.update(suSource, currSuLayerName, suViewParams, suLayerStyle);	
-				priorLayerStyle = new ams.SLDStyles.PercentageStyle(currSuLayerName, suLayerMinPercentage, 
-																suLayerMaxPercentage, true);
-				ams.Map.update(priorSource, currSuLayerName, priorViewParams, priorLayerStyle);	
-				priorLayer.bringToFront();				
+				updateAll(suSource, currSuLayerName, suViewParams, suLayerMinPercentage, 
+						priorSource, priorViewParams, legendControl); 								
 			},
 			beforeShow: function() {
 				setTimeout(function() {
