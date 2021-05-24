@@ -31,7 +31,7 @@ sudo -u postgres psql
 #### Core 
 ```bash
 cd ~
-mkdir -p git/ams
+ mkdir -p ~/ams/git
 cd ams
 git clone https://github.com/$GitHub_User/ams.git git/ams #note: it must be your fork for development
 sudo apt-get install python3-venv
@@ -41,7 +41,7 @@ pip install -r git/ams/requirements.txt
 createdb -h localhost -p 5432 -U postgres DETER-B
 pg_restore --host "localhost" --port "5432" --username "postgres" --dbname "DETER-B" --verbose  git/ams/data/deter-b-2019-2021.backup
 cd git/ams/tests
-export PYTHONPATH=~/ams/git/ams/
+export PYTHONPATH=~/ams/git/ams
 pytest -v --cov
 flake8 ..
 ```
@@ -99,7 +99,7 @@ In **Add layer from** choose ams:AMS
 Click in **Publish** to publish a table in the list that appears below.
 
 Publish the following tables:
-csAmz_150km, csAmz_300km, csAmz_150km_risk_indicators, csAmz_300km_risk_indicators
+csAmz_150km, csAmz_300km, csAmz_150km_risk_indicators, csAmz_300km_risk_indicators, amz_municipalities, amz_municipalities_risk_indicators, amz_states, amz_states_risk_indicators.
 
 ###### Click Layers/Add a new Layer
 
@@ -117,8 +117,8 @@ Click **Configure a new SQL view...**
 Click **Guess parameters from SQL** link
 
 Copy the values for **Default value** and **Validation regular expression** from the original SQL statement comments.
-
-Marck checkbox **Get geometry type and SRID**
+ 
+Check checkbox **Get geometry type and SRID**
 
 In **Atributes**, click **Refresh** 
 
@@ -137,14 +137,14 @@ You must create the other views you find in **~/git/ams/geoserver/sqlviews** fol
 ##### Web App
 Create a file `.env` within `~/git/ams/tests` whith following content:
 ```
-export FLASK_APP=~/git/ams/webapp/main.py 
+export FLASK_APP=~/ams/git/ams/webapp/main.py 
 export FLASK_DEBUG=1
-export PYTHONPATH=~/git/ams
+export PYTHONPATH=~/ams/git/ams
 source ~/git/ams/venv/bin/activate
 ```
 Then
 ```bash
-cd ~/git/ams/tests
+cd ~/ams/git/ams/tests
 source .env
 flask run
 ```
