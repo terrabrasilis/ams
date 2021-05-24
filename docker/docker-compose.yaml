@@ -1,0 +1,13 @@
+version: '3.3'
+services:
+  ams-webapp:
+    image: terrabrasilis/ams-webapp:v1.0.0
+    container_name: ams.webapp
+    restart: always
+    ports:
+      - 7000:7000
+    environment:
+      - "SCRIPT_NAME=/ams"
+      - "SERVER_URL=http://terrabrasilis.dpi.inpe.br/geoserverams/"
+    env_file:
+      - webapp-secrets.env
