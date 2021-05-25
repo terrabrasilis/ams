@@ -18,7 +18,7 @@ echo "/######################################################################/"
 echo " Build new image terrabrasilis/ams-webapp:v$VERSION "
 echo "/######################################################################/"
 echo
-docker build $NO_CACHE -t "terrabrasilis/ams-webapp:v$VERSION" --build-arg VERSION="v$VERSION" -f webapp/Dockerfile .
+docker build $NO_CACHE -t "terrabrasilis/ams-webapp:v$VERSION" --build-arg VERSION="v$VERSION" -f webapp/Dockerfile ../
 
 # send to dockerhub
 echo 
