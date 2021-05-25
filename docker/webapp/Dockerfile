@@ -39,18 +39,25 @@ ENV INSTALL_PATH /usr/local
 # INSTALL REQUIREMENTS
 # ------------------------------------------------------
 RUN mkdir $INSTALL_PATH/ams && mkdir $INSTALL_PATH/webapp
-COPY ams/ $INSTALL_PATH/ams/
-COPY webapp/ $INSTALL_PATH/webapp/
+ADD ams/requirements.txt $INSTALL_PATH/ams/requirements.txt
+ADD webapp/requirements.txt $INSTALL_PATH/webapp/requirements.txt
 # Install Python requirements
 RUN pip install -r $INSTALL_PATH/ams/requirements.txt && \
 pip install -r $INSTALL_PATH/webapp/requirements.txt
 # END REQUIREMENTS INSTALATION
 # ------------------------------------------------------
 
+# INSTALL APP
+# ------------------------------------------------------
+COPY ams/ $INSTALL_PATH/ams/
+COPY webapp/ $INSTALL_PATH/webapp/
+# END INSTALL APP
+# ------------------------------------------------------
+
 ## THE ENV VARS
 RUN echo "export FLASK_APP=\"${INSTALL_PATH}/webapp/main.py\"" > "${INSTALL_PATH}/webapp/.env" \
     && echo "export FLASK_DEBUG=1" >> "${INSTALL_PATH}/webapp/.env" \
-    && echo "export PYTHONPATH=\"${INSTALL_PATH}/ams\"" >> "${INSTALL_PATH}/webapp/.env" \
+    && echo "export PYTHONPATH=\"${INSTALL_PATH}\"" >> "${INSTALL_PATH}/webapp/.env" \
     && echo "export TZ=America/Sao_Paulo" >> "${INSTALL_PATH}/webapp/.env"
 
 # Script to run on start server
@@ -63,6 +70,3 @@ EXPOSE 7000
 WORKDIR $INSTALL_PATH/webapp
 
 ENTRYPOINT [ "/docker-entrypoint.sh" ]
-
-# using the gunicorn as a WSGI server
-#CMD ["gunicorn", "--workers=4", "--bind=0.0.0.0:7000", "wsgi:app"]
