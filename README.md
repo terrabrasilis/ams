@@ -31,19 +31,20 @@ sudo -u postgres psql
 #### Core 
 ```bash
 cd ~
- mkdir -p ~/ams/git
+mkdir -p ~/ams/git
 cd ams
-git clone https://github.com/$GitHub_User/ams.git git/ams #note: it must be your fork for development
+git clone https://github.com/$GitHub_User/ams.git ams #note: it must be your fork for development
 sudo apt-get install python3-venv
 python3 -m venv venv
-source venv/bin/activate
-pip install -r git/ams/requirements.txt
+source ~/ams/venv/bin/activate
+pip install -r ~/ams/git/ams/requirements.txt
 createdb -h localhost -p 5432 -U postgres DETER-B
 pg_restore --host "localhost" --port "5432" --username "postgres" --dbname "DETER-B" --verbose  git/ams/data/deter-b-2019-2021.backup
-cd git/ams/tests
+cd ~/ams/git/ams/tests
 export PYTHONPATH=~/ams/git/ams
 pytest -v --cov
 flake8 ..
+python ~/ams/git/ams/scripts/startup.py
 ```
 ### GeoServer
 
@@ -61,80 +62,67 @@ source ~/.profile
 ```
 ##### Config
 
-###### Accessing GeoServer Context Path to create the objects:
-
-http://**[geoserverip]**:8080/geoserver/web/?7 
-
-###### Click Workspaces/Add new workspace
-
-**Name:** ams
-
+###### Accessing GeoServer Context Path to create the objects:  
+http://**[geoserverip]**:8080/geoserver/web
+###### Click Workspaces/Add new workspace  
+**Name:** ams\
 Click **Save**
 
 ###### Click Stores/Add 
-**Note:** A store is a data repository, a Postgres database f.e.
-
-**Workspace:** ams
-
-**Data Source Name:** AMS
-
-**host:** locallhost (or another valid Postgres server IP)
-
-**port:** 5432
-
-**database:** AMS
-
-**schema:** public
-
-**user:** postgres
-
-**passwd:** postgres
+**Note:** A store is a data repository, a Postgres database f.e.\
+**Workspace**: ams\
+**Data Source Name**: AMS\
+**host**: locallhost (or another valid Postgres server IP)\
+**port**: 5432\
+**database**: AMS\
+**schema**: public\
+**user**: postgres\
+**passwd**: postgres
 
 Click **Save**
 
 ###### Click Layers/Add a new Layer
 
-In **Add layer from** choose ams:AMS
-
-Click in **Publish** to publish a table in the list that appears below.
-
+In **Add layer from** choose ams:AMS\
+Click in **Publish** to publish a table in the list that appears below.\
 Publish the following tables:
-csAmz_150km, csAmz_300km, csAmz_150km_risk_indicators, csAmz_300km_risk_indicators, amz_municipalities, amz_municipalities_risk_indicators, amz_states, amz_states_risk_indicators.
+```
+csAmz_150km, csAmz_150km_risk_indicators
+csAmz_300km, csAmz_300km_risk_indicators 
+amz_municipalities, amz_municipalities_risk_indicators 
+amz_states, amz_states_risk_indicators
+```
 
 ###### Click Layers/Add a new Layer
 
-**Note:** Before that, check if the functions that are shown in **~/git/ams/geoserver/sqlviews** folder exists in AMS database. If they don't, you should create it.
+**Note:** Before that, check if the functions that are shown\
+in **~/git/ams/geoserver/sqlviews** folder exists in AMS database.\
+If they don't, you should create it.
 
-In **Add layer from** choose ams:AMS
+In **Add layer from** choose ams:AMS\
+Click **Configure a new SQL view...** \
+**View Name:** csAmz_150km_view
 
-Click **Configure a new SQL view...**
-
-**View Name:** csAmz_150km_diff_view
-
-**SQL statement:** get the corresponding (by name) SQL statement in **~/git/ams/geoserver/sqlviews** folder. 
+**SQL statement:** get the corresponding (by name) SQL statement\
+in **~/git/ams/geoserver/sqlviews** folder.\
 **Note:** remove comments and any other text than the SQL itself.
 
-Click **Guess parameters from SQL** link
-
-Copy the values for **Default value** and **Validation regular expression** from the original SQL statement comments.
- 
-Check checkbox **Get geometry type and SRID**
-
-In **Atributes**, click **Refresh** 
-
+Click **Guess parameters from SQL** link\
+Copy the values for **Default value** and **Validation regular expression** \
+from the original SQL statement comments.\ 
+Check checkbox **Get geometry type and SRID** \
+In **Atributes**, click **Refresh** \
 Click **Save**
 
-In the next form:
-
-In **Bounding Boxes\Native Bounding Box**, click **Compute from data**
-
-In **Bounding Boxes\Lat/Lon Bounding Box**, click **Compute from native bounds**
-
+In the next form:\
+In **Bounding Boxes\Native Bounding Box**, click **Compute from data** \
+In **Bounding Boxes\Lat/Lon Bounding Box**, click **Compute from native bounds** \
 Click **Save**
 
-You must create the other views you find in **~/git/ams/geoserver/sqlviews** folder.
+You must create the other views found in **~/git/ams/geoserver/sqlviews** folder.\
+The view names are the same as the file names, replacing hyphens with underscores.
 
-##### Web App
+### Web App
 Create a file `.env` within `~/git/ams/tests` whith following content:
 ```
 export FLASK_APP=~/ams/git/ams/webapp/main.py 
