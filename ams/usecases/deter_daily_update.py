@@ -63,10 +63,9 @@ class DeterDailyUpdate:
 						.create_spatial_unit(sutablename, as_attribute_name)
 			su = surepo.get()
 			rirepo = RiskIndicatorsRepository(sutablename, as_attribute_name, self._dataaccess)
-			rirepo.delete(enddate)
 			uc = DetermineRiskIndicators(su, self._deter_repo, [], class_groups, startdate, enddate)	
 			indicators = uc.execute()
-			rirepo.save(indicators)		
+			rirepo.overwrite_from_date(indicators, enddate)		
 
 	# rebuild all deter_table data
 	# because old data can change from Deter team
