@@ -1,4 +1,10 @@
-# Docker for app
+# Docker-based deploy
+
+A complete stack to deploy the dependency services required by the AMS application.
+
+**Missing notes about required server configuration before starting the stack.**
+
+## Docker for app
 
 A self-contained environment to run the webapp based on Python 3.8.10 and Alpine Linux images.
 
