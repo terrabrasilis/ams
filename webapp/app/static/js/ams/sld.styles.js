@@ -5,7 +5,11 @@ ams.SLDStyles = {
 		this.setStroke = function(onlyStrokes) {
 			if(onlyStrokes) {
 				this.fillOpacity = 0;
-				this.stroke = `<Stroke><CssParameter name="stroke">#ff0000</CssParameter><CssParameter name="stroke-width">2</CssParameter><CssParameter name="stroke-linejoin">bevel</CssParameter></Stroke>`;     
+				this.stroke = '<Stroke>'
+								+ '<CssParameter name="stroke">#ff0000</CssParameter>'
+								+ '<CssParameter name="stroke-width">2</CssParameter>'
+								+ '<CssParameter name="stroke-linejoin">bevel</CssParameter>'
+							+ '</Stroke>';     
 			}
 		}
 
@@ -28,13 +32,69 @@ ams.SLDStyles = {
 		this.colorRange;
 		this.colorDomain;
 
-		this.createRule = function(v1, v2, color) {
+		this.createFill = function(value, color) {
 			let fill = "";
 			if(color) {
-				color = d3.color(color).formatHex();
-				fill = `<Fill><CssParameter name="fill">${color}</CssParameter></Fill>`;
+				let colorhex = d3.color(color).formatHex();
+				fill = '<Fill><CssParameter name="fill">' + colorhex + '</CssParameter>';
+				if(value == 0) {
+					fill += '<CssParameter name="fill-opacity">0.1</CssParameter>';
+				}
+				fill += '</Fill>';
 			}
-			return `<Rule><Title> ${v1}% - ${v2}% </Title><ogc:Filter><ogc:PropertyIsGreaterThanOrEqualTo><ogc:PropertyName>percentage</ogc:PropertyName><ogc:Literal>${v1}</ogc:Literal></ogc:PropertyIsGreaterThanOrEqualTo><ogc:PropertyIsLessThan><ogc:PropertyName>percentage</ogc:PropertyName><ogc:Literal>${v2}</ogc:Literal></ogc:PropertyIsLessThan></ogc:Filter><PolygonSymbolizer>${fill}${this.stroke}</PolygonSymbolizer></Rule>`;        
+			return fill;			
+		}
+
+		this.createTitle = function(v1, v2) {
+			return  ((v1 < 0) ? '<Title>' : '<Title> ') + v1 + '% - ' + v2 + '% </Title>';
+		}
+
+		this.createFirstRule = function(v1, v2, color) {
+			let fill = this.createFill(v1, color);
+			return '<Rule>'
+					+ this.createTitle(v1, v2)
+					+ '<ogc:Filter>'
+					+ 	'<ogc:PropertyIsLessThan>'
+					+ 	'<ogc:PropertyName>percentage</ogc:PropertyName>'
+					+ 	'<ogc:Literal>' + v2 + '</ogc:Literal>'
+					+ 	'</ogc:PropertyIsLessThan>'
+					+ '</ogc:Filter>'
+					+ '<PolygonSymbolizer>' + fill + this.stroke + '</PolygonSymbolizer>'
+				+ '</Rule>'; 			
+		}
+
+		this.createLastRule = function(v1, v2, color) {
+			let fill = this.createFill(v1, color);
+			return '<Rule>'
+					+ this.createTitle(v1, v2)
+					+ '<ogc:Filter>'
+					+ 	'<ogc:PropertyIsGreaterThan>'
+					+ 	'<ogc:PropertyName>percentage</ogc:PropertyName>'
+					+ 	'<ogc:Literal>' + v1 + '</ogc:Literal>'
+					+ 	'</ogc:PropertyIsGreaterThan>'
+					+ '</ogc:Filter>'
+					+ '<PolygonSymbolizer>' + fill + this.stroke + '</PolygonSymbolizer>'
+				+ '</Rule>'; 			
+		}		
+
+		this.createRule = function(v1, v2, color) {
+			let fill = this.createFill(v1, color);
+			return '<Rule>'
+					+ this.createTitle(v1, v2)
+					+ '<ogc:Filter>'
+					+	'<ogc:And>'
+					+ 	'<ogc:PropertyIsGreaterThanOrEqualTo>'
+					+ 	'<ogc:PropertyName>percentage</ogc:PropertyName>'
+					+ 	'<ogc:Literal>' + v1 + '</ogc:Literal>'
+					+ 	'</ogc:PropertyIsGreaterThanOrEqualTo>'
+					+ 	'<ogc:PropertyIsLessThan>'
+					+ 	'<ogc:PropertyName>percentage</ogc:PropertyName>'
+					+ 	'<ogc:Literal>' + v2 + '</ogc:Literal>'
+					+ 	'</ogc:PropertyIsLessThan>'
+					+	'</ogc:And>'
+					+ '</ogc:Filter>'
+					+ '<PolygonSymbolizer>' + fill + this.stroke + '</PolygonSymbolizer>'
+				+ '</Rule>';        
 		} 
 
 		this.getMaxLength = function(values) {
@@ -62,23 +122,45 @@ ams.SLDStyles = {
 				.nice(numOfRanges);
 			let ticks = legend.ticks(numOfRanges);
 			let rules = "";
+			let firstRule = "";
+			let lastRule = "";
 			if(!onlyStrokes) {
-				let vMaxLength = this.getMaxLength(ticks);
-				for(let i = 0; i < ticks.length - 1; i++) {
-					let v1 = ticks[i];
-					let v2 = ticks[i+1];
-					let color = legend(v1);
-					rules = `${rules}${this.createRule(v1.toFixed(vMaxLength), v2.toFixed(vMaxLength), color)}`;
-				}       
+				if(ticks.length >= 2) {			
+					let vMaxLength = this.getMaxLength(ticks);
+					firstRule = this.createFirstRule(ticks[0].toFixed(vMaxLength), 
+												ticks[1].toFixed(vMaxLength), 
+												legend(ticks[0]))
+					for(let i = 1; i < ticks.length - 2; i++) {
+						let v1 = ticks[i];
+						let v2 = ticks[i+1];
+						let color = legend(v1);
+						rules = `${rules}${this.createRule(v1.toFixed(vMaxLength), 
+															v2.toFixed(vMaxLength), 
+															color)}`;
+					}     
+					let lastIdx = ticks.length - 1;
+					lastRule = this.createLastRule(ticks[lastIdx - 1].toFixed(vMaxLength), 
+												ticks[lastIdx].toFixed(vMaxLength), 
+												legend(ticks[lastIdx - 1]));
+				}
 			}
 			else {
 				rules = `${rules}${this.createRule(ticks[0], ticks[ticks.length - 1])}`;
 			}       
 
-			return rules;   
+			return firstRule + rules + lastRule;   
 		}
 
-		this.sld = `<?xml version="1.0" encoding="ISO-8859-1"?> <StyledLayerDescriptor version="1.0.0" xsi:schemaLocation="http://www.opengis.net/sld StyledLayerDescriptor.xsd" xmlns="http://www.opengis.net/sld" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><NamedLayer><Name>${layerName}</Name><UserStyle><Title>SLD Cook Book: Attribute-based polygon</Title><FeatureTypeStyle>${this.createRules(6)}</FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>`; 
+		this.sld = '<?xml version="1.0" encoding="ISO-8859-1"?>' 
+					+ '<StyledLayerDescriptor version="1.0.0"'
+					+ ' xsi:schemaLocation="http://www.opengis.net/sld StyledLayerDescriptor.xsd"'
+					+ ' xmlns="http://www.opengis.net/sld" xmlns:ogc="http://www.opengis.net/ogc"'
+					+ ' xmlns:xlink="http://www.w3.org/1999/xlink"' 
+					+ ' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
+					+ '<NamedLayer><Name>' + layerName + '</Name>'
+					+ '<UserStyle><Title>' + layerName + '</Title>'
+					+ '<FeatureTypeStyle>' + this.createRules(6) + '</FeatureTypeStyle>'
+					+ '</UserStyle></NamedLayer></StyledLayerDescriptor>'; 
 		
 		this.getSLD = function() {
 			return this.sld;
