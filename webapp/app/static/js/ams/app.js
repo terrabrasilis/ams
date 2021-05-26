@@ -81,6 +81,17 @@ ams.App = {
 		priorLayer.bringToFront();
 		priorLayer.addTo(map);
 
+		var tbBiomeLayerName = "prodes-amz:brazilian_amazon_biome_border";
+		var tbWmsOptions = {
+			"transparent": true, 
+			"tiled": true, 
+			"format": "image/png",
+		};
+		var tbWmsUrl = "http://terrabrasilis.dpi.inpe.br/geoserver/ows";
+		var tbSource = L.WMS.source(tbWmsUrl, tbWmsOptions);
+		var tbBiomeLayer = tbSource.getLayer(tbBiomeLayerName).addTo(map);
+		tbBiomeLayer.bringToFront();
+
 		var groupedOverlays = {
 			"Spatial Unit": {
 				[spatialUnits.default.dataname]: suLayer
