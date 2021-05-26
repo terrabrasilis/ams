@@ -42,6 +42,19 @@ ams.Map = {
 	},
 
 	SpatialUnits: function(spatialUnits, suDefaultName) {
+		this._suNamesMap = {
+			"csAmz_150km": "C&#233;lulas 150x150 Km&#178;",
+			"csAmz_300km": "C&#233;lulas 300x300 Km&#178;",
+			"amz_states": "Estados",
+			"amz_municipalities": "Munic&#237;pios",
+		};
+
+		this._suDataNamesMap = {};
+
+		this.getName = function(dataname) {
+			return this._suNamesMap[dataname];
+		}
+
 		this.getSpatialUnit = function getSpatialUnit(name) {
 			for(var i = 0; i < this.spatialUnits.length; i++) {
 				if(this.spatialUnits[i].dataname == name) {
@@ -49,30 +62,64 @@ ams.Map = {
 				}
 			}
 			return null;				
-		}			
-		this.spatialUnits = spatialUnits;
+		}	
+
+		this._setNames = function(sus) {
+			for(var i = 0; i < sus.length; i++) {
+				sus[i].name = this._suNamesMap[sus[i].dataname];
+				this._suDataNamesMap[sus[i].name] = sus[i].dataname;
+			}
+			this.spatialUnits = sus;
+		}
+		
+		this._setNames(spatialUnits);
+
 		this.default = this.getSpatialUnit(suDefaultName);
+
 		this.isSpatialUnit = function(name) {
 			for(var i = 0; i < this.spatialUnits.length; i++) {
-				if(this.spatialUnits[i].dataname == name) {
+				if(this.spatialUnits[i].name == name) {
 					return true;
 				}
 			}
 			return false;			
 		}
+
 		this.length = function() {
 			return this.spatialUnits.length;
 		}
+
 		this.at = function(pos) {
 			return this.spatialUnits[pos];
 		}	
+
+		this.getDataName = function(name) {
+			return this._suDataNamesMap[name];
+		}
 	},
 
 	DeterClassGroups: function(groups) {
-		this.groups = groups;
+		this._groupNamesMap = {
+			"DS": "DETER Desmatamento",
+			"DG": "DETER Degrada&#231;&#227;o",
+			"CS": "DETER Corte-Seletivo",
+			"MN": "DETER Minera&#231;&#227;o",
+		}
+
+		this._setNames = function(groups) {
+			for(var i = 0; i < groups.length; i++) {
+				groups[i].acronym = groups[i].name;
+				groups[i].name = this._groupNamesMap[groups[i].name];
+			}
+			this.groups = groups;
+		}
+
+		this._setNames(groups);
+		
 		this.length = function() {
 			return this.groups.length;
 		}
+		
 		this.at = function(pos) {
 			return this.groups[pos];
 		}		
@@ -113,16 +160,16 @@ ams.Map = {
 
 	TemporalUnits: function() {
 		this.aggregates = {		
-			0: {"key": "7d", "value": "Week"},
-			1: {"key": "15d", "value": "15 Days"},
-			2: {"key": "1m", "value": "Month"},
-			3: {"key": "3m", "value": "3 Months"},
-			4: {"key": "1y", "value": "Year"},
+			0: {"key": "7d", "value": "Agregado Semanal"},
+			1: {"key": "15d", "value": "Agregado 15 Dias"},
+			2: {"key": "1m", "value": "Agregado Mensal"},
+			3: {"key": "3m", "value": "Agregado 3 Meses"},
+			4: {"key": "1y", "value": "Agregado Anual"},
 		};
 
 		this.differeces = {
-			0: {"key": "none", "value": "Current"},
-			1: {"key": "1m", "value": "Previous"},
+			0: {"key": "none", "value": "No Per&#237;odo"},
+			1: {"key": "1m", "value": "Diferen&#231;a Per&#237;odo Anterior"},
 			// 2: {"key": "1y", "value": "Previous Year"}, TODO
 		}
 

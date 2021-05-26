@@ -76,5 +76,7 @@ ams.Date = {
 	}
 };
 
-module.exports.ams = ams;
-module.exports.ams.Date.DateController = ams.Date.DateController;
+if(typeof module !== 'undefined') {
+	module.exports.ams = ams;
+	module.exports.ams.Date.DateController = ams.Date.DateController;
+}
