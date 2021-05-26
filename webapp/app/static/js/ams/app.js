@@ -18,7 +18,8 @@ ams.App = {
 			ams.Map.update(suSource, currSuLayerName, suViewParams, suLayerStyle);	
 			priorLayerStyle = new ams.SLDStyles.PercentageStyle(currSuLayerName, 
 															suLayerMinPercentage, 
-															suLayerMaxPercentage, true);
+															suLayerMaxPercentage, 
+															true, "#ff0000");
 			ams.Map.update(priorSource, currSuLayerName, priorViewParams, priorLayerStyle);	
 			priorLayer.bringToFront();		
 		}
@@ -64,7 +65,8 @@ ams.App = {
 
 		var priorLayerName = currSuLayerName;
 		var priorLayerStyle = new ams.SLDStyles.PercentageStyle(currSuLayerName, 0, 
-															suLayerMaxPercentage, true);
+															suLayerMaxPercentage, 
+															true, "#ff0000");
 		var priorViewParams = new ams.Map.ViewParams(deterClassGroups.at(0).name, 
 															dateControll, "10");	
 		var priorWmsOptions = {
