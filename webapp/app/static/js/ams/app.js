@@ -103,11 +103,10 @@ ams.App = {
 		tbBiomeLayer.bringToBack();
 
 		var groupedOverlays = {
-			"INDICADOR": {},
+			"INDICADOR (&#193;rea Km&#178;)": {},
 			"UNIDADE ESPACIAL": {
 				[spatialUnits.default.name]: suLayer
 			},
-			"INDICADOR": {},
 			"UNIDADE TEMPORAL": {},
 			"": {},
 		};
@@ -120,12 +119,12 @@ ams.App = {
 
 		var classLayer = new L.WMS.Layer(wmsUrl, deterClassGroups.at(0).acronym, 
 										wmsOptions).addTo(map);	
-		groupedOverlays["INDICADOR"][deterClassGroups.at(0).name] = classLayer;	
+		groupedOverlays["INDICADOR (&#193;rea Km&#178;)"][deterClassGroups.at(0).name] = classLayer;	
 
 		for(var i = 1; i < deterClassGroups.length(); i++)
 		{
 			let layer = new L.WMS.Layer(wmsUrl, deterClassGroups.at(i).acronym, wmsOptions);	
-			groupedOverlays["INDICADOR"][deterClassGroups.at(i).name] = layer;
+			groupedOverlays["INDICADOR (&#193;rea Km&#178;)"][deterClassGroups.at(i).name] = layer;
 		}
 
 		var temporalUnitAggregates = temporalUnits.getAggregates();
@@ -150,7 +149,12 @@ ams.App = {
 		}
 
 		var groupControl = L.control.groupedLayers(null, groupedOverlays, {
-			exclusiveGroups: ["UNIDADE ESPACIAL", "Indicator", "INDICADOR", "UNIDADE TEMPORAL", ""],
+			exclusiveGroups: [
+				"UNIDADE ESPACIAL", 
+				"INDICADOR (&#193;rea Km&#178;)", 
+				"UNIDADE TEMPORAL", 
+				"",
+			],
 			collapsed: false,
 			position: "topleft",
 		});
@@ -183,7 +187,7 @@ ams.App = {
 
 		map.on('overlayadd', function(e) {	
 			if(spatialUnits.isSpatialUnit(e.name)) {
-				suLayerName = gsWorkspace + ":" + e.name;
+				suLayerName = gsWorkspace + ":" + spatialUnits.getDataName(e.name);
 				if(diffON) {
 					currSuLayerName = suLayerName + "_diff_view"; 
 					suLayerMinPercentage = wfs.getMin(currSuLayerName, "percentage", suViewParams);

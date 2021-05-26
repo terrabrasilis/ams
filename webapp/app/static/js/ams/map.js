@@ -49,6 +49,8 @@ ams.Map = {
 			"amz_municipalities": "Munic&#237;pios",
 		};
 
+		this._suDataNamesMap = {};
+
 		this.getName = function(dataname) {
 			return this._suNamesMap[dataname];
 		}
@@ -65,6 +67,7 @@ ams.Map = {
 		this._setNames = function(sus) {
 			for(var i = 0; i < sus.length; i++) {
 				sus[i].name = this._suNamesMap[sus[i].dataname];
+				this._suDataNamesMap[sus[i].name] = sus[i].dataname;
 			}
 			this.spatialUnits = sus;
 		}
@@ -75,7 +78,7 @@ ams.Map = {
 
 		this.isSpatialUnit = function(name) {
 			for(var i = 0; i < this.spatialUnits.length; i++) {
-				if(this.spatialUnits[i].dataname == name) {
+				if(this.spatialUnits[i].name == name) {
 					return true;
 				}
 			}
@@ -89,6 +92,10 @@ ams.Map = {
 		this.at = function(pos) {
 			return this.spatialUnits[pos];
 		}	
+
+		this.getDataName = function(name) {
+			return this._suDataNamesMap[name];
+		}
 	},
 
 	DeterClassGroups: function(groups) {
