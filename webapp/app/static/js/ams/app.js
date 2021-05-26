@@ -32,13 +32,21 @@ ams.App = {
 
 		var wfs = new ams.Map.WFS(geoserverUrl);
 		
-		var map = new L.Map("map").setView([spatialUnits.default.center_lat, 
-									spatialUnits.default.center_lng], 5);
+		var map = new L.Map("map", {
+		    zoomControl: false
+		});
+
+		map.setView([spatialUnits.default.center_lat, 
+					spatialUnits.default.center_lng], 5);
 
 		var osmLayer = new L.TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
 			maxZoom: 18,
-			crs: L.CRS.EPSG4326
+			crs: L.CRS.EPSG4326,
+		}).addTo(map);
+
+		L.control.zoom({
+			position: 'topright'
 		}).addTo(map);
 
 		var suViewParams = new ams.Map.ViewParams(deterClassGroups.at(0).name, 
@@ -148,6 +156,7 @@ ams.App = {
 		var groupControl = L.control.groupedLayers(null, groupedOverlays, {
 			exclusiveGroups: ["Spatial Unit", "Indicator", "Class", "Aggregate", "Difference"],
 			collapsed: false,
+			position: "topleft",
 		});
 
 		groupControl.addTo(map);
