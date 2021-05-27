@@ -1,12 +1,14 @@
 var ams = ams || {};
 
 ams.SLDStyles = {
-	PercentageStyle: function(layerName, minValue, maxValue, onlyStrokes) {
-		this.setStroke = function(onlyStrokes) {
-			if(onlyStrokes) {
+	PercentageStyle: function(layerName, minValue, maxValue,
+							isPriorization, priorColorHex) {
+		this.setStroke = function(isPriorization) {
+			if(isPriorization) {
 				this.fillOpacity = 0;
 				this.stroke = '<Stroke>'
-								+ '<CssParameter name="stroke">#ff0000</CssParameter>'
+								+ '<CssParameter name="stroke">' 
+								+ priorColorHex + '</CssParameter>'
 								+ '<CssParameter name="stroke-width">2</CssParameter>'
 								+ '<CssParameter name="stroke-linejoin">bevel</CssParameter>'
 							+ '</Stroke>';     
@@ -26,7 +28,7 @@ ams.SLDStyles = {
 
 		this.stroke = "";
 		this.fillOpacity = 1;
-		this.setStroke(onlyStrokes);
+		this.setStroke(isPriorization);
 		this.maxValue = maxValue;
 		this.minValue = minValue;
 		this.colorRange;
@@ -124,7 +126,7 @@ ams.SLDStyles = {
 			let rules = "";
 			let firstRule = "";
 			let lastRule = "";
-			if(!onlyStrokes) {
+			if(!isPriorization) {
 				if(ticks.length >= 2) {			
 					let vMaxLength = this.getMaxLength(ticks);
 					firstRule = this.createFirstRule(ticks[0].toFixed(vMaxLength), 
