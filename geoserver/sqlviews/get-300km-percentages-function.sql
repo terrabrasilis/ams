@@ -1,4 +1,4 @@
-DROP FUNCTION IF EXISTS et_300km_percentages(varchar, date, date);
+DROP FUNCTION IF EXISTS get_300km_percentages(varchar, date, date);
 
 create or replace function get_300km_percentages(clsname varchar, startdate date, enddate date)
 	returns table (
