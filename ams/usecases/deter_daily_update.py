@@ -31,6 +31,8 @@ class DeterDailyUpdate:
 		while not self._terminate:
 			time.sleep(self._sleep_sec)	
 			if datetime.now().strftime('%H:%M') == self._at:
+				at = datetime.now().strftime('%Y-%m-%d %H:%M:%S %p')
+				print(f'AMS daily update was fired at {at}.')  # TODO(#59)
 				self._check()
 				while ((datetime.now().strftime('%H:%M') == self._at) 
 						and (not self._terminate)):
