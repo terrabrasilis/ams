@@ -11,6 +11,7 @@ from ams.repository import (DeterRepository,
 							SpatialUnitInfoRepository)
 from ams.usecases import DetermineRiskIndicators, AddSpatialUnit
 from ams.domain.entities import DeterClassGroup
+from tests.helpers.dataaccess_helper import DataAccessHelper
 
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -150,6 +151,34 @@ def test_uc_historical():
 		assert round(expected_classname[i]['percentage'], 5) == round(indicators[i].percentage, 5)
 		assert expected_classname[i]['date'] == str(indicators[i].date)
 	db.drop()	
+
+
+def test_unknown_classname():
+	db = DataAccessHelper.createdb('postgresql://postgres:postgres@localhost:5432/det_unk_class')
+	sudata = {'tablename': 'amz_states', 
+				'shpname': 'amz_states_epsg_4326', 
+				'as_attribute_name': 'NM_ESTADO'}
+	DataAccessHelper.add_spatial_unit(db, sudata['tablename'], sudata['shpname'],
+										sudata['as_attribute_name'])
+	group_dg = DeterClassGroup('DG')
+	group_dg.add_class('CICATRIZ_DE_QUEIMADA')
+	group_repo = DeterClassGroupRepository(db)
+	group_repo.add(group_dg)	
+	surepo = SpatialUnitDynamicMapperFactory.instance()\
+				.create_spatial_unit(sudata['tablename'], sudata['as_attribute_name'])
+	su = surepo.get()
+	startdate = datetime.date(2021, 2, 1)
+	enddate = datetime.date(2021, 1, 1)
+	deter_repo = DeterRepository()
+	deter_hist = []
+	class_groups = group_repo.list()
+	uc = DetermineRiskIndicators(su, deter_repo, deter_hist, 
+								class_groups, startdate, enddate)	
+	indicators = uc.execute()	
+	assert len(indicators) == 4
+	for ind in indicators: 
+		assert ind.classname == 'DG'
+	db.drop()
 
 
 def setdb(url):
