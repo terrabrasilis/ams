@@ -13,3 +13,19 @@ ORDER BY
 	percentage %order%
 LIMIT
 	%limit%
+
+/*
+SELECT p1.suid, p1.id, p1.geometry, p1.classname, p2.date, COALESCE(p2.percentage, 0) - COALESCE(p1.percentage, 0) AS percentage
+FROM get_300km_percentages('%classname%', '%enddate%'::date, '%prevdate%'::date) p1
+LEFT OUTER JOIN get_300km_percentages('%classname%', '%startdate%'::date, '%enddate%'::date) p2
+ON p1.suid = p2.suid
+ORDER BY
+	percentage %order%
+LIMIT
+	%limit%
+
+-73.9909439086914
+-16.290519038120973
+-41.59353565626206
+5.307753100107966
+ */
