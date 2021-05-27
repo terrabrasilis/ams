@@ -1,3 +1,5 @@
+DROP FUNCTION IF EXISTS et_300km_percentages(varchar, date, date);
+
 create or replace function get_300km_percentages(clsname varchar, startdate date, enddate date)
 	returns table (
 			suid bigint,
@@ -32,10 +34,3 @@ ON
 	AND
 	ri.date <= startdate;
 end;$$
-
-/*
--73.9909439086914
--16.290519038120973
--41.59353565626206
-5.307753100107966
- */
