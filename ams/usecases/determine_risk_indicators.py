@@ -39,7 +39,10 @@ class DetermineRiskIndicators:
 				if a.date == currdate:
 					if fgeom.intersects(a.geom):
 						group = self._get_class_group(a.classname)
-						percentages[group] += geoprocess.percentage_of_area(fgeom, a.geom)
+						if group != '':
+							percentages[group] += geoprocess.percentage_of_area(fgeom, a.geom)
+						else:
+							print(f'Class \'{a.classname}\' not found.')  # TODO(#59) 
 					i += 1
 				else:
 					self._add_percentages(indicators, percentages, f, currdate)
