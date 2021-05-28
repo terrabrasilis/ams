@@ -29,7 +29,7 @@ class DeterRepository(Base, DeterAlerts, metaclass=DeterRepositoryMeta):
 	gid = Column(Integer, primary_key=True)
 	classname = Column(String, nullable=False)
 	date = Column(Date, nullable=False)
-	geom = Column(Geometry('POLYGON', srid=4326), nullable=False)
+	geom = Column(Geometry('GEOMETRY', srid=4326), nullable=False)
 
 	@property
 	def id(self):
@@ -68,7 +68,7 @@ class DeterHistoricalRepository(DeterRepository):
 	gid = Column(Integer, primary_key=True)
 	classname = Column(String, nullable=False)
 	date = Column(Date, nullable=False)
-	geom = Column(Geometry('POLYGON', srid=4326), nullable=False)
+	geom = Column(Geometry('GEOMETRY', srid=4326), nullable=False)
 
 	__mapper_args__ = {
 		'concrete': True
