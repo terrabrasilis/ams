@@ -1,4 +1,4 @@
-from ams.domain.entities import SpatialUnitInfo, DeterClassGroup
+from ams.entities import SpatialUnitInfo, DeterClassGroup
 
 
 class ConfigInfo:

@@ -8,7 +8,7 @@ from ams.usecases import AddSpatialUnit, DetermineRiskIndicators
 from ams.repository import (SpatialUnitDynamicMapperFactory, SpatialUnitInfoRepository,
                             DeterClassGroupRepository, DeterRepository,
                             RiskIndicatorsRepository)
-from ams.domain.entities import DeterClassGroup
+from ams.entities import DeterClassGroup
 from webapp.app.config import Config
 
 

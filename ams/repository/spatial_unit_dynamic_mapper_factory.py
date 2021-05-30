@@ -44,6 +44,7 @@ class SpatialUnitDynamicMapperFactory:
 		ri_table = Table(ri_tablename, metadata,
 			Column('id', Integer, primary_key=True, autoincrement=True),
 			Column('percentage', Float),
+			Column('area', Float),
 			Column('classname', String),
 			Column('date', Date),
 			Column('suid', Integer, ForeignKey(f'{su_table}.suid'), nullable=False),

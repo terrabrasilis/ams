@@ -1,4 +1,4 @@
-from ams.domain import entities
+from ams import entities
 from ams.dataaccess import DataAccess
 from .alchemy_orm import SpatialUnitInfo
 from .spatial_unit_dynamic_mapper_factory import SpatialUnitDynamicMapperFactory

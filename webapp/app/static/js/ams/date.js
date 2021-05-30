@@ -23,9 +23,9 @@ ams.Date = {
 
 		this.setPeriod = function(startdate, period) {
 			this.startdate = startdate;
-			startdate = new Date(startdate + "T00:00:00");
-			let enddate = new Date(startdate);
-			let prevdate = new Date(startdate);
+			let sdate = new Date(startdate + "T00:00:00");
+			let enddate = new Date(sdate);
+			let prevdate = new Date(sdate);
 			if(period == "7d") {
 				enddate.setUTCDate(enddate.getUTCDate() - 7);
 				prevdate.setUTCDate(prevdate.getUTCDate() - 14);
@@ -38,14 +38,14 @@ ams.Date = {
 				enddate.setUTCDate(0);
 				prevdate.setUTCDate(0);
 				prevdate.setUTCDate(0);				
-				if(!this.isLastDay(startdate)) {
-					let day = startdate.getUTCDate();
+				if(!this.isLastDay(sdate)) {
+					let day = sdate.getUTCDate();
 					prevdate.setUTCDate(day);
 					enddate.setUTCDate(day);
 				}
 			}
 			else if(period == "3m") {
-				if(this.isLastDay(startdate)) {
+				if(this.isLastDay(sdate)) {
 					enddate.setUTCDate(enddate.getUTCDate() - 2*32);
 					enddate.setUTCDate(0);
 					prevdate.setUTCDate(prevdate.getUTCDate() - 5*32);
@@ -62,8 +62,8 @@ ams.Date = {
 			else if(period == "1y") {
 				enddate.setUTCFullYear(enddate.getUTCFullYear() - 1);
 				prevdate.setUTCFullYear(prevdate.getUTCFullYear() - 2);					
-				if(this.isLastDay(startdate) && (startdate.getUTCMonth() == 1)) {
-					let month = startdate.getUTCMonth() + 1;
+				if(this.isLastDay(sdate) && (sdate.getUTCMonth() == 1)) {
+					let month = sdate.getUTCMonth() + 1;
 					enddate.setUTCMonth(month);
 					prevdate.setUTCMonth(month);					
 					enddate.setUTCDate(0);

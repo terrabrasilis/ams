@@ -1,5 +1,5 @@
 from shapely.geometry.base import BaseGeometry
-from ams.domain.entities import Geometry
+from ams.entities import Geometry
 
 
 class ShapelyGeometry(Geometry):
@@ -16,4 +16,4 @@ class ShapelyGeometry(Geometry):
 		return self._geom.intersects(other._geom)
 
 	def intersection(self, other: Geometry) -> Geometry:
-		return ShapelyGeometry(self._geom.intersection(other._geom))		
+		return ShapelyGeometry(self._geom.intersection(other._geom))	

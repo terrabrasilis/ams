@@ -2,7 +2,7 @@ import os
 import datetime
 from sqlalchemy import create_engine
 from ams.dataaccess import DataAccess, AlchemyDataAccess
-from ams.domain.entities import DeterClassGroup
+from ams.entities import DeterClassGroup
 from ams.repository import (DeterClassGroupRepository,
 							SpatialUnitDynamicMapperFactory,
 							SpatialUnitInfoRepository,
