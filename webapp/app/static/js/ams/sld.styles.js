@@ -35,6 +35,7 @@ ams.SLDStyles = {
 		this.colorDomain;
 		this._unit = "km&#178;"
 		this._propertyName = "area"; 
+		this._numberOfTicks = 6; 
 
 		this.createFill = function(value, color) {
 			let fill = "";
@@ -139,13 +140,13 @@ ams.SLDStyles = {
 			return vMaxLength;
 		}
 
-		this.createRules = function(numOfRanges) {
+		this.createRules = function() {
 			this.setLegendDomainAndRange();
 			let legend = d3.scaleLinear()
 				.domain(this.colorDomain)
 				.range(this.colorRange)
-				.nice(numOfRanges);
-			let ticks = legend.ticks(numOfRanges);
+				.nice(this._numberOfTicks);
+			let ticks = legend.ticks(this._numberOfTicks);	
 			let rules = "";
 			let firstRule = "";
 			let lastRule = "";
@@ -185,7 +186,7 @@ ams.SLDStyles = {
 					+ ' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
 					+ '<NamedLayer><Name>' + layerName + '</Name>'
 					+ '<UserStyle><Title>' + layerName + '</Title>'
-					+ '<FeatureTypeStyle>' + this.createRules(6) + '</FeatureTypeStyle>'
+					+ '<FeatureTypeStyle>' + this.createRules() + '</FeatureTypeStyle>'
 					+ '</UserStyle></NamedLayer></StyledLayerDescriptor>'; 
 		
 		this.getSLD = function() {

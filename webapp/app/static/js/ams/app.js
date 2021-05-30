@@ -175,7 +175,7 @@ ams.App = {
 		(function addPriorizationControl() {
 			$('<div class="leaflet-control-layers-group" id="prioritization-control-layers-group">'
 				+ '<label class="leaflet-control-layers-group-name">'
-				+ '<span class="leaflet-control-layers-group-name">Prioritiza&#231;&#227;o </span>'
+				+ '<span class="leaflet-control-layers-group-name">Prioriza&#231;&#227;o </span>'
 				+ '<input type="number" id="prioritization-input" min="1" max="50" value=' 
 				+ priorViewParams.limit + ' />'
 				+ '<button id="prioritization-button"> Ok </button>'
@@ -185,12 +185,11 @@ ams.App = {
 		var suLayerMinArea = 0;
 		var diffON = false;
 
-		map.on('overlayadd', function(e) {	
+		map.on('overlayadd', function(e) {
 			if(spatialUnits.isSpatialUnit(e.name)) {
 				suLayerName = gsWorkspace + ":" + spatialUnits.getDataName(e.name);
 				if(diffON) {
 					currSuLayerName = suLayerName + "_diff_view"; 
-					suLayerMinArea = wfs.getMin(currSuLayerName, "area", suViewParams);
 				} 
 				else {
 					currSuLayerName = suLayerName + "_view";
@@ -211,7 +210,6 @@ ams.App = {
 				}
 				else {
 					currSuLayerName =  suLayerName + "_diff_view"; 
-					suLayerMinArea = wfs.getMin(currSuLayerName, "area", suViewParams);
 					diffON = true;
 				}
 			}
@@ -220,26 +218,18 @@ ams.App = {
 				suViewParams.classname = acronym;
 				priorViewParams.classname = acronym;
 			}
+
+			if(diffON) {
+				suLayerMinArea = wfs.getMin(currSuLayerName, "area", suViewParams);
+			}			
 			
 			updateAll(suSource, currSuLayerName, suViewParams, suLayerMinArea, 
 					priorSource, priorViewParams, legendControl); 			
 		});	
 
 		var defaultDate = new Date(currStartdate + "T00:00:00")
-
-		$.datepicker.regional['br'] = {
-			closeText: 'Fechar',
-			currentText: 'Hoje',
-			monthNames: ['Janeiro','Fevereiro','Mar&#231;o','Abril','Maio','Junho', 
-						'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],
-			monthNamesShort: ['Jan','Fev','Mar','Abr','Mai','Jun',
-							'Jul','Ago','Set','Out','Nov','Dez'],
-			dayNames: ['Domingo','Segunda','Ter&#231;a','Quarta','Quinta','Sexta','S&#225;bado'],
-			dayNamesShort: ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'],
-			dayNamesMin: ['D','S','T','Q','Q','S','S'],
-			dateFormat: 'dd/mm/yy',
-		};
-
+		var datepicker = new ams.datepicker.Datepicker();
+		$.datepicker.regional['br'] = datepicker.regional("br");
 		$.datepicker.setDefaults($.datepicker.regional["br"]);
 
 		$('#datepicker').datepicker({
