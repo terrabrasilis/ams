@@ -3,22 +3,22 @@ var ams = ams || {};
 ams.App = {
 	run: function(geoserverUrl, gsWorkspace, sus, spatialUnits, deterClassGroups) {
 		const updateAll = function(suSource, currSuLayerName, suViewParams, 
-								suLayerMinPercentage, priorSource, priorViewParams, 
+								suLayerMinArea, priorSource, priorViewParams, 
 								legendControl) {
-			let suLayerMaxPercentage = wfs.getMax(currSuLayerName, "percentage", suViewParams);
-			if(suLayerMaxPercentage == suLayerMinPercentage) 
+			let suLayerMaxArea = wfs.getMax(currSuLayerName, "area", suViewParams);
+			if(suLayerMaxArea == suLayerMinArea) 
 			{
 				alert("Não existem dados para o periodo selecionado!");
 				return;
 			}
-			let suLayerStyle = new ams.SLDStyles.PercentageStyle(currSuLayerName, 
-																suLayerMinPercentage, 
-																suLayerMaxPercentage);	
+			let suLayerStyle = new ams.SLDStyles.AreaStyle(currSuLayerName, 
+																suLayerMinArea, 
+																suLayerMaxArea);	
 		 	legendControl.update(currSuLayerName, suLayerStyle);
 			ams.Map.update(suSource, currSuLayerName, suViewParams, suLayerStyle);	
-			priorLayerStyle = new ams.SLDStyles.PercentageStyle(currSuLayerName, 
-															suLayerMinPercentage, 
-															suLayerMaxPercentage, 
+			priorLayerStyle = new ams.SLDStyles.AreaStyle(currSuLayerName, 
+															suLayerMinArea, 
+															suLayerMaxArea, 
 															true, "#ff0000");
 			ams.Map.update(priorSource, currSuLayerName, priorViewParams, priorLayerStyle);	
 			priorLayer.bringToFront();		
@@ -53,10 +53,10 @@ ams.App = {
 												dateControll, "ALL");
 		var suLayerName = gsWorkspace + ":" + spatialUnits.default.dataname;
 		var currSuLayerName = suLayerName + "_view";
-		var suLayerMaxPercentage = wfs.getMax(currSuLayerName, "percentage", 
+		var suLayerMaxArea = wfs.getMax(currSuLayerName, "area", 
 											suViewParams); 
-		var suLayerStyle = new ams.SLDStyles.PercentageStyle(currSuLayerName, 0, 
-															suLayerMaxPercentage);
+		var suLayerStyle = new ams.SLDStyles.AreaStyle(currSuLayerName, 0, 
+															suLayerMaxArea);
 		var wmsUrl = geoserverUrl + "/wms?"
 		var wmsOptions = {
 			"transparent": true, 
@@ -72,8 +72,8 @@ ams.App = {
 		suLayer.addTo(map);	
 
 		var priorLayerName = currSuLayerName;
-		var priorLayerStyle = new ams.SLDStyles.PercentageStyle(currSuLayerName, 0, 
-															suLayerMaxPercentage, 
+		var priorLayerStyle = new ams.SLDStyles.AreaStyle(currSuLayerName, 0, 
+															suLayerMaxArea, 
 															true, "#ff0000");
 		var priorViewParams = new ams.Map.ViewParams(deterClassGroups.at(0).acronym, 
 															dateControll, "10");	
@@ -182,7 +182,7 @@ ams.App = {
 				+ '</label></div>').insertAfter("#leaflet-control-layers-group-1");	
 		})();	
 
-		var suLayerMinPercentage = 0;
+		var suLayerMinArea = 0;
 		var diffON = false;
 
 		map.on('overlayadd', function(e) {	
@@ -190,11 +190,11 @@ ams.App = {
 				suLayerName = gsWorkspace + ":" + spatialUnits.getDataName(e.name);
 				if(diffON) {
 					currSuLayerName = suLayerName + "_diff_view"; 
-					suLayerMinPercentage = wfs.getMin(currSuLayerName, "percentage", suViewParams);
+					suLayerMinArea = wfs.getMin(currSuLayerName, "area", suViewParams);
 				} 
 				else {
 					currSuLayerName = suLayerName + "_view";
-					suLayerMinPercentage = 0
+					suLayerMinArea = 0
 				}
 			}
 			else if(temporalUnits.isAggregate(e.name)) {
@@ -204,14 +204,14 @@ ams.App = {
 				priorViewParams.updateDates(dateControll);
 			}	
 			else if(temporalUnits.isDifference(e.name)) {
-				if(e.name == "NO PER&#205;ODO") {
+				if(e.name == temporalUnits.getCurrentName()) {
 					currSuLayerName = suLayerName + "_view";
-					suLayerMinPercentage = 0;
+					suLayerMinArea = 0;
 					diffON = false;
 				}
 				else {
 					currSuLayerName =  suLayerName + "_diff_view"; 
-					suLayerMinPercentage = wfs.getMin(currSuLayerName, "percentage", suViewParams);
+					suLayerMinArea = wfs.getMin(currSuLayerName, "area", suViewParams);
 					diffON = true;
 				}
 			}
@@ -221,7 +221,7 @@ ams.App = {
 				priorViewParams.classname = acronym;
 			}
 			
-			updateAll(suSource, currSuLayerName, suViewParams, suLayerMinPercentage, 
+			updateAll(suSource, currSuLayerName, suViewParams, suLayerMinArea, 
 					priorSource, priorViewParams, legendControl); 			
 		});	
 
@@ -243,13 +243,13 @@ ams.App = {
 		$.datepicker.setDefaults($.datepicker.regional["br"]);
 
 		$('#datepicker').datepicker({
-			disabled: true,
 			showButtonPanel: true,
 			defaultDate: new Date(currStartdate + "T00:00:00"),
 			minDate: new Date("2017-01-01T00:00:00"),
 			maxDate: defaultDate,
 			changeMonth: true,
-			changeYear: true,			
+			changeYear: true,	
+			todayBtn: "linked",	
 			onSelect: function() {
 				let selected = $(this).val().split("/");
 				let date = selected[2] + "-" + selected[1] + "-" + selected[0];
@@ -257,13 +257,13 @@ ams.App = {
 				suViewParams.updateDates(dateControll);
 				priorViewParams.updateDates(dateControll);
 				if(currSuLayerName.includes("diff")) {
-					suLayerMinPercentage = wfs.getMin(currSuLayerName, "percentage", suViewParams);	
+					suLayerMinArea = wfs.getMin(currSuLayerName, "area", suViewParams);	
 				}
 				else {
-					suLayerMinPercentage = 0;
+					suLayerMinArea = 0;
 				}	
 
-				updateAll(suSource, currSuLayerName, suViewParams, suLayerMinPercentage, 
+				updateAll(suSource, currSuLayerName, suViewParams, suLayerMinArea, 
 						priorSource, priorViewParams, legendControl); 								
 			},
 			beforeShow: function() {

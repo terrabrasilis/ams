@@ -25,8 +25,8 @@ def test_export_shp_to_postgis():
 	db.drop()
 
 
-def test_percentage_of_area():
-	url = 'postgresql://postgres:postgres@localhost:5432/percentage_of_area'
+def test_intersection_area():
+	url = 'postgresql://postgres:postgres@localhost:5432/intersection_area'
 	db = AlchemyDataAccess()
 	db.connect(url)
 	db.create(True)
@@ -45,8 +45,11 @@ def test_percentage_of_area():
 	for f in feats:
 		fgeom = f.geom
 		if fgeom.intersects(a1geom):
-			assert geoprocess.percentage_of_area(fgeom, a1geom) == 0.001008271044465656
-			assert geoprocess.percentage_of_area(a1geom, fgeom) == 100
+			area_info1 = geoprocess.intersection_area(fgeom, a1geom)
+			area_info2 = geoprocess.intersection_area(a1geom, fgeom)
+			assert area_info1['percentage'] == 0.001008271044465656
+			assert area_info2['percentage']  == 100
+			assert area_info1['area']  == area_info2['area']  == 0.22686098500569116
 			assert fgeom.intersection(a1geom).area == a1geom.area
 	db.drop()
 

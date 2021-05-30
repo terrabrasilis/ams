@@ -173,6 +173,10 @@ ams.Map = {
 			// 2: {"key": "1y", "value": "Previous Year"}, TODO
 		}
 
+		this.getCurrentName = function() {
+			return this.differeces[0].value;
+		}
+
 		this.getAggregates = function() {
 			return this.aggregates;
 		}
@@ -210,7 +214,7 @@ ams.Map = {
 			this._url = this._wmsUrl 
 						+ "REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20"
 						+ "&LAYER=" + layerName
-						+ "&sld_body=" + layerStyle.getEncodeURI(); 			
+						+ "&SLD_BODY=" + layerStyle.getEncodeURI(); 			
 		}
 
 		this.init = function(layerName, layerStyle)	{

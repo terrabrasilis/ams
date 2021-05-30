@@ -24,14 +24,15 @@ class DetermineRiskIndicators:
 			hist_alerts = self._deter_historical.list(start=self._startdate, end=self._enddate)
 			alerts = hist_alerts + alerts
 		sufeats = self._su.features
-		return self._calc_percentage_of_area(sufeats, alerts)
+		return self._calc_intersection_area(sufeats, alerts)
 
-	def _calc_percentage_of_area(self, features, alerts):
+	def _calc_intersection_area(self, features, alerts):
 		geoprocess = Geoprocessing()
 		indicators = []		
 		for f in features:
 			fgeom = f.geom
 			percentages = self._clear_percentages()
+			areas = self._clear_percentages()
 			currdate = alerts[0].date
 			i = 0
 			while i < len(alerts):
@@ -40,15 +41,18 @@ class DetermineRiskIndicators:
 					if fgeom.intersects(a.geom):
 						group = self._get_class_group(a.classname)
 						if group != '':
-							percentages[group] += geoprocess.percentage_of_area(fgeom, a.geom)
+							area_info = geoprocess.intersection_area(fgeom, a.geom)
+							percentages[group] += area_info['percentage']
+							areas[group] += area_info['area']
 						else:
 							print(f'Class \'{a.classname}\' not found.')  # TODO(#59) 
 					i += 1
 				else:
-					self._add_percentages(indicators, percentages, f, currdate)
+					self._add_percentages(indicators, percentages, areas, f, currdate)
 					currdate = a.date	
 					percentages = self._clear_percentages()
-			self._add_percentages(indicators, percentages, f, currdate)
+					areas = self._clear_percentages()
+			self._add_percentages(indicators, percentages, areas, f, currdate)
 		return indicators
 
 	def _mapper_class_groups(self):
@@ -73,8 +77,8 @@ class DetermineRiskIndicators:
 			percentages[''] = 0 
 			return percentages
 
-	def _add_percentages(self, indicators, percentages, feature, currdate):
+	def _add_percentages(self, indicators, percentages, areas, feature, currdate):
 		if len(percentages) > 0:
 			for k in percentages.keys():
 				if percentages[k] > 0:
-					indicators.append(RiskIndicator(currdate, percentages[k], k, feature))		
+					indicators.append(RiskIndicator(currdate, percentages[k], areas[k], k, feature))		

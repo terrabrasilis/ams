@@ -6,10 +6,12 @@ class RiskIndicator:
 	"""RiskIndicator"""
 	def __init__(self, date: datetime.date, 
 					percentage: float,
+					area: float,
 					classname: str,
 					feature: SpatialUnitFeature):
 		self._date = date
 		self._percentage = percentage
+		self._area = area
 		self._classname = classname
 		self._feature = feature
 
@@ -20,6 +22,11 @@ class RiskIndicator:
 	@property
 	def percentage(self):
 		return self._percentage
+
+	@property
+	def area(self):
+		return self._area
+	
 
 	@property
 	def classname(self):
