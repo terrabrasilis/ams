@@ -10,7 +10,7 @@ from ams.repository import (DeterRepository,
 							DeterClassGroupRepository,
 							SpatialUnitInfoRepository)
 from ams.usecases import DetermineRiskIndicators, AddSpatialUnit
-from ams.domain.entities import DeterClassGroup
+from ams.entities import DeterClassGroup
 from tests.helpers.dataaccess_helper import DataAccessHelper
 
 

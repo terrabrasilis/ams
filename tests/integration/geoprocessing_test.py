@@ -48,8 +48,8 @@ def test_intersection_area():
 			area_info1 = geoprocess.intersection_area(fgeom, a1geom)
 			area_info2 = geoprocess.intersection_area(a1geom, fgeom)
 			assert area_info1['percentage'] == 0.001008271044465656
-			assert area_info2['percentage']  == 100
-			assert area_info1['area']  == area_info2['area']  == 0.22686098500569116
+			assert area_info2['percentage'] == 100
+			assert area_info1['area'] == area_info2['area'] == 0.22686098500569116
 			assert fgeom.intersection(a1geom).area == a1geom.area
 	db.drop()
 

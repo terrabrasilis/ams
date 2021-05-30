@@ -1,5 +1,5 @@
 from ams.dataaccess import DataAccess
-from ams.domain.entities import SpatialUnitInfo
+from ams.entities import SpatialUnitInfo
 from ams.repository import (SpatialUnitInfoRepository, 
 							SpatialUnitDynamicMapperFactory)
 from ams.gis import Geoprocessing

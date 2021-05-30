@@ -1,5 +1,5 @@
 import datetime
-from ams.domain.entities import (SpatialUnit, DeterAlerts, 
+from ams.entities import (SpatialUnit, DeterAlerts, 
 								RiskIndicator, DeterClassGroup)
 from ams.gis import Geoprocessing
 

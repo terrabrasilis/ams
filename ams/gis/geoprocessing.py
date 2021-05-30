@@ -1,6 +1,6 @@
 import geopandas
 import fiona
-from ams.domain.entities import Geometry, Centroid
+from ams.entities import Geometry, Centroid
 
 
 class Geoprocessing:

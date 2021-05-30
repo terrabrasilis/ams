@@ -1,6 +1,6 @@
 import datetime
 from sqlalchemy import desc
-from ams.domain.entities import RiskIndicator
+from ams.entities import RiskIndicator
 from ams.dataaccess import DataAccess
 from .spatial_unit_dynamic_mapper_factory import SpatialUnitDynamicMapperFactory
 

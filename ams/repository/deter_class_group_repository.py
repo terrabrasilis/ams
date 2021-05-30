@@ -1,5 +1,5 @@
 from ams.dataaccess import DataAccess
-from ams.domain import entities
+from ams import entities
 from .alchemy_orm import DeterClassGroup, DeterClass
 
 

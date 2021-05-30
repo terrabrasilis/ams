@@ -1,5 +1,5 @@
 from geoalchemy2.shape import to_shape
-from ams.domain.entities import SpatialUnitFeature, SpatialUnit
+from ams.entities import SpatialUnitFeature, SpatialUnit
 from ams.gis import ShapelyGeometry
 from ams.dataaccess import DataAccess
 

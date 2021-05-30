@@ -26,7 +26,6 @@ class RiskIndicator:
 	@property
 	def area(self):
 		return self._area
-	
 
 	@property
 	def classname(self):
