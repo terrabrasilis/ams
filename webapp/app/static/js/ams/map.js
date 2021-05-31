@@ -122,7 +122,38 @@ ams.Map = {
 		
 		this.at = function(pos) {
 			return this.groups[pos];
-		}		
+		}	
+
+
+		this.getGroup = function(acronym) {
+			for(let i = 0; i < this.groups.length; i++) {
+				if(this.groups[i].acronym == acronym) {
+					return this.groups[i];
+				}
+			}
+		}
+
+		this._filterClasses = function(acronym) {
+			let group = this.getGroup(acronym);
+			let res = "";
+			let classes = group.classes;
+			for(let i = 0; i < classes.length; i++) {
+				res += "classname='" + classes[i] + "'"
+				if(i < group.classes.length - 1) {
+					res += " OR ";
+				}
+			}
+			return res;
+		}
+
+		this.getCqlFilter = function(viewParams) {
+			return "(date > " + viewParams.enddate
+					+ ") AND (date <= "
+					+ viewParams.startdate
+					+ ") AND ("
+					+ this._filterClasses(viewParams.classname)
+					+ ")";
+		}	
 	},
 
 	WFS: function(wmsUrl) {
