@@ -36,7 +36,7 @@ cd docker/
 
 The preconditions is:
  - Change the **docker/webapp-secrets.env** with the necessary database parameters so that the application back-end reaches the target database;
- - Change the SCRIPT_NAME and SERVER_URL environment variables in the docker-compose.yaml file to their compatible runtime values.;
+ - Change the SCRIPT_NAME and GEOSERVER_URL environment variables in the docker-compose.yaml file to their compatible runtime values.;
 
 Using the docker-compose command and the **docker/docker-compose.yaml** file to activate the weebapp service.
 
