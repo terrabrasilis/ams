@@ -164,14 +164,6 @@ ams.App = {
 		var legendControl = new ams.Map.LegendController(map, wmsUrl);
 		legendControl.init(currSuLayerName, suLayerStyle);
 
-		(function addDateControl() {
-			$('<div class="leaflet-control-layers-group" id="datepicker-control-layers-group">'
-				+ '<label class="leaflet-control-layers-group-name">'
-				+ '<span class="leaflet-control-layers-group-name">Dados DETER At&#233; </span>'
-				+ '<input type="text" id="datepicker" size="7" />'
-				+ '</label></div>').insertAfter("#leaflet-control-layers-group-3");
-		})();
-
 		(function addPriorizationControl() {
 			$('<div class="leaflet-control-layers-group" id="prioritization-control-layers-group">'
 				+ '<label class="leaflet-control-layers-group-name">'
@@ -181,6 +173,24 @@ ams.App = {
 				+ '<button id="prioritization-button"> Ok </button>'
 				+ '</label></div>').insertAfter("#leaflet-control-layers-group-1");	
 		})();	
+
+		(function addDateControl() {
+			$('<div class="leaflet-control-layers-group" id="datepicker-control-layers-group">'
+				+ '<label class="leaflet-control-layers-group-name">'
+				+ '<span class="leaflet-control-layers-group-name">Dados DETER At&#233; </span>'
+				+ '<input type="text" id="datepicker" size="7" />'
+				+ '</label></div>').insertAfter("#leaflet-control-layers-group-3");
+		})();	
+		
+		(function addFileDownloadControl() {
+			$('<div class="leaflet-control-layers-group" id="shapezip-control-layers-group">'
+				+ '<label class="leaflet-control-layers-group-name">'
+				+ '<span class="leaflet-control-layers-group-name">BAIXAR</span><br>'
+				+ '<button id="csv-download-button"> CSV </button>'
+				+ '&nbsp;'
+				+ '<button id="shapezip-download-button"> Shapefile </button>'
+				+ '</label></div>').insertAfter("#datepicker-control-layers-group");	
+		})();				
 
 		var suLayerMinArea = 0;
 		var diffON = false;
@@ -283,6 +293,16 @@ ams.App = {
 
 		$(function() {
 			$("#prioritization-input").dblclick(false);
-		});			
+		});	
+
+		$("#shapezip-download-button").click(function() {
+			wfs.getShapeZip(currSuLayerName, suViewParams);	
+			return false;
+		});		
+
+		$("#csv-download-button").click(function() {
+			wfs.getCsv(currSuLayerName, priorViewParams);	
+			return false;
+		});						
 	}
 };

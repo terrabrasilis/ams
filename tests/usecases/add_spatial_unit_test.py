@@ -51,7 +51,7 @@ def test_add_two_spatial_units():
 
 
 def test_as_attribute_name():
-	url = 'postgresql://postgres:postgres@localhost:5432/two_sus'
+	url = 'postgresql://postgres:postgres@localhost:5432/as_attrname'
 	db = AlchemyDataAccess()
 	db.connect(url)
 	db.create(True)
@@ -77,4 +77,5 @@ def test_as_attribute_name():
 	su1 = surepo1.get()
 	assert len(su1.features) == 13
 	assert su1.features[0].name == 'ACRE'
+	assert su1.features[1].name == 'AMAPÁ'
 	db.drop()
