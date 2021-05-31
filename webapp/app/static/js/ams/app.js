@@ -24,6 +24,15 @@ ams.App = {
 			priorLayer.bringToFront();		
 		}
 
+		const updateDeterAlerts = function(deterAlertsLayer, deterClassGroups, suViewParams) {
+			let source = deterAlertsLayer._source
+			source.options["cql_filter"] = deterClassGroups.getCqlFilter(suViewParams);
+			source._overlay.setParams({
+				"cql_filter": deterClassGroups.getCqlFilter(suViewParams),
+			});	
+			deterAlertsLayer.bringToBack();
+		}
+
 		var temporalUnits = new ams.Map.TemporalUnits();
 		var dateControll = new ams.Date.DateController();
 		var currStartdate = spatialUnits.default.last_date;
@@ -92,15 +101,26 @@ ams.App = {
 		priorLayer.addTo(map);
 
 		var tbBiomeLayerName = "prodes-amz:brazilian_amazon_biome_border";
-		var tbWmsOptions = {
+		var tbBiomeWmsOptions = {
 			"transparent": true, 
 			"tiled": true, 
 			"format": "image/png",
 		};
 		var tbWmsUrl = "http://terrabrasilis.dpi.inpe.br/geoserver/ows";
-		var tbSource = L.WMS.source(tbWmsUrl, tbWmsOptions);
-		var tbBiomeLayer = tbSource.getLayer(tbBiomeLayerName).addTo(map);
+		var tbBiomeSource = L.WMS.source(tbWmsUrl, tbBiomeWmsOptions);
+		var tbBiomeLayer = tbBiomeSource.getLayer(tbBiomeLayerName).addTo(map);
 		tbBiomeLayer.bringToBack();
+
+		var tbDeterAlertsLayerName = "deter-amz:deter_amz"
+		var tbDeterAlertsWmsOptions = {
+			"transparent": true, 
+			"tiled": true, 
+			"format": "image/png",
+			"cql_filter": deterClassGroups.getCqlFilter(suViewParams),
+		};		
+		var tbDeterAlertsSource = L.WMS.source(tbWmsUrl, tbDeterAlertsWmsOptions);
+		var tbDeterAlertsLayer = tbDeterAlertsSource.getLayer(tbDeterAlertsLayerName).addTo(map);
+		tbDeterAlertsLayer.bringToBack();
 
 		var groupedOverlays = {
 			"INDICADOR (&#193;rea Km&#178;)": {},
@@ -179,6 +199,7 @@ ams.App = {
 				+ '<label class="leaflet-control-layers-group-name">'
 				+ '<span class="leaflet-control-layers-group-name">Dados DETER At&#233; </span>'
 				+ '<input type="text" id="datepicker" size="7" />'
+				+ '<input type="checkbox" id="deter-checkbox" title="exibir alertas" checked />'
 				+ '</label></div>').insertAfter("#leaflet-control-layers-group-3");
 		})();	
 		
@@ -210,7 +231,8 @@ ams.App = {
 				currAggregate = e.layer._name;
 				dateControll.setPeriod(dateControll.startdate, currAggregate);
 				suViewParams.updateDates(dateControll);
-				priorViewParams.updateDates(dateControll);
+				priorViewParams.updateDates(dateControll);	
+				updateDeterAlerts(tbDeterAlertsLayer, deterClassGroups, suViewParams);			
 			}	
 			else if(temporalUnits.isDifference(e.name)) {
 				if(e.name == temporalUnits.getCurrentName()) {
@@ -227,6 +249,7 @@ ams.App = {
 				let acronym = e.layer._name;
 				suViewParams.classname = acronym;
 				priorViewParams.classname = acronym;
+				updateDeterAlerts(tbDeterAlertsLayer, deterClassGroups, suViewParams);	
 			}
 
 			if(diffON) {
@@ -264,7 +287,8 @@ ams.App = {
 				}	
 
 				updateAll(suSource, currSuLayerName, suViewParams, suLayerMinArea, 
-						priorSource, priorViewParams, legendControl); 								
+						priorSource, priorViewParams, legendControl); 
+				updateDeterAlerts(tbDeterAlertsLayer, deterClassGroups, suViewParams);										
 			},
 			beforeShow: function() {
 				setTimeout(function() {
@@ -303,6 +327,18 @@ ams.App = {
 		$("#csv-download-button").click(function() {
 			wfs.getCsv(currSuLayerName, priorViewParams);	
 			return false;
-		});						
+		});		
+
+		$("#deter-checkbox").change(function() {
+			if(this.checked) 
+			{
+				updateDeterAlerts(tbDeterAlertsLayer, deterClassGroups, suViewParams);
+				map.addControl(tbDeterAlertsLayer);
+			}
+			else {
+				map.removeControl(tbDeterAlertsLayer);
+			}
+			return false;
+		});							
 	}
 };
