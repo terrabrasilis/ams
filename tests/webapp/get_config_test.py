@@ -21,3 +21,14 @@ def test_get_config(app, client, app_startup):
 		assert deter_classes[1]['name'] == 'DG'
 		assert deter_classes[2]['name'] == 'CS'
 		assert deter_classes[3]['name'] == 'MN'
+		ds_classes = deter_classes[0]['classes']
+		dg_classes = deter_classes[1]['classes']
+		cs_classes = deter_classes[2]['classes']
+		mn_classes = deter_classes[3]['classes']
+		assert dg_classes[0] == 'CICATRIZ_DE_QUEIMADA'
+		assert dg_classes[1] == 'DEGRADACAO'
+		assert ds_classes[0] == 'DESMATAMENTO_CR'
+		assert ds_classes[1] == 'DESMATAMENTO_VEG'
+		assert cs_classes[0] == 'CS_DESORDENADO'
+		assert cs_classes[1] == 'CS_GEOMETRICO'	
+		assert mn_classes[0] == 'MINERACAO'	
