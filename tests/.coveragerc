@@ -3,7 +3,8 @@ source =
     ../ams
     ../webapp
 omit =
-    */webapp/main.py    
+    */webapp/main.py 
+    */webapp/wsgi.py 
 [report]
 exclude_lines =
     pragma: no cover

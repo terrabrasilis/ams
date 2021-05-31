@@ -1,0 +1,49 @@
+version: '3.3'
+services:
+  ams-webapp:
+    image: terrabrasilis/ams-webapp:v1.0.0
+    container_name: ams.webapp
+    restart: always
+    ports:
+      - 81:7000
+    environment:
+      - "SCRIPT_NAME=/ams"
+      - "GEOSERVER_URL=http://terrabrasilis.dpi.inpe.br/geoams/"
+      - "SERVER_NAME=terrabrasilis.dpi.inpe.br"
+      - "APPLICATION_ROOT=/ams/"
+    env_file:
+      - webapp-secrets.env
+
+  ams-geoserver:
+    image: terrabrasilis/ams-geoserver:v1.0.0
+    container_name: ams.geoserver
+    restart: always
+    ports:
+      - 8080:8080
+    volumes:
+      - /docker/geoserver/data:/data/geoserver/configs
+
+  postgis13:
+    image: postgis/postgis:13-3.1
+    container_name: postgis13
+    restart: always
+    ports:
+      - 5434:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - "/docker/postgresql/13/main:/var/lib/postgresql/data"
+
+  pgadmin4:
+    image: dpage/pgadmin4
+    container_name: pgadmin4
+    restart: always
+    ports:
+      - 5555:80
+    environment:
+      - "PGADMIN_DEFAULT_EMAIL=admin@pg.org"
+      - "PGADMIN_DEFAULT_PASSWORD=secret"
+    volumes:
+      - "/docker/pgadmin4/data:/var/lib/pgadmin"
