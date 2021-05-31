@@ -7,4 +7,6 @@ class Config:
 	GEOSERVER_WORKSPACE = os.environ.get('GEOSERVER_WORKSPACE') or 'ams'
 	DATABASE_URL = os.environ.get('DATABASE_URL') or \
 			'postgresql://postgres:postgres@localhost:5432/AMS'
+	SERVER_NAME = os.environ.get('SERVER_NAME') or '127.0.0.1:5000'
+	APPLICATION_ROOT = os.environ.get('APPLICATION_ROOT')
 	DETER_DAILY_UPDATE_TIME = '01:30'

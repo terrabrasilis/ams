@@ -9,8 +9,6 @@ bp = Blueprint('', __name__)
 
 def create_app(config=Config):
 	app = Flask(__name__)
-	app.config['SERVER_NAME'] = "terrabrasilis.dpi.inpe.br"
-	app.config['APPLICATION_ROOT'] = "/ams/"
 	cors = CORS(app)	
 	app.config.from_object(config)	
 	app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False

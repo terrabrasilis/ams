@@ -9,6 +9,8 @@ services:
     environment:
       - "SCRIPT_NAME=/ams"
       - "GEOSERVER_URL=http://terrabrasilis.dpi.inpe.br/geoams/"
+      - "SERVER_NAME=terrabrasilis.dpi.inpe.br"
+      - "APPLICATION_ROOT=/ams/"
     env_file:
       - webapp-secrets.env
 
