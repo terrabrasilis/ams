@@ -6,7 +6,7 @@ from ams.usecases import AddSpatialUnit, DetermineRiskIndicators
 from ams.repository import (SpatialUnitDynamicMapperFactory, SpatialUnitInfoRepository,
 							DeterClassGroupRepository, DeterRepository,
 							DeterHistoricalRepository, RiskIndicatorsRepository)
-from ams.domain.entities import DeterClassGroup
+from ams.entities import DeterClassGroup
 
 
 def setdb(url):

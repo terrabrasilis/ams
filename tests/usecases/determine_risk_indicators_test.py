@@ -10,7 +10,7 @@ from ams.repository import (DeterRepository,
 							DeterClassGroupRepository,
 							SpatialUnitInfoRepository)
 from ams.usecases import DetermineRiskIndicators, AddSpatialUnit
-from ams.domain.entities import DeterClassGroup
+from ams.entities import DeterClassGroup
 from tests.helpers.dataaccess_helper import DataAccessHelper
 
 
@@ -56,8 +56,12 @@ def test_uc_basic():
 		assert (round(expected_total_per_feature[i]['percentage'], 5) 
 				== round(indicators_per_feature[expected_total_per_feature[i]['id']], 5))
 	expected_per_day = determine_risk_indicators_results.percentage_per_day
+	gp = Geoprocessing()
 	for i in range(len(indicators)):
-		# print(f'{{\'id\': {i.feature.id}, \'percentage\': {i.percentage}, \'date\': \'{i.date}\'}},')
+		# print(f'{{\'id\': {indicators[i].feature.id}, \'percentage\': {indicators[i].percentage},'
+		# 	+ f' \'area\': {indicators[i].area}, \'date\': \'{indicators[i].date}\'}},')
+		assert int(indicators[i].area * 100 / indicators[i].percentage)\
+				== int(gp.degrees_to_km2(indicators[i].feature.geom.area))
 		assert expected_per_day[i]['id'] == indicators[i].feature.id
 		assert round(expected_per_day[i]['percentage'], 5) == round(indicators[i].percentage, 5)
 		assert expected_per_day[i]['date'] == str(indicators[i].date)
@@ -103,10 +107,13 @@ def test_uc_classes():
 	# 	print(f'{{\'id\': {i.feature.id}, \'percentage\': {i.percentage},' 
 	# 			+ f'\'classname\': \'{i.classname}\', \'date\': \'{i.date}\'}},')	
 	expected_classname = determine_risk_indicators_results.percentage_classname
+	gp = Geoprocessing()
 	for i in range(len(indicators)):
 		assert expected_classname[i]['id'] == indicators[i].feature.id
 		assert round(expected_classname[i]['percentage'], 5) == round(indicators[i].percentage, 5)
 		assert expected_classname[i]['date'] == str(indicators[i].date)
+		assert int(indicators[i].area * 100 / indicators[i].percentage)\
+				== int(gp.degrees_to_km2(indicators[i].feature.geom.area))		
 	db.drop()
 
 
@@ -151,10 +158,13 @@ def test_uc_historical():
 	# 	print(f'{{\'id\': {i.feature.id}, \'percentage\': {i.percentage},' 
 	# 			+ f'\'classname\': \'{i.classname}\', \'date\': \'{i.date}\'}},')	
 	expected_classname = determine_risk_indicators_results.deter_historical
+	gp = Geoprocessing()
 	for i in range(len(indicators)):
 		assert expected_classname[i]['id'] == indicators[i].feature.id
 		assert round(expected_classname[i]['percentage'], 5) == round(indicators[i].percentage, 5)
 		assert expected_classname[i]['date'] == str(indicators[i].date)
+		assert int(indicators[i].area * 100 / indicators[i].percentage)\
+				== int(gp.degrees_to_km2(indicators[i].feature.geom.area))		
 	db.drop()	
 
 

@@ -7,7 +7,7 @@ from geoalchemy2 import Geometry
 from sqlalchemy import Column, Integer, String, Date
 from geoalchemy2.shape import to_shape
 from ams.gis import ShapelyGeometry
-from ams.domain.entities import DeterAlert, DeterAlerts
+from ams.entities import DeterAlert, DeterAlerts
 
 
 url = os.environ.get('DETER_DATABASE_URL') or\

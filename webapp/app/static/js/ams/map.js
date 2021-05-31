@@ -156,6 +156,43 @@ ams.Map = {
 		this.getMin = function(layerName, propertyName, viewParams) {
 			return this.getMinOrMax(layerName, propertyName, viewParams, true);
 		}
+
+		this.getFile = function(layerName, viewParams, 
+								outputFormat, extension,
+								propertyName) {
+			filename = layerName.replace("_view", "").replace("_", "").replace(":", "")
+						+ '_'
+						+ viewParams.classname
+						+ "_" 
+						+ viewParams.startdate
+						+ "_" 
+						+ viewParams.enddate
+						+ "." + extension;
+			let wfsUrl = this.url 
+						+ "&typeName=" + layerName
+						+ "&outputFormat=" + outputFormat
+						+ "&format_options=filename:" + filename
+						+ "&version=1.0.0"
+						+ "&propertyName=" + (propertyName ? propertyName : "")
+						+ "&viewparams=classname:" + viewParams.classname
+										+ ";startdate:" + viewParams.startdate
+										+ ";enddate:" + viewParams.enddate
+										+ ";prevdate:" + viewParams.prevdate
+										+ ";limit:" + viewParams.limit;		
+			let a = document.createElement("a");
+			a.href = wfsUrl;
+			a.setAttribute("download", filename);
+			a.click();			
+		}
+
+		this.getShapeZip = function(layerName, viewParams) {
+			this.getFile(layerName, viewParams, "shape-zip", "zip");
+		} 
+
+		this.getCsv = function(layerName, viewParams) {
+			let propertyName = "name,classname,date,area,percentage";
+			this.getFile(layerName, viewParams, "csv", "csv", propertyName);
+		} 
 	},
 
 	TemporalUnits: function() {
@@ -171,6 +208,10 @@ ams.Map = {
 			0: {"key": "none", "value": "No Per&#237;odo"},
 			1: {"key": "1m", "value": "Diferen&#231;a Per&#237;odo Anterior"},
 			// 2: {"key": "1y", "value": "Previous Year"}, TODO
+		}
+
+		this.getCurrentName = function() {
+			return this.differeces[0].value;
 		}
 
 		this.getAggregates = function() {
@@ -210,7 +251,7 @@ ams.Map = {
 			this._url = this._wmsUrl 
 						+ "REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20"
 						+ "&LAYER=" + layerName
-						+ "&sld_body=" + layerStyle.getEncodeURI(); 			
+						+ "&SLD_BODY=" + layerStyle.getEncodeURI(); 			
 		}
 
 		this.init = function(layerName, layerStyle)	{

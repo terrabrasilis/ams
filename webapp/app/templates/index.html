@@ -21,6 +21,7 @@
     <script type="text/javascript" src="{{url_for('static', filename='js/ams/map.js')}}"></script>
     <script type="text/javascript" src="{{url_for('static', filename='js/ams/sld.styles.js')}}"></script>
     <script type="text/javascript" src="{{url_for('static', filename='js/ams/date.js')}}"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='js/ams/datepicker.js')}}"></script>
     <script type="text/javascript" src="{{url_for('static', filename='js/ams/app.js')}}"></script>
 
 	<style>
@@ -34,6 +35,10 @@
 		}
 		#spatial-unit-title {
 			font-weight: bold;
+		}
+		.leaflet-tile-pane {
+			-webkit-filter: grayscale(100%);
+			filter: grayscale(100%);
 		}
 	</style>
 
