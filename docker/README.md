@@ -56,13 +56,13 @@ docker-compose -f docker-compose.yaml down
 
 The preconditions is:
  - Change the **docker/webapp-secrets.env** with the necessary database parameters so that the application back-end reaches the target database;
- - Change the SCRIPT_NAME and SERVER_URL environment variables in the command below to their compatible runtime values.;
+ - Change the SCRIPT_NAME and GEOSERVER_URL environment variables in the command below to their compatible runtime values.;
 
 Use the docker command line. Change the <x.y.z> to the desired version.
 
 ```sh
 docker run --env SCRIPT_NAME="/ams" \
---env SERVER_URL="http://terrabrasilis.dpi.inpe.br/geoserverams/" \
+--env GEOSERVER_URL="http://terrabrasilis.dpi.inpe.br/geoams/" \
 --env-file docker/webapp-secrets.env \
 -d --rm --name ams-webapp terrabrasilis/ams-webapp:v<x.y.z>
 ```
