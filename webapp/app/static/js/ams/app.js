@@ -71,7 +71,6 @@ ams.App = {
 			"transparent": true, 
 			"tiled": true, 
 			"format": "image/png", 
-			// "identify": false
 			"opacity": 0.8,
 			"viewparams": suViewParams.toWmsFormat(),
 			"sld_body": suLayerStyle.getSLD(),
@@ -90,7 +89,7 @@ ams.App = {
 			"transparent": true, 
 			"tiled": true, 
 			"format": "image/png", 
-			// "identify": false
+			"identify": false,
 			"viewparams": priorViewParams.toWmsFormat(),
 			"sld_body": priorLayerStyle.getSLD(),
 
@@ -104,6 +103,7 @@ ams.App = {
 		var tbBiomeWmsOptions = {
 			"transparent": true, 
 			"tiled": true, 
+			"identify": false,
 			"format": "image/png",
 		};
 		var tbWmsUrl = "http://terrabrasilis.dpi.inpe.br/geoserver/ows";
@@ -111,10 +111,11 @@ ams.App = {
 		var tbBiomeLayer = tbBiomeSource.getLayer(tbBiomeLayerName).addTo(map);
 		tbBiomeLayer.bringToBack();
 
-		var tbDeterAlertsLayerName = "deter-amz:deter_amz"
+		var tbDeterAlertsLayerName = "deter-amz:deter-amz-ccst"
 		var tbDeterAlertsWmsOptions = {
 			"transparent": true, 
 			"tiled": true, 
+			"identify": false,
 			"format": "image/png",
 			"cql_filter": deterClassGroups.getCqlFilter(suViewParams),
 		};		
