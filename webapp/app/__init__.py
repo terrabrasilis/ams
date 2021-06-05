@@ -1,7 +1,7 @@
 from flask import Flask, Blueprint
 from flask_cors import CORS
 from ams.dataaccess import AlchemyDataAccess
-from .controllers import DeterDailyUpdateController
+from .controllers import InitializerController
 from .config import Config
 
 db = AlchemyDataAccess()
@@ -14,7 +14,7 @@ def create_app(config=Config):
 	app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 	db.connect(config.DATABASE_URL)
 	app.register_blueprint(bp)
-	deter_daily_up = DeterDailyUpdateController(db, config.DETER_DAILY_UPDATE_TIME_INTERVAL)
+	init = InitializerController(db, config.DETER_DAILY_UPDATE_TIME_INTERVAL)
 	return app
 
 
