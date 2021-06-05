@@ -9,4 +9,4 @@ class Config:
 			'postgresql://postgres:postgres@localhost:5432/AMS'
 	SERVER_NAME = os.environ.get('SERVER_NAME') or '127.0.0.1:5000'
 	APPLICATION_ROOT = os.environ.get('APPLICATION_ROOT') or ''
-	DETER_DAILY_UPDATE_TIME = os.environ.get('DETER_DAILY_UPDATE_TIME') or '6:30'
+	DETER_DAILY_UPDATE_TIME_INTERVAL = os.environ.get('DETER_DAILY_UPDATE_TIME_INTERVAL') or 60

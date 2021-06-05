@@ -46,14 +46,18 @@ class DeterRepository(Base, DeterAlerts, metaclass=DeterRepositoryMeta):
 				limit: int = None) -> 'list[DeterAlert]':
 		session = Session()
 		alerts = None
-		if start and end:
-			alerts = session.query(self.__class__)\
-						.filter(self.__class__.date >= end)\
-						.filter(self.__class__.date <= start)\
-						.order_by(self.__class__.date.desc())
-		else:
-			alerts = session.query(self.__class__).order_by(
-				self.__class__.date.desc()).limit(limit).all()
+		try:
+			if start and end:
+				alerts = session.query(self.__class__)\
+							.filter(self.__class__.date >= end)\
+							.filter(self.__class__.date <= start)\
+							.order_by(self.__class__.date.desc())
+			else:
+				alerts = session.query(self.__class__).order_by(
+					self.__class__.date.desc()).limit(limit).all()
+		except Exception as e:
+			session.close()
+			raise e
 		session.close()
 		return [self._to_deter_alert(alert) for alert in alerts]
 

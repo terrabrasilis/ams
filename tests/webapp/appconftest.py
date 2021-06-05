@@ -79,8 +79,8 @@ def set_class_groups(db):
 
 def determine_risk_indicators(db):
     deter_alerts = DeterRepository()
-    startdate = datetime.date(2021, 1, 31)
-    enddate = datetime.date(2020, 11, 1)
+    startdate = datetime.date(2021, 2, 28)
+    enddate = datetime.date(2020, 12, 31)
     groups_repo = DeterClassGroupRepository(db)
     class_groups = groups_repo.list()   
     units_repo = SpatialUnitInfoRepository(db)
