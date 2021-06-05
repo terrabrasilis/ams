@@ -79,11 +79,15 @@ class DataAccessHelper:
 		engine = create_engine(url)	
 		with engine.connect() as con:
 			con.execute('commit')
-			res = con.execute('SELECT * FROM public.deter_history ORDER BY date DESC LIMIT 5')	
+			hist = con.execute(
+				f'SELECT * FROM public.deter_history ORDER BY date DESC LIMIT {nrows}')
+			last = con.execute(
+				'SELECT * FROM terrabrasilis.deter_table ORDER BY gid DESC LIMIT 1').fetchone()	
+			gid = last['gid'] + 1
 			values = ""
 			count = 0
-			for row in res:
-				values = values + (f'({row["gid"]}, {row["origin_gid"]}, \'{row["classname"]}\', \'\','
+			for row in hist:
+				values = values + (f'({gid}, {row["origin_gid"]}, \'{row["classname"]}\', \'\','
 								+ f' {row["orbitpoint"]}, \'{date}\', \'{row["date_audit"]}\','
 								+ f' {row["lot"]}, \'{row["sensor"]}\', \'{row["satellite"]}\', {row["areatotalkm"]} ,' 
 								+ f' {row["areamunkm"]}, {row["areauckm"]}, \'{row["county"]}\', \'{row["uf"]}\', \'\','
@@ -91,6 +95,7 @@ class DataAccessHelper:
 				if count < nrows - 1:
 					values = values + ','
 				count += 1
+				gid += 1
 			con.execute('INSERT INTO terrabrasilis.deter_table(gid, origin_gid, classname, quadrant,'
 						+ ' orbitpoint, date, date_audit, lot, sensor, satellite, areatotalkm, areamunkm,'
 						+ ' areauckm, county, uf, uc, geom, publish_month, geocod)'

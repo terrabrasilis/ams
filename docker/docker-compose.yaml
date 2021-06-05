@@ -11,7 +11,7 @@ services:
       - "GEOSERVER_URL=http://terrabrasilis.dpi.inpe.br/geoams/"
       - "SERVER_NAME=terrabrasilis.dpi.inpe.br"
       - "APPLICATION_ROOT=/ams/"
-      - "DETER_DAILY_UPDATE_TIME=6:30"
+      - "DETER_DAILY_UPDATE_TIME_INTERVAL=60"
     env_file:
       - webapp-secrets.env
 
