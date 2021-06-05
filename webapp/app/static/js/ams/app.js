@@ -33,6 +33,18 @@ ams.App = {
 			deterAlertsLayer.bringToBack();
 		}
 
+		const addWmsOptionsBase = function(options, identity) {
+			let wmsOptionsBase = {
+				"transparent": true, 
+				"tiled": true, 
+				"format": "image/png", 
+				"identify": identity,
+			}
+			for(let k in wmsOptionsBase) {
+				options[k] = wmsOptionsBase[k];
+			}
+		}		
+
 		var temporalUnits = new ams.Map.TemporalUnits();
 		var dateControll = new ams.Date.DateController();
 		var currStartdate = spatialUnits.default.last_date;
@@ -68,13 +80,14 @@ ams.App = {
 															suLayerMaxArea);
 		var wmsUrl = geoserverUrl + "/wms?"
 		var wmsOptions = {
-			"transparent": true, 
-			"tiled": true, 
-			"format": "image/png", 
-			"opacity": 0.8,
-			"viewparams": suViewParams.toWmsFormat(),
-			"sld_body": suLayerStyle.getSLD(),
+			// "transparent": true, 
+			// "tiled": true, 
+			// "format": "image/png", 
+				"opacity": 0.8,
+				"viewparams": suViewParams.toWmsFormat(),
+				"sld_body": suLayerStyle.getSLD(),
 		};
+		addWmsOptionsBase(wmsOptions, true);
 		var suSource = L.WMS.source(wmsUrl, wmsOptions);
 		var suLayer = suSource.getLayer(currSuLayerName);
 		suLayer.addTo(map);	
@@ -86,39 +99,42 @@ ams.App = {
 		var priorViewParams = new ams.Map.ViewParams(deterClassGroups.at(0).acronym, 
 															dateControll, "10");	
 		var priorWmsOptions = {
-			"transparent": true, 
-			"tiled": true, 
-			"format": "image/png", 
-			"identify": false,
+			// "transparent": true, 
+			// "tiled": true, 
+			// "format": "image/png", 
+			// "identify": false,
 			"viewparams": priorViewParams.toWmsFormat(),
 			"sld_body": priorLayerStyle.getSLD(),
-
 		};
+		addWmsOptionsBase(priorWmsOptions, false);
+
 		var priorSource = L.WMS.source(wmsUrl, priorWmsOptions);
 		var priorLayer = priorSource.getLayer(currSuLayerName);
 		priorLayer.bringToFront();
 		priorLayer.addTo(map);
 
 		var tbBiomeLayerName = "prodes-amz:brazilian_amazon_biome_border";
-		var tbBiomeWmsOptions = {
-			"transparent": true, 
-			"tiled": true, 
-			"identify": false,
-			"format": "image/png",
+		var onlyWmsBase = {
+			// "transparent": true, 
+			// "tiled": true, 
+			// "identify": false,
+			// "format": "image/png",
 		};
+		addWmsOptionsBase(onlyWmsBase, false);
 		var tbWmsUrl = "http://terrabrasilis.dpi.inpe.br/geoserver/ows";
-		var tbBiomeSource = L.WMS.source(tbWmsUrl, tbBiomeWmsOptions);
+		var tbBiomeSource = L.WMS.source(tbWmsUrl, onlyWmsBase);
 		var tbBiomeLayer = tbBiomeSource.getLayer(tbBiomeLayerName).addTo(map);
 		tbBiomeLayer.bringToBack();
 
 		var tbDeterAlertsLayerName = "deter-amz:deter-amz-ccst"
 		var tbDeterAlertsWmsOptions = {
-			"transparent": true, 
-			"tiled": true, 
-			"identify": false,
-			"format": "image/png",
+			// "transparent": true, 
+			// "tiled": true, 
+			// "identify": false,
+			// "format": "image/png",
 			"cql_filter": deterClassGroups.getCqlFilter(suViewParams),
 		};		
+		addWmsOptionsBase(tbDeterAlertsWmsOptions, false);
 		var tbDeterAlertsSource = L.WMS.source(tbWmsUrl, tbDeterAlertsWmsOptions);
 		var tbDeterAlertsLayer = tbDeterAlertsSource.getLayer(tbDeterAlertsLayerName).addTo(map);
 		tbDeterAlertsLayer.bringToBack();
@@ -139,33 +155,33 @@ ams.App = {
 		}
 
 		var classLayer = new L.WMS.Layer(wmsUrl, deterClassGroups.at(0).acronym, 
-										wmsOptions).addTo(map);	
+										onlyWmsBase).addTo(map);	
 		groupedOverlays["INDICADOR (&#193;rea Km&#178;)"][deterClassGroups.at(0).name] = classLayer;	
 
 		for(var i = 1; i < deterClassGroups.length(); i++)
 		{
-			let layer = new L.WMS.Layer(wmsUrl, deterClassGroups.at(i).acronym, wmsOptions);	
+			let layer = new L.WMS.Layer(wmsUrl, deterClassGroups.at(i).acronym, onlyWmsBase);	
 			groupedOverlays["INDICADOR (&#193;rea Km&#178;)"][deterClassGroups.at(i).name] = layer;
 		}
 
 		var temporalUnitAggregates = temporalUnits.getAggregates();
 		var tempUnitLayer = new L.WMS.Layer(wmsUrl, temporalUnitAggregates[0].key,
-											wmsOptions).addTo(map);	
+											onlyWmsBase).addTo(map);	
 		groupedOverlays["UNIDADE TEMPORAL"][temporalUnitAggregates[0].value] = tempUnitLayer;	
 
 		for(var i = 1; i < Object.keys(temporalUnitAggregates).length; i++)
 		{
-			let layer = new L.WMS.Layer(wmsUrl, temporalUnitAggregates[i].key, wmsOptions);	
+			let layer = new L.WMS.Layer(wmsUrl, temporalUnitAggregates[i].key, onlyWmsBase);	
 			groupedOverlays["UNIDADE TEMPORAL"][temporalUnitAggregates[i].value] = layer;
 		}	
 
 		var temporalUnitsDifferences = temporalUnits.getDifferences();
 		var diffLayer = new L.WMS.Layer(wmsUrl, temporalUnitAggregates[0].value, 
-										wmsOptions).addTo(map);
+										onlyWmsBase).addTo(map);
 		groupedOverlays[""][temporalUnitsDifferences[0].value] = diffLayer;		
 		for(var i = 1; i < Object.keys(temporalUnitsDifferences).length; i++)
 		{
-			let layer = new L.WMS.Layer(wmsUrl, temporalUnitAggregates[i].value, wmsOptions);	
+			let layer = new L.WMS.Layer(wmsUrl, temporalUnitAggregates[i].value, onlyWmsBase);	
 			groupedOverlays[""][temporalUnitsDifferences[i].value] = layer;
 		}
 
