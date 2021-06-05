@@ -4,11 +4,8 @@
 #--------- Generic stuff all our Dockerfiles should start with so we get caching ------------
 FROM python:3.8.10-alpine
 
-ARG VERSION="1.0.0"
-
 LABEL "br.inpe.dpi"="INPE/DPI-TerraBrasilis"
 LABEL br.inpe.dpi.terrabrasilis="ams-webapp"
-LABEL version=${VERSION}
 LABEL author="Andre Carvalho"
 LABEL author.email="andre.carvalho@inpe.br"
 LABEL description="AMS - Amazon Situation Room"
@@ -55,9 +52,7 @@ COPY webapp/ $INSTALL_PATH/webapp/
 # ------------------------------------------------------
 
 ## THE ENV VARS
-RUN echo "export FLASK_APP=\"${INSTALL_PATH}/webapp/main.py\"" > "${INSTALL_PATH}/webapp/.env" \
-    && echo "export FLASK_DEBUG=1" >> "${INSTALL_PATH}/webapp/.env" \
-    && echo "export PYTHONPATH=\"${INSTALL_PATH}\"" >> "${INSTALL_PATH}/webapp/.env" \
+RUN echo "export PYTHONPATH=\"${INSTALL_PATH}\"" >> "${INSTALL_PATH}/webapp/.env" \
     && echo "export TZ=America/Sao_Paulo" >> "${INSTALL_PATH}/webapp/.env"
 
 # Script to run on start server
