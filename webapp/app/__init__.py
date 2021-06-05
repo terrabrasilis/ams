@@ -14,7 +14,7 @@ def create_app(config=Config):
 	app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 	db.connect(config.DATABASE_URL)
 	app.register_blueprint(bp)
-	deter_daily_up = DeterDailyUpdateController(db, config.DETER_DAILY_UPDATE_TIME)
+	deter_daily_up = DeterDailyUpdateController(db, config.DETER_DAILY_UPDATE_TIME_INTERVAL)
 	return app
 
 
