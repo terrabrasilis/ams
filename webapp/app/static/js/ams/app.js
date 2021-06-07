@@ -4,7 +4,8 @@ ams.App = {
 	run: function(geoserverUrl, gsWorkspace, sus, spatialUnits, deterClassGroups) {
 		const updateAll = function(suSource, currSuLayerName, suViewParams, 
 								suLayerMinArea, priorSource, priorViewParams, 
-								legendControl) {
+								legendControl, map) {
+			map.closePopup();
 			let suLayerMaxArea = wfs.getMax(currSuLayerName, "area", suViewParams);
 			if(suLayerMaxArea == suLayerMinArea) 
 			{
@@ -80,15 +81,12 @@ ams.App = {
 															suLayerMaxArea);
 		var wmsUrl = geoserverUrl + "/wms?"
 		var wmsOptions = {
-			// "transparent": true, 
-			// "tiled": true, 
-			// "format": "image/png", 
 				"opacity": 0.8,
 				"viewparams": suViewParams.toWmsFormat(),
 				"sld_body": suLayerStyle.getSLD(),
 		};
 		addWmsOptionsBase(wmsOptions, true);
-		var suSource = L.WMS.source(wmsUrl, wmsOptions);
+		var suSource = new ams.LeafletWms.Source(wmsUrl, wmsOptions, deterClassGroups); //L.WMS.source(wmsUrl, wmsOptions);
 		var suLayer = suSource.getLayer(currSuLayerName);
 		suLayer.addTo(map);	
 
@@ -99,10 +97,6 @@ ams.App = {
 		var priorViewParams = new ams.Map.ViewParams(deterClassGroups.at(0).acronym, 
 															dateControll, "10");	
 		var priorWmsOptions = {
-			// "transparent": true, 
-			// "tiled": true, 
-			// "format": "image/png", 
-			// "identify": false,
 			"viewparams": priorViewParams.toWmsFormat(),
 			"sld_body": priorLayerStyle.getSLD(),
 		};
@@ -114,12 +108,7 @@ ams.App = {
 		priorLayer.addTo(map);
 
 		var tbBiomeLayerName = "prodes-amz:brazilian_amazon_biome_border";
-		var onlyWmsBase = {
-			// "transparent": true, 
-			// "tiled": true, 
-			// "identify": false,
-			// "format": "image/png",
-		};
+		var onlyWmsBase = {};
 		addWmsOptionsBase(onlyWmsBase, false);
 		var tbWmsUrl = "http://terrabrasilis.dpi.inpe.br/geoserver/ows";
 		var tbBiomeSource = L.WMS.source(tbWmsUrl, onlyWmsBase);
@@ -128,14 +117,10 @@ ams.App = {
 
 		var tbDeterAlertsLayerName = "deter-amz:deter-amz-ccst"
 		var tbDeterAlertsWmsOptions = {
-			// "transparent": true, 
-			// "tiled": true, 
-			// "identify": false,
-			// "format": "image/png",
 			"cql_filter": deterClassGroups.getCqlFilter(suViewParams),
 		};		
-		addWmsOptionsBase(tbDeterAlertsWmsOptions, false);
-		var tbDeterAlertsSource = L.WMS.source(tbWmsUrl, tbDeterAlertsWmsOptions);
+		addWmsOptionsBase(tbDeterAlertsWmsOptions, true);
+		var tbDeterAlertsSource = new ams.LeafletWms.Source(tbWmsUrl, tbDeterAlertsWmsOptions, deterClassGroups); //L.WMS.source(tbWmsUrl, tbDeterAlertsWmsOptions);
 		var tbDeterAlertsLayer = tbDeterAlertsSource.getLayer(tbDeterAlertsLayerName).addTo(map);
 		tbDeterAlertsLayer.bringToBack();
 
@@ -205,7 +190,7 @@ ams.App = {
 			$('<div class="leaflet-control-layers-group" id="prioritization-control-layers-group">'
 				+ '<label class="leaflet-control-layers-group-name">'
 				+ '<span class="leaflet-control-layers-group-name">Prioriza&#231;&#227;o </span>'
-				+ '<input type="number" id="prioritization-input" min="1" max="50" value=' 
+				+ '<input type="number" id="prioritization-input" min="1" style="width:45px" title="Prioriza&#231;&#227;o" value=' 
 				+ priorViewParams.limit + ' />'
 				+ '<button id="prioritization-button"> Ok </button>'
 				+ '</label></div>').insertAfter("#leaflet-control-layers-group-1");	
@@ -216,7 +201,7 @@ ams.App = {
 				+ '<label class="leaflet-control-layers-group-name">'
 				+ '<span class="leaflet-control-layers-group-name">Dados DETER At&#233; </span>'
 				+ '<input type="text" id="datepicker" size="7" />'
-				+ '<input type="checkbox" id="deter-checkbox" title="exibir alertas" checked />'
+				+ '<input type="checkbox" id="deter-checkbox" title="Exibir Alertas" checked />'
 				+ '</label></div>').insertAfter("#leaflet-control-layers-group-3");
 		})();	
 		
@@ -274,7 +259,7 @@ ams.App = {
 			}			
 			
 			updateAll(suSource, currSuLayerName, suViewParams, suLayerMinArea, 
-					priorSource, priorViewParams, legendControl); 			
+					priorSource, priorViewParams, legendControl, map); 			
 		});	
 
 		var defaultDate = new Date(currStartdate + "T00:00:00")
@@ -304,7 +289,7 @@ ams.App = {
 				}	
 
 				updateAll(suSource, currSuLayerName, suViewParams, suLayerMinArea, 
-						priorSource, priorViewParams, legendControl); 
+						priorSource, priorViewParams, legendControl, map); 
 				updateDeterAlerts(tbDeterAlertsLayer, deterClassGroups, suViewParams);										
 			},
 			beforeShow: function() {

@@ -154,6 +154,10 @@ ams.Map = {
 					+ this._filterClasses(viewParams.classname)
 					+ ")";
 		}	
+
+		this.getGroupName = function(acronym) {
+			return this._groupNamesMap[acronym];
+		} 
 	},
 
 	WFS: function(wmsUrl) {
