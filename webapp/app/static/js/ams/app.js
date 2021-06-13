@@ -71,6 +71,15 @@ ams.App = {
 			position: 'topright'
 		}).addTo(map);
 
+		L.control.coordinates({
+			position:"bottomright",
+			decimals:4,
+			decimalSeperator:",",
+			enableUserInput:false,
+			labelTemplateLat:"Latitude: {y}",
+			labelTemplateLng:"Longitude: {x}"
+		}).addTo(map);
+
 		var suViewParams = new ams.Map.ViewParams(deterClassGroups.at(0).acronym, 
 												dateControll, "ALL");
 		var suLayerName = gsWorkspace + ":" + spatialUnits.default.dataname;
@@ -121,6 +130,7 @@ ams.App = {
 		};		
 		addWmsOptionsBase(tbDeterAlertsWmsOptions, true);
 		var tbDeterAlertsSource = new ams.LeafletWms.Source(tbWmsUrl, tbDeterAlertsWmsOptions, deterClassGroups); //L.WMS.source(tbWmsUrl, tbDeterAlertsWmsOptions);
+
 		var tbDeterAlertsLayer = tbDeterAlertsSource.getLayer(tbDeterAlertsLayerName).addTo(map);
 		tbDeterAlertsLayer.bringToBack();
 
