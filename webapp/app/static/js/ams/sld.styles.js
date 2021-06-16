@@ -19,10 +19,17 @@ ams.SLDStyles = {
 			if(this.minValue < 0) {
 				this.colorRange = ["#add8e6", "#f0f0f0", "#ff3838"];
 				this.colorDomain = [this.minValue, 0, this.maxValue];
+				this.colorRangeN = ["#add8e6", "#f0f0f0"];
+				this.colorRangeP = ["#f0f0f0", "#ff3838"];
+				this.colorDomainN = [this.minValue, 0];
+				this.colorDomainP = [0, this.maxValue];
+				this._numberOfTicksN = 5;
+				this._numberOfTicksP = 6;  
 			}
 			else {
 				this.colorRange = ["#f0f0f0", "#ff3838"];
 				this.colorDomain = [this.minValue, this.maxValue];
+				this._numberOfTicks = 10; 
 			}
 		}
 
@@ -35,7 +42,10 @@ ams.SLDStyles = {
 		this.colorDomain;
 		this._unit = "km&#178;"
 		this._propertyName = "area"; 
-		this._numberOfTicks = 6; 
+		this._numberOfTicks = 0;
+		this._numberOfTicksN = 0;
+		this._numberOfTicksP = 0;
+
 
 		this.createFill = function(value, color) {
 			let fill = "";
@@ -140,16 +150,55 @@ ams.SLDStyles = {
 			return vMaxLength;
 		}
 
+		this._getTickStep = function(domain, numberOfTicks) {
+			return (domain[domain.length-1] - domain[0]) / (numberOfTicks - 1);
+		}
+
+		this._getTicks = function(domain, tickStep, numberOfTicks) {
+			let ticks = [];
+			ticks.push(domain[0])
+			for(let i = 1; i < numberOfTicks; i++) {
+				ticks.push(ticks[i-1] + tickStep);
+			}
+			return ticks;
+		}
+
 		this.createRules = function() {
 			this.setLegendDomainAndRange();
 			let legend = d3.scaleLinear()
 				.domain(this.colorDomain)
-				.range(this.colorRange)
-				.nice(this._numberOfTicks);
-			let ticks = legend.ticks(this._numberOfTicks);	
+				.range(this.colorRange);	
+
+			let ticks;
+			if(this.minValue == 0) {
+				let domain = legend.domain();
+				let tickStep = this._getTickStep(domain, this._numberOfTicks);
+				ticks = this._getTicks(domain, tickStep, this._numberOfTicks);				
+			}
+			else {
+				let legendN = d3.scaleLinear()
+					.domain(this.colorDomainN)
+					.range(this.colorRangeN);	
+				let legendP = d3.scaleLinear()
+					.domain(this.colorDomainP)
+					.range(this.colorRangeP);	
+				let domainN = legendN.domain();						
+				let domainP = legendP.domain();						
+				let tickStepN = this._getTickStep(domainN, this._numberOfTicksN);
+				let tickStepP = this._getTickStep(domainP, this._numberOfTicksP);
+				let ticksN = this._getTicks(domainN, tickStepN, this._numberOfTicksN);
+				let ticksP = this._getTicks(domainP, tickStepP, this._numberOfTicksP);
+				for(let i = 1; i < ticksP.length; i++) {
+					ticksN.push(ticksP[i]);
+				}
+				ticks = ticksN;
+			}
 			let rules = "";
 			let firstRule = "";
 			let lastRule = "";
+			for(let i = 0; i < ticks.length; i++) {
+				let color =  legend(ticks[i]);
+			}
 			if(!isPriorization) {
 				if(ticks.length >= 2) {			
 					let vMaxLength = this.getMaxLength(ticks);
@@ -172,7 +221,7 @@ ams.SLDStyles = {
 				}
 			}
 			else {
-				rules = `${rules}${this.createRule(ticks[0], ticks[ticks.length - 1])}`;
+				rules = `${rules}${this.createLastRule(this.minValue, this.maxValue)}`;
 			}       
 
 			return firstRule + rules + lastRule;   
