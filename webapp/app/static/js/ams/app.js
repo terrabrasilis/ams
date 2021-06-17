@@ -179,9 +179,18 @@ ams.App = {
 			],
 			collapsed: false,
 			position: "topleft",
-		});
+		}).addTo(map);
 
-		groupControl.addTo(map);
+		L.control.coordinates({
+			position: "bottomright",
+			decimals: 2,
+			decimalSeperator:",",
+			enableUserInput: false,
+			centerUserCoordinates: true,
+			useLatLngOrder: false,
+			labelTemplateLat: "Latitude: {y}",
+			labelTemplateLng: "Longitude: {x}"
+		}).addTo(map);				
 
 		var legendControl = new ams.Map.LegendController(map, wmsUrl);
 		legendControl.init(currSuLayerName, suLayerStyle);
