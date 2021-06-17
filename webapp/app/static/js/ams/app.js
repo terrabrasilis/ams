@@ -184,12 +184,12 @@ ams.App = {
 		L.control.coordinates({
 			position: "bottomright",
 			decimals: 2,
-			decimalSeperator:".",
+			decimalSeperator:",",
 			enableUserInput: false,
 			centerUserCoordinates: true,
-			useLatLngOrder: true,
-			labelTemplateLat: "Lat: {y}",
-			labelTemplateLng: "Long: {x}"
+			useLatLngOrder: false,
+			labelTemplateLat: "Latitude: {y}",
+			labelTemplateLng: "Longitude: {x}"
 		}).addTo(map);				
 
 		var legendControl = new ams.Map.LegendController(map, wmsUrl);
