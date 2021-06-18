@@ -22,11 +22,10 @@ $(document).ready(function () {
   if(versionDiv.length>0){
     versionDiv.append('ver: 1.0.0');
     // TODO: enable this code if a file with tag version is present
-      // $.getJSON('PROJECT_VERSION', function(data) {
-      //     let version = data.version;
-      //     console.log(version);
-      //     versionDiv.append('ver: '+version);
-      // });
+    $.getJSON('PROJECT_VERSION', function(data) {
+        let version = data.version;
+        versionDiv.append('ver: '+version);
+    });
   }
 
   /** init authentication component */
