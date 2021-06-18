@@ -54,8 +54,7 @@ COPY webapp/ $INSTALL_PATH/webapp/
 
 ## THE ENV VARS
 RUN echo "export PYTHONPATH=\"${INSTALL_PATH}\"" >> "${INSTALL_PATH}/webapp/.env" \
-    && echo "export TZ=America/Sao_Paulo" >> "${INSTALL_PATH}/webapp/.env" \
-    && cat "export TZ=America/Sao_Paulo" >> "${INSTALL_PATH}/webapp/.env" 
+    && echo "export TZ=America/Sao_Paulo" >> "${INSTALL_PATH}/webapp/.env"
 
 # Script to run on start server
 ADD docker/webapp/docker-entrypoint.sh $INSTALL_PATH/bin/docker-entrypoint.sh
