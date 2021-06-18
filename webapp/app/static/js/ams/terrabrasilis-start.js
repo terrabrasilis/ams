@@ -50,6 +50,17 @@ $(document).ready(function () {
   function gtag() { dataLayer.push(arguments); }
   gtag('js', new Date());
   gtag('config', 'G-VF4139FH8F');
+
+  var tid=null;
+  window.onresize=()=>{
+    if(tid) window.clearTimeout(tid);
+    tid=window.setTimeout(
+      ()=>{
+        tid=null;
+        setMapHeight();
+      },200
+    );
+  };
 });
 
 
