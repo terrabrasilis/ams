@@ -38,6 +38,7 @@ ENV INSTALL_PATH /usr/local
 RUN mkdir $INSTALL_PATH/ams && mkdir $INSTALL_PATH/webapp
 ADD ams/requirements.txt $INSTALL_PATH/ams/requirements.txt
 ADD webapp/requirements.txt $INSTALL_PATH/webapp/requirements.txt
+ADD docker/webapp/APP_BUILD_VERSION $INSTALL_PATH/webapp/app/static/PROJECT_VERSION
 # Install Python requirements
 RUN pip install -r $INSTALL_PATH/ams/requirements.txt && \
 pip install -r $INSTALL_PATH/webapp/requirements.txt
@@ -53,7 +54,8 @@ COPY webapp/ $INSTALL_PATH/webapp/
 
 ## THE ENV VARS
 RUN echo "export PYTHONPATH=\"${INSTALL_PATH}\"" >> "${INSTALL_PATH}/webapp/.env" \
-    && echo "export TZ=America/Sao_Paulo" >> "${INSTALL_PATH}/webapp/.env"
+    && echo "export TZ=America/Sao_Paulo" >> "${INSTALL_PATH}/webapp/.env" \
+    && cat "export TZ=America/Sao_Paulo" >> "${INSTALL_PATH}/webapp/.env" 
 
 # Script to run on start server
 ADD docker/webapp/docker-entrypoint.sh $INSTALL_PATH/bin/docker-entrypoint.sh
