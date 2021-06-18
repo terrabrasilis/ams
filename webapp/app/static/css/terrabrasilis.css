@@ -214,6 +214,10 @@ width: auto;
 #modal-container-info-rates h3 {text-align: left; color: #00796b; font-size: 18px; text-decoration: none; border-bottom: 1px solid #eeeeee;}
 #modal-container-info-rates a {color: #00796b; font-weight: bold;}
 
+#panel_container{
+  display: contents;
+}
+
 /* ------------- Radio ------------*/
 .custom-radios div {
 display: inline-block;
@@ -496,7 +500,7 @@ margin-left: -290px;
 
 #sidebar .sidebar-header {
 padding: 4px 20px 4px 20px;
-background-image:url(../img/i-mapa2.jpg);
+background-image:url(../imgs/i-mapa2.jpg);
 color: #119789;
 height: 210px;
 }
@@ -609,9 +613,6 @@ CONTENT STYLE
 width: calc(100% - 290px);
 padding: 0px;
 transition: all 0.3s;
-position: absolute;
-top: 0;
-right: 0;
 }
 #content.active {
 width: 100%;
@@ -782,7 +783,7 @@ transform: rotate(360deg);
 /* ---------------------------------------------------
 MEDIAQUERIES
 ----------------------------------------------------- */
-@media (max-width: 768px) {
+/* @media (max-width: 768px) {
 .boxtitle, .generalinfo, .bt_generalinfo, .highlight-time, .number-display span, .number-display .numberinf, .generalinfo i{
 font-size: 18px;
 }
@@ -847,7 +848,7 @@ margin-right: -155px !important;
 .boxtitlepanel {  margin-left: -270px !important;}
 .box-grafico {   margin-left: 0px;}
 
-}
+} */
 
 @media only screen and (max-width: 978px) {
 .navbar-collapse {

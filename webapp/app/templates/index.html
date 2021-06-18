@@ -281,12 +281,14 @@
 	<!-- end footer and modals -->
 
 	<script type="text/javascript">
-		var gsWorkspace = "{{workspace}}"; 
-		var sus = {{spatial_units_info|safe}};
-		var spatialUnits = new ams.Map.SpatialUnits(sus, sus[0].dataname);
-		var deterClassGroups = new ams.Map.DeterClassGroups({{deter_class_groups|safe}});
-		var geoserverUrl = "{{geoserver_url}}";
-		ams.App.run(geoserverUrl, gsWorkspace, sus, spatialUnits, deterClassGroups);
+		var startApp=()=>{
+			var gsWorkspace = "{{workspace}}"; 
+			var sus = {{spatial_units_info|safe}};
+			var spatialUnits = new ams.Map.SpatialUnits(sus, sus[0].dataname);
+			var deterClassGroups = new ams.Map.DeterClassGroups({{deter_class_groups|safe}});
+			var geoserverUrl = "{{geoserver_url}}";
+			ams.App.run(geoserverUrl, gsWorkspace, sus, spatialUnits, deterClassGroups);
+		};
 	</script>
 
 	<!-- Start the JS dependencies of Terrabrasilis template -->
