@@ -13,7 +13,9 @@ $(document).ready(function () {
   };
 
   let setMapHeight=()=>{
-    $('#map').height(window.innerHeight-$('footer.footer').height()-$('#content').height());
+    let mh=window.innerHeight-$('footer.footer').height()-$('#content').height();
+    $('#map').height(mh);
+    $('.leaflet-control-layers').attr('style','max-height: '+(mh-10)+'px');
   };
     
   $("#sidebar").mCustomScrollbar({
