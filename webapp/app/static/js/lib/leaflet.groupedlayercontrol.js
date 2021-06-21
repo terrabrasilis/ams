@@ -96,6 +96,12 @@ L.Control.GroupedLayers = L.Control.extend({
 
     var form = this._form = L.DomUtil.create('form', className + '-list');
 
+    this._baseLayersList = L.DomUtil.create('div', className + '-base', form);
+    this._separator = L.DomUtil.create('div', className + '-separator', form);
+    this._overlaysList = L.DomUtil.create('div', className + '-overlays', form);
+
+    container.appendChild(form);
+
     if (this.options.collapsed) {
       if (!L.Browser.android) {
         L.DomEvent
@@ -119,12 +125,6 @@ L.Control.GroupedLayers = L.Control.extend({
     } else {
       this._expand();
     }
-
-    this._baseLayersList = L.DomUtil.create('div', className + '-base', form);
-    this._separator = L.DomUtil.create('div', className + '-separator', form);
-    this._overlaysList = L.DomUtil.create('div', className + '-overlays', form);
-
-    container.appendChild(form);
   },
 
   _addLayer: function (layer, name, group, overlay) {
@@ -347,11 +347,17 @@ L.Control.GroupedLayers = L.Control.extend({
 
   _expand: function () {
     L.DomUtil.addClass(this._container, 'leaflet-control-layers-expanded');
-    // permits to have a scrollbar if overlays heighter than the map.
-    var acceptableHeight = this._map._size.y - (this._container.offsetTop * 4);
-    if (acceptableHeight < this._form.clientHeight) {
-      L.DomUtil.addClass(this._form, 'leaflet-control-layers-scrollbar');
+    L.DomUtil.addClass(this._form, 'leaflet-control-layers-scrollbar');
+    this._form.style.height='auto';
+  },
+
+  _onWindowResize: function () {
+    // permits to have a scrollbar if overlays heighter than the map. 
+    var acceptableHeight = $('#map').height() - (this._container.offsetTop * 2);
+    if (this._form.scrollHeight>acceptableHeight) {
       this._form.style.height = acceptableHeight + 'px';
+    }else{
+      this._form.style.height='auto';
     }
   },
 

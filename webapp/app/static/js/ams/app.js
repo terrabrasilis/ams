@@ -181,6 +181,9 @@ ams.App = {
 			position: "topleft",
 		}).addTo(map);
 
+		// to apply new heigth for groupControl UI component when window is resized
+		ams.groupControl=groupControl;
+		
 		L.control.coordinates({
 			position: "bottomright",
 			decimals: 2,
@@ -269,7 +272,17 @@ ams.App = {
 			
 			updateAll(suSource, currSuLayerName, suViewParams, suLayerMinArea, 
 					priorSource, priorViewParams, legendControl, map); 			
-		});	
+		});
+
+		map.whenReady(()=>{
+			// This approach is necessary because we must wait for the UI control to be rendered to get the actual height.
+			window.setTimeout(
+				()=>{
+					// set control div to available height
+					ams.App._onWindowResize();
+				},500
+			);
+		});
 
 		var defaultDate = new Date(currStartdate + "T00:00:00")
 		var datepicker = new ams.datepicker.Datepicker();
@@ -350,6 +363,10 @@ ams.App = {
 				map.removeControl(tbDeterAlertsLayer);
 			}
 			return false;
-		});							
+		});
+	},
+
+	_onWindowResize: function () {
+		ams.groupControl._onWindowResize();
 	}
 };

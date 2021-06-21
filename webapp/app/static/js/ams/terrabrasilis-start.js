@@ -13,9 +13,7 @@ $(document).ready(function () {
   };
 
   let setMapHeight=()=>{
-    let mh=window.innerHeight-$('footer.footer').height()-$('#content').height();
-    $('#map').height(mh);
-    $('.leaflet-control-layers').attr('style','max-height: '+(mh-10)+'px');
+    $('#map').height(window.innerHeight-$('footer.footer').height()-$('#content').height());
   };
     
   $("#sidebar").mCustomScrollbar({
@@ -60,6 +58,7 @@ $(document).ready(function () {
       ()=>{
         tid=null;
         setMapHeight();
+        ams.App._onWindowResize();
       },200
     );
   };
