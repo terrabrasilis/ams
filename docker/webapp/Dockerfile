@@ -38,6 +38,7 @@ ENV INSTALL_PATH /usr/local
 RUN mkdir $INSTALL_PATH/ams && mkdir $INSTALL_PATH/webapp
 ADD ams/requirements.txt $INSTALL_PATH/ams/requirements.txt
 ADD webapp/requirements.txt $INSTALL_PATH/webapp/requirements.txt
+ADD docker/webapp/APP_BUILD_VERSION $INSTALL_PATH/webapp/app/static/PROJECT_VERSION
 # Install Python requirements
 RUN pip install -r $INSTALL_PATH/ams/requirements.txt && \
 pip install -r $INSTALL_PATH/webapp/requirements.txt
