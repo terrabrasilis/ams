@@ -3,6 +3,7 @@ DROP FUNCTION get_municipalities_area(character varying,date,date);
 create or replace function get_municipalities_area(clsname varchar, startdate date, enddate date)
 	returns table (
 			suid bigint,
+			state text,
 			name text,
 			geometry geometry(MultiPolygon,4326),
 			classname varchar,
@@ -15,7 +16,7 @@ as $$
 begin
 	return query
 SELECT
-	su.suid AS suid, su.nm_municip AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS percentage
+	su.suid AS suid, su.uf AS state, su.nm_municip AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS percentage
 FROM 
 	public."amz_municipalities" su
 LEFT JOIN (
