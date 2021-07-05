@@ -41,9 +41,7 @@ $(document).ready(function () {
 
   /** init authentication component */
   let Lang={language:"pt-br", change:(l)=>{alert("Na fila de implementação.");}};
-  Authentication.init(Lang.language, function(){
-      console.log("The authentication component has been loaded");
-  });
+  Authentication.init(Lang.language, ams.App.evaluateAuth);
 
   /** config google analytics */
   window.dataLayer = window.dataLayer || [];
