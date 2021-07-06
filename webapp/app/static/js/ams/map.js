@@ -177,7 +177,11 @@ ams.Map = {
 			$.ajax({
 				dataType: "json",
 				url: wfsUrl,
-				async: false, 
+				async: false,
+				headers: {
+					'Authorization': 'Bearer '+
+					( (typeof Authentication!="undefined" && Authentication.hasToken())?(Authentication.getToken()):("") )
+				},
 				success: function(data) {
 					res = data["features"][0]["properties"][propertyName];
 				}
