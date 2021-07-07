@@ -5,7 +5,7 @@
 -- limit: ALL - (ALL|\d+)
 
 SELECT 
-	su.suid, su.uf AS state, su.nm_municip AS name, su.geometry, ri.classname, ri.date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area
+	su.suid, su.nm_municip AS name, su.geometry, ri.classname, ri.date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area
 FROM 
 	public."amz_municipalities" su
 LEFT JOIN (
