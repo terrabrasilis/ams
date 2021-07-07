@@ -63,7 +63,7 @@ class SessionProxy():
 			self._session.rollback()
 			self._session.close()
 			if 'NotNullViolation' in str(e):
-				raise NotNullViolationError('Object violates not-null constraint.')
+				raise NotNullViolationException('Object violates not-null constraint.')
 			else:
 				raise e
 
@@ -83,5 +83,5 @@ class SessionProxy():
 		return self._session.query(object)     
 
 
-class NotNullViolationError(Exception):
+class NotNullViolationException(Exception):
 	pass
