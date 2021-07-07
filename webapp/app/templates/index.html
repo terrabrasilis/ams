@@ -33,8 +33,6 @@
 	<link rel="stylesheet" href="{{url_for('static', filename='css/leaflet.groupedlayercontrol.css')}}"/>
 	<script type="text/javascript" src="{{url_for('static', filename='js/lib/leaflet.groupedlayercontrol.js')}}"></script>
 	<script src="https://d3js.org/d3.v6.min.js"></script>
-	<script type="text/javascript" src="{{url_for('static', filename='js/ams/utils.js')}}"></script>
-	<script type="text/javascript" src="{{url_for('static', filename='js/ams/auth.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/map.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/sld.styles.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/date.js')}}"></script>
@@ -288,18 +286,12 @@
 
 	<script type="text/javascript">
 		var startApp=()=>{
-			var gsWorkspace = "{{workspace}}";
-			// register workspace name to work on front-end
-			ams.Auth.setWorkspace(gsWorkspace);
-			// evaluate the user profile on start app
-			ams.Auth.evaluate();
-			// set map div to available height
-			ams.Utils.setMapHeight();
+			var gsWorkspace = "{{workspace}}"; 
 			var sus = {{spatial_units_info|safe}};
 			var spatialUnits = new ams.Map.SpatialUnits(sus, sus[0].dataname);
 			var deterClassGroups = new ams.Map.DeterClassGroups({{deter_class_groups|safe}});
 			var geoserverUrl = "{{geoserver_url}}";
-			ams.App.run(geoserverUrl, spatialUnits, deterClassGroups);
+			ams.App.run(geoserverUrl, gsWorkspace, sus, spatialUnits, deterClassGroups);
 		};
 	</script>
 
