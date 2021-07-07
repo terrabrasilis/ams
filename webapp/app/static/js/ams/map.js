@@ -160,8 +160,8 @@ ams.Map = {
 		} 
 	},
 
-	WFS: function(baseUrl) {
-		this.url = baseUrl + "/ows?SERVICE=WFS&REQUEST=GetFeature";
+	WFS: function(wmsUrl) {
+		this.url = wmsUrl + "/ows?SERVICE=WFS&REQUEST=GetFeature";
 		this.getMinOrMax = function(layerName, propertyName, viewParams, isMin) {
 			let wfsUrl = this.url 
 						+ "&typeName=" + layerName
@@ -177,45 +177,19 @@ ams.Map = {
 			$.ajax({
 				dataType: "json",
 				url: wfsUrl,
-				async: false,
-				headers: {
-					'Authorization': 'Bearer '+
-					( (ams.Auth.isAuthenticated())?(Authentication.getToken()):("") )
-				},
-				success: function(data) {
-					res = data["features"][0]["properties"][propertyName];
-				}
-			});		
-			return res;
-		}
-		this.getMax = function(layerName, propertyName, viewParams) {		
-			return this.getMinOrMax(layerName, propertyName, viewParams, false);
-		}
-
-		this.getMin = function(layerName, propertyName, viewParams) {
-			return this.getMinOrMax(layerName, propertyName, viewParams, true);
-		}
-
-		this.getLastDate = function(layerName) {
-			let propertyName="last_date";
-			let wfsUrl = this.url 
-						+ "&typeName=" + layerName
-						+ "&propertyName=" + propertyName
-						+ "&outputFormat=json";
-			let res;
-			$.ajax({
-				dataType: "json",
-				url: wfsUrl,
-				async: false,
-				headers: {
-					'Authorization': 'Bearer '+
-					( (ams.Auth.isAuthenticated())?(Authentication.getToken()):("") )
-				},
+				async: false, 
 				success: function(data) {
 					res = data["features"][0]["properties"][propertyName];
 				}
 			});		
 			return res;	
+		}		
+		this.getMax = function(layerName, propertyName, viewParams) {		
+			return this.getMinOrMax(layerName, propertyName, viewParams, false);
+		}	
+
+		this.getMin = function(layerName, propertyName, viewParams) {
+			return this.getMinOrMax(layerName, propertyName, viewParams, true);
 		}
 
 		this.getFile = function(layerName, viewParams, 
@@ -239,8 +213,7 @@ ams.Map = {
 										+ ";startdate:" + viewParams.startdate
 										+ ";enddate:" + viewParams.enddate
 										+ ";prevdate:" + viewParams.prevdate
-										+ ";limit:" + viewParams.limit
-										+ ((ams.Auth.isAuthenticated())?("&access_token="+Authentication.getToken()):(""));
+										+ ";limit:" + viewParams.limit;		
 			let a = document.createElement("a");
 			a.href = wfsUrl;
 			a.setAttribute("download", filename);
@@ -311,10 +284,9 @@ ams.Map = {
 
 		this.setUrl = function(layerName, layerStyle) {
 			this._url = this._wmsUrl 
-						+ "?REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20"
+						+ "REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20"
 						+ "&LAYER=" + layerName
-						+ "&SLD_BODY=" + layerStyle.getEncodeURI()
-						+ ((ams.Auth.isAuthenticated())?("&access_token="+Authentication.getToken()):(""));
+						+ "&SLD_BODY=" + layerStyle.getEncodeURI(); 			
 		}
 
 		this.init = function(layerName, layerStyle)	{
