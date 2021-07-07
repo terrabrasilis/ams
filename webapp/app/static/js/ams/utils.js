@@ -8,7 +8,7 @@ ams.Utils = {
   },
 
   onWindowResize: function(){
-    if(ams.Utils.tid) window.clearTimeout(tid);
+    if(ams.Utils.tid) window.clearTimeout(ams.Utils.tid);
     ams.Utils.tid=window.setTimeout(
       ()=>{
         ams.Utils.tid=null;
