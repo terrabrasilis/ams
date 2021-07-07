@@ -1,43 +1,9 @@
 var ams = ams || {};
 
 ams.App = {
-	/**
-	 * Default GeoServer workspace for anonymous users.
-	 */
-	gsWorkspace:'ams',
-	/**
-	 * Default is no suffix. TO authenticate the suffix is "_auth"
-	 */
-	gsAuthSuffix:'',
 
-	/**
-	 * Evaluates user authentication status and sets appropriate suffix
-	 * 
-	 * When starting the application or after user login, changes the default suffix
-	 * to the suffix suitable for authenticated users.
-	 * 
-	 * The GeoServer workspace name for AMS or the layer name for Official DETER
-	 * for authenticated users uses "_auth" by convention.
-	 */
-	evaluateAuth: function() {
-		ams.App.gsAuthSuffix=( (typeof Authentication!="undefined" && Authentication.hasToken())?("_auth"):("") );
-		ams.App.defineWorkspace();// reset workspace name when suffix changes
-	},
-
-	/**
-	 * Evaluates user authentication status and sets appropriate workspace
-	 * 
-	 * The GeoServer workspace name for authenticated users is "ams_auth" by convention.
-	 */
-	defineWorkspace: function() {
-		ams.App.gsWorkspace=ams.App.gsWorkspace+ams.App.gsAuthSuffix;
-	},
-
-	run: function(geoserverUrl, gsWorkspace, sus, spatialUnits, deterClassGroups) {
+	run: function(geoserverUrl, spatialUnits, deterClassGroups) {
 		
-		ams.App.gsWorkspace=gsWorkspace;
-		this.evaluateAuth();
-
 		const updateAll = function(suSource, currSuLayerName, suViewParams, 
 								suLayerMinArea, priorSource, priorViewParams, 
 								legendControl, map) {
@@ -70,7 +36,15 @@ ams.App = {
 			deterAlertsLayer.bringToBack();
 		}
 
+		const addAutorizationToken = function(options) {
+			if(ams.Auth.isAuthenticated()){
+				if(!options) options={};
+				options["access_token"]=Authentication.getToken();
+			}
+		}
+
 		const addWmsOptionsBase = function(options, identity) {
+			addAutorizationToken(options);
 			let wmsOptionsBase = {
 				"transparent": true, 
 				"tiled": true, 
@@ -80,15 +54,16 @@ ams.App = {
 			for(let k in wmsOptionsBase) {
 				options[k] = wmsOptionsBase[k];
 			}
-		}		
+		}
+
+		var wfs = new ams.Map.WFS(geoserverUrl);
+		var ldLayerName = ams.Auth.getWorkspace() + ":last_date";
 
 		var temporalUnits = new ams.Map.TemporalUnits();
 		var dateControll = new ams.Date.DateController();
-		var currStartdate = spatialUnits.default.last_date;
+		var currStartdate = (ams.Auth.isAuthenticated())?(spatialUnits.default.last_date):(wfs.getLastDate(ldLayerName));
 		var currAggregate = temporalUnits.getAggregates()[0].key;
 		dateControll.setPeriod(currStartdate, currAggregate);
-
-		var wfs = new ams.Map.WFS(geoserverUrl);
 		
 		var map = new L.Map("map", {
 		    zoomControl: false
@@ -109,20 +84,20 @@ ams.App = {
 
 		var suViewParams = new ams.Map.ViewParams(deterClassGroups.at(0).acronym, 
 												dateControll, "ALL");
-		var suLayerName = ams.App.gsWorkspace + ":" + spatialUnits.default.dataname;
+		var suLayerName = ams.Auth.getWorkspace() + ":" + spatialUnits.default.dataname;
 		var currSuLayerName = suLayerName + "_view";
 		var suLayerMaxArea = wfs.getMax(currSuLayerName, "area", 
 											suViewParams); 
 		var suLayerStyle = new ams.SLDStyles.AreaStyle(currSuLayerName, 0, 
 															suLayerMaxArea);
-		var wmsUrl = geoserverUrl + "/wms?"
+		var wmsUrl = geoserverUrl + "/wms"
 		var wmsOptions = {
 				"opacity": 0.8,
 				"viewparams": suViewParams.toWmsFormat(),
-				"sld_body": suLayerStyle.getSLD(),
+				"sld_body": suLayerStyle.getSLD()
 		};
 		addWmsOptionsBase(wmsOptions, true);
-		var suSource = new ams.LeafletWms.Source(wmsUrl, wmsOptions, deterClassGroups); //L.WMS.source(wmsUrl, wmsOptions);
+		var suSource = new ams.LeafletWms.Source(wmsUrl, wmsOptions, deterClassGroups);
 		var suLayer = suSource.getLayer(currSuLayerName);
 		suLayer.addTo(map);	
 
@@ -146,17 +121,16 @@ ams.App = {
 		var tbBiomeLayerName = "prodes-amz:brazilian_amazon_biome_border";
 		var onlyWmsBase = {};
 		addWmsOptionsBase(onlyWmsBase, false);
-		var tbWmsUrl = "http://terrabrasilis.dpi.inpe.br/geoserver/ows";
-		var tbBiomeSource = L.WMS.source(tbWmsUrl, onlyWmsBase);
+		var tbBiomeSource = L.WMS.source(wmsUrl, onlyWmsBase);
 		var tbBiomeLayer = tbBiomeSource.getLayer(tbBiomeLayerName).addTo(map);
 		tbBiomeLayer.bringToBack();
 
-		var tbDeterAlertsLayerName = "deter-amz:deter-ams" + ams.App.gsAuthSuffix;
+		var tbDeterAlertsLayerName = "deter-amz:deter-ams" + ams.Auth.getAuthSuffix();
 		var tbDeterAlertsWmsOptions = {
 			"cql_filter": deterClassGroups.getCqlFilter(suViewParams),
 		};		
 		addWmsOptionsBase(tbDeterAlertsWmsOptions, true);
-		var tbDeterAlertsSource = new ams.LeafletWms.Source(tbWmsUrl, tbDeterAlertsWmsOptions, deterClassGroups); //L.WMS.source(tbWmsUrl, tbDeterAlertsWmsOptions);
+		var tbDeterAlertsSource = new ams.LeafletWms.Source(wmsUrl, tbDeterAlertsWmsOptions, deterClassGroups);
 		var tbDeterAlertsLayer = tbDeterAlertsSource.getLayer(tbDeterAlertsLayerName).addTo(map);
 		tbDeterAlertsLayer.bringToBack();
 
@@ -170,7 +144,7 @@ ams.App = {
 		};
 
 		for(var i = 1; i < spatialUnits.length(); i++) {
-			let layerName = ams.App.gsWorkspace + ":" + spatialUnits.at(i).dataname + "_view";
+			let layerName = ams.Auth.getWorkspace() + ":" + spatialUnits.at(i).dataname + "_view";
 			let layer = suSource.getLayer(layerName);
 			groupedOverlays["UNIDADE ESPACIAL"][spatialUnits.at(i).name] = layer;
 		}
@@ -268,7 +242,7 @@ ams.App = {
 
 		map.on('overlayadd', function(e) {
 			if(spatialUnits.isSpatialUnit(e.name)) {
-				suLayerName = ams.App.gsWorkspace + ":" + spatialUnits.getDataName(e.name);
+				suLayerName = ams.Auth.getWorkspace() + ":" + spatialUnits.getDataName(e.name);
 				if(diffON) {
 					currSuLayerName = suLayerName + "_diff_view"; 
 				} 
