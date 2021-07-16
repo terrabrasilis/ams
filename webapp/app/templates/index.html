@@ -18,6 +18,7 @@
 	<meta name="author" content="Rodrigo Avancini - avancinirodrigo@gmail.com">
 	<meta name="author" content="Mauro Assis - assismauro@hotmail.com">
 	<meta name="author" content="André Carvalho - andre.carvalho@inpe.br">
+	<meta name="author" content="Miguel Gastelumendi - miguel.gastelumendi@gmail.com">
 	
 	<link rel="shortcut icon" href="{{ url_for('static', filename='imgs/favicon.ico') }}" type="image/x-icon">
 	<link rel="icon" href="{{ url_for('static', filename='imgs/favicon.ico') }}" type="image/x-icon">
@@ -157,16 +158,19 @@
 			 aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
 				<i class="material-icons menuicon">menu</i>
 			</button> -->
+            <!-- mgd:2021T03a
 			<button class="btn btn-material navbar-btn " type="button" data-toggle="collapse"
 			 aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
 				<i class="material-icons menuicon">menu</i>
 			</button>
+			-->
 			<a class="navbar-brand" href="http://terrabrasilis.dpi.inpe.br/"><span class="amarelo">Terra</span><span class="verde">Brasilis</span></a>
 			<div class="collapse navbar-collapse justify-content-between">
 				<div class="navbar-nav">
 					<a class="nav-item nav-link" href="#" id="header-panel">| AMS</a>
 				</div>
 				<ul id="navigationBarUL" class="navbar-nav navbar-right analises">
+                    <!-- mgd:2021T03b
 					<li class="nav-item dropdown">
 						<a aria-expanded="true" aria-haspopup="true" class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="navbarDropdownMenuLink" role="button">
 							<i class="material-icons iconmobile">assignment </i><span id="maps-sup">Mapas</span>
@@ -176,6 +180,8 @@
 							<a class="dropdown-item" target="_blank" href="/app/map/alerts/"><i class="material-icons iconmenu">warning</i><span id="map-war">DETER (Avisos)</span></a>
 						</div>
 					</li>
+					-->
+                    <!-- mgd:2021T03c
 					<li class="nav-item dropdown">
 						<a aria-expanded="true" aria-haspopup="true" class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="navbarDropdownMenuLink" role="button"> 
 							<i class="material-icons iconmobile">assignment </i><span id="analysis-sup">Gráficos</span>
@@ -186,31 +192,55 @@
 							<a class="dropdown-item" href="/app/dashboard/fires/legal/amazon/aggregated/"><i class="material-icons iconmenu">local_fire_department</i><span id="analysis-fire">Focos (Queimada)</span></a>
 						</div>
 					</li>
+					-->
+                    <!-- mgd:2021T03f
 					<li class="nav-item active">
-							<a class="nav-link" target="_blank" href="http://terrabrasilis.dpi.inpe.br/sobre/#post-1355"><span id="about-menu">Sobre</span></a>
-					</li>
+						<a class="nav-link" target="_blank" href="http://terrabrasilis.dpi.inpe.br/sobre/#post-1355">
+					-->
 					<li class="nav-item">
+						<a class="nav-link" href="#modal-container-menu-about" id="goto_menu-about" data-toggle="modal" title="Abrir sobre o AMS">
+							<span id="about-menu">Sobre</span>
+  						</a>
+					</li>
+					<li class="nav-item active">
+                        <!-- mgd:2021T03g
+                        <li class="nav-item">
 						<a class="nav-link" href="#modal-container-general-info" data-toggle="modal" id="tt-contactus-menu" title="Envie sugestões ou perguntas para terrabrasilis@inpe.br.">
-							<span id="contactus-menu">Contato</span>
+						-->
+						<a class="nav-link" target="_blank" href="https://falabr.cgu.gov.br/" title="Envie sugestões ou perguntas atrav&eacute;s de Fala.BR">
+							<span id="contactbr-menu">Fale Conosco</span>
 						</a>
 					</li>
+					<!-- mgd:2021T03i -->
+					<li class="nav-item active">
+						<a class="nav-link" target="_blank" href="http://www.inpe.br/ouvidoria/" title="Contate a ouvidoria do INPE">
+							<span id="contactus-menu">Ouvidoria</span>
+						</a>
+					</li>
+
+					<!-- mgd:2021T03h1
 					<li class="nav-item">
 						<a class="nav-link" href="#modal-container-general-info" id="goto_video_sup" data-toggle="modal" title="Ver o vídeo introdutório sobre como utilizar este painel.">
 							<i class="material-icons iconmobile">help</i><span id="help-sup">Ajuda</span>
 						</a>
 					</li>
+					-->
+                    <!-- mgd:2021T03d
 					<li class="nav-item">
 						<a class="nav-link" href="#">
 							<img id="flag-pt-br" alt="Bandeira Brasil" class="bandeira" src="{{ url_for('static', filename='imgs/br.svg') }}" onclick="Lang.change('pt-br');"
 							 title="Alterar o idioma do painel para Português do Brasil.">
 						</a>
 					</li>
+					-->
+                    <!-- mgd:2021T03e
 					<li class="nav-item">
 						<a class="nav-link" href="#">
 							<img id="flag-en" alt="Flag USA" class="bandeira" src="{{ url_for('static', filename='imgs/usa.svg') }}" onclick="Lang.change('en');"
 							title="Change panel language to English.">
 						</a>
 					</li>
+					-->
 				</ul>
 			</div>
 		</nav>
@@ -241,36 +271,83 @@
 	<div class="container">
 		<div class="row box">
 			<div class="col-md-12">
-				
-				<!-- modal window for General informations -->
-				<div class="modal fade" id="modal-container-general-info" role="dialog" aria-labelledby="general-info" aria-hidden="true">
+
+				<!-- modal window for Menu About -->
+				<div class="modal fade" id="modal-container-menu-about" role="dialog" aria-labelledby="menu-about" aria-hidden="true">
 					<div class="modal-dialog">
 						<div class="modal-content modalinf">
 							<div class="modal-header fechar">
-								<h5 class="modal-title boxtitletable"><span id="txt2a">Informação geral</span></h5>
+								<h5 class="modal-title boxtitletable"><span id="txt2a">Sobre</span></h5>
 								<button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="material-icons">clear</i></button>
 							</div>
 							<div class="modal-body">
-								<div class="alert alert-warning">
-									<span id="txt2b">Algum texto de alerta ao usuário. Use as classes do bootstrap para alterar a cor da caixa.</span>
+	<div class="alert alert-secondary">
+	A "Sala de Situação da Amazônia" (AMS) é uma ferramenta web visa subsidiar ações de inteligência territorial através
+	da visualização sinótica de indicadores de áreas críticas do desmatamento, integrando os alertas do sistema Detecção
+	do Desmatamento em Tempo Quase Real (DETER). Está ferramenta está integrada no portal TerraBrasilis.
+	</div>
+	<div class="alert alert-secondary">
+	O objetivo principal da ferramenta é subsidiar o planejamento de ações de fiscalização pelas Secretarias de Meio Ambiente
+	dos Estados e IBAMA, mas esperamos também que a ferramenta seja útil para que outros setores da sociedade possam entender,
+	de forma sintética, os múltiplos processos em curso na Amazônia (desmatamento corte-raso, degradação, corte-seletivo, mineração)
+	e propor ações efetivas para controle desses processos na região.
+	Por exemplo, ações restritivas ou de incentivo a municípios críticos.
+	</div>
+	<div class="alert alert-secondary">
+	A ferramenta Terrabrasilis/AMS é derivada de uma colaboração científica entre pesquisadores do INPE e Univ. Federal de Minas Gerais (UFMG)
+	com a Secretaria de Meio Ambiente e Sustentabilidade do Pará (SEMAS-PA) que esperamos seja útil para todos os demais atores.
+	</div>
+	<div class="alert alert-dark">
+		Os dados do AMS são públicos, abertos e gratuitos, sob a
+		<a rel="license" target="_blank" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.pt_BR">
+			<img alt="Licença Creative Commons" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" />
+		</a>
+		Licença
+		<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
+			Creative Commons Atribuição-NãoComercial-CompartilhaIgual 4.0 Internacional</a>,
+		desde que seja referenciada a fonte no seguinte formato:<br>
+
+		<samp>
+			Instituto Nacional de Pesquisas Espaciais (INPE). Amazon Situation Room/TerraBrasilis. Disponível em <b>http://terrabrasilis.dpi.inpe.br/ams</b>.
+		</samp>
+	</div>
 								</div>
-								<div class="alert alert-info">
-									<span id="txt2b">Algum texto de interesse ao usuário. Use as classes do bootstrap para alterar a cor da caixa.</span>
+						</div>
+					</div>
+				</div>
+				<!-- end modal -->
+
+				<!-- modal window for General informations -->
+					<!-- mgd:2021T03h2
+					<div class="modal fade" id="modal-container-general-info" role="dialog" aria-labelledby="general-info" aria-hidden="true">
+						<div class="modal-dialog">
+							<div class="modal-content modalinf">
+								<div class="modal-header fechar">
+									<h5 class="modal-title boxtitletable"><span id="txt2a">Informação geral</span></h5>
+									<button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="material-icons">clear</i></button>
 								</div>
-							</div>
-							
-							<div class="modal-footer">
-								<div class="checkbox pull-right">
-									<label>
-										<button type="button" class="btn btngreen" data-dismiss="modal">
-											<span id="txt2c">Fechar</span>
-										</button>
-									</label>
+								<div class="modal-body">
+									<div class="alert alert-warning">
+										<span id="txt2b">Algum texto de alerta ao usuário. Use as classes do bootstrap para alterar a cor da caixa.</span>
+									</div>
+									<div class="alert alert-info">
+										<span id="txt2b">Algum texto de interesse ao usuário. Use as classes do bootstrap para alterar a cor da caixa.</span>
+									</div>
+								</div>
+
+								<div class="modal-footer">
+									<div class="checkbox pull-right">
+										<label>
+											<button type="button" class="btn btngreen" data-dismiss="modal">
+												<span id="txt2c">Fechar</span>
+											</button>
+										</label>
+									</div>
 								</div>
 							</div>
 						</div>
 					</div>
-				</div>
+				-->
 				<!-- end modal -->
 
 				<!--Footer-->
