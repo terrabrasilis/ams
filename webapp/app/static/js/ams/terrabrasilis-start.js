@@ -27,7 +27,7 @@ $(document).ready(function () {
     // TODO: enable this code if a file with tag version is present
     $.getJSON('static/PROJECT_VERSION', function(data) {
         let version = data.version;
-        versionDiv.append('ver: '+version);
+        versionDiv.append('<a href="https://github.com/terrabrasilis/ams/releases/tag/'+version+'" target="_blank" title="Veja este release no GitHub">'+version+'</a>');
     });
   }
 
