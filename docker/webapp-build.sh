@@ -11,7 +11,7 @@ else
     echo "Nice, it will be faster than use no-cache option."
 fi
 
-VERSION=$(cat webapp/APP_BUILD_VERSION | grep -oP '(?<="version": ")[^"]*')
+VERSION=$(git describe --tags --abbrev=0)
 
 echo 
 echo "/######################################################################/"
