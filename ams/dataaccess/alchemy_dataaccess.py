@@ -80,8 +80,8 @@ class SessionProxy():
 		self._session.close()
 
 	def query(self, object):
-		return self._session.query(object)     
+		return self._session.query(object)
 
 
-class NotNullViolationException(Exception):
+class NotNullViolationExceptionError(Exception):
 	pass
