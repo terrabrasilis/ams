@@ -3,7 +3,7 @@ var ams = ams || {};
 ams.Map = {
 	update: function(source, layerName, viewParams, layerStyle) {
 		source._subLayers = {};
-		source._subLayers[layerName] = true;
+		source._subLayers[layerName] = true;		
 		source.options["viewparams"] = viewParams.toWmsFormat();
 		source._overlay.wmsParams.layers = layerName;
 		if(layerStyle) {
@@ -11,13 +11,13 @@ ams.Map = {
 			source._overlay.setParams({
 				"viewparams": viewParams.toWmsFormat(),
 				"sld_body": layerStyle.getSLD(),
-			});
+			});				
 		}
 		else {
 			source._overlay.setParams({
 				"viewparams": viewParams.toWmsFormat(),
-			});
-		}
+			});	
+		}	
 	},
 
 	ViewParams: function(classname, dateControll, limit) {
@@ -61,8 +61,8 @@ ams.Map = {
 					return this.spatialUnits[i];
 				}
 			}
-			return null;
-		}
+			return null;				
+		}	
 
 		this._setNames = function(sus) {
 			for(var i = 0; i < sus.length; i++) {
@@ -71,7 +71,7 @@ ams.Map = {
 			}
 			this.spatialUnits = sus;
 		}
-
+		
 		this._setNames(spatialUnits);
 
 		this.default = this.getSpatialUnit(suDefaultName);
@@ -82,7 +82,7 @@ ams.Map = {
 					return true;
 				}
 			}
-			return false;
+			return false;			
 		}
 
 		this.length = function() {
@@ -91,7 +91,7 @@ ams.Map = {
 
 		this.at = function(pos) {
 			return this.spatialUnits[pos];
-		}
+		}	
 
 		this.getDataName = function(name) {
 			return this._suDataNamesMap[name];
@@ -115,14 +115,14 @@ ams.Map = {
 		}
 
 		this._setNames(groups);
-
+		
 		this.length = function() {
 			return this.groups.length;
 		}
-
+		
 		this.at = function(pos) {
 			return this.groups[pos];
-		}
+		}	
 
 
 		this.getGroup = function(acronym) {
@@ -153,17 +153,17 @@ ams.Map = {
 					+ ") AND ("
 					+ this._filterClasses(viewParams.classname)
 					+ ")";
-		}
+		}	
 
 		this.getGroupName = function(acronym) {
 			return this._groupNamesMap[acronym];
-		}
+		} 
 	},
 
 	WFS: function(baseUrl) {
 		this.url = baseUrl + "/ows?SERVICE=WFS&REQUEST=GetFeature";
 		this.getMinOrMax = function(layerName, propertyName, viewParams, isMin) {
-			let wfsUrl = this.url
+			let wfsUrl = this.url 
 						+ "&typeName=" + layerName
 						+ "&propertyName=" + propertyName
 						+ "&outputFormat=json"
@@ -185,10 +185,10 @@ ams.Map = {
 				success: function(data) {
 					res = data["features"][0]["properties"][propertyName];
 				}
-			});
+			});		
 			return res;
 		}
-		this.getMax = function(layerName, propertyName, viewParams) {
+		this.getMax = function(layerName, propertyName, viewParams) {		
 			return this.getMinOrMax(layerName, propertyName, viewParams, false);
 		}
 
@@ -198,7 +198,7 @@ ams.Map = {
 
 		this.getLastDate = function(layerName) {
 			let propertyName="last_date";
-			let wfsUrl = this.url
+			let wfsUrl = this.url 
 						+ "&typeName=" + layerName
 						+ "&propertyName=" + propertyName
 						+ "&outputFormat=json";
@@ -214,11 +214,11 @@ ams.Map = {
 				success: function(data) {
 					res = data["features"][0]["properties"][propertyName];
 				}
-			});
-			return res;
+			});		
+			return res;	
 		}
 
-		this.getFile = function(layerName, viewParams,
+		this.getFile = function(layerName, viewParams, 
 								outputFormat, extension,
 								propertyName){
 
@@ -252,7 +252,7 @@ ams.Map = {
 						+ "."
 						+ extension;
 
-			let wfsUrl = this.url
+			let wfsUrl = this.url 
 						+ "&typeName=" + layerName
 						+ "&outputFormat=" + outputFormat
 						+ "&format_options=filename:" + filename
@@ -263,26 +263,45 @@ ams.Map = {
 										+ ";enddate:" + viewParams.enddate
 										+ ";prevdate:" + viewParams.prevdate
 										+ ";limit:" + viewParams.limit
-										+ ((ams.Auth.isAuthenticated())?("&access_token="+Authentication.getToken()):(""));
+			/*							+ ((ams.Auth.isAuthenticated())?("&access_token="+Authentication.getToken()):(""));
+
 			let a = document.createElement("a");
 			a.href = wfsUrl;
 			a.setAttribute("download", filename);
-			a.click();
+			a.click(); */
+			$.ajax({
+				url: wfsUrl,
+				async: false,
+				headers: {
+					'Authorization': 'Bearer ' + ((ams.Auth.isAuthenticated())?(Authentication.getToken()):("") )
+				},
+				success: function(data) {
+					const blob = new Blob([data], { type: "application/octetstream" });
+					const url = window.URL.createObjectURL(blob);
+					const a = document.createElement("a");
+					a.href = url;
+					a.download = filename;
+					a.click();
+				},
+				fail: function(jqXHR, textStatus){
+					window.console.log(textStatus);
+				}
+			});
 		}
 
 		this.getShapeZip = function(layerName, viewParams) {
 			let propertyName = "name,area,percentage,geometry";
 			this.getFile(layerName, viewParams, "shape-zip", "zip", propertyName);
-		}
+		} 
 
 		this.getCsv = function(layerName, viewParams) {
 			let propertyName = "name,area,percentage";
 			this.getFile(layerName, viewParams, "csv", "csv", propertyName);
-		}
+		} 
 	},
 
 	TemporalUnits: function() {
-		this.aggregates = {
+		this.aggregates = {		
 			0: {"key": "7d", "value": "Agregado Semanal"},
 			1: {"key": "15d", "value": "Agregado 15 Dias"},
 			2: {"key": "1m", "value": "Agregado Mensal"},
@@ -312,7 +331,7 @@ ams.Map = {
 			for(let i = 0; i < Object.keys(this.aggregates).length; i++) {
 				if(this.aggregates[i].value == name) {
 					return true;
-				}
+				} 
 			}
 			return false;
 		}
@@ -321,10 +340,10 @@ ams.Map = {
 			for(let i = 0; i < Object.keys(this.differeces).length; i++) {
 				if(this.differeces[i].value == name) {
 					return true;
-				}
+				} 
 			}
 			return false;
-		}
+		}		
 	},
 
 	LegendController: function(map, wmsUrl) {
@@ -334,7 +353,7 @@ ams.Map = {
 		this._map = map;
 
 		this.setUrl = function(layerName, layerStyle) {
-			this._url = this._wmsUrl
+			this._url = this._wmsUrl 
 						+ "?REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20"
 						+ "&LAYER=" + layerName
 						+ "&SLD_BODY=" + layerStyle.getEncodeURI()
@@ -350,7 +369,7 @@ ams.Map = {
 			this._setWMSControl(layerName, layerStyle);
 			this._map.removeControl(this._wmsLegendControl);
 			this._map.addControl(this._wmsLegendControl);
-		}
+		}	
 
 		this._setWMSControl = function(layerName, layerStyle) {
 			this.setUrl(layerName, layerStyle);
