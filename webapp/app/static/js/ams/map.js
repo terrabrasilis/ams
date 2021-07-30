@@ -262,32 +262,34 @@ ams.Map = {
 										+ ";startdate:" + viewParams.startdate
 										+ ";enddate:" + viewParams.enddate
 										+ ";prevdate:" + viewParams.prevdate
-										+ ";limit:" + viewParams.limit
-			/*							+ ((ams.Auth.isAuthenticated())?("&access_token="+Authentication.getToken()):(""));
+										+ ";limit:" + viewParams.limit;
 
-			let a = document.createElement("a");
-			a.href = wfsUrl;
-			a.setAttribute("download", filename);
-			a.click(); */
-			$.ajax({
-				url: wfsUrl,
-				async: false,
-				headers: {
-					'Authorization': 'Bearer ' + ((ams.Auth.isAuthenticated())?(Authentication.getToken()):("") )
-				},
-				success: function(data) {
-					const blob = new Blob([data], { type: "application/octetstream" });
-					const url = window.URL.createObjectURL(blob);
-					const a = document.createElement("a");
-					a.href = url;
-					a.download = filename;
-					a.click();
-				},
-				fail: function(jqXHR, textStatus){
-					window.console.log(textStatus);
-				}
-			});
-		}
+			if (extension == 'csv') {
+				$.ajax({
+					url: wfsUrl,
+					async: false,
+					headers: {
+						'Authorization': 'Bearer ' + ((ams.Auth.isAuthenticated()) ? (Authentication.getToken()) : (""))
+					},
+					success: function(data) {
+						const blob = new Blob([data], {type: "application/octet-stream"});
+						const url = window.URL.createObjectURL(blob);
+						const a = document.createElement("a");
+						a.href = url;
+						a.download = filename;
+						a.click();
+					},
+					fail: function (jqXHR, textStatus) {
+						window.console.log(textStatus);
+					}
+				});
+			} else {
+				let a = document.createElement("a");
+				a.href = wfsUrl + ((ams.Auth.isAuthenticated())?("&access_token="+Authentication.getToken()):(""));
+				a.setAttribute("download", filename);
+				a.click();
+			}
+        }
 
 		this.getShapeZip = function(layerName, viewParams) {
 			let propertyName = "name,area,percentage,geometry";
