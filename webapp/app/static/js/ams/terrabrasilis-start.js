@@ -35,7 +35,10 @@ $(document).ready(function () {
     // TODO: enable this code if a file with tag version is present
     $.getJSON('static/PROJECT_VERSION', function(data) {
         let version = data.version;
-        versionDiv.append('ver: '+version);
+        versionDiv.append('<a href="https://github.com/terrabrasilis/ams/releases/tag/'+version+'" target="_blank" title="Veja este release no GitHub">'+version+'</a>');
+        if(window.location.pathname.includes("homologation")){
+          $('#header-panel').append("<span style='font-size:18px;font-weight:600;color:#ffff00;'> (Versão de homologação)</span>")
+        }
     });
   }
 

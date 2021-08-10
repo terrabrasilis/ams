@@ -61,7 +61,7 @@ ams.App = {
 		map.setView([spatialUnits.default.center_lat, 
 					spatialUnits.default.center_lng], 5);
 
-		var osmLayer = new L.TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		var osmLayer = new L.TileLayer('http://{s}.tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png', {
 			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
 			maxZoom: 18,
 			crs: L.CRS.EPSG4326,

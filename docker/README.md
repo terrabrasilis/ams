@@ -23,7 +23,13 @@ Optional:
 ## Building the app image
 
 The preconditions is:
- - Review and/or change the version number in the **docker/webapp/APP_BUILD_VERSION** file before building the image, because successive builds will overwrite the previous image that has the same version number;
+ - Review and/or change the version number using git tags before building the image, because successive builds will overwrite the previous image that has the same version number;
+
+The build script uses the latest repository tag to tag the docker image by running the following command.
+```sh
+# example to get more recent repository tag
+git describe --tags --abbrev=0
+```
 
 Using a shell command line terminal, go to the docker directory and run the webapp-build.sh script.
 
@@ -62,7 +68,7 @@ Use the docker command line. Change the <x.y.z> to the desired version.
 
 ```sh
 docker run --env SCRIPT_NAME="/ams" \
---env GEOSERVER_URL="http://terrabrasilis.dpi.inpe.br/geoams/" \
+--env GEOSERVER_URL="http://terrabrasilis.dpi.inpe.br/geoserver/" \
 --env-file docker/webapp-secrets.env \
 -d --rm --name ams-webapp terrabrasilis/ams-webapp:v<x.y.z>
 ```

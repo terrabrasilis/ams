@@ -194,15 +194,38 @@ ams.Map = {
 
 		this.getFile = function(layerName, viewParams, 
 								outputFormat, extension,
-								propertyName) {
-			filename = layerName.replace("_view", "").replace("_", "").replace(":", "")
-						+ '_'
+								propertyName){
+
+			let _viewToResolution = {
+				"csAmz_150km": "CELL_150Km",
+				"csAmz_300km": "CELL_300Km",
+				"amz_states": "ESTADO",
+				"amz_municipalities": "MUNIC",
+			};
+			let baseName = layerName.substring(layerName.indexOf(':') + 1).replace("_view", "");
+			let diff = '';
+			const _diff = "diff";
+			if (baseName.indexOf(_diff) > 0) {
+				diff = "_" + viewParams.prevdate;
+				baseName = baseName.replace(_diff, "");
+			}
+			let resolution = _viewToResolution[baseName];
+			if (typeof resolution == 'undefined') {
+				resolution = baseName;
+			}
+
+			let filename = "AMS_"
+						+ resolution
+						+ "_"
 						+ viewParams.classname
-						+ "_" 
+						+ "_"
 						+ viewParams.startdate
-						+ "_" 
+						+ "_"
 						+ viewParams.enddate
-						+ "." + extension;
+						+ diff
+						+ "."
+						+ extension;
+
 			let wfsUrl = this.url 
 						+ "&typeName=" + layerName
 						+ "&outputFormat=" + outputFormat
@@ -213,19 +236,42 @@ ams.Map = {
 										+ ";startdate:" + viewParams.startdate
 										+ ";enddate:" + viewParams.enddate
 										+ ";prevdate:" + viewParams.prevdate
-										+ ";limit:" + viewParams.limit;		
-			let a = document.createElement("a");
-			a.href = wfsUrl;
-			a.setAttribute("download", filename);
-			a.click();			
-		}
+										+ ";limit:" + viewParams.limit;
+
+			if (extension == 'csv') {
+				$.ajax({
+					url: wfsUrl,
+					async: false,
+					headers: {
+						'Authorization': 'Bearer ' + ((ams.Auth.isAuthenticated()) ? (Authentication.getToken()) : (""))
+					},
+					success: function(data) {
+						const blob = new Blob([data], {type: "application/octet-stream"});
+						const url = window.URL.createObjectURL(blob);
+						const a = document.createElement("a");
+						a.href = url;
+						a.download = filename;
+						a.click();
+					},
+					fail: function (jqXHR, textStatus) {
+						window.console.log(textStatus);
+					}
+				});
+			} else {
+				let a = document.createElement("a");
+				a.href = wfsUrl + ((ams.Auth.isAuthenticated())?("&access_token="+Authentication.getToken()):(""));
+				a.setAttribute("download", filename);
+				a.click();
+			}
+        }
 
 		this.getShapeZip = function(layerName, viewParams) {
-			this.getFile(layerName, viewParams, "shape-zip", "zip");
+			let propertyName = "name,area,percentage,geometry";
+			this.getFile(layerName, viewParams, "shape-zip", "zip", propertyName);
 		} 
 
 		this.getCsv = function(layerName, viewParams) {
-			let propertyName = "name,classname,date,area,percentage";
+			let propertyName = "name,area,percentage";
 			this.getFile(layerName, viewParams, "csv", "csv", propertyName);
 		} 
 	},

@@ -11,14 +11,14 @@ else
     echo "Nice, it will be faster than use no-cache option."
 fi
 
-VERSION=$(cat webapp/APP_BUILD_VERSION | grep -oP '(?<="version": ")[^"]*')
+VERSION=$(git describe --tags --abbrev=0)
 
 echo 
 echo "/######################################################################/"
-echo " Build new image terrabrasilis/ams-webapp:v$VERSION "
+echo " Build new image terrabrasilis/ams-webapp:$VERSION "
 echo "/######################################################################/"
 echo
-docker build $NO_CACHE -t "terrabrasilis/ams-webapp:v$VERSION" -f webapp/Dockerfile ../
+docker build $NO_CACHE -t "terrabrasilis/ams-webapp:$VERSION" --build-arg APP_BUILD_VERSION=$VERSION -f webapp/Dockerfile ../
 
 # send to dockerhub
 echo 
@@ -27,5 +27,5 @@ if [[ ! "$SEND_TO_HUB" = "yes" ]]; then
     echo "Ok, not send the images."
 else
     echo "Nice, sending the image!"
-    docker push "terrabrasilis/ams-webapp:v$VERSION"
+    docker push "terrabrasilis/ams-webapp:$VERSION"
 fi
