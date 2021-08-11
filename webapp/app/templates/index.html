@@ -117,12 +117,14 @@
 	<!-- Menu superior -->
 	<div id="content">
 		<nav class="navbar navbar-expand-lg materialnav navbar-header">
+
 			<a class="navbar-brand" href="http://terrabrasilis.dpi.inpe.br/"><span class="amarelo">Terra</span><span class="verde">Brasilis</span></a>
 			<div class="collapse navbar-collapse justify-content-between">
 				<div class="navbar-nav">
 					<a class="nav-item nav-link" href="#" id="header-panel">| AMS - Sala de Situação da Amazônia</a>
 				</div>
 				<ul id="navigationBarUL" class="navbar-nav navbar-right analises">
+
 					<li class="nav-item">
 						<a class="nav-link" href="#modal-container-menu-about" id="goto_menu-about" data-toggle="modal" title="Abrir sobre o AMS">
 							<span id="about-menu">Sobre</span>
@@ -238,7 +240,7 @@
 			var spatialUnits = new ams.Map.SpatialUnits(sus, sus[0].dataname);
 			var deterClassGroups = new ams.Map.DeterClassGroups(JSON.parse("{{deter_class_groups|safe}}".replaceAll("'","\"")));
 			var geoserverUrl = "{{geoserver_url}}";
-			ams.App.run(geoserverUrl, gsWorkspace, sus, spatialUnits, deterClassGroups);
+			ams.App.run(geoserverUrl, spatialUnits, deterClassGroups);
 		};
 	</script>
 
