@@ -11,10 +11,6 @@ $(document).ready(function () {
         $('#panel_container').removeClass('full-width');
     }
   };
-
-  let setMapHeight=()=>{
-    $('#map').height(window.innerHeight-$('footer.footer').height()-$('#content').height());
-  };
     
   $("#sidebar").mCustomScrollbar({
       theme: "minimal"
@@ -24,11 +20,7 @@ $(document).ready(function () {
 
   // close side bar by default
   toggleSideBar();
-  // set map div to available height
-  setMapHeight();
-  // start webapp based on definitions inside index.html
-  startApp();
-
+  
   /** display app version on footer bar */
   let versionDiv = $('#version');
   if(versionDiv.length>0){
@@ -42,11 +34,17 @@ $(document).ready(function () {
     });
   }
 
-  /** init authentication component */
+  /** Translation component mock, used to start the authentication component */
   let Lang={language:"pt-br", change:(l)=>{alert("Na fila de implementação.");}};
-  Authentication.init(Lang.language, function(){
-      console.log("The authentication component has been loaded");
-  });
+  /**
+   * When starting the authentication component, register the restartApp callback
+   * to restart the webapp based on the definitions in index.html and the status
+   * of the authentication chain.
+   */
+  Authentication.init(Lang.language, ams.Utils.restartApp);
+
+  /** Launch the app when loading the page for the first time */
+  startApp();
 
   /** config google analytics */
   window.dataLayer = window.dataLayer || [];
@@ -54,19 +52,6 @@ $(document).ready(function () {
   gtag('js', new Date());
   gtag('config', 'G-VF4139FH8F');
 
-  var tid=null;
-  window.onresize=()=>{
-    if(tid) window.clearTimeout(tid);
-    tid=window.setTimeout(
-      ()=>{
-        tid=null;
-        setMapHeight();
-        ams.App._onWindowResize();
-      },200
-    );
-  };
+  /** Defines what to do for the window resize event */
+  window.onresize=ams.Utils.onWindowResize;
 });
-
-
-
-      
