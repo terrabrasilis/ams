@@ -125,7 +125,7 @@ ams.App = {
 		var tbBiomeLayer = tbBiomeSource.getLayer(tbBiomeLayerName).addTo(map);
 		tbBiomeLayer.bringToBack();
 
-		var tbDeterAlertsLayerName = "deter-amz:deter-ams" + ams.Auth.getAuthSuffix();
+		var tbDeterAlertsLayerName = ams.Auth.getWorkspace() + ":deter-ams";
 		var tbDeterAlertsWmsOptions = {
 			"cql_filter": deterClassGroups.getCqlFilter(suViewParams),
 		};		
