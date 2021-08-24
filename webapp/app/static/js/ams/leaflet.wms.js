@@ -1,6 +1,8 @@
 var ams = ams || {};
 
 ams.LeafletWms = {
+	floatDecimals: 2,// change this number to change the number of decimals to float numbers
+	DETERMetadataURL: "http://terrabrasilis.dpi.inpe.br/geonetwork/srv/eng/catalog.search#/metadata/f9b7e1d3-0d4e-4cb1-b3cf-c2b8906126be",
 	Source: L.WMS.Source.extend({
 	    'initialize': function(url, options, deterClassGroups) {
 	        //L.WMS.Source.prototype.initialize(url, options); # TODO: call base class initialize instead
@@ -45,7 +47,7 @@ ams.LeafletWms = {
 				let pair = tokens[i].split(" = ");
 				if(pair.length > 1) {
 					if(pair[0] in result) {
-						result[pair[0]] = isNaN(pair[1]) ? pair[1] : parseFloat(pair[1]).toFixed(5);
+						result[pair[0]] = isNaN(pair[1]) ? pair[1] : parseFloat(pair[1]).toFixed(ams.LeafletWms.floatDecimals);
 					}
 				}
 			}
@@ -86,7 +88,7 @@ ams.LeafletWms = {
 			let result = {};
 			let numberFormat = function(n){
 				let sp=n.split('.');// determine if number is float by exists point
-				return ( (sp.length==2)?(parseFloat(n).toFixed(5)):(parseInt(n)) );
+				return ( (sp.length==2)?(parseFloat(n).toFixed(ams.LeafletWms.floatDecimals)):(parseInt(n)) );
 			};
 			for(let i = 0; i < tokens.length; i++)
 			{
@@ -113,18 +115,20 @@ ams.LeafletWms = {
 					v = this._formatDate(v);
 				}
 				if(k.includes("car_imovel") && (v.split(";")).length>=1 ) {
-					v = this._formatListCAR(v);
 					table += "<tr>"
-								+ "<td>" + k + "  </td>"
-								+ "<td><a href='javascript:ams.LeafletWms.Source.prototype._displayListCar();'>ver lista</a></td>"
+								+ "<td colspan='2'>"
+								+ k
+								+ (v != "null" ? this._formatListCAR(v) : " ")
+								+ "</td>"
 								+ "</tr>";
 				}else{
 					table += "<tr>"
 								+ "<td>" + k + "  </td>"
 								+ "<td>" + (v != "null" ? v : " ") + "</td>"
-							+ "</tr>";
+								+ "</tr>";
 				}
 			}
+			table += "<tr><td colspan='2'><a target='_blank' href='"+ams.LeafletWms.DETERMetadataURL+"'>Ver detalhes dos atributos</a></td></tr>";
 			table += "</table>"
 			return table;
 		},
@@ -133,14 +137,11 @@ ams.LeafletWms = {
 			return `${res[2]}/${res[1]}/${res[0]}`
 		},
 		'_formatListCAR': function(str) {
-			let ids = str.replace(";","\n");
-			return "<tr><td colspan='2'>"+
-			"<div id='ids_car' style='display:none;'><textarea name='listcars' rows='5' cols='48' readonly "+
+			let ids = str.replaceAll(";","\n");
+			return "<div id='ids_car'>"+
+			"<textarea name='listcars' rows='2' cols='50' readonly "+
 			"style='resize: none;max-width: fit-content;border:0;font-size:xx-small;'>"+
-			ids+"</textarea></div></td></tr>";
-		},
-		'_displayListCar': function() {
-			$("#ids_car").attr("style","display:"+( ($("#ids_car").attr("style")).split(":")[1]=="none"?"block":"none" ) );
+			ids+"</textarea></div>";
 		}
 
 	})
