@@ -30,7 +30,7 @@ ams.LeafletWms = {
 		},
 
 		'_isDeterInfo': function(info) {
-			return info.includes("origin_gid") && info.includes("date_audit"); 
+			return info.includes("view_date"); 
 		},		
 
 		'_formatSpatialUnitPopup': function(str) {
