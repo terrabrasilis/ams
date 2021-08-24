@@ -98,9 +98,6 @@ ams.LeafletWms = {
 				}
 			}
 			delete result["geom"];
-			delete result["month_year"];
-			delete result["quadrant"];
-			delete result["lot"];
 			return this._createDeterInfoTable(result);
 		},
 		'_createDeterInfoTable': function(result) {
@@ -111,7 +108,7 @@ ams.LeafletWms = {
 							+ "</tr>";
 			for(let k in result) {
 				let v = result[k];
-				if(k.includes("date")) {
+				if(k.includes("view_date")) {
 					v = this._formatDate(v);
 				}
 				if(k.includes("car_imovel") && (v.split(";")).length>=1 ) {
