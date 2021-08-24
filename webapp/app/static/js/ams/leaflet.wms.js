@@ -84,17 +84,22 @@ ams.LeafletWms = {
 		'_formatDeterPopup': function(str) {
 			let tokens = str.split("\n");
 			let result = {};
+			let numberFormat = function(n){
+				let sp=n.split('.');// determine if number is float by exists point
+				return ( (sp.length==2)?(parseFloat(n).toFixed(5)):(parseInt(n)) );
+			};
 			for(let i = 0; i < tokens.length; i++)
 			{
 				let pair = tokens[i].split(" = ");
 				if(pair.length > 1) {
-					result[pair[0]] = isNaN(pair[1]) ? pair[1] : parseFloat(pair[1]).toFixed(5);
+					result[pair[0]] = isNaN(pair[1]) ? pair[1] : numberFormat(pair[1]);
 				}
 			}
-			delete result["geom"];	
-			delete result["month_year"];	
-			delete result["quadrant"];	
-			return this._createDeterInfoTable(result);	
+			delete result["geom"];
+			delete result["month_year"];
+			delete result["quadrant"];
+			delete result["lot"];
+			return this._createDeterInfoTable(result);
 		},
 		'_createDeterInfoTable': function(result) {
 			let table = '<table class="popup-deter-table" style="width:100%">'
@@ -107,10 +112,18 @@ ams.LeafletWms = {
 				if(k.includes("date")) {
 					v = this._formatDate(v);
 				}
-				table += "<tr>"
-							+ "<td>" + k + "  </td>"
-							+ "<td>" + (v != "null" ? v : " ") + "</td>"
-						+ "</tr>"	
+				if(k.includes("car_imovel") && (v.split(";")).length>=1 ) {
+					v = this._formatListCAR(v);
+					table += "<tr>"
+								+ "<td>" + k + "  </td>"
+								+ "<td><a href='javascript:ams.LeafletWms.Source.prototype._displayListCar();'>ver lista</a></td>"
+								+ "</tr>";
+				}else{
+					table += "<tr>"
+								+ "<td>" + k + "  </td>"
+								+ "<td>" + (v != "null" ? v : " ") + "</td>"
+							+ "</tr>";
+				}
 			}
 			table += "</table>"
 			return table;
@@ -118,6 +131,16 @@ ams.LeafletWms = {
 		'_formatDate': function(str) {
 			let res = str.replace("Z", "").split("-");
 			return `${res[2]}/${res[1]}/${res[0]}`
+		},
+		'_formatListCAR': function(str) {
+			let ids = str.replace(";","\n");
+			return "<tr><td colspan='2'>"+
+			"<div id='ids_car' style='display:none;'><textarea name='listcars' rows='5' cols='48' readonly "+
+			"style='resize: none;max-width: fit-content;border:0;font-size:xx-small;'>"+
+			ids+"</textarea></div></td></tr>";
+		},
+		'_displayListCar': function() {
+			$("#ids_car").attr("style","display:"+( ($("#ids_car").attr("style")).split(":")[1]=="none"?"block":"none" ) );
 		}
 
 	})
