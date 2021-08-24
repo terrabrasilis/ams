@@ -147,8 +147,8 @@ ams.Map = {
 		}
 
 		this.getCqlFilter = function(viewParams) {
-			return "(date > " + viewParams.enddate
-					+ ") AND (date <= "
+			return "(view_date > " + viewParams.enddate
+					+ ") AND (view_date <= "
 					+ viewParams.startdate
 					+ ") AND ("
 					+ this._filterClasses(viewParams.classname)
