@@ -2,6 +2,8 @@ var ams = ams || {};
 
 ams.App = {
 
+	zoomThreshold: 11, // used to change the DETER layer in the map layer stack.
+
 	run: function(geoserverUrl, spatialUnits, deterClassGroups) {
 		
 		const updateAll = function(suSource, currSuLayerName, suViewParams, 
@@ -81,6 +83,8 @@ ams.App = {
 		L.control.zoom({
 			position: 'topright'
 		}).addTo(map);
+
+		L.control.scale({position: 'bottomright'}).addTo(map);
 
 		var suViewParams = new ams.Map.ViewParams(deterClassGroups.at(0).acronym, 
 												dateControll, "ALL");
