@@ -85,6 +85,15 @@ ams.App = {
 		}).addTo(map);
 
 		L.control.scale({position: 'bottomright'}).addTo(map);
+    
+		map.on('zoomend',function(e){
+			let currZoom = map.getZoom();
+			if(currZoom >= ams.App.zoomThreshold){
+				if(tbDeterAlertsLayer) tbDeterAlertsLayer.bringToFront();
+			}else if(currZoom < ams.App.zoomThreshold) {
+				if(tbDeterAlertsLayer) tbDeterAlertsLayer.bringToBack();
+			}
+		});
 
 		var suViewParams = new ams.Map.ViewParams(deterClassGroups.at(0).acronym, 
 												dateControll, "ALL");
