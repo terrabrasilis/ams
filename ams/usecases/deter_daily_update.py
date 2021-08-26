@@ -26,13 +26,12 @@ class DeterDailyUpdate:
 		self._terminate = False
 		self._thread_finished = False
 
-	def _update_from_DETER_R(self):
+	def _update_from_deter_r(self):
 		with open('script_fill_deter_public_deter_all.sql', encoding='UTF-8') as scriptfile:
 			script = scriptfile.read()
 		with create_engine(self._db_url).connect() as con:
 			con.connect()
 			con.execute(script)
-
 
 	def _get_next_update_time(self):
 		return (datetime.now() + timedelta(minutes=self._every)).strftime('%H:%M')
@@ -40,7 +39,7 @@ class DeterDailyUpdate:
 	def _do_updates(self):
 		try:
 			self._check()
-			self._update_from_DETER_R()
+			self._update_from_deter_r()
 		except Exception:
 			print(traceback.format_exc())
 
@@ -55,7 +54,6 @@ class DeterDailyUpdate:
 			self._thread = threading.Thread(target=self._schedule)
 			self._thread.daemon = True
 			self._thread.start()
-
 
 	def _schedule(self):
 		while not self._terminate:
