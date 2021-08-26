@@ -13,5 +13,3 @@ init.execute(da)
 deter_repo = DeterRepository()
 update = DeterDailyUpdate(deter_repo, -1, db_url)
 update.execute(da, True)
-
-
