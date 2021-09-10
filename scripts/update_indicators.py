@@ -4,7 +4,8 @@ from ams.repository import (DeterRepository,
 from ams.dataaccess import AlchemyDataAccess
 
 
-db_url = 'postgresql://postgres:postgres@localhost:5432/AMS'
+db_url = os.environ.get('DATABASE_URL') or/
+	'postgresql://postgres:postgres@localhost:5432/AMS'
 da = AlchemyDataAccess()
 da.connect(db_url)
 su_info_repo = SpatialUnitInfoRepository(da)
