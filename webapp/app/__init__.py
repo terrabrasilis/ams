@@ -9,12 +9,11 @@ bp = Blueprint('', __name__)
 
 def create_app(config=Config):
 	app = Flask(__name__)
-	cors = CORS(app)	
-	app.config.from_object(config)	
+	cors = CORS(app)
+	app.config.from_object(config)
 	app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 	db.connect(config.DATABASE_URL)
 	app.register_blueprint(bp)
-	init = InitializerController(db, config.DETER_DAILY_UPDATE_TIME_INTERVAL)
 	return app
 
 
