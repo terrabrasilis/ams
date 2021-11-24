@@ -1,6 +1,14 @@
 CREATE SCHEMA IF NOT EXISTS deter;
 
--- step 1 for authenticated users
+-- step 1@app.route("/home")
+-- def home():
+--     return render_template("home.html")
+-- @app.route("/<name>")
+-- def user(name):
+--     return f"Hello-- {name}!"
+-- @app.route("/admin")
+-- def admin():
+--     return redirect(url_for("home")) for authenticated users
 TRUNCATE deter.deter_all;
 
 -- step 2 for authenticated users

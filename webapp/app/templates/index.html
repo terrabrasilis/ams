@@ -203,8 +203,8 @@
 									<br/>
 									A fonte deve ser referenciada no seguinte formato:<br/>
 									<samp>
-										Amazon Situation Room/TerraBrasilis. 
-										<b>Instituto Nacional de Pesquisas Espaciais</b>, 2021. 
+										Amazon Situation Room/TerraBrasilis.
+										<b>Instituto Nacional de Pesquisas Espaciais</b>, 2021.
 										Dispon&iacute;vel em &lt;http://terrabrasilis.dpi.inpe.br/ams/&gt;.
 										Acesso em: 19 de jul. de 2021.
 									</samp>
@@ -213,9 +213,32 @@
 						</div>
 					</div>
 				</div>
-				<!-- end modal -->
-
-
+	<!-- v mgd T7 -->
+                <div class="modal fade" id="modal-container-general-info"  role="dialog" aria-labelledby="general-info" aria-hidden="true">
+					<div class="modal-dialog modal-lg" role="document">
+						<div class="modal-content modalinf">
+							<div class="modal-header fechar">
+								<h5 class="modal-title boxtitletable"><span id="txt3a"></span></h5>
+								<button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="material-icons">clear</i></button>
+							</div>
+							<div class="modal-body">
+								<div class="container-fluid">
+									<div class="row no-gutters">
+                                        <div class="col-md-12" align="center">
+											<span id="AreaPerLandUse" class="chart" ></span>
+                                        </div>
+									</div>
+									<div class="row no-gutters">
+									 	<div class="col-md-12">
+											<span id="AreaPerYearTableClass" class="chart" style="height: 250px;width: auto"></span>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+                </div>
+	<!-- ^ mgd T7 -->
 
 				<!--Footer-->
 				<footer class="footer">
@@ -232,7 +255,7 @@
 			var gsWorkspace = "{{workspace}}";
 			// register workspace name to work on front-end
 			ams.Auth.setWorkspace(gsWorkspace);
-			// evaluate the user profile on start app
+			// evaluate the user area_profile on start app
 			ams.Auth.evaluate();
 			// set map div to available height
 			ams.Utils.setMapHeight();
@@ -242,6 +265,38 @@
 			var geoserverUrl = "{{geoserver_url}}";
 			ams.App.run(geoserverUrl, spatialUnits, deterClassGroups);
 		};
+        // mgd T5
+		function displayGraph( jsConfig /* T6: sView, sId, sClasse*/ ) {
+            async function getGraphics(  jsConfig ) {
+                // .spatialUnit, jsConfig.click.name, jsConfig.click.classname
+                let jsConfigStr = JSON.stringify(jsConfig);
+                let response = await fetch("/callback/area_profile?&sData=" + jsConfigStr);
+                    //jsConfig.spatialUnit + "&sId=" + jsConfig.click.name + "&sClasse=" + jsConfig.click.classname +
+                if (response.ok) {
+                    let profileJson = await response.json();
+                    if (response.ok) {
+                        //console.log('1',JSON.parse(chartJson['AreaPerYearStateClass']));
+                        document.getElementById("txt3a").innerHTML = profileJson['FormTitle'];
+                        Plotly.react('AreaPerYearTableClass', JSON.parse(profileJson['AreaPerYearTableClass']), {});
+                        //Plotly.react('AreaPerClass', JSON.parse(profileJson['AreaPerClass']), {});
+                        Plotly.react('AreaPerLandUse', JSON.parse(profileJson['AreaPerLandUse']), {});
+  						$('#modal-container-general-info').modal();
+                    } else {
+                        alert("HTTP-Error: " + response.status + "area_profile");
+                    }
+                } else {
+                    alert("HTTP-Error: " + response.status + "on area_profile");
+                }
+            }
+            // T6 getGraphics(sView, sId, sClasse);
+			if (jsConfig.click.classname == 'null'){
+				// fora do mapa, msg? (ou não colocar botao na tabela?
+			} else{
+				getGraphics(jsConfig);
+				//-- mgd T6  $('#modal-container-general-info').modal();
+			}
+        }
+		// mgd T5
 	</script>
 
 	<script type="text/javascript" src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
@@ -270,5 +325,7 @@
 	<!-- Global site tag (gtag.js) - Google Analytics -->
 	<script type="text/javascript" async src="https://www.googletagmanager.com/gtag/js?id=G-VF4139FH8F"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/terrabrasilis-start.js')}}"></script>
+    <!-- Plotly render library https://cdn.plot.ly/plotly-latest.min.js -->
+    <script src="{{ url_for('static', filename='js/lib/plotly/plotly-latest.min.js') }}"></script>
 </body>
 </html>

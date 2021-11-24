@@ -1,5 +1,6 @@
 import os
 import datetime
+
 from ams.dataaccess import AlchemyDataAccess
 from ams.gis import Geoprocessing
 from ams.usecases import AddSpatialUnit, DetermineRiskIndicators
@@ -8,6 +9,12 @@ from ams.repository import (SpatialUnitDynamicMapperFactory, SpatialUnitInfoRepo
 							DeterHistoricalRepository, RiskIndicatorsRepository)
 from ams.entities import DeterClassGroup
 
+def create_land_use_table(db):
+	with open(os.path.join(os.path.dirname(__file__), '../../scripts/fill_land_use.sql'),
+			  encoding='UTF-8') as scriptfile:
+		script = scriptfile.read()
+		conn = db.engine.connect()
+		conn.execute(script)
 
 def setdb(url):
 	db = AlchemyDataAccess()
@@ -72,6 +79,7 @@ def determine_risk_indicators(db):
 	units = units_repo.list()
 	for u in units:
 		sutablename = u.dataname
+		print(f'Processing {sutablename} risk indicators...')
 		as_attribute_name = u.as_attribute_name
 		surepo = SpatialUnitDynamicMapperFactory.instance()\
 				.create_spatial_unit(sutablename, as_attribute_name)
@@ -80,7 +88,7 @@ def determine_risk_indicators(db):
 									class_groups, startdate, enddate)	
 		model_indicators = uc.execute()
 		rirepo = RiskIndicatorsRepository(sutablename, as_attribute_name, db)
-		rirepo.save(model_indicators)	
+		rirepo.save(model_indicators)
 
 
 db = setdb('postgresql://postgres:postgres@localhost:5432/AMS')
