@@ -3,3 +3,4 @@ __pycache__
 node_modules
 .idea/
 .vscode/
+/data/estrutura_fundiaria_cst_reclass_lzw_EPSG4326.tif

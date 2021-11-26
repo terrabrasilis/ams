@@ -30,5 +30,5 @@ class GetConfigController:
 	def _deter_class_groups_to_dict(self, group):
 		return {
 			'name': group.name,
-			'classes': [clas for clas in group.classes],
+			'classes': [clas for clas in group._classes],
 		}		

@@ -35,12 +35,12 @@ def test_basic():
 	assert class_groups[0].name == 'DG'
 	assert class_groups[1].name == 'DS'
 	assert class_groups[2].name == 'CS'
-	assert len(class_groups[0].classes) == 2
-	assert len(class_groups[1].classes) == 3
-	assert len(class_groups[2].classes) == 2
-	dg_classes = class_groups[0].classes
-	ds_classes = class_groups[1].classes
-	cs_classes = class_groups[2].classes
+	assert len(class_groups[0]._classes) == 2
+	assert len(class_groups[1]._classes) == 3
+	assert len(class_groups[2]._classes) == 2
+	dg_classes = class_groups[0]._classes
+	ds_classes = class_groups[1]._classes
+	cs_classes = class_groups[2]._classes
 	assert dg_classes[0] == 'CICATRIZ_DE_QUEIMADA'
 	assert dg_classes[1] == 'DEGRADACAO'
 	assert ds_classes[0] == 'MINERACAO'

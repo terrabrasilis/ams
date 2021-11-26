@@ -1,3 +1,4 @@
+from os import path
 import time
 import threading
 import traceback
@@ -15,8 +16,10 @@ from ams.usecases import DetermineRiskIndicators
 class DeterDailyUpdate:
 	"""DeterDailyUpdate"""
 	def __init__(self, deter_repo: DeterRepository, every_in_minutes: int, db_url: str = ''):
+		self._scriptspath = path.join(path.dirname(__file__), '../../scripts')
 		self._db_url = db_url
-		self._enabled = every_in_minutes > -1
+		#self._enabled = every_in_minutes > -1
+		self._enabled = False
 		self._now = False
 		self._deter_repo = deter_repo
 		self._every = every_in_minutes
@@ -27,7 +30,7 @@ class DeterDailyUpdate:
 		self._thread_finished = False
 
 	def _update_from_deter_r(self):
-		with open('script_fill_deter_public_deter_all.sql', encoding='UTF-8') as scriptfile:
+		with open(f'{self._scriptspath}/script_fill_deter_public_deter_all.sql', encoding='UTF-8') as scriptfile:
 			script = scriptfile.read()
 		with create_engine(self._db_url).connect() as con:
 			con.connect()

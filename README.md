@@ -56,8 +56,8 @@ wget http://sourceforge.net/projects/geoserver/files/GeoServer/2.19.0/geoserver-
 sudo apt install unzip
 unzip geoserver-2.19.0-bin.zip -d geoserver
 sudo apt install openjdk-11-jre-headless
-echo "export GEOSERVER_HOME=/home/$USER*/geoserver" >> ~/.profile #note: $USER here needs to be written#
-source ~/.profile
+echo "export GEOSERVER_HOME=/home/$USER*/geoserver" >> ~/.area_profile #note: $USER here needs to be written#
+source ~/.area_profile
 ~/geoserver/bin/startup.sh &
 ```
 ##### Config

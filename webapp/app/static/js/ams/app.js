@@ -13,7 +13,7 @@ ams.App = {
 			let suLayerMaxArea = wfs.getMax(currSuLayerName, "area", suViewParams);
 			if(suLayerMaxArea == suLayerMinArea) 
 			{
-				alert("Não existem dados para o periodo selecionado!");
+				alert("Não existem dados para o periodo selecionado."); // mgd T6 Change an exclamation point to a period
 				return;
 			}
 			let suLayerStyle = new ams.SLDStyles.AreaStyle(currSuLayerName, 
@@ -74,7 +74,7 @@ ams.App = {
 		map.setView([spatialUnits.default.center_lat, 
 					spatialUnits.default.center_lng], 5);
 
-		var osmLayer = new L.TileLayer('http://{s}.tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png', {
+		var osmLayer = new L.TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
 			maxZoom: 18,
 			crs: L.CRS.EPSG4326,
@@ -253,8 +253,29 @@ ams.App = {
 		var suLayerMinArea = 0;
 		var diffON = false;
 
+
+		//-- mgd T6 v  keeps an (almost) updated copy of the legend Control's inputs (app.js:legendControl). See app.js:map.on() (-->
+		suSource.viewConfig = {
+			className : suViewParams.classname,
+			spatialUnit : spatialUnits.default.dataname,
+			limit : suViewParams.limit,
+			tempUnit : currAggregate,
+			diffOn : diffON,
+			startDate : null,
+			endDate :  null,
+			prevDate :  null,
+			updateDates : function(/* ams.Date.DateController */ dateControll) {
+				this.startDate = dateControll.startdate;
+				this.endDate = dateControll.enddate;
+				this.prevDate = dateControll.prevdate;
+			}
+		};
+		suSource.viewConfig.updateDates(dateControll);
+		// -- ^ -->
+
 		map.on('overlayadd', function(e) {
 			if(spatialUnits.isSpatialUnit(e.name)) {
+				suSource.viewConfig.spatialUnit =  spatialUnits.getDataName(e.name);  // T6
 				suLayerName = ams.Auth.getWorkspace() + ":" + spatialUnits.getDataName(e.name);
 				if(diffON) {
 					currSuLayerName = suLayerName + "_diff_view"; 
@@ -265,6 +286,8 @@ ams.App = {
 				}
 			}
 			else if(temporalUnits.isAggregate(e.name)) {
+				suSource.viewConfig.tempUnit= e.layer._name;  // T6
+				suSource.viewConfig.updateDates(dateControll); // T6
 				currAggregate = e.layer._name;
 				dateControll.setPeriod(dateControll.startdate, currAggregate);
 				suViewParams.updateDates(dateControll);
@@ -281,9 +304,11 @@ ams.App = {
 					currSuLayerName =  suLayerName + "_diff_view"; 
 					diffON = true;
 				}
+				suSource.viewConfig.diffOn = diffON;  // T6
 			}
 			else {
 				let acronym = e.layer._name;
+				suSource.viewConfig.className = acronym; // T6
 				suViewParams.classname = acronym;
 				priorViewParams.classname = acronym;
 				updateDeterAlerts(tbDeterAlertsLayer, deterClassGroups, suViewParams);	
@@ -324,6 +349,7 @@ ams.App = {
 				let selected = $(this).val().split("/");
 				let date = selected[2] + "-" + selected[1] + "-" + selected[0];
 				dateControll.setPeriod(date, currAggregate);
+				suSource.viewConfig.updateDates(dateControll); // T6
 				suViewParams.updateDates(dateControll);
 				priorViewParams.updateDates(dateControll);
 				if(currSuLayerName.includes("diff")) {
