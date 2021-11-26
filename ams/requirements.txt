@@ -3,3 +3,5 @@ sqlalchemy-utils
 psycopg2-binary
 geoalchemy2 < 0.9.0
 geopandas
+plotly
+alive-progress

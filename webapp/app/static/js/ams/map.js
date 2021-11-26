@@ -173,7 +173,7 @@ ams.Map = {
 										+ ";prevdate:" + viewParams.prevdate
 										+ ";order:" + (isMin ? 'ASC' : 'DESC')
 										+ ";limit:1";
-			let res;
+			let res = 10; // T6 DEBUG: don't copy. When no success, res is undefined
 			$.ajax({
 				dataType: "json",
 				url: wfsUrl,

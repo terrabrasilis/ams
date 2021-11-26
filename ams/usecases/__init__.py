@@ -3,3 +3,4 @@ from .add_spatial_unit import AddSpatialUnit
 from .get_config import GetConfig
 from .deter_daily_update import DeterDailyUpdate
 from .initializer import Initializer
+from .classify_deter_polygons import ClassifyDeterPolygons
