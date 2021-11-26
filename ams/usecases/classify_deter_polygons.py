@@ -25,7 +25,7 @@ class ClassifyDeterPolygons:
         self._spatial_units = {'csAmz_150km': 'id','csAmz_300km': 'id',
                                'amz_municipalities': 'nm_municip',
                                'amz_states': 'NM_ESTADO'}
-        self._pixel_land_use_area = 29.875 * 29.875 * 1 ** -6
+        self._pixel_land_use_area = 29.875 * 29.875 * (10 ** -6)
 
     def create_land_use_table(self):
         with open(f'{self._scriptspath}/fill_land_use.sql', encoding='UTF-8') as scriptfile:
@@ -66,9 +66,10 @@ class ClassifyDeterPolygons:
                 unique_counts = np.asarray((unique, counts)).T
                 counts = pd.DataFrame(unique_counts)
                 for _, count in counts.iterrows():
-                    cur.execute(
-                        f"INSERT INTO deter_land_structure (deter_gid, land_use_id, num_pixels) "
-                        f"VALUES('{row.gid}', {count[0]}, {count[1]})")
+                    if count[0] > 0:
+                        cur.execute(
+                            f"INSERT INTO deter_land_structure (deter_gid, land_use_id, num_pixels) "
+                            f"VALUES('{row.gid}', {count[0]}, {count[1]})")
                 i += 1
                 if (i % 1000) == 0:
                     self._conn.commit()

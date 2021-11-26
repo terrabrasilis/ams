@@ -47,23 +47,23 @@ class AreaProfile():
             "1y": "Agregado Anual"}
         self._temporal_unit_sql = {
 7:'''select TO_CHAR(date, 'YYYY/WW') as period,classname,sum(area) as 
-area from "{0}_risk_indicators" a inner join "{0}" b on a.suid = b.suid where {1} 
+area from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
 group by TO_CHAR(date, 'YYYY/WW'), classname
 order by 1 desc limit 20''',
 15: '''select concat(TO_CHAR(date, 'YYYY'),'/',to_char(TO_CHAR(date, 'WW')::int/2+1,'FM00')) as period,
-classname,sum(area) as area from "{0}_risk_indicators" a inner join "{0}" b on a.suid = b.suid where {1} 
+classname,sum(area) as area from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
 group by concat(TO_CHAR(date, 'YYYY'),'/',to_char(TO_CHAR(date, 'WW')::int/2+1,'FM00')), classname
 order by 1 desc limit 20''',
 31: '''select TO_CHAR(date, 'YYYY/MM') as period,classname,sum(area) as 
-area from "{0}_risk_indicators" a inner join "{0}" b on a.suid = b.suid where {1} 
+area from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
 group by TO_CHAR(date, 'YYYY/MM'), classname
 order by 1 desc limit 20''',
-124: '''select TO_CHAR(date, 'YYYY-Q') as period,classname, sum(area) as 
-area from "{0}_risk_indicators" a inner join "{0}" b on a.suid = b.suid where {1} 
-group by TO_CHAR(date, 'YYYY-Q'),classname
+124: '''select TO_CHAR(date, 'YYYY/Q') as period,classname, sum(area) as 
+area from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
+group by TO_CHAR(date, 'YYYY/Q'),classname
 order by 1 desc limit 20''',
 366: '''select TO_CHAR(date, 'YYYY') as period,classname,sum(area) as 
-area from "{0}_risk_indicators" a inner join "{0}" b on a.suid = b.suid where {1} 
+area from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
 group by TO_CHAR(date, 'YYYY'),classname
 order by 1 desc limit 20'''}
 
@@ -78,12 +78,16 @@ order by 1 desc limit 20'''}
         elif temporal_unit == '3m': return (start_date_date + relativedelta(months = -3)).strftime('%Y-%m-%d')
         elif temporal_unit == '1y': return (start_date_date + relativedelta(years = -1)).strftime('%Y-%m-%d')
 
+    def period_where_clause(self):
+        return f" date >= '{self._start_period_date}' and date <= '{self._start_date}'"
+
     def get_temporal_unit_sql(self):
         delta = datetime.strptime(self._start_date, '%Y-%m-%d') - datetime.strptime(self._start_period_date, '%Y-%m-%d')
         for key, value in self._temporal_unit_sql.items():
             if delta.days <= key:
                 where = f"b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}' " \
-                        f"and classname = '{self._classname}'"
+                        f"and classname = '{self._classname}' " \
+                        f"and date <= '{self._start_date}'"
                 return f"select * from ({value.format(self._spatial_unit,where)}) a order by 1"
 
     def execute_sql(self, sql, cursor_factory=None, return_headers=False):
@@ -109,9 +113,6 @@ order by 1 desc limit 20'''}
     def resultset_as_list(self, sql):
         return [row[0] for row in self.execute_sql(sql)]
 
-    def period_where_clause(self):
-        return f" date >= '{self._start_period_date}' and date <= '{self._start_date}'"
-
     def area_per_year_table_class(self):
         df = self.resultset_as_dataframe(
             self.get_temporal_unit_sql())
@@ -123,7 +124,7 @@ order by 1 desc limit 20'''}
     def area_per_class(self, suid, table):
         df = self.resultset_as_dataframe(
             'select classname as code, sum(a.area) as area '                                                   
-            f'from "{table}_risk_indicators" a '
+            f'from "{table}_land_use" a '
             f'inner join "csAmz_150km" b on a.suid = b.suid '
             f"where b.\"{self._tableinfo[table]['key']}\" = '{suid}' " 
             f'group by classname order by classname'
@@ -136,17 +137,14 @@ order by 1 desc limit 20'''}
 
     def area_per_land_use(self):
         df = self.resultset_as_dataframe(
-            f"select c.name, sum(area) as Area "
-            f"from \"{self._spatial_unit}_land_use\" a "
-            f"inner join \"{self._spatial_unit}\" b "
-            "on a.suid = b.suid "
-            f"inner join land_use c "
-            f"on  a.land_use_id = c.id "
-            f"where b.\"{self._tableinfo[self._spatial_unit]['key']}\" = "
-            f"'{self._name.replace('|',' ')}' "
+            f"select a.name,coalesce(Area, 0) as Area from land_use a "
+            f"left join "
+            f"(select a.land_use_id, sum(area) as Area from \"{self._spatial_unit}_land_use\" a "
+            f"inner join \"{self._spatial_unit}\" b on a.suid = b.suid "
+            f"where b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name.replace('|',' ')}' "
             f"and {self.period_where_clause()} "
-            #"and land_use_id > 0 "
-            "group by c.name")
+            f"group by a.land_use_id) b on a.id = b.land_use_id"
+        )
         df.columns = ['Categorias Fundiárias', 'Área (km²)']
         df['Área (km²)'] = df['Área (km²)'].round(3)
         return df
@@ -161,15 +159,18 @@ order by 1 desc limit 20'''}
     def fig_area_per_land_use(self):
         df = self.area_per_land_use()
 
-        fig = px.pie(df, values='Área (km²)', names='Categorias Fundiárias', template='plotly', title='Categoria Fundiária')
+        fig = px.pie(df, values='Área (km²)', names='Categorias Fundiárias', template='plotly',
+                     color_discrete_sequence=px.colors.sequential.RdBu,
+                     title='Categoria Fundiária na unidade<br> territorial/temporal selecionada' )
         #  Dois gráficos cada um com width=400 e' para maiores > 1000px. Height 300, foi um bom aspect ratio
         #  Para calcular o width ideal, a gente pode enviar o device width na requisição
         #    (https://stackoverflow.com/questions/1248081/how-to-get-the-browser-viewport-dimensions)
+        fig.update_traces(textposition='inside')
         fig.update_layout(
-            height=450,
-            width=450,
-            title_x=0.5,
-            legend=dict(font=dict(size=10)),
+            height=400,
+            width=430,
+            uniformtext_minsize=10, uniformtext_mode='hide',
+            legend=dict(font=dict(size=12)),
             margin=dict(
                 l=0,
                 r=0,
@@ -177,6 +178,7 @@ order by 1 desc limit 20'''}
                 t=50,
                 pad=0
             ),
+
             #paper_bgcolor="LightSteelBlue",
         )
         graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
@@ -207,14 +209,15 @@ order by 1 desc limit 20'''}
         last_period = df.tail(1).values[0][0]
         last_period_items = last_period.split('/')
         precedent_period = f"{int(last_period_items[0])- 1}/{last_period_items[1]}" \
-            if len(last_period_items) > 1 else last_period_items[0] - 10
+            if len(last_period_items) > 1 else f"{int(last_period_items[0]) - 10}"
         color_discrete_sequence = ['#609cd4'] * len(df)
         color_change_items = df.index[(df['Período']==last_period) | (df['Período']==precedent_period)].tolist()
         for i in color_change_items:
             color_discrete_sequence[i] = '#ec7c34'
 
-        fig = px.bar(df, x='Período', y='Área (km²)',
+        fig = px.bar(df, x='Período', y='Área (km²)', title='<br>Evolucao temporal do indicador na unidade territorial',
                      category_orders = {'Período': df['Período'].to_list()},
+                     #height=260,
                      color='Período',
                      color_discrete_sequence=color_discrete_sequence)
                      #title=f"{self._temporal_units[self._temporal_unit]}",)
@@ -230,7 +233,7 @@ order by 1 desc limit 20'''}
                 l=0,
                 r=0,
                 b=0,
-                t=30,
+                t=60,
                 pad=0
             ),
             annotations=[

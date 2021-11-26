@@ -56,7 +56,7 @@ ams.LeafletWms = {
             // -- mlra
             if (viewConfig.click.classname == 'null')
                 viewConfig.click.classname = "DS";
-            if (viewConfig.click.classname != 'null') {
+            if ((viewConfig.click.classname != 'null') && (viewConfig.click.area != 0)) {
                 sButton = this._createGraphicButton(viewConfig);
             }
             return this._createSpatialUnitInfoTable(result) + sButton;
