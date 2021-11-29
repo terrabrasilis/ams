@@ -50,7 +50,7 @@ RUN echo "export PYTHONPATH=\"${INSTALL_PATH}\"" >> "${INSTALL_PATH}/tasks/.env"
 
 # install and enable cron job scripts
 ADD docker/backend-sync/cron_exec.sh ${INSTALL_PATH}/
-ADD docker/backend-sync/backend-sync-schedule.cron /etc/crontabs/root
+ADD docker/backend-sync/schedule.cron /etc/crontabs/root
 RUN chmod +x ${INSTALL_PATH}/cron_exec.sh \
     && chmod +x /etc/crontabs/root
 
