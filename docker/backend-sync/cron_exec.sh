@@ -1,2 +1,4 @@
 #!/bin/sh
-/usr/local/bin/python3 /usr/local/webapp/start_sync.py
+cd /usr/local/tasks/
+source .env
+/usr/local/bin/python3 update_indicators.py

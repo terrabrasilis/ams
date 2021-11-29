@@ -1,2 +1,0 @@
-# m h  dom mon dow   command
-30 23 * * * /usr/local/cron_exec.sh
