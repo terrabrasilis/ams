@@ -25,6 +25,7 @@ RUN apk update \
     proj-util \
     gdal-dev \
     geos \
+    geos-dev \
     && rm -rf /var/cache/apk/*
 
 # define the timezone to run cron
