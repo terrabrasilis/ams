@@ -1,7 +1,6 @@
 from flask import Flask, Blueprint
 from flask_cors import CORS
 from ams.dataaccess import AlchemyDataAccess
-from .controllers import InitializerController
 from .config import Config
 
 db = AlchemyDataAccess()
