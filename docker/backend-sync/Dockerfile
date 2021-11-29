@@ -1,5 +1,5 @@
 # To build image for this dockerfile use this command on root directory of project:
-#   docker build -t terrabrasilis/ams-sync:<version> -f docker/update-task/Dockerfile .
+#   docker build -t terrabrasilis/ams-sync:<version> -f docker/backend-sync/Dockerfile .
 #
 #--------- Generic stuff all our Dockerfiles should start with so we get caching ------------
 FROM python:3.8.10-alpine
@@ -49,8 +49,8 @@ RUN echo "export PYTHONPATH=\"${INSTALL_PATH}\"" >> "${INSTALL_PATH}/tasks/.env"
     && echo "export TZ=America/Sao_Paulo" >> "${INSTALL_PATH}/tasks/.env"
 
 # install and enable cron job scripts
-ADD docker/update-task/cron_exec.sh ${INSTALL_PATH}/
-ADD docker/update-task/update-task-schedule.cron /etc/crontabs/root
+ADD docker/backend-sync/cron_exec.sh ${INSTALL_PATH}/
+ADD docker/backend-sync/backend-sync-schedule.cron /etc/crontabs/root
 RUN chmod +x ${INSTALL_PATH}/cron_exec.sh \
     && chmod +x /etc/crontabs/root
 
