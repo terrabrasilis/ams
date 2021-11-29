@@ -5,3 +5,4 @@ geoalchemy2 < 0.9.0
 geopandas
 plotly
 alive-progress
+rasterio
