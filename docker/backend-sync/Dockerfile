@@ -40,6 +40,7 @@ RUN mkdir $INSTALL_PATH/ams && mkdir $INSTALL_PATH/tasks && mkdir $INSTALL_PATH/
 # ------------------------------------------------------
 COPY ams/ $INSTALL_PATH/ams/
 COPY scripts/ $INSTALL_PATH/tasks/
+ADD webapp/app/config.py $INSTALL_PATH/webapp/app/
 # Install Python requirements
 RUN pip install -r $INSTALL_PATH/ams/requirements.txt
 # END REQUIREMENTS INSTALATION
