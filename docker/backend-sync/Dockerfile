@@ -36,7 +36,7 @@ ENV INSTALL_PATH /usr/local
 
 # INSTALL REQUIREMENTS AND BACKEND CODE
 # ------------------------------------------------------
-RUN mkdir $INSTALL_PATH/ams && mkdir $INSTALL_PATH/tasks
+RUN mkdir $INSTALL_PATH/ams && mkdir $INSTALL_PATH/tasks && mkdir $INSTALL_PATH/data
 # ------------------------------------------------------
 COPY ams/ $INSTALL_PATH/ams/
 COPY scripts/ $INSTALL_PATH/tasks/
@@ -56,5 +56,7 @@ RUN chmod +x ${INSTALL_PATH}/cron_exec.sh \
     && chmod +x /etc/crontabs/root
 
 WORKDIR $INSTALL_PATH
+
+VOLUME ["${INSTALL_PATH}/data/"]
 
 CMD crond -l 2 -f
