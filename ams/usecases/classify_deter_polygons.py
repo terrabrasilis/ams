@@ -16,10 +16,10 @@ from datetime import timedelta
 class ClassifyDeterPolygons:
     """ClassifyDeterPolygons"""
 
-    def __init__(self, db_url: str):
+    def __init__(self, db_url: str, input_tif: str):
         self._datapath = path.join(path.dirname(__file__), '../../data')
         self._scriptspath = path.join(path.dirname(__file__), '../../scripts')
-        self._amazon_class_fname = 'est_fundiaria_cst.tif'
+        self._amazon_class_fname = input_tif
         self._conn = connect(db_url)
         self._spatial_units = {'csAmz_150km': 'id','csAmz_300km': 'id',
                                'amz_municipalities': 'nm_municip',

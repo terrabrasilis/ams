@@ -19,5 +19,5 @@ deter_repo = DeterRepository()
 update = DeterDailyUpdate(deter_repo, -1, Config.DATABASE_URL)
 update.execute(da, True)
 
-class_deter_polys = ClassifyDeterPolygons(Config.DATABASE_URL)
+class_deter_polys = ClassifyDeterPolygons(Config.DATABASE_URL, Config.INPUT_GEOTIFF_FUNDIARY_STRUCTURE)
 class_deter_polys.execute()
