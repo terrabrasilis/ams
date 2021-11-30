@@ -5,7 +5,6 @@ from psycopg2 import connect
 import rasterio
 import geopandas as gpd
 import pygeos
-import rtree
 import pandas as pd
 from shapely.geometry import mapping
 from rasterio.mask import mask
