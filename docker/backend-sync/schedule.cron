@@ -1,2 +1,2 @@
 # m h  dom mon dow   command
-00 07 * * * * /usr/local/cron_exec.sh
+00 07 * * * /usr/local/cron_exec.sh
