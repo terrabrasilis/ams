@@ -36,10 +36,10 @@ ENV INSTALL_PATH /usr/local
 
 # INSTALL REQUIREMENTS AND BACKEND CODE
 # ------------------------------------------------------
-RUN mkdir $INSTALL_PATH/ams && mkdir $INSTALL_PATH/tasks && mkdir $INSTALL_PATH/data
+RUN mkdir $INSTALL_PATH/ams && mkdir $INSTALL_PATH/scripts && mkdir $INSTALL_PATH/data
 # ------------------------------------------------------
 COPY ams/ $INSTALL_PATH/ams/
-COPY scripts/ $INSTALL_PATH/tasks/
+COPY scripts/ $INSTALL_PATH/scripts/
 ADD webapp/app/config.py $INSTALL_PATH/webapp/app/
 # Install Python requirements
 RUN pip install -r $INSTALL_PATH/ams/requirements.txt
@@ -47,8 +47,8 @@ RUN pip install -r $INSTALL_PATH/ams/requirements.txt
 # ------------------------------------------------------
 
 ## THE ENV VARS
-RUN echo "export PYTHONPATH=\"${INSTALL_PATH}\"" >> "${INSTALL_PATH}/tasks/.env" \
-    && echo "export TZ=America/Sao_Paulo" >> "${INSTALL_PATH}/tasks/.env"
+RUN echo "export PYTHONPATH=\"${INSTALL_PATH}\"" >> "${INSTALL_PATH}/scripts/.env" \
+    && echo "export TZ=America/Sao_Paulo" >> "${INSTALL_PATH}/scripts/.env"
 
 # install and enable cron job scripts
 ADD docker/backend-sync/cron_exec.sh ${INSTALL_PATH}/
