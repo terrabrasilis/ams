@@ -34,14 +34,14 @@ ENV TZ=America/Sao_Paulo
 # define the install path env var
 ENV INSTALL_PATH /usr/local
 
-# INSTALL REQUIREMENTS
+# INSTALL REQUIREMENTS AND CODE
 # ------------------------------------------------------
 RUN mkdir $INSTALL_PATH/ams && mkdir $INSTALL_PATH/webapp
 ADD ams/requirements.txt $INSTALL_PATH/ams/requirements.txt
 ADD webapp/requirements.txt $INSTALL_PATH/webapp/requirements.txt
 # Install Python requirements
-RUN pip install -r $INSTALL_PATH/ams/requirements.txt && \
-pip install -r $INSTALL_PATH/webapp/requirements.txt
+RUN pip install -r $INSTALL_PATH/ams/requirements.txt \
+    && pip install -r $INSTALL_PATH/webapp/requirements.txt
 # END REQUIREMENTS INSTALATION
 # ------------------------------------------------------
 

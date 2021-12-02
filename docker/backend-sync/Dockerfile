@@ -36,14 +36,14 @@ ENV INSTALL_PATH /usr/local
 
 # INSTALL REQUIREMENTS AND BACKEND CODE
 # ------------------------------------------------------
-RUN mkdir $INSTALL_PATH/ams && mkdir $INSTALL_PATH/scripts && mkdir $INSTALL_PATH/data
-# ------------------------------------------------------
-COPY ams/ $INSTALL_PATH/ams/
-COPY scripts/ $INSTALL_PATH/scripts/
-ADD webapp/app/config.py $INSTALL_PATH/webapp/app/
+RUN mkdir ${INSTALL_PATH}/ams && mkdir ${INSTALL_PATH}/scripts && mkdir ${INSTALL_PATH}/data
+ADD ams/requirements.txt ${INSTALL_PATH}/ams/requirements.txt
 # Install Python requirements
-RUN pip install -r $INSTALL_PATH/ams/requirements.txt
-# END REQUIREMENTS INSTALATION
+RUN pip install -r ${INSTALL_PATH}/ams/requirements.txt
+# ------------------------------------------------------
+COPY ams/ ${INSTALL_PATH}/ams/
+COPY scripts/ ${INSTALL_PATH}/scripts/
+ADD webapp/app/config.py ${INSTALL_PATH}/webapp/app/
 # ------------------------------------------------------
 
 ## THE ENV VARS
@@ -56,7 +56,7 @@ ADD docker/backend-sync/schedule.cron /etc/crontabs/root
 RUN chmod +x ${INSTALL_PATH}/cron_exec.sh \
     && chmod +x /etc/crontabs/root
 
-WORKDIR $INSTALL_PATH
+WORKDIR ${INSTALL_PATH}
 
 VOLUME ["${INSTALL_PATH}/data/"]
 
