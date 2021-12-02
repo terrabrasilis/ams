@@ -270,7 +270,7 @@
             async function getGraphics(  jsConfig ) {
                 // .spatialUnit, jsConfig.click.name, jsConfig.click.classname
                 let jsConfigStr = JSON.stringify(jsConfig);
-                let response = await fetch("/callback/area_profile?&sData=" + jsConfigStr);
+                let response = await fetch("callback/area_profile?sData=" + jsConfigStr);
                     //jsConfig.spatialUnit + "&sId=" + jsConfig.click.name + "&sClasse=" + jsConfig.click.classname +
                 if (response.ok) {
                     let profileJson = await response.json();
