@@ -131,14 +131,14 @@ ams.App = {
 		priorLayer.bringToFront();
 		priorLayer.addTo(map);
 
-		var tbBiomeLayerName = ams.Config.amzBiomeBorder;
+		var tbBiomeLayerName = ams.Config.defaultLayers.amzBiomeBorder;
 		var onlyWmsBase = {};
 		addWmsOptionsBase(onlyWmsBase, false);
 		var tbBiomeSource = L.WMS.source(wmsUrl, onlyWmsBase);
 		var tbBiomeLayer = tbBiomeSource.getLayer(tbBiomeLayerName).addTo(map);
 		tbBiomeLayer.bringToBack();
 
-		var tbDeterAlertsLayerName = ams.Auth.getWorkspace() + ":" + ams.Config.deterAmz;
+		var tbDeterAlertsLayerName = ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.deterAmz;
 		var tbDeterAlertsWmsOptions = {
 			"cql_filter": deterClassGroups.getCqlFilter(suViewParams),
 		};		
