@@ -15,19 +15,15 @@ ams.LeafletWms = {
         },
 
         'showFeatureInfo': function (latlng, info) {
-            if (this._isSpatialUnitInfo(info)) {
+            if (this._isSpatialUnitInfo()) {
                 this._map.openPopup(this._formatSpatialUnitPopup(info, this.viewConfig, latlng) , latlng); //-- mgd T6 this.config
-            } else if (this._isDeterInfo(info)) {
+            }else{
                 this._map.openPopup(this._formatDeterPopup(info), latlng);
             }
         },
 
-        '_isSpatialUnitInfo': function (info) {
-            return info.includes("area") && info.includes("percentage") && info.includes("name");
-        },
-
-        '_isDeterInfo': function (info) {
-            return info.includes("origin_gid") && info.includes("date_audit");
+        '_isSpatialUnitInfo': function () {
+            return !this._overlay.wmsParams.layers.includes(ams.Config.deterAmz);
         },
 
         '_formatSpatialUnitPopup': function (str, viewConfig, latlng) {  //-- mgd T6

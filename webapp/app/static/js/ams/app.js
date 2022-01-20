@@ -131,14 +131,14 @@ ams.App = {
 		priorLayer.bringToFront();
 		priorLayer.addTo(map);
 
-		var tbBiomeLayerName = "prodes-amz:brazilian_amazon_biome_border";
+		var tbBiomeLayerName = ams.Config.amzBiomeBorder;
 		var onlyWmsBase = {};
 		addWmsOptionsBase(onlyWmsBase, false);
 		var tbBiomeSource = L.WMS.source(wmsUrl, onlyWmsBase);
 		var tbBiomeLayer = tbBiomeSource.getLayer(tbBiomeLayerName).addTo(map);
 		tbBiomeLayer.bringToBack();
 
-		var tbDeterAlertsLayerName = ams.Auth.getWorkspace() + ":deter-ams";
+		var tbDeterAlertsLayerName = ams.Auth.getWorkspace() + ":" + ams.Config.deterAmz;
 		var tbDeterAlertsWmsOptions = {
 			"cql_filter": deterClassGroups.getCqlFilter(suViewParams),
 		};		
