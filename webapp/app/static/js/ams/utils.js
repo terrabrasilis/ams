@@ -45,6 +45,7 @@ ams.Utils = {
    * @param {number} n, the input number 
    */
   numberFormat: function(n){
+    n=n+'';
     let sp=n.split('.');// determine if the number is floating by the existing point
     return ( (sp.length==2)?(parseFloat(n).toFixed(ams.Config.floatDecimals)):(parseInt(n)) );
   }
