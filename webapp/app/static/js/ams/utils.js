@@ -37,5 +37,15 @@ ams.Utils = {
     // set map div to available height
     ams.Utils.setMapHeight();
     startApp();
+  },
+
+  /**
+   * Used to format a number to display in web view
+   * This function uses the configuration value defined in Config.js to set the number of decimals (see: floatDecimals)
+   * @param {number} n, the input number 
+   */
+  numberFormat: function(n){
+    let sp=n.split('.');// determine if the number is floating by the existing point
+    return ( (sp.length==2)?(parseFloat(n).toFixed(ams.Config.floatDecimals)):(parseInt(n)) );
   }
 };

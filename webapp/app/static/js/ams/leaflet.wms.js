@@ -15,6 +15,7 @@ ams.LeafletWms = {
         },
 
         'showFeatureInfo': function (latlng, info) {
+            if(info.includes("no features were found")) return;
             if (this._isSpatialUnitInfo()) {
                 this._map.openPopup(this._formatSpatialUnitPopup(info, this.viewConfig, latlng) , latlng); //-- mgd T6 this.config
             }else{
@@ -23,7 +24,7 @@ ams.LeafletWms = {
         },
 
         '_isSpatialUnitInfo': function () {
-            return !this._overlay.wmsParams.layers.includes(ams.Config.deterAmz);
+            return !this._overlay.wmsParams.layers.includes(ams.Config.defaultLayers.deterAmz);
         },
 
         '_formatSpatialUnitPopup': function (str, viewConfig, latlng) {  //-- mgd T6
@@ -44,7 +45,7 @@ ams.LeafletWms = {
                     value= isNaN(pair[1]) ? pair[1] : parseFloat(pair[1]);
                     viewConfig.click[pair[0]] = isNaN(pair[1]) ?  value.replace(/ /g, "|"): value;  //-- mgd T6 HTML render error (space brakes quotes), check why
                     if (pair[0] in result) {
-                        result[pair[0]] = isNaN(value) ? value : value.toFixed(5);//isNaN(pair[1]) ? pair[1] : parseFloat(pair[1]).toFixed(5);
+                        result[pair[0]] = isNaN(value) ? value : ams.Utils.numberFormat(value);
                     }
                 }
             }
@@ -95,43 +96,62 @@ ams.LeafletWms = {
                 + "</tr>"
             +"</table>";
         },
-        '_formatDeterPopup': function (str) {
-            let tokens = str.split("\n");
-            let result = {};
-            for (let i = 0; i < tokens.length; i++) {
-                let pair = tokens[i].split(" = ");
-                if (pair.length > 1) {
-                    result[pair[0]] = isNaN(pair[1]) ? pair[1] : parseFloat(pair[1]).toFixed(5);
-                }
-            }
-            delete result["geom"];
-            delete result["month_year"];
-            delete result["quadrant"];
-            return this._createDeterInfoTable(result);
-        },
-        '_createDeterInfoTable': function (result) {
-            let table = '<table class="popup-deter-table" style="width:100%">'
-                + "<tr>"
-                + "<th></th>"
-                + "<th></th>"
-                + "</tr>";
-            for (let k in result) {
-                let v = result[k];
-                if (k.includes("date")) {
-                    v = this._formatDate(v);
-                }
-                table += "<tr>"
-                    + "<td>" + k + "  </td>"
-                    + "<td>" + (v != "null" ? v : " ") + "</td>"
-                    + "</tr>"
-            }
-            table += "</table>"
-            return table;
-        },
+
+        '_formatDeterPopup': function(str) {
+			let tokens = str.split("\n");
+			let result = {};
+			for(let i = 0; i < tokens.length; i++)
+			{
+				let pair = tokens[i].split(" = ");
+				if(pair.length > 1) {
+					result[pair[0]] = isNaN(pair[1]) ? pair[1] : ams.Utils.numberFormat(pair[1]);
+				}
+			}
+			delete result["geom"];
+			return this._createDeterInfoTable(result);
+		},
+
+        '_createDeterInfoTable': function(result) {
+			let table = '<table class="popup-deter-table" style="width:100%">'
+						+ "<tr>"
+							+ "<th></th>"
+							+ "<th></th>"
+							+ "</tr>";
+			for(let k in result) {
+				let v = result[k];
+				if(k.includes("view_date")) {
+					v = this._formatDate(v);
+				}
+				if(k.includes("car_imovel") && (v.split(";")).length>=1 ) {
+					table += "<tr>"
+								+ "<td colspan='2'>"
+								+ k
+								+ (v != "null" ? this._formatListCAR(v) : " ")
+								+ "</td>"
+								+ "</tr>";
+				}else{
+					table += "<tr>"
+								+ "<td>" + k + "  </td>"
+								+ "<td>" + (v != "null" ? v : " ") + "</td>"
+								+ "</tr>";
+				}
+			}
+			table += "<tr><td colspan='2'><a target='_blank' href='"+ams.Config.DETERMetadataURL+"'>Ver detalhes dos atributos</a></td></tr>";
+			table += "</table>"
+			return table;
+		},
+
         '_formatDate': function (str) {
             let res = str.replace("Z", "").split("-");
             return `${res[2]}/${res[1]}/${res[0]}`
-        }
+        },
 
+		'_formatListCAR': function(str) {
+			let ids = str.replaceAll(";","\n");
+			return "<div id='ids_car'>"+
+			"<textarea name='listcars' rows='2' cols='50' readonly "+
+			"style='resize: none;max-width: fit-content;border:0;font-size:xx-small;'>"+
+			ids+"</textarea></div>";
+		}
     })
 };
