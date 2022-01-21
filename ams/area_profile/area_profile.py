@@ -143,7 +143,7 @@ order by 1 desc limit 20'''}
             f"inner join \"{self._spatial_unit}\" b on a.suid = b.suid "
             f"where b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name.replace('|',' ')}' "
             f"and {self.period_where_clause()} "
-            f"group by a.land_use_id) b on a.id = b.land_use_id"
+            f"group by a.land_use_id) b on a.id = b.land_use_id ORDER BY a.priority ASC "
         )
         df.columns = ['Categorias Fundiárias', 'Área (km²)']
         df['Área (km²)'] = df['Área (km²)'].round(3)
@@ -165,8 +165,11 @@ order by 1 desc limit 20'''}
         #  Dois gráficos cada um com width=400 e' para maiores > 1000px. Height 300, foi um bom aspect ratio
         #  Para calcular o width ideal, a gente pode enviar o device width na requisição
         #    (https://stackoverflow.com/questions/1248081/how-to-get-the-browser-viewport-dimensions)
-        fig.update_traces(textposition='inside')
+
+        # sort=False is used to keep legend order like ordered in dataset
+        fig.update_traces(sort=False,textposition='inside')
         fig.update_layout(
+            legend_traceorder='normal',
             height=400,
             width=430,
             uniformtext_minsize=10, uniformtext_mode='hide',
@@ -215,7 +218,7 @@ order by 1 desc limit 20'''}
         for i in color_change_items:
             color_discrete_sequence[i] = '#ec7c34'
 
-        fig = px.bar(df, x='Período', y='Área (km²)', title='<br>Evolucao temporal do indicador na unidade territorial',
+        fig = px.bar(df, x='Período', y='Área (km²)', title='<br>Evolução temporal do indicador na unidade territorial',
                      category_orders = {'Período': df['Período'].to_list()},
                      #height=260,
                      color='Período',
