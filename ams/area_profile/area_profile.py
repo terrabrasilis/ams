@@ -150,18 +150,36 @@ order by 1 desc limit 20'''}
         return df
 
     def form_title(self):
-        date_label = f"Dados DETER at&eacute;: {self.format_date(self._start_date)}"
-        return f"{self._tableinfo[self._spatial_unit]['description']}: " \
-               f"{self._name}, Indicador: " \
-               f"{self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']}" \
-               f"<br>{date_label}, Unidade temporal: {self._temporal_units[self._temporal_unit]}"
+        """
+        gets the main title for profile form
+        """
+        indicador=self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
+        last_date=self.format_date(self._start_date)
+        spatial_unit={self._tableinfo[self._spatial_unit]['description']
+        temporal_unit=self._temporal_units[self._temporal_unit]
+
+        title="""Usando dados de <b>{0}</b> do DETER até <b>{1}</b>,
+        com recorte na unidade espacial <b>{2}</b>
+        e unidade temporal <b>{3}</b>.
+        """.format(indicador,last_date,spatial_unit,temporal_unit)
+
+        return title
+        
+        # date_label = f"Dados DETER at&eacute;: {self.format_date(self._start_date)}"
+        # return f"{self._tableinfo[self._spatial_unit]['description']}: " \
+        #        f"{self._name}, Indicador: " \
+        #        f"{self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']}" \
+        #        f"<br>{date_label}, Unidade temporal: {self._temporal_units[self._temporal_unit]}"
 
     def fig_area_per_land_use(self):
         df = self.area_per_land_use()
+        indicador={self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
+        unid_temp=self._temporal_units[self._temporal_unit]
+        chart_title="Porcentagem de <b>{0}</b> por categoria fundiária no último período do <b>{1}</b>".format(indicador,unid_temp)
 
         fig = px.pie(df, values='Área (km²)', names='Categorias Fundiárias', template='plotly',
                      color_discrete_sequence=px.colors.sequential.RdBu,
-                     title='Categoria Fundiária na unidade<br> territorial/temporal selecionada' )
+                     title=chart_title )
         #  Dois gráficos cada um com width=400 e' para maiores > 1000px. Height 300, foi um bom aspect ratio
         #  Para calcular o width ideal, a gente pode enviar o device width na requisição
         #    (https://stackoverflow.com/questions/1248081/how-to-get-the-browser-viewport-dimensions)
@@ -218,7 +236,11 @@ order by 1 desc limit 20'''}
         for i in color_change_items:
             color_discrete_sequence[i] = '#ec7c34'
 
-        fig = px.bar(df, x='Período', y='Área (km²)', title='<br>Evolução temporal do indicador na unidade territorial',
+        indicador={self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
+        unid_temp=self._temporal_units[self._temporal_unit]
+        chart_title="Evolução temporal de <b>{0}</b> nos períodos do <b>{1}</b> (limitado aos últimos 20 períodos).".format(indicador,unid_temp)
+
+        fig = px.bar(df, x='Período', y='Área (km²)', title=chart_title,
                      category_orders = {'Período': df['Período'].to_list()},
                      #height=260,
                      color='Período',
@@ -230,7 +252,8 @@ order by 1 desc limit 20'''}
             width=700,
             xaxis=layout.XAxis(
                 type='category',
-                tickangle=45),
+                tickangle=45,
+                title_text="Data de início de cada período"),
             showlegend=False,
             margin=dict(
                 l=0,
