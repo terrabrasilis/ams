@@ -173,7 +173,7 @@ order by 1 desc limit 20'''}
 
     def fig_area_per_land_use(self):
         df = self.area_per_land_use()
-        indicador={self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
+        indicador=self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
         unid_temp=self._temporal_units[self._temporal_unit]
         chart_title="Porcentagem de <b>{0}</b> por categoria fundiária no último período do <b>{1}</b>".format(indicador,unid_temp)
 
