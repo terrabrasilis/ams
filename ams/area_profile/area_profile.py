@@ -175,7 +175,7 @@ order by 1 desc limit 20'''}
         df = self.area_per_land_use()
         indicador=self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
         unid_temp=self._temporal_units[self._temporal_unit]
-        chart_title="Porcentagem de <b>{0}</b> por categoria fundiária no último período do <b>{1}</b>".format(indicador,unid_temp)
+        chart_title="Porcentagem de <b>{0}</b><br/>por categoria fundiária<br/>no último período do <b>{1}</b>".format(indicador,unid_temp)
 
         fig = px.pie(df, values='Área (km²)', names='Categorias Fundiárias', template='plotly',
                      color_discrete_sequence=px.colors.sequential.RdBu,
@@ -238,7 +238,7 @@ order by 1 desc limit 20'''}
 
         indicador=self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
         unid_temp=self._temporal_units[self._temporal_unit]
-        chart_title="Evolução temporal de <b>{0}</b> nos períodos do <b>{1}</b> (limitado aos últimos 20 períodos).".format(indicador,unid_temp)
+        chart_title="Evolução temporal de <b>{0}</b> nos períodos do <b>{1}</b><br/>(limitado aos últimos 20 períodos).".format(indicador,unid_temp)
 
         fig = px.bar(df, x='Período', y='Área (km²)', title=chart_title,
                      category_orders = {'Período': df['Período'].to_list()},
