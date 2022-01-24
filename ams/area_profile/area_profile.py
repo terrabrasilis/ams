@@ -236,7 +236,7 @@ order by 1 desc limit 20'''}
         for i in color_change_items:
             color_discrete_sequence[i] = '#ec7c34'
 
-        indicador={self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
+        indicador=self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
         unid_temp=self._temporal_units[self._temporal_unit]
         chart_title="Evolução temporal de <b>{0}</b> nos períodos do <b>{1}</b> (limitado aos últimos 20 períodos).".format(indicador,unid_temp)
 
