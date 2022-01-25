@@ -188,7 +188,6 @@ order by 1 desc limit 20'''}
         fig.update_traces(sort=False,textposition='inside')
         fig.update_layout(
             legend_traceorder='normal',
-            legend_valign="middle",
             height=400,
             width=430,
             uniformtext_minsize=10, uniformtext_mode='hide',
@@ -197,7 +196,7 @@ order by 1 desc limit 20'''}
                 l=0,
                 r=0,
                 b=0,
-                t=60,
+                t=70,
                 pad=0
             ),
 
