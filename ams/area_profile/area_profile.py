@@ -155,13 +155,14 @@ order by 1 desc limit 20'''}
         """
         indicador=self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
         last_date=self.format_date(self._start_date)
-        spatial_unit=self._tableinfo[self._spatial_unit]['description']
+        spatial_unit=self._name
+        spation_description=self._tableinfo[self._spatial_unit]['description']
         temporal_unit=self._temporal_units[self._temporal_unit]
 
         title="""Usando dados de <b>{0}</b> do DETER até <b>{1}</b>,
-        com recorte na unidade espacial <b>{2}</b>
-        e unidade temporal <b>{3}</b>.
-        """.format(indicador,last_date,spatial_unit,temporal_unit)
+        com recorte na unidade espacial <b>{2}</b> ({3})
+        e unidade temporal <b>{4}</b>.
+        """.format(indicador,last_date,spatial_unit,spation_description,temporal_unit)
 
         return title
         
