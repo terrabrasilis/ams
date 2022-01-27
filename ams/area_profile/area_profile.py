@@ -79,7 +79,7 @@ order by 1 desc limit 20'''}
         elif temporal_unit == '1y': return (start_date_date + relativedelta(years = -1)).strftime('%Y-%m-%d')
 
     def period_where_clause(self):
-        return f" date >= '{self._start_period_date}' and date <= '{self._start_date}'"
+        return f" date > '{self._start_period_date}' and date <= '{self._start_date}'"
 
     def get_temporal_unit_sql(self):
         delta = datetime.strptime(self._start_date, '%Y-%m-%d') - datetime.strptime(self._start_period_date, '%Y-%m-%d')
