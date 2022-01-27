@@ -143,6 +143,7 @@ order by 1 desc limit 20'''}
             f"inner join \"{self._spatial_unit}\" b on a.suid = b.suid "
             f"where b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name.replace('|',' ')}' "
             f"and {self.period_where_clause()} "
+            f"and classname = '{self._classname}' "
             f"group by a.land_use_id) b on a.id = b.land_use_id ORDER BY a.priority ASC "
         )
         df.columns = ['Categorias Fundiárias', 'Área (km²)']
