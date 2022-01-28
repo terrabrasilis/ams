@@ -224,13 +224,13 @@
 							<div class="modal-body">
 								<div class="container-fluid">
 									<div class="row no-gutters">
-                                        <div class="col-md-12" align="center">
-											<span id="AreaPerLandUse" class="chart" ></span>
-                                        </div>
-									</div>
-									<div class="row no-gutters">
 									 	<div class="col-md-12">
 											<span id="AreaPerYearTableClass" class="chart" style="height: 250px;width: auto"></span>
+										</div>
+									</div>
+									<div class="row no-gutters">
+										<div class="col-md-12" style="vertical-align: center;">
+											<span id="AreaPerLandUse" class="chart" ></span>
 										</div>
 									</div>
 								</div>
@@ -275,12 +275,12 @@
                 if (response.ok) {
                     let profileJson = await response.json();
                     if (response.ok) {
-                        //console.log('1',JSON.parse(chartJson['AreaPerYearStateClass']));
-                        document.getElementById("txt3a").innerHTML = profileJson['FormTitle'];
-                        Plotly.react('AreaPerYearTableClass', JSON.parse(profileJson['AreaPerYearTableClass']), {});
-                        //Plotly.react('AreaPerClass', JSON.parse(profileJson['AreaPerClass']), {});
-                        Plotly.react('AreaPerLandUse', JSON.parse(profileJson['AreaPerLandUse']), {});
-  						$('#modal-container-general-info').modal();
+											//console.log('1',JSON.parse(chartJson['AreaPerYearStateClass']));
+											document.getElementById("txt3a").innerHTML = profileJson['FormTitle'];
+											Plotly.react('AreaPerYearTableClass', JSON.parse(profileJson['AreaPerYearTableClass']), {});
+											//Plotly.react('AreaPerClass', JSON.parse(profileJson['AreaPerClass']), {});
+											Plotly.react('AreaPerLandUse', JSON.parse(profileJson['AreaPerLandUse']), {});
+											$('#modal-container-general-info').modal();
                     } else {
                         alert("HTTP-Error: " + response.status + "area_profile");
                     }
