@@ -18,6 +18,7 @@ class AreaProfile():
     def __init__(self, config, params):
         self._config = config
         self._db = AlchemyDataAccess()
+        self._query_limit = 20
         self._classname = params['className']
         self._spatial_unit = params['spatialUnit']
         self._start_date = params['startDate']
@@ -49,23 +50,23 @@ class AreaProfile():
 7:'''select TO_CHAR(date, 'YYYY/WW') as period,classname,sum(area) as 
 area from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
 group by TO_CHAR(date, 'YYYY/WW'), classname
-order by 1 desc limit 20''',
+order by 1 desc limit {2}''',
 15: '''select concat(TO_CHAR(date, 'YYYY'),'/',to_char(TO_CHAR(date, 'WW')::int/2+1,'FM00')) as period,
 classname,sum(area) as area from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
 group by concat(TO_CHAR(date, 'YYYY'),'/',to_char(TO_CHAR(date, 'WW')::int/2+1,'FM00')), classname
-order by 1 desc limit 20''',
+order by 1 desc limit {2}''',
 31: '''select TO_CHAR(date, 'YYYY/MM') as period,classname,sum(area) as 
 area from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
 group by TO_CHAR(date, 'YYYY/MM'), classname
-order by 1 desc limit 20''',
+order by 1 desc limit {2}''',
 124: '''select TO_CHAR(date, 'YYYY/Q') as period,classname, sum(area) as 
 area from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
 group by TO_CHAR(date, 'YYYY/Q'),classname
-order by 1 desc limit 20''',
+order by 1 desc limit {2}''',
 366: '''select TO_CHAR(date, 'YYYY') as period,classname,sum(area) as 
 area from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
 group by TO_CHAR(date, 'YYYY'),classname
-order by 1 desc limit 20'''}
+order by 1 desc limit {2}'''}
 
     def format_date(self, date: str)->str:
         return f'{date[8:10]}/{date[5:7]}/{date[0:4]}'
@@ -80,6 +81,38 @@ order by 1 desc limit 20'''}
 
     def period_where_clause(self):
         return f" date > '{self._start_period_date}' and date <= '{self._start_date}'"
+
+    def __get_period_settings(self):
+        if self._temporal_unit == '7d': return 7,'day',self._query_limit*7
+        elif self._temporal_unit == '15d': return 15,'day',self._query_limit*15
+        elif self._temporal_unit == '1m': return 1,'month',self._query_limit*1
+        elif self._temporal_unit == '3m': return 3,'month',self._query_limit*3
+        elif self._temporal_unit == '1y': return 1,'year',self._query_limit*1
+
+    def __get_temporal_unit_sql(self):
+        interval_val,period_unit,period_series=self.__get_period_settings()
+        calendar=f"""
+        SELECT ((ld::date - interval '{interval_val} {period_unit}') + interval '1 day')::date as fd,
+        ld::date as ld
+        FROM generate_series(('{self._start_date}'::date - interval '{period_series} {period_unit}')::date,
+        date '{self._start_date}', interval '{interval_val} {period_unit}') as t(ld)
+        ORDER BY 1 DESC LIMIT {self._query_limit}"""
+
+        group_by_periods=f"""
+        WITH calendar AS ({calendar}),
+        bar_chart AS (
+            SELECT (calendar.fd || '/' || calendar.ld) as period, ROUND(sum(area)::numeric,4) as area
+            FROM calendar, "{self._spatial_unit}_land_use" a inner join "{self._spatial_unit}" b on a.suid = b.suid
+            WHERE b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}'
+            AND classname = '{self._classname}'
+            AND date >= calendar.fd
+            AND date <= calendar.ld
+            GROUP BY period
+            ORDER BY period DESC LIMIT {self._query_limit}
+        )
+        SELECT (cd.fd || '/' || cd.ld) as period, COALESCE(bc.area,0) as area
+        FROM calendar cd left join bar_chart bc on (cd.fd || '/' || cd.ld)=bc.period
+        ORDER BY 1 DESC"""
 
     def get_temporal_unit_sql(self):
         delta = datetime.strptime(self._start_date, '%Y-%m-%d') - datetime.strptime(self._start_period_date, '%Y-%m-%d')
@@ -117,6 +150,13 @@ order by 1 desc limit 20'''}
         df = self.resultset_as_dataframe(
             self.get_temporal_unit_sql())
         df.columns = ['Período', 'Classe', 'Área (km²)']
+        df['Área (km²)'] = df['Área (km²)'].round(3)
+        return df
+
+    def __area_by_period(self):
+        df = self.resultset_as_dataframe(
+            self.__get_temporal_unit_sql())
+        df.columns = ['Período', 'Área (km²)']
         df['Área (km²)'] = df['Área (km²)'].round(3)
         return df
 
@@ -166,12 +206,6 @@ order by 1 desc limit 20'''}
         """.format(indicador,last_date,spatial_unit,spation_description,temporal_unit)
 
         return title
-        
-        # date_label = f"Dados DETER at&eacute;: {self.format_date(self._start_date)}"
-        # return f"{self._tableinfo[self._spatial_unit]['description']}: " \
-        #        f"{self._name}, Indicador: " \
-        #        f"{self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']}" \
-        #        f"<br>{date_label}, Unidade temporal: {self._temporal_units[self._temporal_unit]}"
 
     def fig_area_per_land_use(self):
         df = self.area_per_land_use()
@@ -223,8 +257,8 @@ order by 1 desc limit 20'''}
         return graphJSON
     '''
 
-    def fig_area_per_year_table_class(self):
-        df = self.area_per_year_table_class()
+    def fig_area_by_period(self):
+        df = self.__area_by_period()
         # set bar colors
         last_period = df.tail(1).values[0][0]
         last_period_items = last_period.split('/')
