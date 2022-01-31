@@ -160,21 +160,6 @@ order by 1 desc limit {2}'''}
         df['Área (km²)'] = df['Área (km²)'].round(3)
         return df
 
-    '''
-    def area_per_class(self, suid, table):
-        df = self.resultset_as_dataframe(
-            'select classname as code, sum(a.area) as area '                                                   
-            f'from "{table}_land_use" a '
-            f'inner join "csAmz_150km" b on a.suid = b.suid '
-            f"where b.\"{self._tableinfo[table]['key']}\" = '{suid}' " 
-            f'group by classname order by classname'
-        )
-        df = pd.merge(self._classes, df, on='code')
-        df.columns = ['code', 'Name', 'color', 'Área (km²)']
-        df['Área (km²)'] = df['Área (km²)'].round(3)
-        return df
-    '''
-
     def area_per_land_use(self):
         df = self.resultset_as_dataframe(
             f"select a.name,coalesce(Area, 0) as Area from land_use a "
@@ -216,10 +201,7 @@ order by 1 desc limit {2}'''}
         fig = px.pie(df, values='Área (km²)', names='Categorias Fundiárias', template='plotly',
                      color_discrete_sequence=px.colors.sequential.RdBu,
                      title=chart_title )
-        #  Dois gráficos cada um com width=400 e' para maiores > 1000px. Height 300, foi um bom aspect ratio
-        #  Para calcular o width ideal, a gente pode enviar o device width na requisição
-        #    (https://stackoverflow.com/questions/1248081/how-to-get-the-browser-viewport-dimensions)
-
+ 
         # sort=False is used to keep legend order like ordered in dataset
         fig.update_traces(sort=False,textposition='inside')
         fig.update_layout(
@@ -237,25 +219,6 @@ order by 1 desc limit {2}'''}
         )
         graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         return graphJSON
-
-    '''
-    def fig_area_per_class(self, params):
-        df = self.area_per_class(params['click']['name'], params['spatialUnit'])
-
-        fig = px.pie(df, values='Área (km²)', names='Name', template='ggplot2', title='Indicador DETER')
-        #  Dois gráficos cada um com width=400 e' para maiores > 1000px. Height 300, foi um bom aspect ratio
-        #  Para calcular o width ideal, a gente pode enviar o device width na requisição
-        #    (https://stackoverflow.com/questions/1248081/how-to-get-the-browser-viewport-dimensions)
-        fig.update_layout(
-            height=400,
-            width=330,
-            title_x=0.5,
-            legend=dict(font=dict(size=10))
-            #paper_bgcolor="LightSteelBlue",
-        )
-        graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-        return graphJSON
-    '''
 
     def fig_area_by_period(self):
         df = self.__area_by_period()
