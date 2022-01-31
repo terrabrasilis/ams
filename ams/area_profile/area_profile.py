@@ -141,6 +141,8 @@ order by 1 desc limit {2}'''}
         return {row[0]: row[1] for row in self.execute_sql(sql, cursor_factory=DictCursor)}
 
     def resultset_as_dataframe(self, sql):
+        if self._config.HOMOLOGATION:
+            print(sql + ("-"*30))
         return pd.read_sql(sql, self._config.DATABASE_URL)
 
     def resultset_as_list(self, sql):

@@ -7,6 +7,7 @@ services:
     ports:
       - 81:7000
     environment:
+      - "HOMOLOGATION=False"
       - "SCRIPT_NAME=/ams"
       - "GEOSERVER_URL=http://terrabrasilis.dpi.inpe.br/geoams/"
       - "SERVER_NAME=terrabrasilis.dpi.inpe.br"

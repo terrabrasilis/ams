@@ -2,6 +2,7 @@ import os
 
 
 class Config:
+	HOMOLOGATION = os.environ.get('HOMOLOGATION') or False
 	GEOSERVER_URL = os.environ.get('GEOSERVER_URL') or \
 			'http://localhost:8080/geoserver'
 	GEOSERVER_WORKSPACE = os.environ.get('GEOSERVER_WORKSPACE') or 'ams'
