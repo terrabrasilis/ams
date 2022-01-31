@@ -16,13 +16,21 @@ if [[ ! "$1" = "silent" ]]; then
 fi
 
 VERSION=$(git describe --tags --abbrev=0)
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+# if current branch isn't master then change version tag
+if [[ ! "${BRANCH}" = "master" ]]; then
+    TAG_VERSION="${VERSION}.homologation"
+else
+    TAG_VERSION=${VERSION}
+fi
 
 echo 
 echo "/######################################################################/"
-echo " Build new image terrabrasilis/ams-sync:$VERSION "
+echo " Build new image terrabrasilis/ams-sync:${TAG_VERSION} "
 echo "/######################################################################/"
 echo
-docker build $NO_CACHE -t "terrabrasilis/ams-sync:$VERSION" -f backend-sync/Dockerfile ../
+docker build $NO_CACHE -t "terrabrasilis/ams-sync:${TAG_VERSION}" -f backend-sync/Dockerfile ../
 
 # pass "silent" as first parameter when calling this script to skip questions
 if [[ ! "$1" = "silent" ]]; then
@@ -33,6 +41,6 @@ if [[ ! "$1" = "silent" ]]; then
         echo "Ok, not send the images."
     else
         echo "Nice, sending the image!"
-        docker push "terrabrasilis/ams-sync:$VERSION"
+        docker push "terrabrasilis/ams-sync:${TAG_VERSION}"
     fi
 fi
