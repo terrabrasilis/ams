@@ -196,7 +196,9 @@ order by 1 desc limit {2}'''}
         df = self.area_per_land_use()
         indicador=self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
         unid_temp=self._temporal_units[self._temporal_unit]
-        chart_title="Porcentagem de <b>{0}</b> por categoria fundiária<br>no último período do <b>{1}</b>".format(indicador,unid_temp)
+        total_area = df['Área (km²)'].sum()
+        chart_title=f"""Porcentagem de <b>{indicador}</b> por categoria fundiária<br>
+        no último período do <b>{unid_temp}. Área total: {total_area} km²</b>"""
 
         fig = px.pie(df, values='Área (km²)', names='Categorias Fundiárias', template='plotly',
                      color_discrete_sequence=px.colors.sequential.RdBu,
