@@ -223,9 +223,9 @@
 							</div>
 							<div class="modal-body">
 								<div class="container-fluid">
-									<div class="row no-gutters">
+									<div class="row no-gutters" style="margin-bottom: 10px;">
 									 	<div class="col-md-12">
-											<span id="AreaPerYearTableClass" class="chart" style="height: 250px;width: auto"></span>
+											<span id="AreaPerYearTableClass" class="chart"></span>
 										</div>
 									</div>
 									<div class="row no-gutters">
@@ -275,12 +275,12 @@
                 if (response.ok) {
                     let profileJson = await response.json();
                     if (response.ok) {
-											//console.log('1',JSON.parse(chartJson['AreaPerYearStateClass']));
-											document.getElementById("txt3a").innerHTML = profileJson['FormTitle'];
-											Plotly.react('AreaPerYearTableClass', JSON.parse(profileJson['AreaPerYearTableClass']), {});
-											//Plotly.react('AreaPerClass', JSON.parse(profileJson['AreaPerClass']), {});
-											Plotly.react('AreaPerLandUse', JSON.parse(profileJson['AreaPerLandUse']), {});
-											$('#modal-container-general-info').modal();
+						//console.log('1',JSON.parse(chartJson['AreaPerYearStateClass']));
+						document.getElementById("txt3a").innerHTML = profileJson['FormTitle'];
+						Plotly.react('AreaPerYearTableClass', JSON.parse(profileJson['AreaPerYearTableClass']), {});
+						//Plotly.react('AreaPerClass', JSON.parse(profileJson['AreaPerClass']), {});
+						Plotly.react('AreaPerLandUse', JSON.parse(profileJson['AreaPerLandUse']), {});
+						$('#modal-container-general-info').modal();
                     } else {
                         alert("HTTP-Error: " + response.status + "area_profile");
                     }
