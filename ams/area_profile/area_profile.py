@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from unicodedata import category
-
 from plotly.graph_objs import layout
 from psycopg2.extras import DictCursor
 import pandas as pd
@@ -71,6 +70,19 @@ order by 1 desc limit {2}'''}
     def format_date(self, date: str)->str:
         return f'{date[8:10]}/{date[5:7]}/{date[0:4]}'
 
+    def formatDate(self, date: datetime)->str:
+        return self.format_date(date.isoformat())
+
+    def get_previous_date(self, ref_date: datetime)->str:
+        """
+        Gets the previous date based on reference date using a rule for each temporal unit.
+        It's result is used to highlight bars
+        """
+        if self._temporal_unit == '7d': return (ref_date - relativedelta(years = +1)).strftime('%Y-%m')
+        elif self._temporal_unit == '15d': return (ref_date - relativedelta(years = +1)).strftime('%Y-%m')
+        elif self._temporal_unit == '1m': return (ref_date - relativedelta(years = +1)).strftime('%Y-%m')
+        elif self._temporal_unit == '3m': return (ref_date - relativedelta(years = +1)).strftime('%Y-%m')
+
     def get_prev_date_temporal_unit(self, temporal_unit: str)->str:
         start_date_date = datetime.strptime(self._start_date, '%Y-%m-%d')
         if temporal_unit == '7d': return (start_date_date + relativedelta(days = -7)).strftime('%Y-%m-%d')
@@ -110,9 +122,12 @@ order by 1 desc limit {2}'''}
             GROUP BY period
             ORDER BY period DESC LIMIT {self._query_limit}
         )
-        SELECT (cd.fd || '/' || cd.ld) as period, COALESCE(bc.area,0) as area
+        SELECT TO_CHAR(cd.fd::date, 'dd/mm/yyyy')|| '-' ||TO_CHAR(cd.ld::date, 'dd/mm/yyyy') as period,
+        cd.fd as firstday, COALESCE(bc.area,0) as area
         FROM calendar cd left join bar_chart bc on (cd.fd || '/' || cd.ld)=bc.period
-        ORDER BY 1 DESC"""
+        ORDER BY 2 ASC"""
+
+        return group_by_periods
 
     def get_temporal_unit_sql(self):
         delta = datetime.strptime(self._start_date, '%Y-%m-%d') - datetime.strptime(self._start_period_date, '%Y-%m-%d')
@@ -152,14 +167,14 @@ order by 1 desc limit {2}'''}
         df = self.resultset_as_dataframe(
             self.get_temporal_unit_sql())
         df.columns = ['Período', 'Classe', 'Área (km²)']
-        df['Área (km²)'] = df['Área (km²)'].round(3)
+        df['Área (km²)'] = df['Área (km²)'].round(2)
         return df
 
     def __area_by_period(self):
         df = self.resultset_as_dataframe(
             self.__get_temporal_unit_sql())
-        df.columns = ['Período', 'Área (km²)']
-        df['Área (km²)'] = df['Área (km²)'].round(3)
+        df.columns = ['Período', 'Data de referência', 'Área (km²)']
+        df['Área (km²)'] = df['Área (km²)'].round(2)
         return df
 
     def area_per_land_use(self):
@@ -174,7 +189,7 @@ order by 1 desc limit {2}'''}
             f"group by a.land_use_id) b on a.id = b.land_use_id ORDER BY a.priority ASC "
         )
         df.columns = ['Categorias Fundiárias', 'Área (km²)']
-        df['Área (km²)'] = df['Área (km²)'].round(3)
+        df['Área (km²)'] = df['Área (km²)'].round(2)
         return df
 
     def form_title(self):
@@ -199,8 +214,8 @@ order by 1 desc limit {2}'''}
         indicador=self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
         unid_temp=self._temporal_units[self._temporal_unit]
         total_area = df['Área (km²)'].sum()
-        chart_title=f"""Porcentagem de <b>{indicador}</b> por categoria fundiária<br>
-        no último período do <b>{unid_temp}. Área total: {total_area} km²</b>"""
+        chart_title=f"""Porcentagem de <b>{indicador}</b> por categoria fundiária<br>"""
+        chart_title=f"""{chart_title}no último período do <b>{unid_temp}. Área total: {total_area.round(2)} km²</b>"""
 
         fig = px.pie(df, values='Área (km²)', names='Categorias Fundiárias', template='plotly',
                      color_discrete_sequence=px.colors.sequential.RdBu,
@@ -209,52 +224,71 @@ order by 1 desc limit {2}'''}
         # sort=False is used to keep legend order like ordered in dataset
         fig.update_traces(sort=False,textposition='inside')
         fig.update_layout(
-            height=400,
-            width=430,
+            paper_bgcolor='#f3f9f8',
+            height=300,
+            width=700,
             uniformtext_minsize=10, uniformtext_mode='hide',
             legend=dict(font=dict(size=12)),
             margin=dict(
                 l=0,
                 r=0,
-                b=0,
+                b=20,
                 t=105,
-                pad=0
+                pad=10
             )
         )
         graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         return graphJSON
 
     def fig_area_by_period(self):
+
+        def getIndexes(df):
+            refDate=df.tail(1).values[0][1]
+            prev=refDate.strftime('%Y-%m')
+
+            index=[]*len(df['Data de referência'])
+            for i in range(len(df['Data de referência'])-1,-1,-1):
+                if prev == (df['Data de referência'][i]).strftime('%Y-%m'):
+                    index.append(i)
+                    prev=self.get_previous_date(ref_date=df['Data de referência'][i])
+            return index
+
         df = self.__area_by_period()
         # set bar colors
-        last_period = df.tail(1).values[0][0]
-        last_period_items = last_period.split('/')
-        precedent_period = f"{int(last_period_items[0])- 1}/{last_period_items[1]}" \
-            if len(last_period_items) > 1 else f"{int(last_period_items[0]) - 10}"
         color_discrete_sequence = ['#609cd4'] * len(df)
-        color_change_items = df.index[(df['Período']==last_period) | (df['Período']==precedent_period)].tolist()
+        # highlight the bars
+        color_change_items = getIndexes(df)
         for i in color_change_items:
             color_discrete_sequence[i] = '#ec7c34'
 
         indicador=self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
         unid_temp=self._temporal_units[self._temporal_unit]
-        chart_title="Evolução temporal de <b>{0}</b><br>para os períodos do <b>{1}</b> (limitado aos últimos 20 períodos).".format(indicador,unid_temp)
+        chart_title="Evolução temporal de <b>{0}</b><br>para os períodos do <b>{1}</b> (limitado aos últimos {2} períodos).".format(indicador,unid_temp,self._query_limit)
 
-        fig = px.bar(df, x='Período', y='Área (km²)', title=chart_title,
-                     category_orders = {'Período': df['Período'].to_list()},
-                     #height=260,
-                     color='Período',
-                     color_discrete_sequence=color_discrete_sequence)
-                     #title=f"{self._temporal_units[self._temporal_unit]}",)
+        cto=df['Data de referência'].to_list()
+        df['Data de referência']=df['Data de referência'].apply(self.formatDate)
+
+        fig = px.bar(df, x='Data de referência', y='Área (km²)', title=chart_title,
+                     category_orders = {'Data de referência': cto},
+                     color='Data de referência',
+                     color_discrete_sequence=color_discrete_sequence,
+                     hover_data=["Período"])
+
         offset_annotation = df['Área (km²)'].max() * 0.03
         fig.update_layout(
-            height=300,   #acho que ficou melhor que autosize (= que a linha superior)
+            paper_bgcolor='#f3f9f8',
+            plot_bgcolor='#f3f9f8',
+            height=300,
             width=700,
             xaxis=layout.XAxis(
+                linecolor='#000',
+                tickcolor='#C0C0C0',
+                ticks='outside',
                 type='category',
                 tickangle=45,
                 title_text="Data de início de cada período"),
             showlegend=False,
+            hovermode="x unified",
             margin=dict(
                 l=0,
                 r=0,
@@ -267,6 +301,11 @@ order by 1 desc limit {2}'''}
                 for x, total in zip(df.index, df['Área (km²)'].astype(float).round(1))
             ]
         )
-        fig.update_yaxes(rangemode= "tozero")
+        fig.update_yaxes(
+            rangemode= "tozero",
+            linecolor='#000',
+            tickcolor='#C0C0C0',
+            ticks='outside'
+        )
         graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         return graphJSON
