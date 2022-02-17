@@ -188,7 +188,7 @@ order by 1 desc limit {2}'''}
             f"and classname = '{self._classname}' "
             f"group by a.land_use_id) b on a.id = b.land_use_id ORDER BY a.priority ASC "
         )
-        df.columns = ['Categorias Fundiárias', 'Área (km²)']
+        df.columns = ['Categoria Fundiária', 'Área (km²)']
         df['Área (km²)'] = df['Área (km²)'].round(2)
         return df
 
@@ -217,7 +217,7 @@ order by 1 desc limit {2}'''}
         chart_title=f"""Porcentagem de <b>{indicador}</b> por categoria fundiária<br>"""
         chart_title=f"""{chart_title}no último período do <b>{unid_temp}. Área total: {total_area.round(2)} km²</b>"""
 
-        fig = px.pie(df, values='Área (km²)', names='Categorias Fundiárias', template='plotly',
+        fig = px.pie(df, values='Área (km²)', names='Categoria Fundiária', template='plotly',
                      color_discrete_sequence=px.colors.sequential.RdBu,
                      title=chart_title )
  
