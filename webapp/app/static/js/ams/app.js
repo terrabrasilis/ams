@@ -225,30 +225,39 @@ ams.App = {
 			$('<div class="leaflet-control-layers-group" id="prioritization-control-layers-group">'
 				+ '<label class="leaflet-control-layers-group-name">'
 				+ '<span class="leaflet-control-layers-group-name">Prioriza&#231;&#227;o </span>'
-				+ '<input type="number" id="prioritization-input" min="1" style="width:45px" title="Prioriza&#231;&#227;o" value=' 
+				+ '<input type="number" id="prioritization-input" min="1" style="width:45px" title="Alterar o número de unidades espaciais consideradas na priorização de exibição do mapa." value=' 
 				+ priorViewParams.limit + ' />'
-				+ '<button id="prioritization-button"> Ok </button>'
+				+ '<button class="btn btn-primary-p" id="prioritization-button" style="margin-left: 10px;"> Ok </button>'
 				+ '</label></div>').insertAfter("#leaflet-control-layers-group-1");	
 		})();	
 
 		(function addDateControl() {
 			$('<div class="leaflet-control-layers-group" id="datepicker-control-layers-group">'
+			    + '<label class="leaflet-control-layers-group-label">'
+				+ '<span class="leaflet-control-layers-group-name">DADOS DETER</span></label>'
 				+ '<label class="leaflet-control-layers-group-name">'
-				+ '<span class="leaflet-control-layers-group-name">Dados DETER At&#233; </span>'
-				+ '<input type="text" id="datepicker" size="7" />'
-				+ '<input type="checkbox" id="deter-checkbox" title="Exibir Alertas" checked />'
-				+ '</label></div>').insertAfter("#leaflet-control-layers-group-3");
+				+ '<span class="leaflet-control-layers-group-name">Exibir camada DETER </span>'
+				+ '<input type="checkbox" id="deter-checkbox" title="Ligar/desligar camada DETER." checked /></label>'
+				+ '<label class="leaflet-control-layers-group-name">'
+				+ '<span class="leaflet-control-layers-group-name">Usar DETER at&#233; </span>'
+				+ '<input type="text" id="datepicker" size="7" /></label>'
+				+ '</div>').insertAfter("#leaflet-control-layers-group-3");
 		})();	
 		
 		(function addFileDownloadControl() {
 			$('<div class="leaflet-control-layers-group" id="shapezip-control-layers-group">'
+				+ '<label class="leaflet-control-layers-group-label">'
+				+ '<span class="leaflet-control-layers-group-name">DOWNLOAD</span></label>'
 				+ '<label class="leaflet-control-layers-group-name">'
-				+ '<span class="leaflet-control-layers-group-name">BAIXAR</span><br>'
+				+ '<span style="white-space: pre-wrap;">'
+				+ 'Baixar arquivo da unidade\nespacial selecionada.</span></label>'
+				+ '<label class="leaflet-control-layers-group-name btn-download">'
 				+ '<button class="btn btn-primary-p btn-success" id="csv-download-button"> CSV </button>'
-				+ '&nbsp;'
+				+ '&nbsp;&nbsp;'
 				+ '<button class="btn btn-primary-p btn-success" id="shapezip-download-button"> Shapefile </button>'
-				+ '</label></div>').insertAfter("#datepicker-control-layers-group");	
-		})();				
+				+ '</label>'
+				+ '</div>').insertAfter("#datepicker-control-layers-group");	
+		})();
 
 		var suLayerMinArea = 0;
 		var diffON = false;

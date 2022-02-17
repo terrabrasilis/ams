@@ -290,7 +290,7 @@ L.Control.GroupedLayers = L.Control.extend({
 
         var groupName = document.createElement('span');
         groupName.className = 'leaflet-control-layers-group-name';
-        groupName.innerHTML = obj.group.name;
+        groupName.innerHTML = (obj.group.name==''?'CLASSIFICAÇÃO DO MAPA':obj.group.name);
         groupLabel.appendChild(groupName);
 
         groupContainer.appendChild(groupLabel);
