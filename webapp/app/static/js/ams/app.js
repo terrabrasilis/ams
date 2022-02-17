@@ -244,9 +244,9 @@ ams.App = {
 			$('<div class="leaflet-control-layers-group" id="shapezip-control-layers-group">'
 				+ '<label class="leaflet-control-layers-group-name">'
 				+ '<span class="leaflet-control-layers-group-name">BAIXAR</span><br>'
-				+ '<button id="csv-download-button"> CSV </button>'
+				+ '<button class="btn btn-primary-p btn-success" id="csv-download-button"> CSV </button>'
 				+ '&nbsp;'
-				+ '<button id="shapezip-download-button"> Shapefile </button>'
+				+ '<button class="btn btn-primary-p btn-success" id="shapezip-download-button"> Shapefile </button>'
 				+ '</label></div>').insertAfter("#datepicker-control-layers-group");	
 		})();				
 
@@ -417,5 +417,32 @@ ams.App = {
 
 	_onWindowResize: function () {
 		ams.groupControl._onWindowResize();
+	},
+
+	displayGraph: function( jsConfig ) {
+		async function getGraphics(  jsConfig ) {
+			let jsConfigStr = JSON.stringify(jsConfig);
+			let response = await fetch("callback/area_profile?sData=" + jsConfigStr);
+			$("#loading_data_info").css('display','none')
+			if (response.ok) {
+				let profileJson = await response.json();
+				if (response.ok) {
+					document.getElementById("txt3a").innerHTML = profileJson['FormTitle'];
+					Plotly.react('AreaPerYearTableClass', JSON.parse(profileJson['AreaPerYearTableClass']), {});
+					Plotly.react('AreaPerLandUse', JSON.parse(profileJson['AreaPerLandUse']), {});
+					$('#modal-container-general-info').modal();
+				} else {
+					console.log("HTTP-Error: " + response.status + " on area_profile");
+					alert("Encontrou um erro na solicitação ao servidor.");
+				}
+			} else {
+				console.log("HTTP-Error: " + response.status + " on area_profile");
+				alert("Encontrou um erro na solicitação ao servidor.");
+			}
+		}
+		if (jsConfig.click.classname != 'null'){
+			$("#loading_data_info").css('display','block');
+			getGraphics(jsConfig);
+		}
 	}
 };
