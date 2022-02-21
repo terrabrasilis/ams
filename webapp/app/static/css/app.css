@@ -26,6 +26,7 @@ text.gtitle{font-size:15px !important;}
   position: fixed;
   top: 60px;
   left: 0px;
+  bottom: 40px;
   width: calc(100%);
   z-index: 999999;
   text-align: center;
