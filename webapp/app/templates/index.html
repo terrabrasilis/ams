@@ -142,22 +142,12 @@
 		</nav>
 	</div><!-- fim da barra superior -->
 
-	<!-- componente de informacao de carregamento de conteudo -->
-	<div class="container-fluid" id="info_container">
-		<div class="row box">
-			<div class="col-md-12">
-				<div class="text-center">
-					<div id="loading_data_info" style="display:none;"><img alt="loading gif when waiting data" src="{{ url_for('static', filename='imgs/loading_map.gif') }}" /></div>
-					<div id="warning_data_info" style="display:none;">
-						<h3><span id="txt8">Problema na comunicação com o servidor.<br>Aguarde alguns minutos e recarregue a página.</span></h3>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
-
 	<!-- area util central onde deverao ser colocados os componentes da aplicação -->
 	<div class="container-fluid" id="panel_container">
+
+		<div class="loading-data" id="loading_data_info">
+			<img src="{{ url_for('static', filename='imgs/loading_map.gif') }}" alt="loading gif when waiting data" />
+		</div>
 
 		<div id="map"></div>
 
@@ -223,14 +213,14 @@
 							</div>
 							<div class="modal-body">
 								<div class="container-fluid">
-									<div class="row no-gutters">
-                                        <div class="col-md-12" align="center">
-											<span id="AreaPerLandUse" class="chart" ></span>
-                                        </div>
+									<div class="row no-gutters" style="margin-bottom: 10px;">
+									 	<div class="col-md-12">
+											<span id="AreaPerYearTableClass" class="chart"></span>
+										</div>
 									</div>
 									<div class="row no-gutters">
-									 	<div class="col-md-12">
-											<span id="AreaPerYearTableClass" class="chart" style="height: 250px;width: auto"></span>
+										<div class="col-md-12" style="vertical-align: center;">
+											<span id="AreaPerLandUse" class="chart" ></span>
 										</div>
 									</div>
 								</div>
@@ -265,38 +255,6 @@
 			var geoserverUrl = "{{geoserver_url}}";
 			ams.App.run(geoserverUrl, spatialUnits, deterClassGroups);
 		};
-        // mgd T5
-		function displayGraph( jsConfig /* T6: sView, sId, sClasse*/ ) {
-            async function getGraphics(  jsConfig ) {
-                // .spatialUnit, jsConfig.click.name, jsConfig.click.classname
-                let jsConfigStr = JSON.stringify(jsConfig);
-                let response = await fetch("callback/area_profile?sData=" + jsConfigStr);
-                    //jsConfig.spatialUnit + "&sId=" + jsConfig.click.name + "&sClasse=" + jsConfig.click.classname +
-                if (response.ok) {
-                    let profileJson = await response.json();
-                    if (response.ok) {
-                        //console.log('1',JSON.parse(chartJson['AreaPerYearStateClass']));
-                        document.getElementById("txt3a").innerHTML = profileJson['FormTitle'];
-                        Plotly.react('AreaPerYearTableClass', JSON.parse(profileJson['AreaPerYearTableClass']), {});
-                        //Plotly.react('AreaPerClass', JSON.parse(profileJson['AreaPerClass']), {});
-                        Plotly.react('AreaPerLandUse', JSON.parse(profileJson['AreaPerLandUse']), {});
-  						$('#modal-container-general-info').modal();
-                    } else {
-                        alert("HTTP-Error: " + response.status + "area_profile");
-                    }
-                } else {
-                    alert("HTTP-Error: " + response.status + "on area_profile");
-                }
-            }
-            // T6 getGraphics(sView, sId, sClasse);
-			if (jsConfig.click.classname == 'null'){
-				// fora do mapa, msg? (ou não colocar botao na tabela?
-			} else{
-				getGraphics(jsConfig);
-				//-- mgd T6  $('#modal-container-general-info').modal();
-			}
-        }
-		// mgd T5
 	</script>
 
 	<script type="text/javascript" src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>

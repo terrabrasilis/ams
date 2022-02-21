@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from unicodedata import category
-
 from plotly.graph_objs import layout
 from psycopg2.extras import DictCursor
 import pandas as pd
@@ -18,6 +17,7 @@ class AreaProfile():
     def __init__(self, config, params):
         self._config = config
         self._db = AlchemyDataAccess()
+        self._query_limit = 20
         self._classname = params['className']
         self._spatial_unit = params['spatialUnit']
         self._start_date = params['startDate']
@@ -49,26 +49,39 @@ class AreaProfile():
 7:'''select TO_CHAR(date, 'YYYY/WW') as period,classname,sum(area) as 
 area from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
 group by TO_CHAR(date, 'YYYY/WW'), classname
-order by 1 desc limit 20''',
+order by 1 desc limit {2}''',
 15: '''select concat(TO_CHAR(date, 'YYYY'),'/',to_char(TO_CHAR(date, 'WW')::int/2+1,'FM00')) as period,
 classname,sum(area) as area from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
 group by concat(TO_CHAR(date, 'YYYY'),'/',to_char(TO_CHAR(date, 'WW')::int/2+1,'FM00')), classname
-order by 1 desc limit 20''',
+order by 1 desc limit {2}''',
 31: '''select TO_CHAR(date, 'YYYY/MM') as period,classname,sum(area) as 
 area from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
 group by TO_CHAR(date, 'YYYY/MM'), classname
-order by 1 desc limit 20''',
+order by 1 desc limit {2}''',
 124: '''select TO_CHAR(date, 'YYYY/Q') as period,classname, sum(area) as 
 area from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
 group by TO_CHAR(date, 'YYYY/Q'),classname
-order by 1 desc limit 20''',
+order by 1 desc limit {2}''',
 366: '''select TO_CHAR(date, 'YYYY') as period,classname,sum(area) as 
 area from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
 group by TO_CHAR(date, 'YYYY'),classname
-order by 1 desc limit 20'''}
+order by 1 desc limit {2}'''}
 
     def format_date(self, date: str)->str:
         return f'{date[8:10]}/{date[5:7]}/{date[0:4]}'
+
+    def formatDate(self, date: datetime)->str:
+        return self.format_date(date.isoformat())
+
+    def get_previous_date(self, ref_date: datetime)->str:
+        """
+        Gets the previous date based on reference date using a rule for each temporal unit.
+        It's result is used to highlight bars
+        """
+        if self._temporal_unit == '7d': return (ref_date - relativedelta(years = +1)).strftime('%Y-%m')
+        elif self._temporal_unit == '15d': return (ref_date - relativedelta(years = +1)).strftime('%Y-%m')
+        elif self._temporal_unit == '1m': return (ref_date - relativedelta(years = +1)).strftime('%Y-%m')
+        elif self._temporal_unit == '3m': return (ref_date - relativedelta(years = +1)).strftime('%Y-%m')
 
     def get_prev_date_temporal_unit(self, temporal_unit: str)->str:
         start_date_date = datetime.strptime(self._start_date, '%Y-%m-%d')
@@ -79,7 +92,42 @@ order by 1 desc limit 20'''}
         elif temporal_unit == '1y': return (start_date_date + relativedelta(years = -1)).strftime('%Y-%m-%d')
 
     def period_where_clause(self):
-        return f" date >= '{self._start_period_date}' and date <= '{self._start_date}'"
+        return f" date > '{self._start_period_date}' and date <= '{self._start_date}'"
+
+    def __get_period_settings(self):
+        if self._temporal_unit == '7d': return 7,'day',self._query_limit*7
+        elif self._temporal_unit == '15d': return 15,'day',self._query_limit*15
+        elif self._temporal_unit == '1m': return 1,'month',self._query_limit*1
+        elif self._temporal_unit == '3m': return 3,'month',self._query_limit*3
+        elif self._temporal_unit == '1y': return 1,'year',self._query_limit*1
+
+    def __get_temporal_unit_sql(self):
+        interval_val,period_unit,period_series=self.__get_period_settings()
+        calendar=f"""
+        SELECT ((ld::date - interval '{interval_val} {period_unit}') + interval '1 day')::date as fd,
+        ld::date as ld
+        FROM generate_series(('{self._start_date}'::date - interval '{period_series} {period_unit}')::date,
+        date '{self._start_date}', interval '{interval_val} {period_unit}') as t(ld)
+        ORDER BY 1 DESC LIMIT {self._query_limit}"""
+
+        group_by_periods=f"""
+        WITH calendar AS ({calendar}),
+        bar_chart AS (
+            SELECT (calendar.fd || '/' || calendar.ld) as period, ROUND(sum(area)::numeric,4) as area
+            FROM calendar, "{self._spatial_unit}_land_use" a inner join "{self._spatial_unit}" b on a.suid = b.suid
+            WHERE b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}'
+            AND classname = '{self._classname}'
+            AND date >= calendar.fd
+            AND date <= calendar.ld
+            GROUP BY period
+            ORDER BY period DESC LIMIT {self._query_limit}
+        )
+        SELECT TO_CHAR(cd.fd::date, 'dd/mm/yyyy')|| '-' ||TO_CHAR(cd.ld::date, 'dd/mm/yyyy') as period,
+        cd.fd as firstday, COALESCE(bc.area,0) as area
+        FROM calendar cd left join bar_chart bc on (cd.fd || '/' || cd.ld)=bc.period
+        ORDER BY 2 ASC"""
+
+        return group_by_periods
 
     def get_temporal_unit_sql(self):
         delta = datetime.strptime(self._start_date, '%Y-%m-%d') - datetime.strptime(self._start_period_date, '%Y-%m-%d')
@@ -108,6 +156,8 @@ order by 1 desc limit 20'''}
         return {row[0]: row[1] for row in self.execute_sql(sql, cursor_factory=DictCursor)}
 
     def resultset_as_dataframe(self, sql):
+        if self._config.HOMOLOGATION:
+            print(sql + ("-"*30))
         return pd.read_sql(sql, self._config.DATABASE_URL)
 
     def resultset_as_list(self, sql):
@@ -117,23 +167,15 @@ order by 1 desc limit 20'''}
         df = self.resultset_as_dataframe(
             self.get_temporal_unit_sql())
         df.columns = ['Período', 'Classe', 'Área (km²)']
-        df['Área (km²)'] = df['Área (km²)'].round(3)
+        df['Área (km²)'] = df['Área (km²)'].round(2)
         return df
 
-    '''
-    def area_per_class(self, suid, table):
+    def __area_by_period(self):
         df = self.resultset_as_dataframe(
-            'select classname as code, sum(a.area) as area '                                                   
-            f'from "{table}_land_use" a '
-            f'inner join "csAmz_150km" b on a.suid = b.suid '
-            f"where b.\"{self._tableinfo[table]['key']}\" = '{suid}' " 
-            f'group by classname order by classname'
-        )
-        df = pd.merge(self._classes, df, on='code')
-        df.columns = ['code', 'Name', 'color', 'Área (km²)']
-        df['Área (km²)'] = df['Área (km²)'].round(3)
+            self.__get_temporal_unit_sql())
+        df.columns = ['Período', 'Data de referência', 'Área (km²)']
+        df['Área (km²)'] = df['Área (km²)'].round(2)
         return df
-    '''
 
     def area_per_land_use(self):
         df = self.resultset_as_dataframe(
@@ -143,10 +185,11 @@ order by 1 desc limit 20'''}
             f"inner join \"{self._spatial_unit}\" b on a.suid = b.suid "
             f"where b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name.replace('|',' ')}' "
             f"and {self.period_where_clause()} "
+            f"and classname = '{self._classname}' "
             f"group by a.land_use_id) b on a.id = b.land_use_id ORDER BY a.priority ASC "
         )
-        df.columns = ['Categorias Fundiárias', 'Área (km²)']
-        df['Área (km²)'] = df['Área (km²)'].round(3)
+        df.columns = ['Categoria Fundiária', 'Área (km²)']
+        df['Área (km²)'] = df['Área (km²)'].round(2)
         return df
 
     def form_title(self):
@@ -165,94 +208,87 @@ order by 1 desc limit 20'''}
         """.format(indicador,last_date,spatial_unit,spation_description,temporal_unit)
 
         return title
-        
-        # date_label = f"Dados DETER at&eacute;: {self.format_date(self._start_date)}"
-        # return f"{self._tableinfo[self._spatial_unit]['description']}: " \
-        #        f"{self._name}, Indicador: " \
-        #        f"{self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']}" \
-        #        f"<br>{date_label}, Unidade temporal: {self._temporal_units[self._temporal_unit]}"
 
     def fig_area_per_land_use(self):
         df = self.area_per_land_use()
         indicador=self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
         unid_temp=self._temporal_units[self._temporal_unit]
-        chart_title="Porcentagem de <b>{0}</b> por categoria fundiária<br>no último período do <b>{1}</b>".format(indicador,unid_temp)
+        total_area = df['Área (km²)'].sum()
+        chart_title=f"""Porcentagem de <b>{indicador}</b> por categoria fundiária<br>"""
+        chart_title=f"""{chart_title}no último período do <b>{unid_temp}. Área total: {total_area.round(2)} km²</b>"""
 
-        fig = px.pie(df, values='Área (km²)', names='Categorias Fundiárias', template='plotly',
+        fig = px.pie(df, values='Área (km²)', names='Categoria Fundiária', template='plotly',
                      color_discrete_sequence=px.colors.sequential.RdBu,
                      title=chart_title )
-        #  Dois gráficos cada um com width=400 e' para maiores > 1000px. Height 300, foi um bom aspect ratio
-        #  Para calcular o width ideal, a gente pode enviar o device width na requisição
-        #    (https://stackoverflow.com/questions/1248081/how-to-get-the-browser-viewport-dimensions)
-
+ 
         # sort=False is used to keep legend order like ordered in dataset
         fig.update_traces(sort=False,textposition='inside')
         fig.update_layout(
-            height=400,
-            width=430,
+            paper_bgcolor='#f3f9f8',
+            height=300,
+            width=700,
             uniformtext_minsize=10, uniformtext_mode='hide',
             legend=dict(font=dict(size=12)),
             margin=dict(
                 l=0,
                 r=0,
-                b=0,
+                b=20,
                 t=105,
-                pad=0
+                pad=10
             )
         )
         graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         return graphJSON
 
-    '''
-    def fig_area_per_class(self, params):
-        df = self.area_per_class(params['click']['name'], params['spatialUnit'])
+    def fig_area_by_period(self):
 
-        fig = px.pie(df, values='Área (km²)', names='Name', template='ggplot2', title='Indicador DETER')
-        #  Dois gráficos cada um com width=400 e' para maiores > 1000px. Height 300, foi um bom aspect ratio
-        #  Para calcular o width ideal, a gente pode enviar o device width na requisição
-        #    (https://stackoverflow.com/questions/1248081/how-to-get-the-browser-viewport-dimensions)
-        fig.update_layout(
-            height=400,
-            width=330,
-            title_x=0.5,
-            legend=dict(font=dict(size=10))
-            #paper_bgcolor="LightSteelBlue",
-        )
-        graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-        return graphJSON
-    '''
+        def getIndexes(df):
+            refDate=df.tail(1).values[0][1]
+            prev=refDate.strftime('%Y-%m')
 
-    def fig_area_per_year_table_class(self):
-        df = self.area_per_year_table_class()
+            index=[]*len(df['Data de referência'])
+            for i in range(len(df['Data de referência'])-1,-1,-1):
+                if prev == (df['Data de referência'][i]).strftime('%Y-%m'):
+                    index.append(i)
+                    prev=self.get_previous_date(ref_date=df['Data de referência'][i])
+            return index
+
+        df = self.__area_by_period()
         # set bar colors
-        last_period = df.tail(1).values[0][0]
-        last_period_items = last_period.split('/')
-        precedent_period = f"{int(last_period_items[0])- 1}/{last_period_items[1]}" \
-            if len(last_period_items) > 1 else f"{int(last_period_items[0]) - 10}"
         color_discrete_sequence = ['#609cd4'] * len(df)
-        color_change_items = df.index[(df['Período']==last_period) | (df['Período']==precedent_period)].tolist()
+        # highlight the bars
+        color_change_items = getIndexes(df)
         for i in color_change_items:
             color_discrete_sequence[i] = '#ec7c34'
 
         indicador=self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
         unid_temp=self._temporal_units[self._temporal_unit]
-        chart_title="Evolução temporal de <b>{0}</b><br>para os períodos do <b>{1}</b> (limitado aos últimos 20 períodos).".format(indicador,unid_temp)
+        chart_title="Evolução temporal de <b>{0}</b><br>para os períodos do <b>{1}</b> (limitado aos últimos {2} períodos).".format(indicador,unid_temp,self._query_limit)
 
-        fig = px.bar(df, x='Período', y='Área (km²)', title=chart_title,
-                     category_orders = {'Período': df['Período'].to_list()},
-                     #height=260,
-                     color='Período',
-                     color_discrete_sequence=color_discrete_sequence)
-                     #title=f"{self._temporal_units[self._temporal_unit]}",)
+        cto=df['Data de referência'].to_list()
+        df['Data de referência']=df['Data de referência'].apply(self.formatDate)
+
+        fig = px.bar(df, x='Data de referência', y='Área (km²)', title=chart_title,
+                     category_orders = {'Data de referência': cto},
+                     color='Data de referência',
+                     color_discrete_sequence=color_discrete_sequence,
+                     hover_data=["Período"])
+
         offset_annotation = df['Área (km²)'].max() * 0.03
         fig.update_layout(
-            height=300,   #acho que ficou melhor que autosize (= que a linha superior)
+            paper_bgcolor='#f3f9f8',
+            plot_bgcolor='#f3f9f8',
+            height=300,
             width=700,
             xaxis=layout.XAxis(
+                linecolor='#000',
+                tickcolor='#C0C0C0',
+                ticks='outside',
                 type='category',
                 tickangle=45,
                 title_text="Data de início de cada período"),
             showlegend=False,
+            hovermode="x unified",
             margin=dict(
                 l=0,
                 r=0,
@@ -265,6 +301,11 @@ order by 1 desc limit 20'''}
                 for x, total in zip(df.index, df['Área (km²)'].astype(float).round(1))
             ]
         )
-        fig.update_yaxes(rangemode= "tozero")
+        fig.update_yaxes(
+            rangemode= "tozero",
+            linecolor='#000',
+            tickcolor='#C0C0C0',
+            ticks='outside'
+        )
         graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         return graphJSON

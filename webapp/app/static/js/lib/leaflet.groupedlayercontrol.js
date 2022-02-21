@@ -34,7 +34,7 @@ L.Control.GroupedLayers = L.Control.extend({
   },
 
   onAdd: function (map) {
-    this._initLayout();
+    this._initLayout(map);
     this._update();
 
     map
@@ -80,12 +80,24 @@ L.Control.GroupedLayers = L.Control.extend({
     }
   },
 
-  _initLayout: function () {
+  _initLayout: function (map) {
     var className = 'leaflet-control-layers',
       container = this._container = L.DomUtil.create('div', className);
 
     // Makes this work on IE10 Touch devices by stopping it from firing a mouseout event when the touch is released
     container.setAttribute('aria-haspopup', true);
+
+    $(container).mouseenter(function () {
+      map.dragging.disable();
+      map.scrollWheelZoom.disable();
+      map.doubleClickZoom.disable();
+    });
+
+    $(container).mouseleave(function () {
+      map.dragging.enable();
+      map.scrollWheelZoom.enable();
+      map.doubleClickZoom.enable();
+    });
 
     if (L.Browser.touch) {
       L.DomEvent.on(container, 'click', L.DomEvent.stopPropagation);
@@ -278,7 +290,7 @@ L.Control.GroupedLayers = L.Control.extend({
 
         var groupName = document.createElement('span');
         groupName.className = 'leaflet-control-layers-group-name';
-        groupName.innerHTML = obj.group.name;
+        groupName.innerHTML = (obj.group.name==''?'CLASSIFICAÇÃO DO MAPA':obj.group.name);
         groupLabel.appendChild(groupName);
 
         groupContainer.appendChild(groupLabel);

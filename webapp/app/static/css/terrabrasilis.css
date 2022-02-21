@@ -332,6 +332,14 @@ background-color: #108d6f;
 border-color: #108d6f;
 height: 38px;
 }
+.btn-primary-p{
+  color: #fff;
+  background-color: #108d6f;
+  border-color: #108d6f;
+  height: 25px;
+  font-size: 14px;
+  padding-top: 2px;
+}
 
 .ferramentas { padding: 10px; background-color: #14757e; color: #fff;}
 .ferramentas div { margin-right: 4px !important;}

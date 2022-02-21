@@ -6,9 +6,26 @@
 
 .leaflet-control-layers-group {
   margin-bottom: .5em;
+  background-color: #f3f3f3;
+  border-radius: 4px;
 }
 
 .leaflet-control-layers-scrollbar {
   overflow-y: auto;
   padding-right: 10px;
+}
+.leaflet-control-layers label {
+  padding-left: 5px;
+}
+.leaflet-control-layers-group-label{
+  background-color: #00796b;
+  border-bottom: solid 1px #03564d;
+  border-top-right-radius: inherit;
+  border-top-left-radius: inherit;
+  color: white;
+  text-align: center;
+}
+.btn-download{
+  padding: 6px;
+  text-align: center;
 }

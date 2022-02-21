@@ -27,9 +27,7 @@ def get_profile(endpoint):
             return json.dumps(
                 {'FormTitle': area_profile.form_title(),
                 'AreaPerLandUse': area_profile.fig_area_per_land_use(),
-                #'AreaPerClass': area_profile.fig_area_per_class(params),
-                'AreaPerYearTableClass':
-                    area_profile.fig_area_per_year_table_class()}
+                'AreaPerYearTableClass': area_profile.fig_area_by_period()}
             )
         else:
             return "Bad endpoint", 400

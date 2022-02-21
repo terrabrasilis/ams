@@ -66,7 +66,7 @@ ams.LeafletWms = {
         '_createGraphicButton': function (viewConfig) {
             let sButton=
                   '<div style="width: 100%;">'
-                + '<button onclick= displayGraph('  // see index.html
+                + '<button class="btn btn-primary-p btn-success" onclick=ams.App.displayGraph('  // see app.js
                 + JSON.stringify(viewConfig)
                 + ')>Perfil</button>'
                 + '</div>';

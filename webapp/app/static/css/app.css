@@ -21,3 +21,16 @@ html, body {
 }
 /** Used in profile chart panel */
 text.gtitle{font-size:15px !important;}
+.loading-data{
+  display: none;
+  position: fixed;
+  top: 60px;
+  left: 0px;
+  width: calc(100%);
+  z-index: 999999;
+  text-align: center;
+  background-color: #f0f8ffa6;
+}
+.loading-data img{
+  padding: calc(15%);
+}
