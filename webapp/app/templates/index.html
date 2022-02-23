@@ -124,6 +124,15 @@
 					<a class="nav-item nav-link" href="#" id="header-panel">| AMS - Sala de Situação da Amazônia</a>
 				</div>
 				<ul id="navigationBarUL" class="navbar-nav navbar-right analises">
+					<li class="nav-item dropdown">
+						<a aria-expanded="true" aria-haspopup="true" class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="navbarDropdownMenuLink" role="button"> 
+							<i class="material-icons iconmobile">assignment </i><span id="analysis-sup">Novas ferramentas</span>
+						</a>
+						<div aria-labelledby="navbarDropdownMenuLink" class="dropdown-menu submenu"> 
+							<a class="dropdown-item" target="_blank" href="http://terrabrasilis.dpi.inpe.br/download/ams/ams-novas-funcionalidades.pdf" title="Abrir documento com informações detalhadas sobre as novas ferramentas."><i class="material-icons iconmenu">nature</i><span id="info-doc">Texto informativo</span></a>
+							<a class="dropdown-item" href="#modal-container-video" title="Abrir vídeo demonstrativo do AMS"><i class="material-icons iconmenu">warning</i><span id="info-media">Vídeo demonstrativo</span></a>
+						</div>
+					</li>
 
 					<li class="nav-item">
 						<a class="nav-link" href="#modal-container-menu-about" id="goto_menu-about" data-toggle="modal" title="Abrir sobre o AMS">
@@ -203,7 +212,52 @@
 						</div>
 					</div>
 				</div>
-	<!-- v mgd T7 -->
+
+
+				<!-- modal window with an introductory video of this panel -->
+				<div class="modal fade" id="modal-container-video">
+					<div class="modal-dialog">
+						<div class="modal-content modalinf">
+							<div class="modal-header fechar">
+								<h5 class="modal-title boxtitletable"> <span id="txt1c">Vídeo demonstrativo de uso do painel</span></h5>
+								<button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="material-icons">clear</i></button>
+							</div>
+							<!-- / modal-header -->
+							<div class="modal-body ">
+								<div class="alert alert-success" role="alert">
+									<span id="txt1d">Veja o vídeo demonstrativo que mostra a interação de um usuário com algumas ferramentas do painel.</span>
+								</div>
+								<div class="embed-video">
+									<video style="width: 100%" controls>
+										<source src="http://terrabrasilis.dpi.inpe.br/download/ams/ams-demonstration-tools.mp4" type="video/mp4">
+										<!--track src="movies/subtitles/dashboard-in-action_pt_br.vtt" kind="subtitles" srclang="pt-BR" label="Portuguese" default>
+										<track src="movies/subtitles/dashboard-in-action_en.vtt" kind="subtitles" srclang="en" label="English">
+										<track src="movies/subtitles/dashboard-in-action_es.vtt" kind="subtitles" srclang="es" label="Spanish"-->
+										Seu navegador não suporta a tag de vídeo.
+									</video>
+								</div>
+							</div>
+
+							<!-- / modal-body -->
+							<div class="modal-footer">
+								<div class="checkbox pull-right">
+									<label>
+										<button type="button" class="btn btngreen" data-dismiss="modal">
+											<span id="txt1e">Fechar</span>
+										</button>
+									</label>
+								</div>
+								<!--/ checkbox -->
+							</div>
+							<!--/ modal-footer -->
+						</div>
+						<!-- / modal-content -->
+					</div>
+					<!--/ modal-dialog -->
+				</div>
+				<!-- / modal -->
+
+				<!--chart panel -->
                 <div class="modal fade" id="modal-container-general-info"  role="dialog" aria-labelledby="general-info" aria-hidden="true">
 					<div class="modal-dialog modal-lg" role="document">
 						<div class="modal-content modalinf">
