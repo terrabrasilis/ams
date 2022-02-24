@@ -12,6 +12,9 @@ from ams.entities import DeterAlert, DeterAlerts
 
 url = os.environ.get('DETER_DATABASE_URL') or\
 	'postgresql://postgres:postgres@localhost:5432/DETER-B'
+if os.path.exists(url):
+	url = open(url, 'r').read()
+
 Base = automap_base()
 engine = create_engine(url)
 Session = scoped_session(sessionmaker(bind=engine))   
