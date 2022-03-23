@@ -104,6 +104,7 @@ ams.Map = {
 			"DG": "DETER Degrada&#231;&#227;o",
 			"CS": "DETER Corte-Seletivo",
 			"MN": "DETER Minera&#231;&#227;o",
+			"AF": "Focos Queimadas"
 		}
 
 		this._setNames = function(groups) {
