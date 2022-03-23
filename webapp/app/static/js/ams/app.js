@@ -63,7 +63,9 @@ ams.App = {
 
 		var temporalUnits = new ams.Map.TemporalUnits();
 		var dateControll = new ams.Date.DateController();
-		var currStartdate = (ams.Auth.isAuthenticated())?(spatialUnits.default.last_date):(wfs.getLastDate(ldLayerName));
+		let anonimousLastDate = wfs.getLastDate(ldLayerName)
+		anonimousLastDate = anonimousLastDate?anonimousLastDate:spatialUnits.default.last_date;
+		var currStartdate = (ams.Auth.isAuthenticated())?(spatialUnits.default.last_date):(anonimousLastDate);
 		var currAggregate = temporalUnits.getAggregates()[0].key;
 		dateControll.setPeriod(currStartdate, currAggregate);
 		
