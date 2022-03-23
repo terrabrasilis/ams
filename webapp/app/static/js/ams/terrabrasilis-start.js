@@ -41,7 +41,8 @@ $(document).ready(function () {
    * to restart the webapp based on the definitions in index.html and the status
    * of the authentication chain.
    */
-  Authentication.init(Lang.language, ams.Utils.restartApp);
+  if(typeof Authentication != 'undefined')
+    Authentication.init(Lang.language, ams.Utils.restartApp);
 
   /** Launch the app when loading the page for the first time */
   startApp();
