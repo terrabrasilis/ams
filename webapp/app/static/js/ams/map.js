@@ -2,6 +2,7 @@ var ams = ams || {};
 
 ams.Map = {
 	update: function(source, layerName, viewParams, layerStyle) {
+		
 		source._subLayers = {};
 		source._subLayers[layerName] = true;		
 		source.options["viewparams"] = viewParams.toWmsFormat();
@@ -32,13 +33,21 @@ ams.Map = {
 					+ ";enddate:" + this.enddate
 					+ ";prevdate:" + this.prevdate
 					+ ";limit:" + this.limit;
-		}
+		};
 
 		this.updateDates = function(dateControll) {
 			this.startdate = dateControll.startdate;
 			this.enddate = dateControll.enddate;
 			this.prevdate = dateControll.prevdate;
-		}
+		};
+
+		this.setClassname = function(cn) {
+			this.classname = cn;
+		};
+
+		this.getClassname = function() {
+			return this.classname;
+		};
 	},
 
 	SpatialUnits: function(spatialUnits, suDefaultName) {
@@ -98,13 +107,13 @@ ams.Map = {
 		}
 	},
 
-	DeterClassGroups: function(groups) {
+	AppClassGroups: function(groups) {
 		this._groupNamesMap = {
 			"DS": "DETER Desmatamento",
 			"DG": "DETER Degrada&#231;&#227;o",
 			"CS": "DETER Corte-Seletivo",
 			"MN": "DETER Minera&#231;&#227;o",
-			"AF": "Focos Queimadas"
+			"AF": "Focos \"Programa Queimadas\""
 		}
 
 		this._setNames = function(groups) {
@@ -147,13 +156,14 @@ ams.Map = {
 			return res;
 		}
 
-		this.getCqlFilter = function(viewParams) {
+		this.getCqlFilter = function(viewParams, useClass) {
+			useClass=(typeof useClass=='undefined')?(true):(useClass);
+			let classFilter=((useClass)?("AND ("+this._filterClasses(viewParams.classname)+")"):(""));
 			return "(view_date > " + viewParams.enddate
 					+ ") AND (view_date <= "
 					+ viewParams.startdate
-					+ ") AND ("
-					+ this._filterClasses(viewParams.classname)
-					+ ")";
+					+ ") "
+					+ classFilter;
 		}	
 
 		this.getGroupName = function(acronym) {
@@ -217,6 +227,9 @@ ams.Map = {
 				},
 				success: function(data) {
 					res = data["features"][0]["properties"][propertyName];
+				},
+				error: function() {
+					res = false;
 				}
 			});		
 			return res;	
@@ -283,7 +296,7 @@ ams.Map = {
 						a.download = filename;
 						a.click();
 					},
-					fail: function (jqXHR, textStatus) {
+					error: function (jqXHR, textStatus) {
 						window.console.log(textStatus);
 					}
 				});
@@ -316,9 +329,8 @@ ams.Map = {
 		};
 
 		this.differeces = {
-			0: {"key": "none", "value": "No Per&#237;odo"},
-			1: {"key": "1m", "value": "Diferen&#231;a Per&#237;odo Anterior"},
-			// 2: {"key": "1y", "value": "Previous Year"}, TODO
+			0: {"key": "onPeriod", "value": "No Per&#237;odo"},
+			1: {"key": "periodDiff", "value": "Diferen&#231;a Per&#237;odo Anterior"}
 		}
 
 		this.getCurrentName = function() {

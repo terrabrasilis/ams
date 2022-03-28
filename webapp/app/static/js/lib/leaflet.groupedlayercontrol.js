@@ -11,24 +11,29 @@ L.Control.GroupedLayers = L.Control.extend({
     exclusiveGroups: [],
     groupCheckboxes: false
   },
+  _currentReferenceLayer: null,
+  _currentPropertyName: null,
+  _currentSpatialUnitLayer: null,
+  _currentFilters: {},
 
-  initialize: function (baseLayers, groupedOverlays, options) {
+  initialize: function (controlGroups, options) {
     var i, j;
     L.Util.setOptions(this, options);
 
-    this._layers = [];
+    this._ctrls = [];
     this._lastZIndex = 0;
     this._handlingClick = false;
     this._groupList = [];
     this._domGroups = [];
+    this._currentReferenceLayer=controlGroups['INDICADOR']['defaultFilter'];
+    this._currentPropertyName=controlGroups['INDICADOR']['propertyName'];
+    this._currentSpatialUnitLayer=controlGroups['UNIDADE ESPACIAL']['defaultFilter'];
 
-    for (i in baseLayers) {
-      this._addLayer(baseLayers[i], i);
-    }
-
-    for (i in groupedOverlays) {
-      for (j in groupedOverlays[i]) {
-        this._addLayer(groupedOverlays[i][j], j, i, true);
+    for (i in controlGroups) {
+      this._currentFilters[i]=controlGroups[i]['defaultFilter'];
+      for (j in controlGroups[i]) {
+        if(j=='defaultFilter' || j=='propertyName') continue;
+        this._addControl(controlGroups[i][j], j, i, controlGroups[i]['defaultFilter'], true);
       }
     }
   },
@@ -37,45 +42,45 @@ L.Control.GroupedLayers = L.Control.extend({
     this._initLayout(map);
     this._update();
 
-    map
-        .on('layeradd', this._onLayerChange, this)
-        .on('layerremove', this._onLayerChange, this);
+    // map
+    //     .on('layeradd', this._onLayerChange, this)
+    //     .on('layerremove', this._onLayerChange, this);
 
     return this._container;
   },
 
   onRemove: function (map) {
-    map
-        .off('layeradd', this._onLayerChange, this)
-        .off('layerremove', this._onLayerChange, this);
+    // map
+    //     .off('layeradd', this._onLayerChange, this)
+    //     .off('layerremove', this._onLayerChange, this);
   },
 
-  addBaseLayer: function (layer, name) {
-    this._addLayer(layer, name);
-    this._update();
-    return this;
-  },
+  // addBaseLayer: function (layer, name) {
+  //   this._addControl(layer, name);
+  //   this._update();
+  //   return this;
+  // },
 
-  addOverlay: function (layer, name, group) {
-    this._addLayer(layer, name, group, true);
-    this._update();
-    return this;
-  },
+  // addOverlay: function (layer, name, group) {
+  //   this._addControl(layer, name, group, true);
+  //   this._update();
+  //   return this;
+  // },
 
-  removeLayer: function (layer) {
-    var id = L.Util.stamp(layer);
-    var _layer = this._getLayer(id);
-    if (_layer) {
-      delete this._layers[this._layers.indexOf(_layer)];
-    }
-    this._update();
-    return this;
-  },
+  // removeLayer: function (layer) {
+  //   var id = L.Util.stamp(layer);
+  //   var _ctrl = this._getControlById(id);
+  //   if (_ctrl) {
+  //     delete this._ctrls[this._ctrls.indexOf(_ctrl)];
+  //   }
+  //   this._update();
+  //   return this;
+  // },
 
-  _getLayer: function (id) {
-    for (var i = 0; i < this._layers.length; i++) {
-      if (this._layers[i] && L.stamp(this._layers[i].layer) === id) {
-        return this._layers[i];
+  _getControlById: function (id) {
+    for (var i = 0; i < this._ctrls.length; i++) {
+      if (this._ctrls[i] && L.stamp(this._ctrls[i].layer) === id) {
+        return this._ctrls[i];
       }
     }
   },
@@ -139,15 +144,16 @@ L.Control.GroupedLayers = L.Control.extend({
     }
   },
 
-  _addLayer: function (layer, name, group, overlay) {
-    var id = L.Util.stamp(layer);
+  _addControl: function (layer, name, group, defaultFilter, overlay) {
 
-    var _layer = {
+    var _ctrl = {
       layer: layer,
       name: name,
-      overlay: overlay
+      defaultFilter: defaultFilter,
+      overlay: overlay,
+      ctrlId: L.Util.stamp(layer)
     };
-    this._layers.push(_layer);
+    this._ctrls.push(_ctrl);
 
     group = group || '';
     var groupId = this._indexOf(this._groupList, group);
@@ -158,7 +164,7 @@ L.Control.GroupedLayers = L.Control.extend({
 
     var exclusive = (this._indexOf(this.options.exclusiveGroups, group) !== -1);
 
-    _layer.group = {
+    _ctrl.group = {
       name: group,
       id: groupId,
       exclusive: exclusive
@@ -183,8 +189,8 @@ L.Control.GroupedLayers = L.Control.extend({
       overlaysPresent = false,
       i, obj;
 
-    for (var i = 0; i < this._layers.length; i++) {
-      obj = this._layers[i];
+    for (var i = 0; i < this._ctrls.length; i++) {
+      obj = this._ctrls[i];
       this._addItem(obj);
       overlaysPresent = overlaysPresent || obj.overlay;
       baseLayersPresent = baseLayersPresent || !obj.overlay;
@@ -194,7 +200,7 @@ L.Control.GroupedLayers = L.Control.extend({
   },
 
   _onLayerChange: function (e) {
-    var obj = this._getLayer(L.Util.stamp(e.layer)),
+    var obj = this._getControlById(L.Util.stamp(e.layer)),
       type;
 
     if (!obj) {
@@ -231,27 +237,18 @@ L.Control.GroupedLayers = L.Control.extend({
   },
 
   _addItem: function (obj) {
+    // for initial state of checked control, use the ams.Config.defaultFilters defines...
+
     var label = document.createElement('label'),
       input,
-      checked = this._map.hasLayer(obj.layer),
+      checked = obj.layer._name.includes(obj.defaultFilter),
       container,
       groupRadioName;
 
-    if (obj.overlay) {
-      if (obj.group.exclusive) {
-        groupRadioName = 'leaflet-exclusive-group-layer-' + obj.group.id;
-        input = this._createRadioElement(groupRadioName, checked);
-      } else {
-        input = document.createElement('input');
-        input.type = 'checkbox';
-        input.className = 'leaflet-control-layers-selector';
-        input.defaultChecked = checked;
-      }
-    } else {
-      input = this._createRadioElement('leaflet-base-layers', checked);
-    }
+    groupRadioName = 'leaflet-exclusive-group-layer-' + obj.group.id;
+    input = this._createRadioElement(groupRadioName, checked);
 
-    input.layerId = L.Util.stamp(obj.layer);
+    input.ctrlId = obj.ctrlId;
     input.groupID = obj.group.id;
     L.DomEvent.on(input, 'click', this._onInputClick, this);
 
@@ -275,22 +272,9 @@ L.Control.GroupedLayers = L.Control.extend({
         var groupLabel = document.createElement('label');
         groupLabel.className = 'leaflet-control-layers-group-label';
 
-        if (obj.group.name !== '' && !obj.group.exclusive) {
-          // ------ add a group checkbox with an _onInputClickGroup function
-          if (this.options.groupCheckboxes) {
-            var groupInput = document.createElement('input');
-            groupInput.type = 'checkbox';
-            groupInput.className = 'leaflet-control-layers-group-selector';
-            groupInput.groupID = obj.group.id;
-            groupInput.legend = this;
-            L.DomEvent.on(groupInput, 'click', this._onGroupInputClick, groupInput);
-            groupLabel.appendChild(groupInput);
-          }
-        }
-
         var groupName = document.createElement('span');
         groupName.className = 'leaflet-control-layers-group-name';
-        groupName.innerHTML = (obj.group.name==''?'CLASSIFICAÇÃO DO MAPA':obj.group.name);
+        groupName.innerHTML = obj.group.name;
         groupLabel.appendChild(groupName);
 
         groupContainer.appendChild(groupLabel);
@@ -309,31 +293,72 @@ L.Control.GroupedLayers = L.Control.extend({
     return label;
   },
 
-  _onGroupInputClick: function () {
-    var i, input, obj;
+  _onInputClick: function (e) {
+    let obj = this._getControlById(e.target.ctrlId);
+    let layerToAdd,layerToDel;
+    let hasClassFilter=false;
 
-    var this_legend = this.legend;
-    this_legend._handlingClick = true;
+    // change reference layer (deter or fires)?
+    if(obj.group.name=='INDICADOR'){
+      if(obj.layer._name=='AF'){
+        // the reference layer should be active-fires
+        layerToAdd=ams.Config.defaultLayers.activeFireAmz;
+        layerToDel=ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.deterAmz;
+        this._currentPropertyName='counts';
+      }else{
+        // the reference layer should be deter
+        layerToAdd=ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.deterAmz;
+        layerToDel=ams.Config.defaultLayers.activeFireAmz;
+        // in this case, we need the classname to apply on deter layer
+        ams.App._updateFilter({classname:obj.layer._name});
+        hasClassFilter=true;
+        this._currentPropertyName='area';
+      }
+      // reference layer was changes
+      if(this._currentReferenceLayer!=layerToAdd){
+        this._removeLayer(layerToDel);
+        ams.App._displayReferenceLayer(layerToAdd,hasClassFilter);
+        this._currentReferenceLayer=layerToAdd;
+      }
+      // if default filter changes, apply change filters on reference layer
+      if(this._currentFilters[obj.group.name]!=obj.layer._name){
+        this._currentFilters[obj.group.name]=obj.layer._name;
+        // has filter changes
+        this._updateLayerFilter(this._currentReferenceLayer, hasClassFilter);
+      }
 
-    var inputs = this_legend._form.getElementsByTagName('input');
-    var inputsLen = inputs.length;
-
-    for (i = 0; i < inputsLen; i++) {
-      input = inputs[i];
-      if (input.groupID === this.groupID && input.className === 'leaflet-control-layers-selector') {
-        input.checked = this.checked;
-        obj = this_legend._getLayer(input.layerId);
-        if (input.checked && !this_legend._map.hasLayer(obj.layer)) {
-          this_legend._map.addLayer(obj.layer);
-        } else if (!input.checked && this_legend._map.hasLayer(obj.layer)) {
-          this_legend._map.removeLayer(obj.layer);
-        }
+    }else if(obj.group.name=='UNIDADE ESPACIAL'){
+      // spatial unit layer was changes
+      if(!this._currentSpatialUnitLayer!=obj.layer._name){
+        this._removeLayer(this._currentSpatialUnitLayer);
+        // each spatial unit layer has an priority layer to display the highlight border, should be remove too
+        this._removeLayer(this._currentSpatialUnitLayer+'_prior');
+        ams.App._displaySpatialUnitLayer(obj.layer._name, this._currentPropertyName);
+        this._currentSpatialUnitLayer=obj.layer._name;
       }
     }
 
-    this_legend._handlingClick = false;
+    
+
+    // apply change filters on spatial unit layer
+
+    // dispache event to update layers using selected filters
+    this._map.fire('changectrl', obj);
   },
 
+  _removeLayer: function(layerName){
+    let l=ams.App._getLayerByName(layerName);
+    if(l && this._map.hasLayer(l))
+      this._map.removeLayer(l);
+  },
+
+  _updateLayerFilter: function(layerName, hasClassFilter){
+    let l=ams.App._getLayerByName(layerName);
+    if(l && this._map.hasLayer(l))
+      ams.App._updateReferenceLayer(l, hasClassFilter);
+  },
+
+  /*
   _onInputClick: function () {
     var i, input, obj,
       inputs = this._form.getElementsByTagName('input'),
@@ -344,8 +369,7 @@ L.Control.GroupedLayers = L.Control.extend({
     for (i = 0; i < inputsLen; i++) {
       input = inputs[i];
       if (input.className === 'leaflet-control-layers-selector') {
-        obj = this._getLayer(input.layerId);
-
+        obj = this._getControlById(input.ctrlId);
         if (input.checked && !this._map.hasLayer(obj.layer)) {
           this._map.addLayer(obj.layer);
         } else if (!input.checked && this._map.hasLayer(obj.layer)) {
@@ -356,6 +380,7 @@ L.Control.GroupedLayers = L.Control.extend({
 
     this._handlingClick = false;
   },
+  */
 
   _expand: function () {
     L.DomUtil.addClass(this._container, 'leaflet-control-layers-expanded');
@@ -387,6 +412,6 @@ L.Control.GroupedLayers = L.Control.extend({
   }
 });
 
-L.control.groupedLayers = function (baseLayers, groupedOverlays, options) {
-  return new L.Control.GroupedLayers(baseLayers, groupedOverlays, options);
+L.control.groupedLayers = function (controlGroups, options) {
+  return new L.Control.GroupedLayers(controlGroups, options);
 };

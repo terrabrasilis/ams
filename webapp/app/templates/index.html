@@ -305,9 +305,9 @@
 			ams.Utils.setMapHeight();
 			var sus = JSON.parse("{{spatial_units_info|safe}}".replace(/'/g,"\""));
 			var spatialUnits = new ams.Map.SpatialUnits(sus, sus[0].dataname);
-			var deterClassGroups = new ams.Map.DeterClassGroups(JSON.parse("{{deter_class_groups|safe}}".replace(/'/g,"\"")));
+			var appClassGroups = new ams.Map.AppClassGroups(JSON.parse("{{deter_class_groups|safe}}".replace(/'/g,"\"")));
 			var geoserverUrl = "{{geoserver_url}}";
-			ams.App.run(geoserverUrl, spatialUnits, deterClassGroups);
+			ams.App.run(geoserverUrl, spatialUnits, appClassGroups);
 		};
 	</script>
 

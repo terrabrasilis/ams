@@ -1,7 +1,7 @@
 var ams = ams || {};
 
 ams.SLDStyles = {
-	AreaStyle: function(layerName, minValue, maxValue,
+	AreaStyle: function(layerName, propertyName, minValue, maxValue,
 							isPriorization, priorColorHex) {
 		this.setStroke = function(isPriorization) {
 			if(isPriorization) {
@@ -40,8 +40,8 @@ ams.SLDStyles = {
 		this.minValue = minValue;
 		this.colorRange;
 		this.colorDomain;
-		this._unit = "km&#178;"
-		this._propertyName = "area"; 
+		this._unit = (propertyName=="area")?("km&#178;"):("");
+		this._propertyName = propertyName;
 		this._numberOfTicks = 0;
 		this._numberOfTicksN = 0;
 		this._numberOfTicksP = 0;

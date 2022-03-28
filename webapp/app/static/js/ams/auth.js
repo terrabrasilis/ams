@@ -3,7 +3,7 @@ var ams = ams || {};
 ams.Auth = {
 	/**
 	 * Default GeoServer workspace for anonymous users.
-   * The GeoServer workspace name for authenticated users is "ams_auth" by convention.
+	 * The GeoServer workspace name for authenticated users is "ams_auth" by convention.
 	 */
 	gsWorkspace:'ams',
 	/**
@@ -37,9 +37,14 @@ ams.Auth = {
 
   /**
    * Workspace always use the suffix. For anonymous users, the suffix is empty.
+   * Looking for homologation URL or development env. If found forces the amsh (homologation workspace)
+   * Must have a homologation workspace on the geoserver
    */
   getWorkspace: function() {
-    return this.gsWorkspace+this.gsAuthSuffix;;
+	if(window.location.pathname.includes("homologation") || window.location.hostname=='127.0.0.1'){
+		this.gsWorkspace='amsh';
+	}
+    return this.gsWorkspace+this.gsAuthSuffix;
   },
 
   setWorkspace: function(workspace) {
