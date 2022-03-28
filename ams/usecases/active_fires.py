@@ -32,9 +32,10 @@ class ActiveFires:
         """
         update = """
         INSERT INTO fires.active_fires(id, view_date, satelite, estado, municipio, diasemchuva, precipitacao, riscofogo, geom)
-        SELECT id, view_date, satelite, estado, municipio, diasemchuva, precipitacao, riscofogo, geom
-        FROM public.raw_active_fires
-        WHERE view_date>(SELECT MAX(view_date) FROM fires.active_fires)
+        SELECT a.id, a.view_date, a.satelite, a.estado, a.municipio, a.diasemchuva, a.precipitacao, a.riscofogo, a.geom
+        FROM public.raw_active_fires a
+        WHERE a.view_date>(SELECT COALESCE(MAX(view_date),'2016-01-01'::date) FROM fires.active_fires)
+        AND a.bioma='Amazônia'
         """
         cur = self._conn.cursor()
         cur.execute(update)
@@ -42,10 +43,27 @@ class ActiveFires:
     def statistics_processing(self):
         for spatial_unit, id in self._spatial_units.items():
             print(f'Processing {spatial_unit}:{id}...')
+            delete=f"""
+            DELETE FROM public."{spatial_unit}_risk_indicators" WHERE classname='AF'
+            """
+            insert=f"""
+            WITH results AS (
+                SELECT af.view_date as date, su.suid, COUNT(af.id) as counts
+                FROM fires.active_fires af, public."{spatial_unit}" su
+                WHERE (su.geometry && af.geom) AND ST_Intersects(af.geom, su.geometry) 
+                GROUP BY 1,2
+            )
+            INSERT INTO public."{spatial_unit}_risk_indicators"(classname, date, suid, counts)
+            SELECT 'AF' as classname, a.date, a.suid, a.counts
+            FROM results a
+            """
+            cur = self._conn.cursor()
+            cur.execute(delete)
+            cur.execute(insert)
 
     def execute(self):
         self.read_spatial_units()
-        #self.update_focuses_table()
+        self.update_focuses_table()
         self.statistics_processing()
 
 
