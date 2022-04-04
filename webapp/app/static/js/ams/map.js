@@ -309,12 +309,15 @@ ams.Map = {
         }
 
 		this.getShapeZip = function(layerName, viewParams) {
-			let propertyName = "name,area,percentage,geometry";
+			let propertyName = "name,"+
+			((ams.App._propertyName=="area")?("area,percentage"):(ams.App._propertyName))+
+			",geometry";
 			this.getFile(layerName, viewParams, "shape-zip", "zip", propertyName);
 		} 
 
 		this.getCsv = function(layerName, viewParams) {
-			let propertyName = "name,area,percentage";
+			let propertyName = "name,"+
+			((ams.App._propertyName=="area")?("area,percentage"):(ams.App._propertyName));
 			this.getFile(layerName, viewParams, "csv", "csv", propertyName);
 		} 
 	},

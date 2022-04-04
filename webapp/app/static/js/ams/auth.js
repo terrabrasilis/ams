@@ -37,7 +37,7 @@ ams.Auth = {
 
   /**
    * Workspace always use the suffix. For anonymous users, the suffix is empty.
-   * Looking for homologation URL or development env. If found forces the amsh (homologation workspace)
+   * Looking for homologation URL or development env. If found forces the "amsh" (homologation workspace)
    * Must have a homologation workspace on the geoserver
    */
   getWorkspace: function() {

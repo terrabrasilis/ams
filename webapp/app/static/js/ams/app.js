@@ -6,9 +6,16 @@ ams.App = {
 	_addedLayers: [],
 	_appClassGroups: null,
 	_suViewParams: null,
+	_priorViewParams: null,
 	_wfs: null,
 	_dateControl: null,
 	_baseURL: null,
+	_propertyName: null,
+	_referenceLayerName: null,
+	_currentSULayerName: null,
+	_hasClassFilter: false,// if reference layer is DETER, so, has class filter.
+	_suSource: null,
+	_priorSource: null,
 
 	run: function(geoserverUrl, spatialUnits, appClassGroups) {
 
@@ -19,13 +26,16 @@ ams.App = {
 
 		var temporalUnits = new ams.Map.TemporalUnits();
 		this._dateControl = new ams.Date.DateController();
-		let anonimousLastDate = this._wfs.getLastDate(ldLayerName)
+		let anonimousLastDate = this._wfs.getLastDate(ldLayerName);
 		anonimousLastDate = anonimousLastDate?anonimousLastDate:spatialUnits.default.last_date;
 		var currStartdate = (ams.Auth.isAuthenticated())?(spatialUnits.default.last_date):(anonimousLastDate);
 		var currAggregate = temporalUnits.getAggregates()[0].key;
 		this._dateControl.setPeriod(currStartdate, currAggregate);
 		this._baseURL = geoserverUrl + "/wms";
-		
+		this._propertyName = ( (ams.Config.defaultFilters.indicator=='AF')?(ams.Config.propertyName.af):(ams.Config.propertyName.deter) );
+		this._referenceLayerName = ( (ams.Config.defaultFilters.indicator=='AF')?(ams.Config.defaultLayers.activeFireAmz):(ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.deterAmz) );
+		this._hasClassFilter = ( (ams.Config.defaultFilters.indicator=='AF')?(false):(true) );
+
 		var map = new L.Map("map", {
 		    zoomControl: false
 		});
@@ -70,46 +80,53 @@ ams.App = {
 		ams.App._addWmsOptionsBase(AFWmsOptions);
 		var tbDeterAlertsSource = new ams.LeafletWms.Source(this._baseURL, tbDeterAlertsWmsOptions, appClassGroups);
 		var AFSource = new ams.LeafletWms.Source(this._baseURL, AFWmsOptions, appClassGroups);
-		var tbDeterAlertsLayer = tbDeterAlertsSource.getLayer(tbDeterAlertsLayerName).addTo(map);
-		tbDeterAlertsLayer.bringToBack();
+		var tbDeterAlertsLayer = tbDeterAlertsSource.getLayer(tbDeterAlertsLayerName);
+		let AFLayer = AFSource.getLayer(AFLayerName);
+		if(this._referenceLayerName==tbDeterAlertsLayerName) {
+			tbDeterAlertsLayer.addTo(map);
+			tbDeterAlertsLayer.bringToBack();
+		}else{
+			AFLayer.addTo(map);
+			AFLayer.bringToBack();
+		}
 		// Store source to handler layer after controls change
 		this._addedLayers[tbDeterAlertsLayerName]=tbDeterAlertsLayer;
-		this._addedLayers[AFLayerName]=AFSource.getLayer(AFLayerName);
+		this._addedLayers[AFLayerName]=AFLayer;
 
 		// DEFAULT SPATIAL UNIT LAYER
 		var suLayerName = ams.Auth.getWorkspace() + ":" + spatialUnits.default.dataname;
-		var currSuLayerName = suLayerName + "_view";
-		ams.Config.defaultFilters.spatialUnit=currSuLayerName;// update the default for later use in filter change in control.
+		this._currentSULayerName = suLayerName + "_view";
+		ams.Config.defaultFilters.spatialUnit=this._currentSULayerName;// update the default for later use in filter change in control.
 
-		var suLayerMaxArea = this._wfs.getMax(currSuLayerName, "area", this._suViewParams); 
-		var suLayerStyle = new ams.SLDStyles.AreaStyle(currSuLayerName, "area", 0, suLayerMaxArea);
+		var suLayerMaxArea = this._wfs.getMax(this._currentSULayerName, this._propertyName, this._suViewParams); 
+		var suLayerStyle = new ams.SLDStyles.AreaStyle(this._currentSULayerName, this._propertyName, 0, suLayerMaxArea);
 		var wmsOptions = {
 				"opacity": 0.8,
 				"viewparams": this._suViewParams.toWmsFormat(),
 				"sld_body": suLayerStyle.getSLD()
 		};
 		ams.App._addWmsOptionsBase(wmsOptions);
-		var suSource = new ams.LeafletWms.Source(this._baseURL, wmsOptions, appClassGroups);
-		var suLayer = suSource.getLayer(currSuLayerName);
+		this._suSource = new ams.LeafletWms.Source(this._baseURL, wmsOptions, appClassGroups);
+		var suLayer = this._suSource.getLayer(this._currentSULayerName);
 		suLayer.addTo(map);
-		this._addedLayers[currSuLayerName]=suLayer;
+		this._addedLayers[this._currentSULayerName]=suLayer;
 
-		var priorLayerStyle = new ams.SLDStyles.AreaStyle(currSuLayerName, "area", 0, 
+		var priorLayerStyle = new ams.SLDStyles.AreaStyle(this._currentSULayerName, this._propertyName, 0, 
 															suLayerMaxArea, 
 															true, "#ff0000");
-		var priorViewParams = new ams.Map.ViewParams(appClassGroups.at(0).acronym, 
-															ams.App._dateControl, "10");	
+		this._priorViewParams = new ams.Map.ViewParams(appClassGroups.at(0).acronym, 
+															ams.App._dateControl, "10");
 		var priorWmsOptions = {
-			"viewparams": priorViewParams.toWmsFormat(),
+			"viewparams": this._priorViewParams.toWmsFormat(),
 			"sld_body": priorLayerStyle.getSLD(),
 		};
 		ams.App._addWmsOptionsBase(priorWmsOptions);
 
-		var priorSource = L.WMS.source(this._baseURL, priorWmsOptions);
-		var priorLayer = priorSource.getLayer(currSuLayerName);
+		this._priorSource = L.WMS.source(this._baseURL, priorWmsOptions);
+		var priorLayer = this._priorSource.getLayer(this._currentSULayerName);
 		priorLayer.bringToFront();
 		priorLayer.addTo(map);
-		this._addedLayers[currSuLayerName+'_prior']=priorLayer;
+		this._addedLayers[this._currentSULayerName+'_prior']=priorLayer;
 
 		// Fixed biome border layer
 		var tbBiomeLayerName = ams.Config.defaultLayers.biomeBorder;
@@ -123,7 +140,7 @@ ams.App = {
 		var controlGroups = {
 			"INDICADOR": {
 				defaultFilter:ams.Config.defaultFilters.indicator,
-				propertyName:( (ams.Config.defaultFilters.indicator=='AF')?('counts'):('area') )
+				propertyName:this._propertyName
 			},
 			"UNIDADE ESPACIAL": {
 				defaultFilter: ams.Config.defaultFilters.spatialUnit,
@@ -135,7 +152,7 @@ ams.App = {
 
 		for(var i = 1; i < spatialUnits.length(); i++) {
 			let layerName = ams.Auth.getWorkspace() + ":" + spatialUnits.at(i).dataname + "_view";
-			let layer = suSource.getLayer(layerName);
+			let layer = this._suSource.getLayer(layerName);
 			controlGroups["UNIDADE ESPACIAL"][spatialUnits.at(i).name] = layer;
 			this._addedLayers[layerName]=layer;
 		}
@@ -181,7 +198,7 @@ ams.App = {
 			],
 			collapsed: false,
 			position: "topleft",
-		}, tbDeterAlertsLayerName).addTo(map);
+		}).addTo(map);
 
 		// to apply new heigth for groupControl UI component when window is resized
 		ams.groupControl=groupControl;
@@ -198,14 +215,14 @@ ams.App = {
 		}).addTo(map);				
 
 		var legendControl = new ams.Map.LegendController(map, this._baseURL);
-		legendControl.init(currSuLayerName, suLayerStyle);
+		legendControl.init(this._currentSULayerName, suLayerStyle);
 
 		(function addPriorizationControl() {
 			$('<div class="leaflet-control-layers-group" id="prioritization-control-layers-group">'
 				+ '<label class="leaflet-control-layers-group-name">'
 				+ '<span class="leaflet-control-layers-group-name">Prioriza&#231;&#227;o </span>'
 				+ '<input type="number" id="prioritization-input" min="1" style="width:45px" title="Alterar o número de unidades espaciais consideradas na priorização de exibição do mapa." value=' 
-				+ priorViewParams.limit + ' />'
+				+ ams.App._priorViewParams.limit + ' />'
 				+ '<button class="btn btn-primary-p" id="prioritization-button" style="margin-left: 10px;"> Ok </button>'
 				+ '</label></div>').insertAfter("#leaflet-control-layers-group-1");	
 		})();	
@@ -243,7 +260,7 @@ ams.App = {
 
 
 		//-- mgd T6 v  keeps an (almost) updated copy of the legend Control's inputs (app.js:legendControl). See app.js:map.on() (-->
-		suSource.viewConfig = {
+		this._suSource.viewConfig = {
 			className : this._suViewParams.classname,
 			spatialUnit : spatialUnits.default.dataname,
 			limit : this._suViewParams.limit,
@@ -258,57 +275,60 @@ ams.App = {
 				this.prevDate = dateControll.prevdate;
 			}
 		};
-		suSource.viewConfig.updateDates(ams.App._dateControl);
+		this._suSource.viewConfig.updateDates(ams.App._dateControl);
 		// -- ^ -->
 
 		//map.on('overlayadd', function(e) {
 		map.on('changectrl', function(e) {
 			if(spatialUnits.isSpatialUnit(e.name)) {
-				suSource.viewConfig.spatialUnit =  spatialUnits.getDataName(e.name);  // T6
+				ams.App._suSource.viewConfig.spatialUnit =  spatialUnits.getDataName(e.name);  // T6
 				suLayerName = ams.Auth.getWorkspace() + ":" + spatialUnits.getDataName(e.name);
 				if(diffON) {
-					currSuLayerName = suLayerName + "_diff_view"; 
+					this._currentSULayerName = suLayerName + "_diff_view"; 
 				} 
 				else {
-					currSuLayerName = suLayerName + "_view";
+					this._currentSULayerName = suLayerName + "_view";
 					suLayerMinArea = 0
 				}
 			}
 			else if(temporalUnits.isAggregate(e.name)) {
-				suSource.viewConfig.tempUnit= e.layer._name;  // T6
-				suSource.viewConfig.updateDates(ams.App._dateControl); // T6
+				ams.App._suSource.viewConfig.tempUnit= e.layer._name;
+				ams.App._suSource.viewConfig.updateDates(ams.App._dateControl);
 				currAggregate = e.layer._name;
 				ams.App._dateControl.setPeriod(ams.App._dateControl.startdate, currAggregate);
 				ams.App._suViewParams.updateDates(ams.App._dateControl);
-				priorViewParams.updateDates(ams.App._dateControl);	
-				ams.App._updateReferenceLayer(tbDeterAlertsLayer, appClassGroups);			
+				ams.App._priorViewParams.updateDates(ams.App._dateControl);
+				ams.App._updateReferenceLayer();
 			}	
 			else if(temporalUnits.isDifference(e.name)) {
 				if(e.name == temporalUnits.getCurrentName()) {
-					currSuLayerName = suLayerName + "_view";
+					this._currentSULayerName = suLayerName + "_view";
 					suLayerMinArea = 0;
 					diffON = false;
 				}
 				else {
-					currSuLayerName =  suLayerName + "_diff_view"; 
+					this._currentSULayerName =  suLayerName + "_diff_view"; 
 					diffON = true;
 				}
-				suSource.viewConfig.diffOn = diffON;  // T6
+				ams.App._suSource.viewConfig.diffOn = diffON;  // T6
 			}
-			else {
+			else {// is indicator, so set into active layers
 				let acronym = e.layer._name;
-				suSource.viewConfig.className = acronym; // T6
+				ams.App._suSource.viewConfig.className = acronym; // T6
 				ams.App._suViewParams.classname = acronym;
-				priorViewParams.classname = acronym;
-				ams.App._updateReferenceLayer(tbDeterAlertsLayer, appClassGroups);	
+				ams.App._priorViewParams.classname = acronym;
+				ams.App._updateReferenceLayer();
+				// ams.App._updateSULayer();
 			}
 
 			if(diffON) {
-				suLayerMinArea = ams.App._wfs.getMin(currSuLayerName, "area", ams.App._suViewParams);
-			}			
+				suLayerMinArea = ams.App._wfs.getMin(this._currentSULayerName, ams.App._propertyName, ams.App._suViewParams);
+			}
+
+			ams.App._updateSULayer();
 			
-			ams.App._updateAll(suSource, currSuLayerName, ams.App._suViewParams, suLayerMinArea, 
-					priorSource, priorViewParams, legendControl); 			
+			ams.App._updateAll(ams.App._suSource, this._currentSULayerName, ams.App._suViewParams, suLayerMinArea, 
+					ams.App._priorSource, ams.App._priorViewParams, legendControl);
 		});
 
 		map.whenReady(()=>{
@@ -338,19 +358,19 @@ ams.App = {
 				let selected = $(this).val().split("/");
 				let date = selected[2] + "-" + selected[1] + "-" + selected[0];
 				ams.App._dateControl.setPeriod(date, currAggregate);
-				suSource.viewConfig.updateDates(ams.App._dateControl); // T6
+				ams.App._suSource.viewConfig.updateDates(ams.App._dateControl); // T6
 				ams.App._suViewParams.updateDates(ams.App._dateControl);
-				priorViewParams.updateDates(ams.App._dateControl);
-				if(currSuLayerName.includes("diff")) {
-					suLayerMinArea = ams.App._wfs.getMin(currSuLayerName, "area", ams.App._suViewParams);	
+				ams.App._priorViewParams.updateDates(ams.App._dateControl);
+				if(ams.App._currentSULayerName.includes("diff")) {
+					suLayerMinArea = ams.App._wfs.getMin(ams.App._currentSULayerName, ams.App._propertyName, ams.App._suViewParams);	
 				}
 				else {
 					suLayerMinArea = 0;
-				}	
+				}
 
-				ams.App._updateAll(suSource, currSuLayerName, ams.App._suViewParams, suLayerMinArea, 
-						priorSource, priorViewParams, legendControl);
-				ams.App._updateReferenceLayer(tbDeterAlertsLayer, appClassGroups);
+				ams.App._updateAll(ams.App._suSource, ams.App._currentSULayerName, ams.App._suViewParams, suLayerMinArea, 
+						ams.App._priorSource, ams.App._priorViewParams, legendControl);
+				ams.App._updateReferenceLayer();
 			},
 			beforeShow: function() {
 				setTimeout(function() {
@@ -361,8 +381,8 @@ ams.App = {
 
 		function updatePriorization() {
 			let limit = document.getElementById("prioritization-input").value;
-			priorViewParams.limit = limit;
-			ams.Map.update(priorSource, currSuLayerName, priorViewParams);	
+			ams.App._priorViewParams.limit = limit;
+			ams.Map.update(ams.App._priorSource, ams.App._currentSULayerName, ams.App._priorViewParams);	
 		}
 
 		$("#prioritization-input").keypress(function(e) {
@@ -382,19 +402,19 @@ ams.App = {
 		});	
 
 		$("#shapezip-download-button").click(function() {
-			ams.App._wfs.getShapeZip(currSuLayerName, ams.App._suViewParams);	
+			ams.App._wfs.getShapeZip(ams.App._currentSULayerName, ams.App._suViewParams);	
 			return false;
 		});		
 
 		$("#csv-download-button").click(function() {
-			ams.App._wfs.getCsv(currSuLayerName, priorViewParams);	
+			ams.App._wfs.getCsv(ams.App._currentSULayerName, ams.App._priorViewParams);	
 			return false;
 		});		
 
 		$("#deter-checkbox").change(function() {
 			if(this.checked) 
 			{
-				ams.App._updateReferenceLayer(tbDeterAlertsLayer, appClassGroups);
+				ams.App._updateReferenceLayer();//tbDeterAlertsLayer, appClassGroups);
 				map.addControl(tbDeterAlertsLayer);
 			}
 			else {
@@ -409,41 +429,80 @@ ams.App = {
 		suLayerMinArea, priorSource, priorViewParams, 
 		legendControl) {
 		this._map.closePopup();
-		let suLayerMaxArea = ams.App._wfs.getMax(currSuLayerName, "area", suViewParams);
+		let suLayerMaxArea = ams.App._wfs.getMax(currSuLayerName, ams.App._propertyName, suViewParams);
 		if(suLayerMaxArea == suLayerMinArea) 
 		{
 			alert("Não existem dados para o periodo selecionado."); // mgd T6 Change an exclamation point to a period
 			return;
 		}
-		let suLayerStyle = new ams.SLDStyles.AreaStyle(currSuLayerName, "area",
+		let suLayerStyle = new ams.SLDStyles.AreaStyle(currSuLayerName, ams.App._propertyName,
 												suLayerMinArea, 
 												suLayerMaxArea);
 		legendControl.update(currSuLayerName, suLayerStyle);
 		ams.Map.update(suSource, currSuLayerName, suViewParams, suLayerStyle);
-		priorLayerStyle = new ams.SLDStyles.AreaStyle(currSuLayerName, "area",
+		priorLayerStyle = new ams.SLDStyles.AreaStyle(currSuLayerName, ams.App._propertyName,
 											suLayerMinArea, 
 											suLayerMaxArea, 
 											true, "#ff0000");
 		ams.Map.update(priorSource, currSuLayerName, priorViewParams, priorLayerStyle);
-		// let priorLayer=this._addedLayers[currSuLayerName+'_prior']
-		// priorLayer.bringToFront();
+		let priorLayer=this._addedLayers[currSuLayerName+'_prior']
+		if(typeof priorLayer!='undefined') priorLayer.bringToFront();
 	},
 
 	/**
 	* Update the reference data layer by change CQL filter params
-	* @param {*} refLayer, the reference layer can be: Alerts or Active fires
 	*/
-	_updateReferenceLayer: function(refLayer, hasClassFilter) {
-		refLayer._source.options["cql_filter"] = ams.App._appClassGroups.getCqlFilter(ams.App._suViewParams, hasClassFilter);
-		refLayer._source._overlay.setParams({
-			"cql_filter": ams.App._appClassGroups.getCqlFilter(ams.App._suViewParams, hasClassFilter),
-		});	
-		refLayer.bringToBack();
+	_updateReferenceLayer: function() {
+		this._hasClassFilter=( (this._referenceLayerName==ams.Config.defaultLayers.activeFireAmz)?(false):(true) );
+		let l=this._getLayerByName(this._referenceLayerName);
+		if(l && this._map.hasLayer(l)){
+			l._source.options["cql_filter"] = ams.App._appClassGroups.getCqlFilter(ams.App._suViewParams, this._hasClassFilter);
+			l._source._overlay.setParams({
+				"cql_filter": ams.App._appClassGroups.getCqlFilter(ams.App._suViewParams, this._hasClassFilter)
+			});	
+			l.bringToBack();
+		}
 	},
 
-	_updateFilter: function(filters) {
-		if(filters.classname)
-			ams.App._suViewParams.setClassname(filters.classname);		
+	/**
+	 * Update the Spatial Unit layer by change the viewsParams with the new selected class name.
+	 * Must change the priority layer associated to Spatial unit layer too.
+	 */
+	_updateSULayer: function() {
+		let l=ams.App._getLayerByName(this._currentSULayerName);
+		let suLayerMax=0;
+    	if(l && this._map.hasLayer(l)) {
+			suLayerMax = this._wfs.getMax(this._currentSULayerName, this._propertyName, this._suViewParams);
+			let suLayerStyle = new ams.SLDStyles.AreaStyle(this._currentSULayerName, this._propertyName, 0, suLayerMax);
+
+			let wmsOptions = {
+				"opacity": 0.8,
+				"viewparams": this._suViewParams.toWmsFormat(),
+				"sld_body": suLayerStyle.getSLD()
+			};
+			this._addWmsOptionsBase(wmsOptions);
+			l._source._overlay.setParams(wmsOptions);
+			l.bringToFront();
+		}
+		l=ams.App._getLayerByName(this._currentSULayerName+'_prior');
+    	if(l && this._map.hasLayer(l)) {
+			let priorLayerStyle = new ams.SLDStyles.AreaStyle(this._currentSULayerName, this._propertyName, 0, suLayerMax, true, "#ff0000");
+			let wmsOptions = {
+				"opacity": 0.8,
+				"viewparams": this._priorViewParams.toWmsFormat(),
+				"sld_body": priorLayerStyle.getSLD()
+			};
+			this._addWmsOptionsBase(wmsOptions);
+			l._source._overlay.setParams(wmsOptions);
+			l.bringToFront();
+		}
+	},
+
+	_updateClassFilter: function(classname) {
+		if(classname){
+			ams.App._suViewParams.setClassname(classname);
+			ams.App._priorViewParams.setClassname(classname);
+		}
 	},
 
 	_addAutorizationToken: function(options) {
@@ -465,14 +524,22 @@ ams.App = {
 		}
 	},
 
-	_displayReferenceLayer: function(layerName, hasClassFilter){
-		hasClassFilter=hasClassFilter?hasClassFilter:false;// do not use class filter by default
+	/**
+	 * Changes the reference layer on map.
+	 * @param {*} layerName can be, deter or queimadas, see the names on Config.js
+	 * @param {*} hasClassFilter A boolean value, if reference layer is deter, has class filter, otherwise not.
+	 * @param {*} propertyName A column name used to group values, can be, "area" or "counts" if deter or queimadas respectively.
+	 */
+	_displayReferenceLayer: function(layerName, hasClassFilter, propertyName){
+		this._propertyName=propertyName;
+		this._referenceLayerName=layerName;
+		this._hasClassFilter=hasClassFilter;
 		let layer = this._getLayerByName(layerName);
 		if(layer) {
-			let cql = ams.App._appClassGroups.getCqlFilter(ams.App._suViewParams, hasClassFilter);
+			let cql = this._appClassGroups.getCqlFilter(this._suViewParams, this._hasClassFilter);
 			layer._source.options["cql_filter"] = cql;
 			let cqlobj = {"cql_filter": cql};
-			ams.App._addWmsOptionsBase(cqlobj);
+			this._addWmsOptionsBase(cqlobj);
 			layer._source._overlay.setParams(cqlobj);
 			layer.addTo(this._map);
 			layer.bringToBack();
@@ -503,17 +570,16 @@ ams.App = {
 
 		//insert spatial unit priority layer
 		layer = this._getLayerByName(layerName+'_prior');
-		if(!layer) {
+		if(!layer) {// if not exists
 			let priorLayerStyle = new ams.SLDStyles.AreaStyle(layerName, propertyName, 0, suLayerMax, true, "#ff0000");
-			let priorViewParams = new ams.Map.ViewParams(this._suViewParams.getClassname(), this._dateControl, "10");
 			let priorWmsOptions = {
-				"viewparams": priorViewParams.toWmsFormat(),
+				"viewparams": this._priorViewParams.toWmsFormat(),
 				"sld_body": priorLayerStyle.getSLD(),
 			};
 			this._addWmsOptionsBase(priorWmsOptions);
 
-			let priorSource = L.WMS.source(this._baseURL, priorWmsOptions);
-			layer = priorSource.getLayer(layerName);
+			this._priorSource = L.WMS.source(this._baseURL, priorWmsOptions);
+			layer = this._priorSource.getLayer(layerName);
 			this._addedLayers[layerName+'_prior']=layer;
 		}
 		layer.addTo(this._map);

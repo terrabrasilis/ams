@@ -14,7 +14,7 @@ L.Control.GroupedLayers = L.Control.extend({
   _currentReferenceLayer: null,
   _currentPropertyName: null,
   _currentSpatialUnitLayer: null,
-  _currentFilters: {},
+  _classFilter: null,
 
   initialize: function (controlGroups, options) {
     var i, j;
@@ -25,12 +25,14 @@ L.Control.GroupedLayers = L.Control.extend({
     this._handlingClick = false;
     this._groupList = [];
     this._domGroups = [];
-    this._currentReferenceLayer=controlGroups['INDICADOR']['defaultFilter'];
+    this._currentReferenceLayer=controlGroups['INDICADOR']['defaultFilter']=='AF'?
+    ams.Config.defaultLayers.activeFireAmz:
+    ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.deterAmz;
     this._currentPropertyName=controlGroups['INDICADOR']['propertyName'];
     this._currentSpatialUnitLayer=controlGroups['UNIDADE ESPACIAL']['defaultFilter'];
+    this._classFilter = controlGroups['INDICADOR']['defaultFilter'];
 
     for (i in controlGroups) {
-      this._currentFilters[i]=controlGroups[i]['defaultFilter'];
       for (j in controlGroups[i]) {
         if(j=='defaultFilter' || j=='propertyName') continue;
         this._addControl(controlGroups[i][j], j, i, controlGroups[i]['defaultFilter'], true);
@@ -304,32 +306,27 @@ L.Control.GroupedLayers = L.Control.extend({
         // the reference layer should be active-fires
         layerToAdd=ams.Config.defaultLayers.activeFireAmz;
         layerToDel=ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.deterAmz;
-        this._currentPropertyName='counts';
+        this._currentPropertyName=ams.Config.propertyName.af;
       }else{
         // the reference layer should be deter
         layerToAdd=ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.deterAmz;
         layerToDel=ams.Config.defaultLayers.activeFireAmz;
-        // in this case, we need the classname to apply on deter layer
-        ams.App._updateFilter({classname:obj.layer._name});
         hasClassFilter=true;
-        this._currentPropertyName='area';
+        this._currentPropertyName=ams.Config.propertyName.deter;
       }
-      // reference layer was changes
+      // Set the classname to apply on deter layer and spatial unit layers
+      //ams.App._updateClassFilter(obj.layer._name); // TODO: remove this line because the same changes is applied in changectrl
+
+      // reference layer was changes, so propertyName changes too
       if(this._currentReferenceLayer!=layerToAdd){
         this._removeLayer(layerToDel);
-        ams.App._displayReferenceLayer(layerToAdd,hasClassFilter);
+        ams.App._displayReferenceLayer(layerToAdd, hasClassFilter, this._currentPropertyName);
         this._currentReferenceLayer=layerToAdd;
       }
-      // if default filter changes, apply change filters on reference layer
-      if(this._currentFilters[obj.group.name]!=obj.layer._name){
-        this._currentFilters[obj.group.name]=obj.layer._name;
-        // has filter changes
-        this._updateLayerFilter(this._currentReferenceLayer, hasClassFilter);
-      }
-
     }else if(obj.group.name=='UNIDADE ESPACIAL'){
       // spatial unit layer was changes
       if(!this._currentSpatialUnitLayer!=obj.layer._name){
+        // remove the main spatial unit layer, and
         this._removeLayer(this._currentSpatialUnitLayer);
         // each spatial unit layer has an priority layer to display the highlight border, should be remove too
         this._removeLayer(this._currentSpatialUnitLayer+'_prior');
@@ -337,11 +334,12 @@ L.Control.GroupedLayers = L.Control.extend({
         this._currentSpatialUnitLayer=obj.layer._name;
       }
     }
-
     
-
-    // apply change filters on spatial unit layer
-
+    // if class filter changes, apply change filters on reference and spatial unit layer
+    if(hasClassFilter){
+      ams.App._updateReferenceLayer();
+    }
+    // other control groups have their own functions to handle changes, so
     // dispache event to update layers using selected filters
     this._map.fire('changectrl', obj);
   },
@@ -350,12 +348,6 @@ L.Control.GroupedLayers = L.Control.extend({
     let l=ams.App._getLayerByName(layerName);
     if(l && this._map.hasLayer(l))
       this._map.removeLayer(l);
-  },
-
-  _updateLayerFilter: function(layerName, hasClassFilter){
-    let l=ams.App._getLayerByName(layerName);
-    if(l && this._map.hasLayer(l))
-      ams.App._updateReferenceLayer(l, hasClassFilter);
   },
 
   /*
