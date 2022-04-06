@@ -16,6 +16,8 @@ ams.App = {
 	_hasClassFilter: false,// if reference layer is DETER, so, has class filter.
 	_suSource: null,
 	_priorSource: null,
+	_suLayerMinArea: 0,
+	_diffOn: false,
 
 	run: function(geoserverUrl, spatialUnits, appClassGroups) {
 
@@ -28,7 +30,7 @@ ams.App = {
 		this._dateControl = new ams.Date.DateController();
 		let anonimousLastDate = this._wfs.getLastDate(ldLayerName);
 		anonimousLastDate = anonimousLastDate?anonimousLastDate:spatialUnits.default.last_date;
-		var currStartdate = (ams.Auth.isAuthenticated())?(spatialUnits.default.last_date):(anonimousLastDate);
+		var currStartdate = spatialUnits.default.last_date; // TODO: uncoment this line (ams.Auth.isAuthenticated())?(spatialUnits.default.last_date):(anonimousLastDate);
 		var currAggregate = temporalUnits.getAggregates()[0].key;
 		this._dateControl.setPeriod(currStartdate, currAggregate);
 		this._baseURL = geoserverUrl + "/wms";
@@ -110,6 +112,9 @@ ams.App = {
 		var suLayer = this._suSource.getLayer(this._currentSULayerName);
 		suLayer.addTo(map);
 		this._addedLayers[this._currentSULayerName]=suLayer;
+		// adding "_diff_view" layer variation to use later
+		let suLayerDiff = this._suSource.getLayer(suLayerName+"_diff_view");
+		this._addedLayers[suLayerName+"_diff_view"]=suLayerDiff;
 
 		var priorLayerStyle = new ams.SLDStyles.AreaStyle(this._currentSULayerName, this._propertyName, 0, 
 															suLayerMaxArea, 
@@ -127,6 +132,9 @@ ams.App = {
 		priorLayer.bringToFront();
 		priorLayer.addTo(map);
 		this._addedLayers[this._currentSULayerName+'_prior']=priorLayer;
+		// adding "_diff_view" layer variation to use later
+		let suPriorLayerDiff = this._priorSource.getLayer(suLayerName+"_diff_view");
+		this._addedLayers[suLayerName+"_diff_view_prior"]=suPriorLayerDiff;
 
 		// Fixed biome border layer
 		var tbBiomeLayerName = ams.Config.defaultLayers.biomeBorder;
@@ -252,12 +260,8 @@ ams.App = {
 				+ '&nbsp;&nbsp;'
 				+ '<button class="btn btn-primary-p btn-success" id="shapezip-download-button"> Shapefile </button>'
 				+ '</label>'
-				+ '</div>').insertAfter("#datepicker-control-layers-group");	
+				+ '</div>').insertAfter("#datepicker-control-layers-group");
 		})();
-
-		var suLayerMinArea = 0;
-		var diffON = false;
-
 
 		//-- mgd T6 v  keeps an (almost) updated copy of the legend Control's inputs (app.js:legendControl). See app.js:map.on() (-->
 		this._suSource.viewConfig = {
@@ -265,7 +269,7 @@ ams.App = {
 			spatialUnit : spatialUnits.default.dataname,
 			limit : this._suViewParams.limit,
 			tempUnit : currAggregate,
-			diffOn : diffON,
+			diffOn : this._diffOn,
 			startDate : null,
 			endDate :  null,
 			prevDate :  null,
@@ -276,19 +280,17 @@ ams.App = {
 			}
 		};
 		this._suSource.viewConfig.updateDates(ams.App._dateControl);
-		// -- ^ -->
 
-		//map.on('overlayadd', function(e) {
 		map.on('changectrl', function(e) {
 			if(spatialUnits.isSpatialUnit(e.name)) {
 				ams.App._suSource.viewConfig.spatialUnit =  spatialUnits.getDataName(e.name);  // T6
 				suLayerName = ams.Auth.getWorkspace() + ":" + spatialUnits.getDataName(e.name);
-				if(diffON) {
-					this._currentSULayerName = suLayerName + "_diff_view"; 
+				if(ams.App._diffOn) {
+					ams.App._currentSULayerName = suLayerName + "_diff_view"; 
 				} 
 				else {
-					this._currentSULayerName = suLayerName + "_view";
-					suLayerMinArea = 0
+					ams.App._currentSULayerName = suLayerName + "_view";
+					ams.App._suLayerMinArea = 0
 				}
 			}
 			else if(temporalUnits.isAggregate(e.name)) {
@@ -302,15 +304,15 @@ ams.App = {
 			}	
 			else if(temporalUnits.isDifference(e.name)) {
 				if(e.name == temporalUnits.getCurrentName()) {
-					this._currentSULayerName = suLayerName + "_view";
-					suLayerMinArea = 0;
-					diffON = false;
+					ams.App._currentSULayerName = suLayerName + "_view";
+					ams.App._suLayerMinArea = 0;
+					ams.App._diffOn = false;
 				}
 				else {
-					this._currentSULayerName =  suLayerName + "_diff_view"; 
-					diffON = true;
+					ams.App._currentSULayerName =  suLayerName + "_diff_view"; 
+					ams.App._diffOn = true;
 				}
-				ams.App._suSource.viewConfig.diffOn = diffON;  // T6
+				ams.App._suSource.viewConfig.diffOn = ams.App._diffOn;  // T6
 			}
 			else {// is indicator, so set into active layers
 				let acronym = e.layer._name;
@@ -318,16 +320,15 @@ ams.App = {
 				ams.App._suViewParams.classname = acronym;
 				ams.App._priorViewParams.classname = acronym;
 				ams.App._updateReferenceLayer();
-				// ams.App._updateSULayer();
 			}
 
-			if(diffON) {
-				suLayerMinArea = ams.App._wfs.getMin(this._currentSULayerName, ams.App._propertyName, ams.App._suViewParams);
+			if(ams.App._diffOn) {
+				ams.App._suLayerMinArea = ams.App._wfs.getMin(ams.App._currentSULayerName, ams.App._propertyName, ams.App._suViewParams);
 			}
 
 			ams.App._updateSULayer();
 			
-			ams.App._updateAll(ams.App._suSource, this._currentSULayerName, ams.App._suViewParams, suLayerMinArea, 
+			ams.App._updateAll(ams.App._suSource, ams.App._currentSULayerName, ams.App._suViewParams, ams.App._suLayerMinArea, 
 					ams.App._priorSource, ams.App._priorViewParams, legendControl);
 		});
 
@@ -362,13 +363,13 @@ ams.App = {
 				ams.App._suViewParams.updateDates(ams.App._dateControl);
 				ams.App._priorViewParams.updateDates(ams.App._dateControl);
 				if(ams.App._currentSULayerName.includes("diff")) {
-					suLayerMinArea = ams.App._wfs.getMin(ams.App._currentSULayerName, ams.App._propertyName, ams.App._suViewParams);	
+					ams.App._suLayerMinArea = ams.App._wfs.getMin(ams.App._currentSULayerName, ams.App._propertyName, ams.App._suViewParams);	
 				}
 				else {
-					suLayerMinArea = 0;
+					ams.App._suLayerMinArea = 0;
 				}
 
-				ams.App._updateAll(ams.App._suSource, ams.App._currentSULayerName, ams.App._suViewParams, suLayerMinArea, 
+				ams.App._updateAll(ams.App._suSource, ams.App._currentSULayerName, ams.App._suViewParams, ams.App._suLayerMinArea, 
 						ams.App._priorSource, ams.App._priorViewParams, legendControl);
 				ams.App._updateReferenceLayer();
 			},
@@ -432,7 +433,10 @@ ams.App = {
 		let suLayerMaxArea = ams.App._wfs.getMax(currSuLayerName, ams.App._propertyName, suViewParams);
 		if(suLayerMaxArea == suLayerMinArea) 
 		{
-			alert("Não existem dados para o periodo selecionado."); // mgd T6 Change an exclamation point to a period
+			alert("Não existem dados para o periodo selecionado.");
+			return;
+		}else if(ams.App._diffOn && suLayerMinArea>=0){
+			alert("Não há redução de valores para o periodo selecionado.");
 			return;
 		}
 		let suLayerStyle = new ams.SLDStyles.AreaStyle(currSuLayerName, ams.App._propertyName,
