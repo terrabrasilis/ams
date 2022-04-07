@@ -1,26 +1,6 @@
 var ams = ams || {};
 
 ams.Map = {
-	update: function(source, layerName, viewParams, layerStyle) {
-		
-		source._subLayers = {};
-		source._subLayers[layerName] = true;		
-		source.options["viewparams"] = viewParams.toWmsFormat();
-		source._overlay.wmsParams.layers = layerName;
-		if(layerStyle) {
-			source.options["sld_body"] = layerStyle.getSLD();
-			source._overlay.setParams({
-				"viewparams": viewParams.toWmsFormat(),
-				"sld_body": layerStyle.getSLD(),
-			});				
-		}
-		else {
-			source._overlay.setParams({
-				"viewparams": viewParams.toWmsFormat(),
-			});	
-		}	
-	},
-
 	ViewParams: function(classname, dateControll, limit) {
 		this.classname = classname;
 		this.startdate = dateControll.startdate;
@@ -39,14 +19,6 @@ ams.Map = {
 			this.startdate = dateControll.startdate;
 			this.enddate = dateControll.enddate;
 			this.prevdate = dateControll.prevdate;
-		};
-
-		this.setClassname = function(cn) {
-			this.classname = cn;
-		};
-
-		this.getClassname = function() {
-			return this.classname;
 		};
 	},
 
@@ -85,25 +57,12 @@ ams.Map = {
 
 		this.default = this.getSpatialUnit(suDefaultName);
 
-		this.isSpatialUnit = function(name) {
-			for(var i = 0; i < this.spatialUnits.length; i++) {
-				if(this.spatialUnits[i].name == name) {
-					return true;
-				}
-			}
-			return false;			
-		}
-
 		this.length = function() {
 			return this.spatialUnits.length;
 		}
 
 		this.at = function(pos) {
 			return this.spatialUnits[pos];
-		}	
-
-		this.getDataName = function(name) {
-			return this._suDataNamesMap[name];
 		}
 	},
 
@@ -194,7 +153,7 @@ ams.Map = {
 					( (ams.Auth.isAuthenticated())?(Authentication.getToken()):("") )
 				},
 				success: function(data) {
-					res = data["features"][0]["properties"][propertyName];
+					res = (data.totalFeatures>0)?(data["features"][0]["properties"][propertyName]):(false);
 				},
 				error: function() {
 					res = false;

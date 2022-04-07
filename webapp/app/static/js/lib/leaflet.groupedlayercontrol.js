@@ -11,26 +11,14 @@ L.Control.GroupedLayers = L.Control.extend({
     exclusiveGroups: [],
     groupCheckboxes: false
   },
-  _currentReferenceLayer: null,
-  _currentPropertyName: null,
-  _currentSpatialUnitLayer: null,
-  _classFilter: null,
 
   initialize: function (controlGroups, options) {
     var i, j;
     L.Util.setOptions(this, options);
 
     this._ctrls = [];
-    this._lastZIndex = 0;
-    this._handlingClick = false;
     this._groupList = [];
     this._domGroups = [];
-    this._currentReferenceLayer=controlGroups['INDICADOR']['defaultFilter']=='AF'?
-    ams.Config.defaultLayers.activeFireAmz:
-    ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.deterAmz;
-    this._currentPropertyName=controlGroups['INDICADOR']['propertyName'];
-    this._currentSpatialUnitLayer=controlGroups['UNIDADE ESPACIAL']['defaultFilter'];
-    this._classFilter = controlGroups['INDICADOR']['defaultFilter'];
 
     for (i in controlGroups) {
       for (j in controlGroups[i]) {
@@ -43,45 +31,15 @@ L.Control.GroupedLayers = L.Control.extend({
   onAdd: function (map) {
     this._initLayout(map);
     this._update();
-
-    // map
-    //     .on('layeradd', this._onLayerChange, this)
-    //     .on('layerremove', this._onLayerChange, this);
-
     return this._container;
   },
 
   onRemove: function (map) {
-    // map
-    //     .off('layeradd', this._onLayerChange, this)
-    //     .off('layerremove', this._onLayerChange, this);
   },
-
-  // addBaseLayer: function (layer, name) {
-  //   this._addControl(layer, name);
-  //   this._update();
-  //   return this;
-  // },
-
-  // addOverlay: function (layer, name, group) {
-  //   this._addControl(layer, name, group, true);
-  //   this._update();
-  //   return this;
-  // },
-
-  // removeLayer: function (layer) {
-  //   var id = L.Util.stamp(layer);
-  //   var _ctrl = this._getControlById(id);
-  //   if (_ctrl) {
-  //     delete this._ctrls[this._ctrls.indexOf(_ctrl)];
-  //   }
-  //   this._update();
-  //   return this;
-  // },
 
   _getControlById: function (id) {
     for (var i = 0; i < this._ctrls.length; i++) {
-      if (this._ctrls[i] && L.stamp(this._ctrls[i].layer) === id) {
+      if (this._ctrls[i] && this._ctrls[i].ctrlId === id) {
         return this._ctrls[i];
       }
     }
@@ -146,15 +104,14 @@ L.Control.GroupedLayers = L.Control.extend({
     }
   },
 
-  _addControl: function (layer, name, group, defaultFilter, overlay) {
-
+  _addControl: function (acronym, name, group, defaultFilter, overlay) {
     var _ctrl = {
-      layer: layer,
+      acronym: acronym,
       name: name,
       defaultFilter: defaultFilter,
-      overlay: overlay,
-      ctrlId: L.Util.stamp(layer)
+      overlay: overlay
     };
+    _ctrl["ctrlId"]=L.Util.stamp(_ctrl);
     this._ctrls.push(_ctrl);
 
     group = group || '';
@@ -171,11 +128,6 @@ L.Control.GroupedLayers = L.Control.extend({
       id: groupId,
       exclusive: exclusive
     };
-
-    if (this.options.autoZIndex && layer.setZIndex) {
-      this._lastZIndex++;
-      layer.setZIndex(this._lastZIndex);
-    }
   },
 
   _update: function () {
@@ -201,29 +153,6 @@ L.Control.GroupedLayers = L.Control.extend({
     this._separator.style.display = overlaysPresent && baseLayersPresent ? '' : 'none';
   },
 
-  _onLayerChange: function (e) {
-    var obj = this._getControlById(L.Util.stamp(e.layer)),
-      type;
-
-    if (!obj) {
-      return;
-    }
-
-    if (!this._handlingClick) {
-      this._update();
-    }
-
-    if (obj.overlay) {
-      type = e.type === 'layeradd' ? 'overlayadd' : 'overlayremove';
-    } else {
-      type = e.type === 'layeradd' ? 'baselayerchange' : null;
-    }
-
-    if (type) {
-      this._map.fire(type, obj);
-    }
-  },
-
   // IE7 bugs out if you create a radio dynamically, so you have to do it this hacky way (see http://bit.ly/PqYLBe)
   _createRadioElement: function (name, checked) {
     var radioHtml = '<input type="radio" class="leaflet-control-layers-selector" name="' + name + '"';
@@ -243,7 +172,7 @@ L.Control.GroupedLayers = L.Control.extend({
 
     var label = document.createElement('label'),
       input,
-      checked = obj.layer._name.includes(obj.defaultFilter),
+      checked = obj.acronym.includes(obj.defaultFilter),
       container,
       groupRadioName;
 
@@ -297,82 +226,9 @@ L.Control.GroupedLayers = L.Control.extend({
 
   _onInputClick: function (e) {
     let obj = this._getControlById(e.target.ctrlId);
-    let layerToAdd,layerToDel;
-    let hasClassFilter=false;
-
-    // change reference layer (deter or fires)?
-    if(obj.group.name=='INDICADOR'){
-      if(obj.layer._name=='AF'){
-        // the reference layer should be active-fires
-        layerToAdd=ams.Config.defaultLayers.activeFireAmz;
-        layerToDel=ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.deterAmz;
-        this._currentPropertyName=ams.Config.propertyName.af;
-      }else{
-        // the reference layer should be deter
-        layerToAdd=ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.deterAmz;
-        layerToDel=ams.Config.defaultLayers.activeFireAmz;
-        hasClassFilter=true;
-        this._currentPropertyName=ams.Config.propertyName.deter;
-      }
-      // Set the classname to apply on deter layer and spatial unit layers
-      //ams.App._updateClassFilter(obj.layer._name); // TODO: remove this line because the same changes is applied in changectrl
-
-      // reference layer was changes, so propertyName changes too
-      if(this._currentReferenceLayer!=layerToAdd){
-        this._removeLayer(layerToDel);
-        ams.App._displayReferenceLayer(layerToAdd, hasClassFilter, this._currentPropertyName);
-        this._currentReferenceLayer=layerToAdd;
-      }
-    }else if(obj.group.name=='UNIDADE ESPACIAL'){
-      // spatial unit layer was changes
-      if(!this._currentSpatialUnitLayer!=obj.layer._name){
-        // remove the main spatial unit layer, and
-        this._removeLayer(this._currentSpatialUnitLayer);
-        // each spatial unit layer has an priority layer to display the highlight border, should be remove too
-        this._removeLayer(this._currentSpatialUnitLayer+'_prior');
-        ams.App._displaySpatialUnitLayer(obj.layer._name, this._currentPropertyName);
-        this._currentSpatialUnitLayer=obj.layer._name;
-      }
-    }
-    
-    // if class filter changes, apply change filters on reference and spatial unit layer
-    if(hasClassFilter){
-      ams.App._updateReferenceLayer();
-    }
-    // other control groups have their own functions to handle changes, so
     // dispache event to update layers using selected filters
     this._map.fire('changectrl', obj);
   },
-
-  _removeLayer: function(layerName){
-    let l=ams.App._getLayerByName(layerName);
-    if(l && this._map.hasLayer(l))
-      this._map.removeLayer(l);
-  },
-
-  /*
-  _onInputClick: function () {
-    var i, input, obj,
-      inputs = this._form.getElementsByTagName('input'),
-      inputsLen = inputs.length;
-
-    this._handlingClick = true;
-
-    for (i = 0; i < inputsLen; i++) {
-      input = inputs[i];
-      if (input.className === 'leaflet-control-layers-selector') {
-        obj = this._getControlById(input.ctrlId);
-        if (input.checked && !this._map.hasLayer(obj.layer)) {
-          this._map.addLayer(obj.layer);
-        } else if (!input.checked && this._map.hasLayer(obj.layer)) {
-          this._map.removeLayer(obj.layer);
-        }
-      }
-    }
-
-    this._handlingClick = false;
-  },
-  */
 
   _expand: function () {
     L.DomUtil.addClass(this._container, 'leaflet-control-layers-expanded');

@@ -14,7 +14,8 @@ ams.Config = {
     indicator: 'DS',// can be group's name of DETER classnames, 'DS', 'DG', 'CS' and 'MN', or 'AF' to Queimadas
     spatialUnit: 'csAmz_150km',
     temporalUnit: '7d',
-    diffClassify: 'onPeriod'// can be 'onPeriod' or 'periodDiff'
+    diffClassify: 'onPeriod',// can be 'onPeriod' or 'periodDiff'
+    priorityLimit: 10
   },
   propertyName: {
     deter:"area",// can be "area", if reference layer is DETER
