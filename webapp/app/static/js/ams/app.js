@@ -98,7 +98,6 @@ ams.App = {
 
 		// Start the legend control
 		this._legendControl = new ams.Map.LegendController(map, this._baseURL);
-		// this._legendControl.init(this._currentSULayerName, suLayerStyle);
 
 		// Default Spatial Unit layer
 		this._currentSULayerName = ams.Auth.getWorkspace() + ":" + spatialUnits.default.dataname;
@@ -107,7 +106,7 @@ ams.App = {
 
 		// Fixed biome border layer
 		var tbBiomeLayerName = ams.Config.defaultLayers.biomeBorder;
-		var onlyWmsBase = {};
+		var onlyWmsBase = {identify:false};// set this to disable GetFeatureInfo
 		ams.App._addWmsOptionsBase(onlyWmsBase);
 		var tbBiomeSource = L.WMS.source(this._baseURL, onlyWmsBase);
 		var tbBiomeLayer = tbBiomeSource.getLayer(tbBiomeLayerName).addTo(map);
@@ -399,6 +398,8 @@ ams.App = {
 				};
 				this._addWmsOptionsBase(wmsOptions);
 				l._source._overlay.setParams(wmsOptions);
+				Object.assign(l.options,wmsOptions);// to update layer options
+				Object.assign(l._source.options,wmsOptions);// to update layer options
 				l.bringToFront();
 				this._legendControl.update(this._getLayerPrefix(), suLayerStyle);
 			}
@@ -412,6 +413,8 @@ ams.App = {
 			};
 			this._addWmsOptionsBase(wmsOptions);
 			l._source._overlay.setParams(wmsOptions);
+			Object.assign(l.options,wmsOptions);// to update layer options
+			Object.assign(l._source.options,wmsOptions);// to update layer options
 			l.bringToFront();
 		}
 	},
@@ -493,6 +496,7 @@ ams.App = {
 			"sld_body": s.getSLD()
 		};
 		if(!isPriority) wmsOptions["opacity"]=0.8;
+		else wmsOptions["identify"]=false;// set this to disable GetFeatureInfo
 		this._addWmsOptionsBase(wmsOptions);
 		return wmsOptions;
 	},
