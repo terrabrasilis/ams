@@ -6,7 +6,7 @@ ams.Config = {
   defaultLayers:{
     biomeBorder:"prodes-amz:brazilian_amazon_biome_border",// Layer name of Amazon biome border from TerraBrasilis service
     deterAmz:"deter-ams", // The layer name of DETER alerts from TerraBrasilis service. The workspace is dinamic and based on authentication state
-    activeFireAmz:"ams:active-fire" // The layer name of Focos de Queimadas from TerraBrasilis service. The workspace is fixed
+    activeFireAmz:"amsh:active-fire" // The layer name of Focos de Queimadas from TerraBrasilis service. The workspace is fixed
   },
   spatialUnitLayers:[],// populated on App load: ams.App.run(...)
   floatDecimals: 2,// change this number to change the number of decimals to float numbers

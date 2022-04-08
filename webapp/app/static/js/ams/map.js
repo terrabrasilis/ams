@@ -1,17 +1,19 @@
 var ams = ams || {};
 
 ams.Map = {
-	ViewParams: function(classname, dateControll, limit) {
+	ViewParams: function(classname, dateControll, propertyName, limit) {
 		this.classname = classname;
 		this.startdate = dateControll.startdate;
 		this.enddate = dateControll.enddate;
 		this.prevdate = dateControll.prevdate;
+		this.propertyName = propertyName;
 		this.limit = limit;
 		this.toWmsFormat = function() {
 			return "classname:" + this.classname
 					+ ";startdate:" + this.startdate
 					+ ";enddate:" + this.enddate
 					+ ";prevdate:" + this.prevdate
+					+ ";orderby:" + this.propertyName
 					+ ";limit:" + this.limit;
 		};
 
@@ -19,6 +21,10 @@ ams.Map = {
 			this.startdate = dateControll.startdate;
 			this.enddate = dateControll.enddate;
 			this.prevdate = dateControll.prevdate;
+		};
+
+		this.updatePropertyName = function(propertyName) {
+			this.propertyName = propertyName;
 		};
 	},
 
@@ -142,6 +148,7 @@ ams.Map = {
 										+ ";enddate:" + viewParams.enddate
 										+ ";prevdate:" + viewParams.prevdate
 										+ ";order:" + (isMin ? 'ASC' : 'DESC')
+										+ ";orderby:" + propertyName
 										+ ";limit:1";
 			let res;
 			$.ajax({
@@ -196,7 +203,7 @@ ams.Map = {
 
 		this.getFile = function(layerName, viewParams, 
 								outputFormat, extension,
-								propertyName){
+								properties, propertyName){
 
 			let _viewToResolution = {
 				"csAmz_150km": "CELL_150Km",
@@ -233,11 +240,12 @@ ams.Map = {
 						+ "&outputFormat=" + outputFormat
 						+ "&format_options=filename:" + filename
 						+ "&version=1.0.0"
-						+ "&propertyName=" + (propertyName ? propertyName : "")
+						+ "&propertyName=" + (properties ? properties : "")
 						+ "&viewparams=classname:" + viewParams.classname
 										+ ";startdate:" + viewParams.startdate
 										+ ";enddate:" + viewParams.enddate
 										+ ";prevdate:" + viewParams.prevdate
+										+ ";orderby:" + propertyName
 										+ ";limit:" + viewParams.limit;
 
 			if (extension == 'csv') {
@@ -268,16 +276,16 @@ ams.Map = {
         }
 
 		this.getShapeZip = function(layerName, viewParams) {
-			let propertyName = "name,"+
+			let properties = "name,"+
 			((ams.App._propertyName=="area")?("area,percentage"):(ams.App._propertyName))+
 			",geometry";
-			this.getFile(layerName, viewParams, "shape-zip", "zip", propertyName);
+			this.getFile(layerName, viewParams, "shape-zip", "zip", properties, ams.App._propertyName);
 		} 
 
 		this.getCsv = function(layerName, viewParams) {
-			let propertyName = "name,"+
+			let properties = "name,"+
 			((ams.App._propertyName=="area")?("area,percentage"):(ams.App._propertyName));
-			this.getFile(layerName, viewParams, "csv", "csv", propertyName);
+			this.getFile(layerName, viewParams, "csv", "csv", properties, ams.App._propertyName);
 		} 
 	},
 

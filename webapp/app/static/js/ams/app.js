@@ -67,8 +67,8 @@ ams.App = {
 		});
 
 		// Starting viewParams
-		this._suViewParams = new ams.Map.ViewParams(ams.Config.defaultFilters.indicator, ams.App._dateControl, "ALL");
-		this._priorViewParams = new ams.Map.ViewParams(ams.Config.defaultFilters.indicator, ams.App._dateControl, ams.Config.defaultFilters.priorityLimit);
+		this._suViewParams = new ams.Map.ViewParams(ams.Config.defaultFilters.indicator, ams.App._dateControl, ams.App._propertyName, "ALL");
+		this._priorViewParams = new ams.Map.ViewParams(ams.Config.defaultFilters.indicator, ams.App._dateControl, ams.App._propertyName, ams.Config.defaultFilters.priorityLimit);
 
 		// Adding reference layers
 		var tbDeterAlertsLayerName = ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.deterAmz;
@@ -103,7 +103,7 @@ ams.App = {
 		// Default Spatial Unit layer
 		this._currentSULayerName = ams.Auth.getWorkspace() + ":" + spatialUnits.default.dataname;
 		ams.Config.defaultFilters.spatialUnit=this._currentSULayerName;// update the default for later use in filter change in control.
-		this._addSpatialUnitLayer(this._getLayerPrefix(), this._propertyName);
+		this._addSpatialUnitLayer(this._getLayerPrefix(),this._propertyName);
 
 		// Fixed biome border layer
 		var tbBiomeLayerName = ams.Config.defaultLayers.biomeBorder;
@@ -226,10 +226,12 @@ ams.App = {
 					layerToDel=ams.Config.defaultLayers.activeFireAmz;
 					ams.App._propertyName=ams.Config.propertyName.deter;		
 					ams.App._hasClassFilter=true;
-					if(ams.App._suViewParams.classname != e.acronym){
-						ams.App._suViewParams.classname = e.acronym;
-						ams.App._priorViewParams.classname = e.acronym;
-					}
+				}
+				if(ams.App._suViewParams.classname != e.acronym){
+					ams.App._suViewParams.classname = e.acronym;
+					ams.App._priorViewParams.classname = e.acronym;
+					ams.App._suViewParams.updatePropertyName(ams.App._propertyName);
+					ams.App._priorViewParams.updatePropertyName(ams.App._propertyName);
 				}
 				// reference layer was changes, so propertyName changes too
 				if(ams.App._referenceLayerName!=layerToAdd){
@@ -248,7 +250,7 @@ ams.App = {
 					//  new layer to insert
 					let nLayerName=ams.App._getLayerPrefix();
 					ams.App._exchangeSpatialUnitLayer(oLayerName,nLayerName);
-					needUpdateSuLayers=false;
+					needUpdateSuLayers=false;// no need to update because SU layers were swapped by previous command
 				}
 			}else if(e.group.name=='CLASSIFICAÇÃO DO MAPA'){
 				ams.App._diffOn = ( (e.acronym=="onPeriod")?(false):(true) );
@@ -259,7 +261,7 @@ ams.App = {
 					ams.App._currentClassify=e.acronym;// change for new classify method to get the new layer prefix
 					let nLayerName=ams.App._getLayerPrefix();
 					ams.App._exchangeSpatialUnitLayer(oLayerName,nLayerName);
-					needUpdateSuLayers=false
+					needUpdateSuLayers=false;// no need to update because SU layers were swapped by previous command
 				}
 			}else if(temporalUnits.isAggregate(e.name)) {// time aggregate selects: weekly, monthly, yearly...
 				ams.App._currentTemporalAggregate = e.acronym;
@@ -456,27 +458,26 @@ ams.App = {
 
 	/**
 	 * Adding the spatial Unit layer into map using updated viewParams and selected filters
-	 * Create a new one based on _currentSULayerName
-	 * @param {*} layerName the spatial unit layer name
+	 * @param {string} layerName the name for a layer that will be added on map.
 	 * @param {*} propertyName column "area" or "counts"
 	 */
 	_addSpatialUnitLayer: function(layerName, propertyName){
 		// verify if exists on layers list
-		let l1 = this._getLayerByName(this._getLayerPrefix());
-		let l2 = this._getLayerByName(this._getLayerPrefix()+'_prior');
+		let l1 = this._getLayerByName(layerName);
+		let l2 = this._getLayerByName(layerName+'_prior');
 		// if exists on list, remove
-		if(l1) delete this._addedLayers[this._getLayerPrefix()];
-		if(l2) delete this._addedLayers[this._getLayerPrefix()+'_prior'];
+		if(l1) delete this._addedLayers[layerName];
+		if(l2) delete this._addedLayers[layerName+'_prior'];
 
-		let mm=this._getMinMax(this._getLayerPrefix(), propertyName);
+		let mm=this._getMinMax(layerName, propertyName);
 		if(!mm) return;// abort if no valid values
 
 		//insert spatial unit layer
-		let layer=this._createSULayer(this._getLayerPrefix(), propertyName, mm);
+		let layer=this._createSULayer(layerName, propertyName, mm);
 		layer.addTo(this._map);
 
 		//insert spatial unit priority layer
-		layer=this._createPriorSULayer(this._getLayerPrefix(), propertyName, mm);
+		layer=this._createPriorSULayer(layerName, propertyName, mm);
 		layer.addTo(this._map);
 		layer.bringToFront();
 	},
