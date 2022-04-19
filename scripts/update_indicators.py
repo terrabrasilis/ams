@@ -4,6 +4,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from ams.usecases import DeterDailyUpdate
 from ams.usecases import Initializer
+from ams.usecases import ActiveFires
 from ams.repository import (DeterRepository,
 							SpatialUnitInfoRepository)
 from ams.dataaccess import AlchemyDataAccess
@@ -21,3 +22,6 @@ update.execute(da, True)
 
 class_deter_polys = ClassifyDeterPolygons(Config.DATABASE_URL, Config.INPUT_GEOTIFF_FUNDIARY_STRUCTURE)
 class_deter_polys.execute()
+
+firesupdate = ActiveFires(Config.DATABASE_URL)
+firesupdate.execute()

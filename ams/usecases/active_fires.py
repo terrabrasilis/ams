@@ -1,5 +1,4 @@
 from psycopg2 import connect
-import pandas as pd
 
 class ActiveFires:
     """
@@ -68,6 +67,6 @@ class ActiveFires:
 
 
 # local test
-db='postgresql://postgres:postgres@192.168.15.49:5444/AMS'
-ac = ActiveFires(db_url=db)
-ac.execute()
+# db='postgresql://postgres:postgres@192.168.15.49:5444/AMS'
+# ac = ActiveFires(db_url=db)
+# ac.execute()
