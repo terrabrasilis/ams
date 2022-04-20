@@ -12,6 +12,7 @@ class ActiveFires:
 
     def __init__(self, db_url: str):
         self._conn = connect(db_url)
+        print(f'Processing the Active Fires data...')
 
     def read_spatial_units(self):
         """
@@ -25,6 +26,7 @@ class ActiveFires:
         self._spatial_units=dict(results)
 
     def update_focuses_table(self):
+        print(f'Insert fires data from raw database via SQL View ...')
         """
         Load active fire data from raw database using a SQL View resource named public.raw_active_fires
         *raw database has an independent sync task.
@@ -38,10 +40,10 @@ class ActiveFires:
         """
         cur = self._conn.cursor()
         cur.execute(update)
+        self._conn.commit()
 
     def statistics_processing(self):
         for spatial_unit, id in self._spatial_units.items():
-            print(f'Processing {spatial_unit}:{id}...')
             delete=f"""
             DELETE FROM public."{spatial_unit}_risk_indicators" WHERE classname='AF'
             """
@@ -57,8 +59,11 @@ class ActiveFires:
             FROM results a
             """
             cur = self._conn.cursor()
+            print(f'Delete data from {spatial_unit} where classname=AF')
             cur.execute(delete)
+            print(f'Insert data into {spatial_unit} for AF classname')
             cur.execute(insert)
+            self._conn.commit()
 
     def execute(self):
         self.read_spatial_units()
