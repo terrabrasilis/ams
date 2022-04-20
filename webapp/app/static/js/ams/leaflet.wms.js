@@ -12,41 +12,54 @@ ams.LeafletWms = {
             this._subLayers = {};
             this._overlay = this.createOverlay(this.options.untiled);
             this._deterClassGroups = deterClassGroups;
+            this._popupReference=null;
         },
 
-        'showFeatureInfo': function (latlng, info) {
-            if(info.includes("no features were found")) return;
-            if (this._isSpatialUnitInfo()) {
-                this._map.openPopup(this._formatSpatialUnitPopup(info, this.viewConfig, latlng) , latlng); //-- mgd T6 this.config
-            }else{
-                this._map.openPopup(this._formatDeterPopup(info), latlng);
+        'showFeatureInfo': function (latlng, jsonTxt) {
+            if(jsonTxt.includes("no features were found")) return;
+            let featureInfo = JSON.parse(jsonTxt);
+            let htmlInfo="";
+            if(featureInfo.numberReturned>=1){
+                htmlInfo="<div><h5>"+this._overlay.wmsParams.layers+"</h5><br>";
+                if (this._isSpatialUnitInfo()) {
+                    htmlInfo=htmlInfo+this._formatSpatialUnitPopup(featureInfo, latlng);
+                }else{
+                    htmlInfo=htmlInfo+this._formatDeterPopup(featureInfo);
+                }
+                htmlInfo=htmlInfo+"</div>";
+
+                if(this._popupReference && this._popupReference._popup){
+                    htmlInfo=htmlInfo+this._popupReference._popup.getContent();
+                    this._popupReference.closePopup();
+                    delete this._popupReference;
+                }
+                this._popupReference=this._map.openPopup(htmlInfo, latlng);
             }
         },
 
         '_isSpatialUnitInfo': function () {
-            return !this._overlay.wmsParams.layers.includes(ams.Config.defaultLayers.deterAmz);
+            let isDeter=this._overlay.wmsParams.layers.includes(ams.Config.defaultLayers.deterAmz);
+            let isAF=this._overlay.wmsParams.layers.includes(ams.Config.defaultLayers.activeFireAmz);
+            return !isDeter&&!isAF;
         },
 
-        '_formatSpatialUnitPopup': function (str, viewConfig, latlng) {  //-- mgd T6
-            let tokens = str.split("\n");
+        '_formatSpatialUnitPopup': function (featureInfo, latlng) {
             let result = {
                 "name": "",
                 "classname": "",
                 "area": 0,
                 "percentage": 0,
             };
-            //-- mgd T6 v
+            let viewConfig={};
             viewConfig.click = { when: new Date(), where: latlng };
-            let value;
-            //-- mgd T6 ^
-            for (let i = 0; i < tokens.length; i++) {
-                let pair = tokens[i].split(" = ");
-                if (pair.length > 1) {
-                    value= isNaN(pair[1]) ? pair[1] : parseFloat(pair[1]);
-                    viewConfig.click[pair[0]] = isNaN(pair[1]) ?  value.replace(/ /g, "|"): value;  //-- mgd T6 HTML render error (space brakes quotes), check why
-                    if (pair[0] in result) {
-                        result[pair[0]] = isNaN(value) ? value : ams.Utils.numberFormat(value);
-                    }
+            let value, fProperties;
+            feature=featureInfo.features[0].properties;
+            for (let i in fProperties) {
+                let v=fProperties[i];
+                value= isNaN(v) ? v : parseFloat(v);
+                viewConfig.click[i] = isNaN(v) ?  value.replace(/ /g, "|"): value;
+                if (i in result) {
+                    result[i] = isNaN(value) ? value : ams.Utils.numberFormat(value);
                 }
             }
             let sButton = "";
@@ -97,16 +110,17 @@ ams.LeafletWms = {
             +"</table>";
         },
 
-        '_formatDeterPopup': function(str) {
-			let tokens = str.split("\n");
-			let result = {};
-			for(let i = 0; i < tokens.length; i++)
-			{
-				let pair = tokens[i].split(" = ");
-				if(pair.length > 1) {
-					result[pair[0]] = isNaN(pair[1]) ? pair[1] : ams.Utils.numberFormat(pair[1]);
-				}
-			}
+        '_formatDeterPopup': function(featureInfo) {
+            let value, fProperties, result={};
+            feature=featureInfo.features[0].properties;
+
+            for (let i in fProperties) {
+                let v=fProperties[i];
+                value= isNaN(v) ? v : parseFloat(v);
+                if (i in result) {
+                    result[i] = isNaN(value) ? value : ams.Utils.numberFormat(value);
+                }
+            }
 			delete result["geom"];
 			return this._createDeterInfoTable(result);
 		},

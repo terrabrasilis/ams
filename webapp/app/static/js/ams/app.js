@@ -108,7 +108,7 @@ ams.App = {
 		var tbBiomeLayerName = ams.Config.defaultLayers.biomeBorder;
 		var onlyWmsBase = {identify:false};// set this to disable GetFeatureInfo
 		ams.App._addWmsOptionsBase(onlyWmsBase);
-		var tbBiomeSource = L.WMS.source(this._baseURL, onlyWmsBase);
+		var tbBiomeSource = new ams.LeafletWms.Source(this._baseURL, onlyWmsBase, this._appClassGroups);
 		var tbBiomeLayer = tbBiomeSource.getLayer(tbBiomeLayerName).addTo(map);
 		tbBiomeLayer.bringToBack();
 
@@ -503,7 +503,7 @@ ams.App = {
 
 	_createSULayer: function(layerName, propertyName, minMax) {
 		let wop=this._getWmsOptions(layerName, propertyName, minMax, this._suViewParams);
-		let sl = L.WMS.source(this._baseURL, wop);
+		let sl = new ams.LeafletWms.Source(this._baseURL, wop, this._appClassGroups);
 		layer = sl.getLayer(layerName);
 		this._addedLayers[layerName]=layer;
 		return layer;
@@ -511,7 +511,7 @@ ams.App = {
 
 	_createPriorSULayer: function(layerName, propertyName, minMax) {
 		let wop=this._getWmsOptions(layerName, propertyName, minMax, this._priorViewParams, true);
-		let sl = L.WMS.source(this._baseURL, wop);
+		let sl = new ams.LeafletWms.Source(this._baseURL, wop, this._appClassGroups);
 		layer = sl.getLayer(layerName);
 		this._addedLayers[layerName+'_prior']=layer;
 		return layer;
