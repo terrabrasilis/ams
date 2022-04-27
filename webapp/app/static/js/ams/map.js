@@ -1,6 +1,13 @@
 var ams = ams || {};
 
 ams.Map = {
+	/**
+	 * Used to control the popup content
+	 */
+	PopupControl: {
+		_popupReference:null,
+		_infoBody:[]
+	},
 	ViewParams: function(classname, dateControll, propertyName, limit) {
 		this.classname = classname;
 		this.startdate = dateControll.startdate;

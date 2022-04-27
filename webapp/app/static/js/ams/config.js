@@ -3,6 +3,7 @@ var ams = ams || {};
 ams.Config = {
   terrabrasilisURL:"http://terrabrasilis.dpi.inpe.br",
   DETERMetadataURL: "/geonetwork/srv/eng/catalog.search#/metadata/f9b7e1d3-0d4e-4cb1-b3cf-c2b8906126be",
+  AFMetadataURL: "/geonetwork/srv/eng/catalog.search#/metadata/c4b6504f-5d54-4b61-a745-4123fae873ec",
   defaultLayers:{
     biomeBorder:"prodes-amz:brazilian_amazon_biome_border",// Layer name of Amazon biome border from TerraBrasilis service
     deterAmz:"deter-ams", // The layer name of DETER alerts from TerraBrasilis service. The workspace is dinamic and based on authentication state

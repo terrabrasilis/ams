@@ -12,62 +12,93 @@ ams.LeafletWms = {
             this._subLayers = {};
             this._overlay = this.createOverlay(this.options.untiled);
             this._deterClassGroups = deterClassGroups;
-            this._popupReference=null;
         },
 
         'showFeatureInfo': function (latlng, jsonTxt) {
             if(jsonTxt.includes("no features were found")) return;
             let featureInfo = JSON.parse(jsonTxt);
-            let htmlInfo="";
+            let htmlInfo="",name="",type="";
             if(featureInfo.numberReturned>=1){
-                htmlInfo="<div><h5>"+this._overlay.wmsParams.layers+"</h5><br>";
-                if (this._isSpatialUnitInfo()) {
-                    htmlInfo=htmlInfo+this._formatSpatialUnitPopup(featureInfo, latlng);
+                if (this._isDeterInfo()) {
+                    name="DETER";
+                    type="deter";// used to controls
+                    htmlInfo=this._formatDeterPopup(featureInfo);
+                }else if (this._isAFInfo()) {
+                    name="Queimadas";
+                    type="af";// used to controls
+                    htmlInfo=this._formatAFPopup(featureInfo);
                 }else{
-                    htmlInfo=htmlInfo+this._formatDeterPopup(featureInfo);
+                    name="Unidade Espacial";
+                    type="su";// used to controls
+                    htmlInfo=this._formatSpatialUnitPopup(featureInfo);
                 }
-                htmlInfo=htmlInfo+"</div>";
 
-                if(this._popupReference && this._popupReference._popup){
-                    htmlInfo=htmlInfo+this._popupReference._popup.getContent();
-                    this._popupReference.closePopup();
-                    delete this._popupReference;
+                ams.Map.PopupControl._infoBody.push({type:type,name:name,htmlInfo:htmlInfo});
+                let htmlPopup=this._accordionFormat();
+
+                if(ams.Map.PopupControl._popupReference && ams.Map.PopupControl._popupReference._popup){
+                    ams.Map.PopupControl._popupReference._popup.setContent(htmlPopup);
+                }else{
+                    ams.Map.PopupControl._popupReference=this._map.openPopup(htmlPopup, latlng);
+                    ams.Map.PopupControl._popupReference.on('popupclose', ()=>{
+                        ams.Map.PopupControl._infoBody=[];
+                    });
                 }
-                this._popupReference=this._map.openPopup(htmlInfo, latlng);
             }
         },
 
-        '_isSpatialUnitInfo': function () {
-            let isDeter=this._overlay.wmsParams.layers.includes(ams.Config.defaultLayers.deterAmz);
-            let isAF=this._overlay.wmsParams.layers.includes(ams.Config.defaultLayers.activeFireAmz);
-            return !isDeter&&!isAF;
+        '_accordionFormat': function(){
+
+            let ac='<div id="accordion">';
+            for (let id in ams.Map.PopupControl._infoBody){
+                let body=ams.Map.PopupControl._infoBody[id];
+                ac=ac+
+                '<div class="card">'+
+                '    <div class="card-header">'+
+                '    <a class="'+( body.type=='su'?'':'collapsed ' )+'card-link" data-toggle="collapse" href="#collapse'+id+'">'+
+                '        '+body.name+
+                '    </a>'+
+                '    </div>'+
+                '    <div id="collapse'+id+'" class="collapse'+( body.type=='su'?' show':'' )+'" data-parent="#accordion">'+
+                '    <div class="card-body">'+
+                '        '+body.htmlInfo+
+                '    </div>'+
+                '    </div>'+
+                '</div>';
+            }
+            ac=ac+'</div>';
+            return ac;
         },
 
-        '_formatSpatialUnitPopup': function (featureInfo, latlng) {
+        '_isDeterInfo': function () {
+            return this._overlay.wmsParams.layers.includes(ams.Config.defaultLayers.deterAmz);
+        },
+
+        '_isAFInfo': function () {
+            return this._overlay.wmsParams.layers.includes(ams.Config.defaultLayers.activeFireAmz);
+        },
+
+        '_updateResults': function(result, featureInfo) {
+            let fProperties=featureInfo.features[0].properties;
+            for (let i in fProperties) {
+                let v = ((fProperties[i]==null || fProperties[i]=="")?("-"):(fProperties[i]));
+                if (i in result)
+                    result[i] = isNaN(v) ? v : ams.Utils.numberFormat(v);
+            }
+        },
+
+        '_formatSpatialUnitPopup': function (featureInfo) {
             let result = {
                 "name": "",
                 "classname": "",
                 "area": 0,
+                "counts": 0,
                 "percentage": 0,
             };
-            let viewConfig={};
-            viewConfig.click = { when: new Date(), where: latlng };
-            let value, fProperties;
-            feature=featureInfo.features[0].properties;
-            for (let i in fProperties) {
-                let v=fProperties[i];
-                value= isNaN(v) ? v : parseFloat(v);
-                viewConfig.click[i] = isNaN(v) ?  value.replace(/ /g, "|"): value;
-                if (i in result) {
-                    result[i] = isNaN(value) ? value : ams.Utils.numberFormat(value);
-                }
-            }
+            this._updateResults(result, featureInfo);
             let sButton = "";
-            // -- mlra
-            if (viewConfig.click.classname == 'null')
-                viewConfig.click.classname = "DS";
-            if ((viewConfig.click.classname != 'null') && (viewConfig.click.area != 0)) {
-                sButton = this._createGraphicButton(viewConfig);
+            if(result.area!=0){
+                sButton = this._createGraphicButton(result.name);
             }
             return this._createSpatialUnitInfoTable(result) + sButton;
         },
@@ -75,8 +106,22 @@ ams.LeafletWms = {
         '_formatClassName': function (acronym) {
             return acronym != "null" ? this._deterClassGroups.getGroupName(acronym) : " ";
         },
-        //!--  mgd T6 v-->
-        '_createGraphicButton': function (viewConfig) {
+
+        '_getViewConfig': function (suName) {
+            // if it is a Municipality name then it can have spaces between the parts of the name.
+            // In this case, we replaced the spaces with pipe to ensure server-side correctness.
+            let n=suName.replace(/ /g, "|");
+            let conf={};
+            conf["className"]=ams.App._suViewParams.classname;
+            conf["spatialUnit"]=ams.App._currentSULayerName.split(":")[1];
+            conf["startDate"]=ams.App._dateControl.startdate;
+            conf["tempUnit"]=ams.App._currentTemporalAggregate;
+            conf["suName"]=n;
+            return conf;
+        },
+
+        '_createGraphicButton': function (suName) {
+            let viewConfig=this._getViewConfig(suName);
             let sButton=
                   '<div style="width: 100%;">'
                 + '<button class="btn btn-primary-p btn-success" onclick=ams.App.displayGraph('  // see app.js
@@ -86,6 +131,24 @@ ams.LeafletWms = {
             return sButton;
         },
         '_createSpatialUnitInfoTable': function (result) {
+            let focus=deter="";
+            if(result["classname"]=="AF"){
+                focus=""
+                + "<tr>"
+                + "<td>Focos (unidades)   </td>"
+                + "<td>" + result["counts"] + "</td>"
+                + "</tr>";
+            }else{
+                deter=""
+                + "<tr>"
+                + "<td>&#193;rea (km&#178;)   </td>"
+                + "<td>" + result["area"] + "</td>"
+                + "</tr>"
+                + "<tr>"
+                + "<td>Porcentagem   </td>"
+                + "<td>" + result["percentage"] + "%</td>"
+                + "</tr>";
+            }
             return '<table class="popup-spatial-unit-table" style="width:100%">'
                 + "<tr>"
                 + "<th></th>"
@@ -99,29 +162,67 @@ ams.LeafletWms = {
                 + "<td>Classe   </td>"
                 + "<td>" + this._formatClassName(result["classname"]) + "</td>"
                 + "</tr>"
-                + "<tr>"
-                + "<td>&#193;rea (km&#178;)   </td>"
-                + "<td>" + result["area"] + "</td>"
-                + "</tr>"
-                + "<tr>"
-                + "<td>Porcentagem   </td>"
-                + "<td>" + result["percentage"] + "%</td>"
-                + "</tr>"
+                + focus
+                + deter
             +"</table>";
         },
 
-        '_formatDeterPopup': function(featureInfo) {
-            let value, fProperties, result={};
-            feature=featureInfo.features[0].properties;
+        '_formatAFPopup': function(featureInfo) {
+            let result = {
+                "diasemchuva": 0,
+                "estado": "",
+                "municipio": "",
+                "precipitacao": 0,
+                "riscofogo": 0,
+                "satelite": "",
+                "view_date": ""
+            };
+            this._updateResults(result, featureInfo);
+			return this._createAFInfoTable(result);
+		},
 
-            for (let i in fProperties) {
-                let v=fProperties[i];
-                value= isNaN(v) ? v : parseFloat(v);
-                if (i in result) {
-                    result[i] = isNaN(value) ? value : ams.Utils.numberFormat(value);
-                }
-            }
-			delete result["geom"];
+        '_createAFInfoTable': function(result) {
+			let table = '<table class="popup-deter-table" style="width:100%">'
+						+ "<tr>"
+							+ "<th></th>"
+							+ "<th></th>"
+							+ "</tr>";
+			for(let k in result) {
+				let v = result[k];
+				if(k.includes("view_date")) {
+					v = this._formatDate(v);
+				}
+                table += "<tr>"
+                + "<td>" + k + "  </td>"
+                + "<td>" + (v != "null" ? v : " ") + "</td>"
+                + "</tr>";
+			}
+			table += "<tr><td colspan='2'><a target='_blank' href='"+ams.Config.AFMetadataURL+"'>Ver detalhes dos atributos</a></td></tr>";
+			table += "</table>"
+			return table;
+		},
+
+        '_formatDeterPopup': function(featureInfo) {
+            let result = {
+                "classname": "",
+                "view_date": "",
+                "areamunkm": 0,
+                "areatotalkm": 0,
+                "areauckm": 0,
+                "municipality": "",
+                "ncar_ids": null,
+                "uc": null,
+                "uf": "",
+                "car_imovel": null,
+                "continuo": "",
+                "deltad": 0,
+                "dominio": "",
+                "est_fund": "",
+                "ncar_ids": null,
+                "tp_dominio": "",
+                "velocidade": 0
+            };
+            this._updateResults(result, featureInfo);
 			return this._createDeterInfoTable(result);
 		},
 
@@ -163,7 +264,7 @@ ams.LeafletWms = {
 		'_formatListCAR': function(str) {
 			let ids = str.replaceAll(";","\n");
 			return "<div id='ids_car'>"+
-			"<textarea name='listcars' rows='2' cols='50' readonly "+
+			"<textarea name='listcars' rows='2' cols='40' readonly "+
 			"style='resize: none;max-width: fit-content;border:0;font-size:xx-small;'>"+
 			ids+"</textarea></div>";
 		}

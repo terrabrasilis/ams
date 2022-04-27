@@ -606,7 +606,7 @@ ams.App = {
 				alert("Encontrou um erro na solicitação ao servidor.");
 			}
 		}
-		if (jsConfig.click.classname != 'null'){
+		if (jsConfig.className != 'null'){
 			$("#loading_data_info").css('display','block');
 			getGraphics(jsConfig);
 		}
