@@ -23,7 +23,8 @@ class AreaProfile():
         self._start_date = params['startDate']
         self._temporal_unit = params['tempUnit']
         self._start_period_date = self.get_prev_date_temporal_unit(temporal_unit=self._temporal_unit)
-        self._name=params['click']['name'].replace('|',' ')
+        #self._name=params['click']['name'].replace('|',' ')
+        self._name=params['suName'].replace('|',' ')
         self._tableinfo = {
             'csAmz_150km': {'description': 'C&#233;lula 150x150 Km&#178',
                             'key' : 'id'},
