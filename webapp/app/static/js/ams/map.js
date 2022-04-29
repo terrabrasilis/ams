@@ -37,8 +37,8 @@ ams.Map = {
 
 	SpatialUnits: function(spatialUnits, suDefaultName) {
 		this._suNamesMap = {
-			"csAmz_150km": "C&#233;lulas 150x150 Km&#178;",
-			"csAmz_300km": "C&#233;lulas 300x300 Km&#178;",
+			"csAmz_150km": "C&#233;lulas 150x150 km&#178;",
+			"csAmz_300km": "C&#233;lulas 300x300 km&#178;",
 			"amz_states": "Estados",
 			"amz_municipalities": "Munic&#237;pios",
 		};
@@ -213,8 +213,8 @@ ams.Map = {
 								properties, propertyName){
 
 			let _viewToResolution = {
-				"csAmz_150km": "CELL_150Km",
-				"csAmz_300km": "CELL_300Km",
+				"csAmz_150km": "CELL_150km",
+				"csAmz_300km": "CELL_300km",
 				"amz_states": "ESTADO",
 				"amz_municipalities": "MUNIC",
 			};

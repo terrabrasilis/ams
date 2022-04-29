@@ -26,9 +26,9 @@ class AreaProfile():
         #self._name=params['click']['name'].replace('|',' ')
         self._name=params['suName'].replace('|',' ')
         self._tableinfo = {
-            'csAmz_150km': {'description': 'C&#233;lula 150x150 Km&#178',
+            'csAmz_150km': {'description': 'C&#233;lula 150x150 km&#178',
                             'key' : 'id'},
-            'csAmz_300km': {'description': 'C&#233;lula 300x300 Km&#178',
+            'csAmz_300km': {'description': 'C&#233;lula 300x300 km&#178',
                             'key' : 'id'},
             'amz_municipalities': {'description': 'Município',
                             'key' : 'nm_municip'},
