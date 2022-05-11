@@ -37,6 +37,7 @@ ams.Map = {
 
 	SpatialUnits: function(spatialUnits, suDefaultName) {
 		this._suNamesMap = {
+			"csAmz_25km": "C&#233;lulas 25x25 km&#178;",
 			"csAmz_150km": "C&#233;lulas 150x150 km&#178;",
 			"csAmz_300km": "C&#233;lulas 300x300 km&#178;",
 			"amz_states": "Estados",
