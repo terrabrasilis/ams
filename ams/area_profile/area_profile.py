@@ -45,7 +45,7 @@ class AreaProfile():
         self._classes = pd.DataFrame(
             {'code': pd.Series(['DS','DG', 'CS', 'MN', 'AF'], dtype='str'),
              'name': pd.Series(['Desmatamento','Degrada&#231;&#227;o',
-                      'Corte-Seletivo','Minera&#231;&#227;o', 'Focos de Queimadas'], dtype='str'),
+                      'Corte-Seletivo','Minera&#231;&#227;o', 'Focos'], dtype='str'),
              'color': pd.Series(['#0d0887', '#46039f', '#7201a8', '#9c179e'], dtype='str')})
         self._temporal_units = {
             "7d": "Agregado Semanal",
