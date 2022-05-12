@@ -1,6 +1,6 @@
 drop table if exists land_use;
 CREATE TABLE public.land_use (
-	id serial2 NOT NULL,
+	id smallserial NOT NULL,
 	"name" varchar NULL,
 	priority integer NULL,
 	CONSTRAINT land_use_pk PRIMARY KEY (id)

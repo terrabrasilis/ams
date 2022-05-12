@@ -339,11 +339,11 @@ COMMIT;
 -- This session is used for populate base data on model
 -- -------------------------------------------------------------------------
 
-INSERT INTO public.spatial_units(id, dataname, as_attribute_name, center_lat, center_lng) VALUES (1, 'csAmz_150km', 'id', -5.491382969006503, -58.467185764253415);
-INSERT INTO public.spatial_units(id, dataname, as_attribute_name, center_lat, center_lng) VALUES (2, 'csAmz_300km', 'id', -5.491382969006503, -57.792239759933764);
-INSERT INTO public.spatial_units(id, dataname, as_attribute_name, center_lat, center_lng) VALUES (3, 'amz_states', 'NM_ESTADO', -6.384962796500002, -58.97111531179317);
-INSERT INTO public.spatial_units(id, dataname, as_attribute_name, center_lat, center_lng) VALUES (4, 'amz_municipalities', 'nm_municip', -6.384962796413522, -58.97111531172743);
-INSERT INTO public.spatial_units(id, dataname, as_attribute_name, center_lat, center_lng) VALUES (6, 'csAmz_25km', 'id', -5.510617783522636, -58.397927203480116);
+INSERT INTO public.spatial_units(id, dataname, as_attribute_name, center_lat, center_lng) VALUES (1, 'csAmz_25km', 'id', -5.510617783522636, -58.397927203480116);
+INSERT INTO public.spatial_units(id, dataname, as_attribute_name, center_lat, center_lng) VALUES (2, 'csAmz_150km', 'id', -5.491382969006503, -58.467185764253415);
+INSERT INTO public.spatial_units(id, dataname, as_attribute_name, center_lat, center_lng) VALUES (3, 'csAmz_300km', 'id', -5.491382969006503, -57.792239759933764);
+INSERT INTO public.spatial_units(id, dataname, as_attribute_name, center_lat, center_lng) VALUES (4, 'amz_states', 'NM_ESTADO', -6.384962796500002, -58.97111531179317);
+INSERT INTO public.spatial_units(id, dataname, as_attribute_name, center_lat, center_lng) VALUES (5, 'amz_municipalities', 'nm_municip', -6.384962796413522, -58.97111531172743);
 
 INSERT INTO public.deter_class_group(id, name) VALUES (1, 'DS');
 INSERT INTO public.deter_class_group(id, name) VALUES (2, 'DG');
@@ -359,3 +359,208 @@ INSERT INTO public.deter_class(id, name, group_id) VALUES (5, 'CS_DESORDENADO', 
 INSERT INTO public.deter_class(id, name, group_id) VALUES (6, 'CS_GEOMETRICO', 3);
 INSERT INTO public.deter_class(id, name, group_id) VALUES (7, 'MINERACAO', 4);
 INSERT INTO public.deter_class(id, name, group_id) VALUES (8, 'FOCOS', 5);
+
+
+-- -------------------------------------------------------------------------
+-- This session is used for create functions used into GeoServer layers
+-- -------------------------------------------------------------------------
+
+-- FUNCTION: public.get_25km_area(character varying, date, date)
+
+-- DROP FUNCTION IF EXISTS public.get_25km_area(character varying, date, date);
+
+CREATE OR REPLACE FUNCTION public.get_25km_area(
+	clsname character varying,
+	startdate date,
+	enddate date)
+    RETURNS TABLE(suid bigint, name text, geometry geometry, classname character varying, date date, percentage double precision, area double precision, counts bigint) 
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+begin
+	return query
+SELECT 
+	su.suid AS suid, su.id AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
+FROM 
+	public."csAmz_25km" su
+LEFT JOIN (
+	SELECT 
+		rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total, SUM(rii.counts) AS counts
+	FROM 
+		public."csAmz_25km_risk_indicators" rii
+	WHERE
+		rii.classname = clsname
+		AND
+		rii.date > enddate
+		AND
+		rii.date <= startdate
+	GROUP BY 
+	 	rii.suid, rii.classname
+) AS ri
+ON 
+	su.suid = ri.suid;
+end;
+$BODY$;
+
+-- FUNCTION: public.get_150km_area(character varying, date, date)
+
+-- DROP FUNCTION IF EXISTS public.get_150km_area(character varying, date, date);
+
+CREATE OR REPLACE FUNCTION public.get_150km_area(
+	clsname character varying,
+	startdate date,
+	enddate date)
+    RETURNS TABLE(suid bigint, name text, geometry geometry, classname character varying, date date, percentage double precision, area double precision, counts bigint) 
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+begin
+	return query
+SELECT 
+	su.suid AS suid, su.id AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
+FROM 
+	public."csAmz_150km" su
+LEFT JOIN (
+	SELECT 
+		rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total, SUM(rii.counts) AS counts
+	FROM 
+		public."csAmz_150km_risk_indicators" rii
+	WHERE
+		rii.classname = clsname
+		AND
+		rii.date > enddate
+		AND
+		rii.date <= startdate
+	GROUP BY 
+	 	rii.suid, rii.classname
+) AS ri
+ON 
+	su.suid = ri.suid;
+end;
+$BODY$;
+
+-- FUNCTION: public.get_300km_area(character varying, date, date)
+
+-- DROP FUNCTION IF EXISTS public.get_300km_area(character varying, date, date);
+
+CREATE OR REPLACE FUNCTION public.get_300km_area(
+	clsname character varying,
+	startdate date,
+	enddate date)
+    RETURNS TABLE(suid bigint, name text, geometry geometry, classname character varying, date date, percentage double precision, area double precision, counts bigint) 
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+begin
+	return query
+SELECT 
+	su.suid AS suid, su.id AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
+FROM 
+	public."csAmz_300km" su
+LEFT JOIN (
+	SELECT 
+		rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total, SUM(rii.counts) AS counts
+	FROM 
+		public."csAmz_300km_risk_indicators" rii
+	WHERE
+		rii.classname = clsname
+		AND
+		rii.date > enddate
+		AND
+		rii.date <= startdate
+	GROUP BY 
+	 	rii.suid, rii.classname
+) AS ri
+ON 
+	su.suid = ri.suid;
+end;
+$BODY$;
+
+-- FUNCTION: public.get_municipalities_area(character varying, date, date)
+
+-- DROP FUNCTION IF EXISTS public.get_municipalities_area(character varying, date, date);
+
+CREATE OR REPLACE FUNCTION public.get_municipalities_area(
+	clsname character varying,
+	startdate date,
+	enddate date)
+    RETURNS TABLE(suid bigint, state text, name text, geometry geometry, classname character varying, date date, percentage double precision, area double precision, counts bigint) 
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+begin
+	return query
+SELECT
+	su.suid AS suid, su.uf AS state, su.nm_municip AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
+FROM 
+	public."amz_municipalities" su
+LEFT JOIN (
+	SELECT 
+		rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total , SUM(rii.counts) AS counts
+	FROM 
+		public."amz_municipalities_risk_indicators" rii
+	WHERE
+		rii.classname = clsname
+		AND
+		rii.date > enddate
+		AND
+		rii.date <= startdate		
+	GROUP BY 
+	 	rii.suid, rii.classname
+) AS ri
+ON 
+	su.suid = ri.suid;
+end;
+$BODY$;
+
+-- FUNCTION: public.get_states_area(character varying, date, date)
+
+-- DROP FUNCTION IF EXISTS public.get_states_area(character varying, date, date);
+
+CREATE OR REPLACE FUNCTION public.get_states_area(
+	clsname character varying,
+	startdate date,
+	enddate date)
+    RETURNS TABLE(suid bigint, name text, geometry geometry, classname character varying, date date, percentage double precision, area double precision, counts bigint) 
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+begin
+	return query
+SELECT 
+	su.suid AS suid, su."NM_ESTADO" AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
+FROM 
+	public."amz_states" su
+LEFT JOIN (
+	SELECT 
+		rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total, SUM(rii.counts) AS counts
+	FROM 
+		public."amz_states_risk_indicators" rii
+	WHERE
+		rii.classname = clsname
+		AND
+		rii.date > enddate
+		AND
+		rii.date <= startdate		
+	GROUP BY 
+	 	rii.suid, rii.classname
+) AS ri
+ON 
+	su.suid = ri.suid;
+end;
+$BODY$;
