@@ -23,13 +23,16 @@ ams.SLDStyles = {
 				this.colorRangeP = ["#f0f0f0", "#ff3838"];
 				this.colorDomainN = [this.minValue, 0];
 				this.colorDomainP = [0, this.maxValue];
-				this._numberOfTicksN = 5;
-				this._numberOfTicksP = 6;  
+				let tn=Math.floor( Math.abs(this.minValue)/2);
+				this._numberOfTicksN = ( (tn<5)?(tn):(5) );//5;
+				let tp=Math.ceil(this.maxValue/2);
+				this._numberOfTicksP = ( (tp<6)?(tp):(5) );//6;
 			}
 			else {
 				this.colorRange = ["#f0f0f0", "#ff3838"];
 				this.colorDomain = [this.minValue, this.maxValue];
-				this._numberOfTicks = 10; 
+				let tt=Math.ceil(this.maxValue);
+				this._numberOfTicks = ( (tt<10)?(tt):(10) );//10; 
 			}
 		}
 
@@ -40,7 +43,7 @@ ams.SLDStyles = {
 		this.minValue = minValue;
 		this.colorRange;
 		this.colorDomain;
-		this._unit = (propertyName=="area")?("km&#178;"):("");
+		this._unit = (propertyName=="area")?("km&#178;"):("focos");
 		this._propertyName = propertyName;
 		this._numberOfTicks = 0;
 		this._numberOfTicksN = 0;
@@ -61,6 +64,7 @@ ams.SLDStyles = {
 		}
 
 		this._formatValue = function(v, vMaxLength) {
+			v=(v=="-0"?"0":v);
 			let vs = v.toString();
 			let prefix = "";
 			if(vs.includes(".")) {
@@ -75,11 +79,9 @@ ams.SLDStyles = {
 
 		this.createTitle = function(v1, v2, vMaxLength) {
 			return  '<Title>' 
-						+ this._formatValue(v1, vMaxLength) 
-						+ ' ' + this._unit 
-						+ '  ' 
-						+ this._formatValue(v2, vMaxLength)  
-						+ ' ' + this._unit 
+						+ 'entre ' + this._formatValue(v1, vMaxLength)
+						+ ' e ' + this._formatValue(v2, vMaxLength)  
+						+ (this._unit==''?'':' ('+this._unit+')')
 				+ ' </Title>';
 		}
 
@@ -88,13 +90,13 @@ ams.SLDStyles = {
 			return '<Rule>'
 					+ this.createTitle(v1, v2, vMaxLength)
 					+ '<ogc:Filter>'
-					+ 	'<ogc:PropertyIsLessThan>'
+					+ 	'<ogc:PropertyIsLessThanOrEqualTo>'
 					+ 	'<ogc:PropertyName>' + this._propertyName + '</ogc:PropertyName>'
 					+ 	'<ogc:Literal>' + v2 + '</ogc:Literal>'
-					+ 	'</ogc:PropertyIsLessThan>'
+					+ 	'</ogc:PropertyIsLessThanOrEqualTo>'
 					+ '</ogc:Filter>'
 					+ '<PolygonSymbolizer>' + fill + this.stroke + '</PolygonSymbolizer>'
-				+ '</Rule>'; 			
+				+ '</Rule>';
 		}
 
 		this.createLastRule = function(v1, v2, color, vMaxLength) {
@@ -117,14 +119,14 @@ ams.SLDStyles = {
 					+ this.createTitle(v1, v2, vMaxLength)
 					+ '<ogc:Filter>'
 					+	'<ogc:And>'
-					+ 	'<ogc:PropertyIsGreaterThanOrEqualTo>'
+					+ 	'<ogc:PropertyIsGreaterThan>'
 					+ 	'<ogc:PropertyName>' + this._propertyName + '</ogc:PropertyName>'
 					+ 	'<ogc:Literal>' + v1 + '</ogc:Literal>'
-					+ 	'</ogc:PropertyIsGreaterThanOrEqualTo>'
-					+ 	'<ogc:PropertyIsLessThan>'
+					+ 	'</ogc:PropertyIsGreaterThan>'
+					+ 	'<ogc:PropertyIsLessThanOrEqualTo>'
 					+ 	'<ogc:PropertyName>' + this._propertyName + '</ogc:PropertyName>'
 					+ 	'<ogc:Literal>' + v2 + '</ogc:Literal>'
-					+ 	'</ogc:PropertyIsLessThan>'
+					+ 	'</ogc:PropertyIsLessThanOrEqualTo>'
 					+	'</ogc:And>'
 					+ '</ogc:Filter>'
 					+ '<PolygonSymbolizer>' + fill + this.stroke + '</PolygonSymbolizer>'
@@ -202,7 +204,7 @@ ams.SLDStyles = {
 			if(!isPriorization) {
 				if(ticks.length >= 2) {			
 					let vMaxLength = this.getMaxLength(ticks);
-					let fixedValue = 1;
+					let fixedValue = ( (this._propertyName=='area')?(1):(0) );
 					firstRule = this.createFirstRule(ticks[0].toFixed(fixedValue), 
 												ticks[1].toFixed(fixedValue), 
 												legend(ticks[0]), vMaxLength)
