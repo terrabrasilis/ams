@@ -1,26 +1,9 @@
 -- -------------------------------------------------------------------------
--- To create the database, run it in the separate SQL Query window
--- -------------------------------------------------------------------------
-
--- Database: AMST
-
--- DROP DATABASE IF EXISTS "AMST";
-
-CREATE DATABASE "AMST"
-    WITH 
-    OWNER = postgres
-    ENCODING = 'UTF8'
-    LC_COLLATE = 'en_US.utf8'
-    LC_CTYPE = 'en_US.utf8'
-    TABLESPACE = pg_default
-    CONNECTION LIMIT = -1;
-
-COMMENT ON DATABASE "AMST" IS 'Test new scripts';
-
--- -------------------------------------------------------------------------
 -- To create the database model, run it in the separate SQL Query window
--- connected into AMST database already created.
+-- connected into AMS database already created.
 -- -------------------------------------------------------------------------
+
+BEGIN;
 
 -- -------------------------------------------------------------------------
 -- Required database extensions
@@ -350,11 +333,13 @@ CREATE TABLE IF NOT EXISTS public.land_use (
 COMMENT ON TABLE public.land_use
   IS 'This table is used to map the land use geotiff pixel values and names used to display in the App.';
 
+-- End of model creation
 COMMIT;
 
 -- -------------------------------------------------------------------------
 -- This session is used for populate base data on model
 -- -------------------------------------------------------------------------
+BEGIN;
 
 INSERT INTO public.spatial_units(id, dataname, as_attribute_name, center_lat, center_lng) VALUES (1, 'csAmz_25km', 'id', -5.510617783522636, -58.397927203480116);
 INSERT INTO public.spatial_units(id, dataname, as_attribute_name, center_lat, center_lng) VALUES (2, 'csAmz_150km', 'id', -5.491382969006503, -58.467185764253415);
@@ -386,7 +371,8 @@ INSERT INTO land_use values(5,'TI',0);
 INSERT INTO land_use values(6,'UC',1);
 INSERT INTO land_use values(12,'Indefinida',6);
 
-
+-- End of insert metadata
+COMMIT;
 -- -------------------------------------------------------------------------
 -- This session is used for create functions used into GeoServer layers
 -- -------------------------------------------------------------------------
