@@ -1,3 +1,4 @@
+import datetime
 from psycopg2 import connect
 
 class DeterDaily:
@@ -17,10 +18,14 @@ class DeterDaily:
     Otherwise, you must provide this SQL View before running historical statistics.
     See the README.md file for instructions.
 
+    @param {boolean} alldata, Default is False, if True, all data of DETER will be processed, historical and current.
+    Otherwise, only current is processed.
+
     """
 
-    def __init__(self, db_url: str):
+    def __init__(self, db_url: str, alldata=False):
         self._conn = connect(db_url)
+        self._alldata = alldata
         # ignore classes that are not related to DETER data.
         # For more than one, use single quotes and comma like this: "'AF','DS','EX'"
         self.ignore_classes="'AF'" # AF=Active Fires by now.
@@ -96,31 +101,19 @@ class DeterDaily:
             AND deter.{table}.areamunkm=ibama.areamunkm
             AND (ibama.ncar_ids IS NOT NULL OR ibama.est_fund IS NOT NULL OR ibama.dominio IS NOT NULL);
             """
-            try:
-                cur.execute(truncate)
-                cur.execute(insert)
-                cur.execute(update)
-                self._conn.commit()
-                print(f'DETER alerts for {table} have been updated.')
-            except Exception:
-                self._conn.rollback()
-                print(f'DETER alerts for {table} were not updated.')
-                raise
+            cur.execute(truncate)
+            cur.execute(insert)
+            cur.execute(update)
+            print(f'DETER alerts for {table} have been updated.')
 
     def drop_tmp_table(self):
 
         drop="""DROP TABLE IF EXISTS deter.tmp_data"""
         cur = self._conn.cursor()
-        try:
-            cur.execute(drop)
-            print(f'The deter temp table has been removed.')
-            self._conn.commit()
-        except Exception:
-            self._conn.rollback()
-            print(f'The deter temp table were not removed.')
-            raise
+        cur.execute(drop)
+        print(f'The deter temp table has been removed.')
 
-    def create_tmp_table(self, alldata=False):
+    def create_tmp_table(self):
         """
         Create a temporary data table with DETER alerts to ensure gist index creation.
 
@@ -128,22 +121,19 @@ class DeterDaily:
          - Existence of "public.deter_history" SQL View in the database;
          - Existence of "deter" Schema in database;
          - Existence of table "deter.deter_auth" filled in the database (call the update_current_tables before that function);
-        
-        @param {boolean} alldata, if True, all data of DETER will be processed, historical and current.
-        Otherwise, only current is processed.
         """
         union=""
-        if(alldata):
+        if(self._alldata):
             union="""
             UNION
-            SELECT classname, date, areamunkm, geom
+            SELECT gid||'_h' as gid, classname, date, areamunkm, geom
             FROM public.deter_history
             """
         create=f"""
         CREATE TABLE IF NOT EXISTS deter.tmp_data AS
         SELECT tb.classname, tb.date, tb.areamunkm, tb.geom
         FROM (
-            SELECT classname, date, areamunkm, geom
+            SELECT gid, classname, date, areamunkm, geom
             FROM deter.deter_auth
             {union}
         ) as tb
@@ -154,17 +144,11 @@ class DeterDaily:
         (geom)
         """
         cur = self._conn.cursor()
-        try:
-            cur.execute(create)
-            cur.execute(index)
-            print('The DETER temp table has been created.')
-            self._conn.commit()
-        except Exception:
-            self._conn.rollback()
-            print(f'The DETER temp table were not created.')
-            raise
+        cur.execute(create)
+        cur.execute(index)
+        print('The DETER temp table has been created.')
 
-    def statistics_processing(self, alldata=False):
+    def statistics_processing(self):
         """
         Processing of statistics for DETER alerts crossing with tables of spatial units
         registered in the metadata model.
@@ -172,16 +156,13 @@ class DeterDaily:
         "deter_class_group" where spatial units and DETER classes are registered, so it is expected
         that the information represents the names and current classes of the tables.
         See the README.md file for instructions.
-
-        @param {boolean} alldata, if True, all data of DETER will be processed, historical and current.
-        Otherwise, only current is processed.
         """
         # create spatial unit tables if not exists
         self.create_spatial_risk_tables()
         # update the current DETER data table
         self.update_current_tables()
         # create the DETER temporary data table
-        self.create_tmp_table(alldata)
+        self.create_tmp_table()
         
         cur = self._conn.cursor()
         for spatial_unit, id in self._spatial_units.items():
@@ -191,11 +172,10 @@ class DeterDaily:
             DELETE FROM public."{spatial_unit}_risk_indicators"
             WHERE classname NOT IN ({self.ignore_classes})
             """
-            if(not alldata):
+            if(not self._alldata):
                 # remove statistics only for current DETER data
                 delete=f"""{delete} AND date>=(SELECT MIN(date) FROM deter.deter_auth)"""
 
-            try:
                 cur.execute(delete)
                 print(f'The {spatial_unit} statistics has been deleted.')
 
@@ -217,16 +197,9 @@ class DeterDaily:
                     """
                     cur.execute(insert)
                     print(f'The {classname} statistic has been updated.')
-                self._conn.commit()
-            except Exception:
-                self._conn.rollback()
-                print(f'The {spatial_unit} statistic were not updated.')
-                raise
-            finally:
-                print(f'The {spatial_unit} statistic was end.')
-        
+
         # drop the DETER temporary data table
-        #self.drop_tmp_table()
+        self.drop_tmp_table()
 
 
     def create_spatial_risk_tables(self):
@@ -254,24 +227,24 @@ class DeterDaily:
             )
             TABLESPACE pg_default
             """
-            try:
-                cur.execute(create)
-                print(f'The {spatial_unit}_risk_indicators table has been created.')
-                self._conn.commit()
-            except Exception:
-                self._conn.rollback()
-                print(f'The {spatial_unit}_risk_indicators table were not created.')
-                raise
-            finally:
-                print(f'The creation of the {spatial_unit}_risk_indicators table has been completed.')
+            cur.execute(create)
+            print(f'The {spatial_unit}_risk_indicators table has been created.')
 
-    def execute(self, alldata=False):
-        self.read_spatial_units()
-        self.read_deter_classes()
-        self.statistics_processing(alldata)
-
+    def execute(self):
+        try:
+            print("Starting at: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
+            self.read_spatial_units()
+            self.read_deter_classes()
+            self.statistics_processing()
+            print("Finished in: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
+            self._conn.commit()
+        except Exception as e:
+            self._conn.rollback()
+            print('Error on statistics generation for Active Fires')
+            print(e.__str__())
+            raise e
 
 # local test
-db='postgresql://postgres:postgres@192.168.15.49:5444/AMST'
-dd = DeterDaily(db_url=db)
-dd.execute(True)
+# db='postgresql://postgres:postgres@192.168.15.49:5444/AMST'
+# dd = DeterDaily(db_url=db, alldata=False)
+# dd.execute()

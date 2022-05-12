@@ -333,6 +333,23 @@ CREATE OR REPLACE VIEW public.raw_active_fires
     remote_data.geom
    FROM dblink('hostaddr=<IP or hostname> port=5432 dbname=<DB_NAME> user=postgres password=postgres'::text, 'SELECT id, data as view_date, satelite, estado, municipio, diasemchuva, precipitacao, riscofogo, bioma, geom FROM public.focos_aqua_referencia'::text) remote_data(id integer, view_date date, satelite character varying(254), estado character varying(254), municipio character varying(254), diasemchuva integer, precipitacao double precision, riscofogo double precision, bioma character varying(254), geom geometry(Point,4674));
 
+-- -------------------------------------------------------------------------
+-- This session is used for the Land Use model
+-- -------------------------------------------------------------------------
+
+-- Table: public.land_use
+
+-- DROP TABLE IF EXISTS public.land_use;
+
+CREATE TABLE IF NOT EXISTS public.land_use (
+	id integer NOT NULL,
+	"name" varchar NULL,
+	priority integer NULL,
+	CONSTRAINT land_use_pk PRIMARY KEY (id)
+);
+COMMENT ON TABLE public.land_use
+  IS 'This table is used to map the land use geotiff pixel values and names used to display in the App.';
+
 COMMIT;
 
 -- -------------------------------------------------------------------------
@@ -359,6 +376,15 @@ INSERT INTO public.deter_class(id, name, group_id) VALUES (5, 'CS_DESORDENADO', 
 INSERT INTO public.deter_class(id, name, group_id) VALUES (6, 'CS_GEOMETRICO', 3);
 INSERT INTO public.deter_class(id, name, group_id) VALUES (7, 'MINERACAO', 4);
 INSERT INTO public.deter_class(id, name, group_id) VALUES (8, 'FOCOS', 5);
+
+-- Attention: id values are mapped to "land use" pixel values from the Geotiff file.
+INSERT INTO land_use values(1,'APA',3);
+INSERT INTO land_use values(2,'Assentamentos',2);
+INSERT INTO land_use values(3,'CAR',4);
+INSERT INTO land_use values(4,'FPND',5);
+INSERT INTO land_use values(5,'TI',0);
+INSERT INTO land_use values(6,'UC',1);
+INSERT INTO land_use values(12,'Indefinida',6);
 
 
 -- -------------------------------------------------------------------------
