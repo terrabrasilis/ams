@@ -1,6 +1,7 @@
 -- -------------------------------------------------------------------------
 -- To create the database model, run it in the separate SQL Query window
 -- connected into AMS database already created.
+-- WARNING: Change the dblink properties before run
 -- -------------------------------------------------------------------------
 
 BEGIN;
@@ -12,12 +13,13 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE EXTENSION IF NOT EXISTS dblink;
 
 -- -------------------------------------------------------------------------
--- This session is used for the DETER model
+-- This session is used for pointing to DETER and Active Fires databases using SQL Views via dblink
 -- -------------------------------------------------------------------------
 
 -- WARNING: Change the dblink properties to pointing to real DETER database.
+-- WARNING: Change the dblink properties to pointing to real Active Fires database.
 
--- Find this line and change each one
+-- Find this line and properly change each one
 -- hostaddr=<IP or hostname> port=5432 dbname=<DB_NAME> user=postgres password=postgres'
 
 -- -------------------------------------------------------------------------
@@ -128,6 +130,38 @@ CREATE OR REPLACE VIEW public.deter_aggregated_ibama
    FROM dblink('hostaddr=<IP or hostname> port=5432 dbname=<DB_NAME> user=postgres password=postgres'::text, 'SELECT origin_gid, view_date as date, areamunkm, classname, ncar_ids, car_imovel, continuo, velocidade, deltad, est_fund, dominio, tp_dominio FROM deter_agregate.deter WHERE areatotalkm>=0.01 AND uf<>''MS'' AND source=''D'''::text) remote_data(origin_gid integer, date date, areamunkm double precision, classname character varying(254), ncar_ids integer, car_imovel character varying(2048), continuo integer, velocidade numeric, deltad integer, est_fund character varying(254), dominio character varying(254), tp_dominio character varying(254));
 
 
+-- View: public.deter_publish_date
+
+-- DROP VIEW public.deter_publish_date;
+
+CREATE OR REPLACE VIEW public.deter_publish_date
+ AS
+ SELECT remote_data.date
+   FROM dblink('hostaddr=<IP or hostname> port=5432 dbname=<DB_NAME> user=postgres password=postgres'::text, 'SELECT date FROM public.deter_publish_date'::text) remote_data(date date);
+
+
+-- View: public.raw_active_fires
+
+-- DROP VIEW public.raw_active_fires;
+
+CREATE OR REPLACE VIEW public.raw_active_fires
+ AS
+ SELECT remote_data.id,
+    remote_data.view_date,
+    remote_data.satelite,
+    remote_data.estado,
+    remote_data.municipio,
+    remote_data.diasemchuva,
+    remote_data.precipitacao,
+    remote_data.riscofogo,
+    remote_data.bioma,
+    remote_data.geom
+   FROM dblink('hostaddr=<IP or hostname> port=5432 dbname=<DB_NAME> user=postgres password=postgres'::text, 'SELECT id, data as view_date, satelite, estado, municipio, diasemchuva, precipitacao, riscofogo, bioma, geom FROM public.focos_aqua_referencia'::text) remote_data(id integer, view_date date, satelite character varying(254), estado character varying(254), municipio character varying(254), diasemchuva integer, precipitacao double precision, riscofogo double precision, bioma character varying(254), geom geometry(Point,4674));
+
+
+-- -------------------------------------------------------------------------
+-- This session is used for create tables of AMS model
+-- -------------------------------------------------------------------------
 
 -- Table: public.spatial_units
 
@@ -258,12 +292,6 @@ TABLESPACE pg_default;
 -- This session is used for the Active Fires model
 -- -------------------------------------------------------------------------
 
--- WARNING: Change the dblink properties to pointing to real Active Fires database.
-
--- Find this line and change each one
--- hostaddr=<IP or hostname> port=5432 dbname=<DB_NAME> user=postgres password=postgres'
-
--- -------------------------------------------------------------------------
 -- SCHEMA: fires
 
 -- DROP SCHEMA IF EXISTS fires ;
@@ -297,24 +325,6 @@ CREATE INDEX IF NOT EXISTS idx_fires_active_fires_geom
     ON fires.active_fires USING gist
     (geom)
     TABLESPACE pg_default;
-
--- View: public.raw_active_fires
-
--- DROP VIEW public.raw_active_fires;
-
-CREATE OR REPLACE VIEW public.raw_active_fires
- AS
- SELECT remote_data.id,
-    remote_data.view_date,
-    remote_data.satelite,
-    remote_data.estado,
-    remote_data.municipio,
-    remote_data.diasemchuva,
-    remote_data.precipitacao,
-    remote_data.riscofogo,
-    remote_data.bioma,
-    remote_data.geom
-   FROM dblink('hostaddr=<IP or hostname> port=5432 dbname=<DB_NAME> user=postgres password=postgres'::text, 'SELECT id, data as view_date, satelite, estado, municipio, diasemchuva, precipitacao, riscofogo, bioma, geom FROM public.focos_aqua_referencia'::text) remote_data(id integer, view_date date, satelite character varying(254), estado character varying(254), municipio character varying(254), diasemchuva integer, precipitacao double precision, riscofogo double precision, bioma character varying(254), geom geometry(Point,4674));
 
 -- -------------------------------------------------------------------------
 -- This session is used for the Land Use model
