@@ -122,6 +122,9 @@ class DeterDaily:
          - Existence of "deter" Schema in database;
          - Existence of table "deter.deter_auth" filled in the database (call the update_current_tables before that function);
         """
+        # drop the DETER temporary data table if exists
+        self.drop_tmp_table()
+
         union=""
         if(self._alldata):
             union="""
@@ -131,7 +134,7 @@ class DeterDaily:
             """
         create=f"""
         CREATE TABLE IF NOT EXISTS deter.tmp_data AS
-        SELECT tb.classname, tb.date, tb.areamunkm, tb.geom
+        SELECT tb.gid, tb.classname, tb.date, tb.areamunkm, tb.geom
         FROM (
             SELECT gid, classname, date, areamunkm, geom
             FROM deter.deter_auth
@@ -197,10 +200,6 @@ class DeterDaily:
                     """
                     cur.execute(insert)
                     print(f'The {classname} statistic has been updated.')
-
-        # drop the DETER temporary data table
-        self.drop_tmp_table()
-
 
     def create_spatial_risk_tables(self):
         """
