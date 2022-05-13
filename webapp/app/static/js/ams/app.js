@@ -43,6 +43,9 @@ ams.App = {
 		});
 		this._map=map;
 
+		// improve control positions for Leaflet
+		ams.LeafletControlPosition.addNewPositions(map);
+
 		map.setView([spatialUnits.default.center_lat, spatialUnits.default.center_lng], 5);
 
 		var osmLayer = new L.TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -169,7 +172,10 @@ ams.App = {
 			useLatLngOrder: false,
 			labelTemplateLat: "Latitude: {y}",
 			labelTemplateLng: "Longitude: {x}"
-		}).addTo(map);				
+		}).addTo(map);
+
+		// Adding period control over map
+		ams.PeriodHandler.init(map, currStartdate);
 
 		(function addPriorizationControl() {
 			$('<div class="leaflet-control-layers-group" id="prioritization-control-layers-group">'
@@ -181,18 +187,18 @@ ams.App = {
 				+ '</label></div>').insertAfter("#leaflet-control-layers-group-1");	
 		})();	
 
-		(function addDateControl() {
-			$('<div class="leaflet-control-layers-group" id="datepicker-control-layers-group">'
-			    + '<label class="leaflet-control-layers-group-label">'
-				+ '<span class="leaflet-control-layers-group-name">DADOS DETER</span></label>'
-				+ '<label class="leaflet-control-layers-group-name">'
-				+ '<span class="leaflet-control-layers-group-name">Exibir camada DETER </span>'
-				+ '<input type="checkbox" id="deter-checkbox" title="Ligar/desligar camada DETER." checked /></label>'
-				+ '<label class="leaflet-control-layers-group-name">'
-				+ '<span class="leaflet-control-layers-group-name">Usar DETER at&#233; </span>'
-				+ '<input type="text" id="datepicker" size="7" /></label>'
-				+ '</div>').insertAfter("#leaflet-control-layers-group-3");
-		})();	
+		// (function addDateControl() {
+		// 	$('<div class="leaflet-control-layers-group" id="datepicker-control-layers-group">'
+		// 	    + '<label class="leaflet-control-layers-group-label">'
+		// 		+ '<span class="leaflet-control-layers-group-name">DADOS DETER</span></label>'
+		// 		+ '<label class="leaflet-control-layers-group-name">'
+		// 		+ '<span class="leaflet-control-layers-group-name">Exibir camada DETER </span>'
+		// 		+ '<input type="checkbox" id="deter-checkbox" title="Ligar/desligar camada DETER." checked /></label>'
+		// 		+ '<label class="leaflet-control-layers-group-name">'
+		// 		+ '<span class="leaflet-control-layers-group-name">Usar DETER at&#233; </span>'
+		// 		+ '<input type="text" id="datepicker" size="7" /></label>'
+		// 		+ '</div>').insertAfter("#leaflet-control-layers-group-3");
+		// })();	
 		
 		(function addFileDownloadControl() {
 			$('<div class="leaflet-control-layers-group" id="shapezip-control-layers-group">'
@@ -206,7 +212,8 @@ ams.App = {
 				+ '&nbsp;&nbsp;'
 				+ '<button class="btn btn-primary-p btn-success" id="shapezip-download-button"> Shapefile </button>'
 				+ '</label>'
-				+ '</div>').insertAfter("#datepicker-control-layers-group");
+				+ '</div>').insertAfter("#leaflet-control-layers-group-3");
+				//insertAfter("#datepicker-control-layers-group");
 		})();
 
 		map.on('changectrl', function(e) {
@@ -283,35 +290,35 @@ ams.App = {
 			);
 		});
 
-		var defaultDate = new Date(currStartdate + "T00:00:00")
-		var datepicker = new ams.datepicker.Datepicker();
-		$.datepicker.regional['br'] = datepicker.regional("br");
-		$.datepicker.setDefaults($.datepicker.regional["br"]);
+		// var defaultDate = new Date(currStartdate + "T00:00:00")
+		// var datepicker = new ams.datepicker.Datepicker();
+		// $.datepicker.regional['br'] = datepicker.regional("br");
+		// $.datepicker.setDefaults($.datepicker.regional["br"]);
 
-		$('#datepicker').datepicker({
-			showButtonPanel: true,
-			defaultDate: new Date(currStartdate + "T00:00:00"),
-			minDate: new Date("2017-01-01T00:00:00"),
-			maxDate: defaultDate,
-			changeMonth: true,
-			changeYear: true,	
-			todayBtn: "linked",	
-			onSelect: function() {
-				// changes the reference date used to the max date for displayed data
-				let selected = $(this).val().split("/");
-				let date = selected[2] + "-" + selected[1] + "-" + selected[0];
-				ams.App._dateControl.setPeriod(date, ams.App._currentTemporalAggregate);
-				ams.App._suViewParams.updateDates(ams.App._dateControl);
-				ams.App._priorViewParams.updateDates(ams.App._dateControl);
-				ams.App._updateSpatialUnitLayer();
-				ams.App._updateReferenceLayer();
-			},
-			beforeShow: function() {
-				setTimeout(function() {
-					$('.ui-datepicker').css('z-index', 99999999999999);
-				}, 0);
-			}
-		}).val(defaultDate.toLocaleDateString("pt-BR"));		
+		// $('#datepicker').datepicker({
+		// 	showButtonPanel: true,
+		// 	defaultDate: new Date(currStartdate + "T00:00:00"),
+		// 	minDate: new Date("2017-01-01T00:00:00"),
+		// 	maxDate: defaultDate,
+		// 	changeMonth: true,
+		// 	changeYear: true,	
+		// 	todayBtn: "linked",	
+		// 	onSelect: function() {
+		// 		// changes the reference date used to the max date for displayed data
+		// 		let selected = $(this).val().split("/");
+		// 		let date = selected[2] + "-" + selected[1] + "-" + selected[0];
+		// 		ams.App._dateControl.setPeriod(date, ams.App._currentTemporalAggregate);
+		// 		ams.App._suViewParams.updateDates(ams.App._dateControl);
+		// 		ams.App._priorViewParams.updateDates(ams.App._dateControl);
+		// 		ams.App._updateSpatialUnitLayer();
+		// 		ams.App._updateReferenceLayer();
+		// 	},
+		// 	beforeShow: function() {
+		// 		setTimeout(function() {
+		// 			$('.ui-datepicker').css('z-index', 99999999999999);
+		// 		}, 0);
+		// 	}
+		// }).val(defaultDate.toLocaleDateString("pt-BR"));
 
 		function updatePriorization() {
 			let limit = document.getElementById("prioritization-input").value;

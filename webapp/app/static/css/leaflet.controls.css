@@ -1,0 +1,30 @@
+.leaflet-center {
+    left: 50%;
+    transform: translate(-50%, 0%);
+}
+
+.leaflet-middle {
+  top: 50%;
+  position: absolute;
+  z-index: 1000;
+  pointer-events: none;
+  transform: translate(0%, -50%);
+}
+
+.leaflet-center.leaflet-middle {
+  transform: translate(-50%, -50%);
+}
+
+.leaflet-period-control{
+  min-width: 280px;
+  min-height: 35px;
+}
+
+.leaflet-period-control-form{
+  background-color: #00796b;
+  padding: 4px;
+  color: aliceblue;
+  border-radius: 6px;
+  border: 2px solid #d9ed3d;
+  text-align: center;
+}
