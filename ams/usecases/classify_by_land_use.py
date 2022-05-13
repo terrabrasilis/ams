@@ -7,7 +7,7 @@ from shapely.geometry import mapping
 from rasterio.mask import mask
 import numpy as np
 from alive_progress import alive_bar
-import datetime
+from datetime import datetime
 
 class ClassifyByLandUse:
     """ClassifyByLandUse"""
