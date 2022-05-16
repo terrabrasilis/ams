@@ -15,16 +15,43 @@
   transform: translate(-50%, -50%);
 }
 
-.leaflet-period-control{
-  min-width: 280px;
-  min-height: 35px;
-}
-
 .leaflet-period-control-form{
   background-color: #00796b;
-  padding: 4px;
-  color: aliceblue;
+  padding: 4px 0px 4px 6px;
+  color: white;
   border-radius: 6px;
   border: 2px solid #d9ed3d;
   text-align: center;
+  display: flex;
+  justify-content: space-between;
+}
+.period-control{
+  font-weight: bold;
+  margin-bottom: 0.1rem;
+  margin-right: 0.2rem;
+  font-size: large;
+}
+.icon-period-control{
+  font-weight: bold !important;
+  margin-right: 0.2rem;
+  font-size: 28px !important;
+  background-color: #d8f9b7;
+  color: #00796b;
+  border-radius: 15px;
+  height: fit-content;
+  margin-top: 4px;
+  cursor: pointer;
+}
+#datepicker-end{
+  background-color: #dbdbdb;
+  color: gray;
+}
+/** https://stackoverflow.com/a/4407335/6710366 */
+.noselect {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }

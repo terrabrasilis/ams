@@ -19,12 +19,20 @@ L.Control.PeriodHandler = L.Control.extend({
         let container = L.DomUtil.create('div', className);
 
         let form = L.DomUtil.create('div', className+'-form');
-        form.innerHTML='<label class="leaflet-control-layers-group-name">'
-        + '<span class="leaflet-control-layers-group-name"> de </span>'
-        + '<input type="text" id="datepicker-end" size="7" disabled/></label>'
-        + '<label class="leaflet-control-layers-group-name">'
-        + '<span class="leaflet-control-layers-group-name"> até </span>'
-        + '<input type="text" id="datepicker-start" size="7" /></label>';
+        form.innerHTML='<i onclick="ams.PeriodHandler.previousPeriod()" '
+        + 'title="Período anterior" '
+        + 'class="material-icons icon-period-control noselect">chevron_left</i>'
+        + '<label class="period-control">'
+        + '<span class="period-control"> de </span>'
+        + '<input type="text" id="datepicker-end" size="7" disabled'
+        + 'title="Data inicial do período"/></label>'
+        + '<label class="period-control">'
+        + '<span class="period-control"> até </span>'
+        + '<input type="text" id="datepicker-start" size="7" '
+        + 'title="Data final do período - clique para alterar"/></label>'
+        + '<i onclick="ams.PeriodHandler.nextPeriod()" '
+        + 'title="Próximo período" id="next-period" style="visibility:hidden" '
+        + 'class="material-icons icon-period-control noselect">chevron_right</i>';
 
         container.appendChild(form);
 
@@ -68,13 +76,7 @@ L.Control.PeriodHandler = L.Control.extend({
 				// changes the reference date used to the max date for displayed data
 				let selected = $(this).val().split("/");
 				let date = selected[2] + "-" + selected[1] + "-" + selected[0];
-				ams.App._dateControl.setPeriod(date, ams.App._currentTemporalAggregate);
-				ams.App._suViewParams.updateDates(ams.App._dateControl);
-				ams.App._priorViewParams.updateDates(ams.App._dateControl);
-				ams.App._updateSpatialUnitLayer();
-				ams.App._updateReferenceLayer();
-                let enddate= new Date(ams.App._dateControl.enddate + "T00:00:00");
-                $('#datepicker-end').datepicker().val(enddate.toLocaleDateString("pt-BR"));
+                ams.PeriodHandler.changeDate(date);
 			},
 			beforeShow: function() {
 				setTimeout(function() {
@@ -83,7 +85,8 @@ L.Control.PeriodHandler = L.Control.extend({
 			}
 		}).val(defaultDate.toLocaleDateString("pt-BR"));
 
-        let enddate= new Date(ams.App._dateControl.enddate + "T00:00:00");
+        let enddate=new Date(ams.App._dateControl.enddate + "T00:00:00");
+        enddate.setUTCDate(enddate.getUTCDate()+1);
 
         $('#datepicker-end').datepicker({
 			showButtonPanel: true,
