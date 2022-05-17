@@ -118,7 +118,7 @@ class DeterDaily:
         Create a temporary data table with DETER alerts to ensure gist index creation.
 
         Prerequisites (see database requirements section in README.md):
-         - Existence of "public.deter_history" SQL View in the database;
+         - Existence of "deter.deter_history" table in the database (if alldata is True);
          - Existence of "deter" Schema in database;
          - Existence of table "deter.deter_auth" filled in the database (call the update_current_tables before that function);
         """
@@ -130,7 +130,7 @@ class DeterDaily:
             union="""
             UNION
             SELECT gid||'_h' as gid, classname, date, areamunkm, geom
-            FROM public.deter_history
+            FROM deter.deter_history
             """
         create=f"""
         CREATE TABLE IF NOT EXISTS deter.tmp_data AS
@@ -179,27 +179,27 @@ class DeterDaily:
                 # remove statistics only for current DETER data
                 delete=f"""{delete} AND date>=(SELECT MIN(date) FROM deter.deter_auth)"""
 
-                cur.execute(delete)
-                print(f'The {spatial_unit} statistics has been deleted.')
+            cur.execute(delete)
+            print(f'The {spatial_unit} statistics has been deleted.')
 
-                # for each classname, processing the statistics
-                for classname, classgroup in self._deter_classes.items():
-                    
-                    insert=f"""
-                    WITH results AS (
-                        SELECT dt.date as date, su.suid, SUM(dt.areamunkm) as area,
-                        SUM(dt.areamunkm*100/(ST_Area(su.geometry::geography)/1000000)) as percentage
-                        FROM deter.tmp_data dt, public."{spatial_unit}" su
-                        WHERE dt.classname='{classname}'
-                        AND (su.geometry && dt.geom) AND ST_Intersects(dt.geom, su.geometry) 
-                        GROUP BY 1,2
-                    )
-                    INSERT INTO public."{spatial_unit}_risk_indicators"(classname, date, suid, area, percentage)
-                    SELECT '{classgroup}' as classname, a.date, a.suid, a.area, a.percentage
-                    FROM results a
-                    """
-                    cur.execute(insert)
-                    print(f'The {classname} statistic has been updated.')
+            # for each classname, processing the statistics
+            for classname, classgroup in self._deter_classes.items():
+                
+                insert=f"""
+                WITH results AS (
+                    SELECT dt.date as date, su.suid, SUM(dt.areamunkm) as area,
+                    SUM(dt.areamunkm*100/(ST_Area(su.geometry::geography)/1000000)) as percentage
+                    FROM deter.tmp_data dt, public."{spatial_unit}" su
+                    WHERE dt.classname='{classname}'
+                    AND (su.geometry && dt.geom) AND ST_Intersects(dt.geom, su.geometry) 
+                    GROUP BY 1,2
+                )
+                INSERT INTO public."{spatial_unit}_risk_indicators"(classname, date, suid, area, percentage)
+                SELECT '{classgroup}' as classname, a.date, a.suid, a.area, a.percentage
+                FROM results a
+                """
+                cur.execute(insert)
+                print(f'The {classname} statistic has been updated.')
 
     def create_spatial_risk_tables(self):
         """

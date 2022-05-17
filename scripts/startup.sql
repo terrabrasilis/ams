@@ -216,6 +216,18 @@ TABLESPACE pg_default;
 
 CREATE SCHEMA IF NOT EXISTS deter AUTHORIZATION postgres;
 
+-- Table: deter.deter_history (The existence of SQL View public.deter_history is mandatory before creating this table)
+
+-- DROP TABLE IF EXISTS deter.deter_history;
+
+CREATE TABLE IF NOT EXISTS deter.deter_history AS
+SELECT gid, origin_gid, classname, quadrant, orbitpoint, date, date_audit, lot, sensor, satellite, areatotalkm,
+areamunkm, areauckm, mun, uf, uc, geom, month_year,
+NULL::integer as ncar_ids, NULL::text as car_imovel, NULL::integer as continuo, NULL::numeric as velocidade,
+NULL::integer as deltad, NULL::character varying(254) as est_fund, NULL::character varying(254) as dominio, 
+NULL::character varying(254) as tp_dominio
+FROM public.deter_history;
+
 -- Table: deter.deter
 
 -- DROP TABLE IF EXISTS deter.deter;
