@@ -356,6 +356,7 @@ ams.Map = {
 		}
 
 		this.init = function(layerName, layerStyle)	{
+			this._setStaticLegends();// for default layers defined in config.js
 			this._setWMSControl(layerName, layerStyle);
 			this._map.addControl(this._wmsLegendControl);
 		}
@@ -369,7 +370,17 @@ ams.Map = {
 		this._setWMSControl = function(layerName, layerStyle) {
 			this.setUrl(layerName, layerStyle);
 			this._wmsLegendControl.options.uri = this._url;
-			this._wmsLegendControl.options.position = "bottomright";
+			this._wmsLegendControl.options.position = "middleright";
+		}
+
+		this._setStaticLegends = function() {
+			let baseurl = this._wmsUrl
+			+ "?REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20"
+			+ ((ams.Auth.isAuthenticated())?("&access_token="+Authentication.getToken()):(""));
+			let deterurl = baseurl + "&LAYER=" + ams.Config.defaultLayers.deterAmz;
+			this._wmsLegendControl.options.static.deter.url = deterurl;
+			let afurl = baseurl + "&LAYER=" + ams.Config.defaultLayers.activeFireAmz;
+			this._wmsLegendControl.options.static.af.url = afurl;
 		}
 	}
 };

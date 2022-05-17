@@ -1,8 +1,10 @@
+.leaflet-bottom, .leaflet-right{
+  display: grid;
+}
 .leaflet-center {
     left: 50%;
     transform: translate(-50%, 0%);
 }
-
 .leaflet-middle {
   top: 50%;
   position: absolute;
@@ -10,11 +12,9 @@
   pointer-events: none;
   transform: translate(0%, -50%);
 }
-
 .leaflet-center.leaflet-middle {
   transform: translate(-50%, -50%);
 }
-
 .leaflet-period-control-form{
   background-color: #f8f9facf;
   padding: 4px 0px 4px 6px;
@@ -25,6 +25,7 @@
   text-align: center;
   display: flex;
   justify-content: space-between;
+  box-shadow: 0 1px 7px rgba(0, 0, 0, 0.65);
 }
 .leaflet-period-control-info{
   font-weight: bold;
@@ -33,6 +34,7 @@
   border-radius: 6px 6px 0px 0px;
   border-width: 2px 2px 1px 2px;
   border-bottom: 1px solid #94a97f;
+  box-shadow: 0 1px 7px rgba(0, 0, 0, 0.65);
 }
 .period-control{
   font-weight: bold;

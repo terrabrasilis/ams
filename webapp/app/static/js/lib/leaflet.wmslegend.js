@@ -4,51 +4,82 @@
 
 L.Control.WMSLegend = L.Control.extend({
     options: {
-        position: 'topright',
-        uri: ''
+        position: 'middleright',
+        uri: '',
+        static:{
+            deter:{
+                url:''
+            },
+            af:{
+                url:''
+            }
+        }
     },
 
     onAdd: function () {
-        var controlClassName = 'leaflet-control-wms-legend',
-            legendClassName = 'wms-legend',
-            stop = L.DomEvent.stopPropagation;
-        this.container = L.DomUtil.create('div', controlClassName);
-        this.img = L.DomUtil.create('img', legendClassName, this.container);
+        let controlClassName = 'leaflet-control-wms-legend',
+            legendClassName = 'wms-legend';
+        this.fcontainer = L.DomUtil.create('div', 'leaflet-control-legend');
+        this.ll = L.DomUtil.create('span', 'label-legend', this.fcontainer);
+        this.ll.innerText='LEGENDA';
+        let container = L.DomUtil.create('div', controlClassName, this.fcontainer);
+        // static deter legend
+        let ldl = L.DomUtil.create('span', 'wms-label-legend', container);
+        ldl.innerText='DETER';
+        let dl = L.DomUtil.create('img', legendClassName, container);
+        dl.src = this.options.static.deter.url;
+        dl.alt = 'DETER Legend';
+        // static active fires legend
+        let lafl = L.DomUtil.create('span', 'wms-label-legend', container);
+        lafl.innerText='Focos de Queimadas';
+        let afl = L.DomUtil.create('img', legendClassName, container);
+        afl.src = this.options.static.af.url;
+        afl.alt = 'Active Fires Legend';
+        // dinamic spatial unit legend
+        let limg = L.DomUtil.create('span', 'wms-label-legend', container);
+        limg.innerText='Unidade espacial';
+        this.img = L.DomUtil.create('img', legendClassName, container);
         this.img.src = this.options.uri;
-        this.img.alt = 'Legend';
+        this.img.alt = 'Spatial Unit Legend';
 
+        let stop = L.DomEvent.stopPropagation;
         L.DomEvent
+            .on(this.fcontainer, 'click', this._click, this)
+            .on(this.ll, 'click', this._click, this)
             .on(this.img, 'click', this._click, this)
-            .on(this.container, 'click', this._click, this)
+            .on(container, 'click', this._click, this)
             .on(this.img, 'mousedown', stop)
             .on(this.img, 'dblclick', stop)
             .on(this.img, 'click', L.DomEvent.preventDefault)
             .on(this.img, 'click', stop);
         this.height = null;
         this.width = null;
-        return this.container;
+        this.container=container;
+        return this.fcontainer;
     },
     _click: function (e) {
         L.DomEvent.stopPropagation(e);
         L.DomEvent.preventDefault(e);
         // toggle legend visibility
-        var style = window.getComputedStyle(this.img);
+        var style = window.getComputedStyle(this.container);
         if (style.display === 'none') {
-            this.container.style.height = this.height + 'px';
-            this.container.style.width = this.width + 'px';
-            this.img.style.display = this.displayStyle;
+            this.fcontainer.style.height = this.height + 'px';
+            this.fcontainer.style.width = this.width + 'px';
+            this.container.style.display = this.displayStyle;
+            this.ll.style.display = 'none';
         }
         else {
             if (this.width === null && this.height === null) {
                 // Only do inside the above check to prevent the container
                 // growing on successive uses
-                this.height = this.container.offsetHeight;
-                this.width = this.container.offsetWidth;
+                this.height = this.fcontainer.offsetHeight;
+                this.width = this.fcontainer.offsetWidth;
             }
-            this.displayStyle = this.img.style.display;
-            this.img.style.display = 'none';
-            this.container.style.height = '20px';
-            this.container.style.width = '20px';
+            this.displayStyle = this.container.style.display;
+            this.container.style.display = 'none';
+            this.ll.style.display = 'inline';
+            this.fcontainer.style.height = 'fit-content';
+            this.fcontainer.style.width = '20px';
         }
     },
 });
