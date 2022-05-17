@@ -48,11 +48,11 @@ class AreaProfile():
                       'Corte-Seletivo','Minera&#231;&#227;o', 'Focos'], dtype='str'),
              'color': pd.Series(['#0d0887', '#46039f', '#7201a8', '#9c179e'], dtype='str')})
         self._temporal_units = {
-            "7d": "Agregado Semanal",
-            "15d": "Agregado 15 Dias",
-            "1m": "Agregado Mensal",
-            "3m": "Agregado 3 Meses",
-            "1y": "Agregado Anual"}
+            "7d": "Agregado 7 dias",
+            "15d": "Agregado 15 dias",
+            "1m": "Agregado 30 dias",
+            "3m": "Agregado 90 dias",
+            "1y": "Agregado 365 dias"}
         self._temporal_unit_sql = {
 7:'''select TO_CHAR(date, 'YYYY/WW') as period,classname,sum('''+default_column+''') as 
 resultsum from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
@@ -95,9 +95,9 @@ order by 1 desc limit {2}'''}
         start_date_date = datetime.strptime(self._start_date, '%Y-%m-%d')
         if temporal_unit == '7d': return (start_date_date + relativedelta(days = -7)).strftime('%Y-%m-%d')
         elif temporal_unit == '15d': return (start_date_date + relativedelta(days = -15)).strftime('%Y-%m-%d')
-        elif temporal_unit == '1m': return (start_date_date + relativedelta(months = -1)).strftime('%Y-%m-%d')
-        elif temporal_unit == '3m': return (start_date_date + relativedelta(months = -3)).strftime('%Y-%m-%d')
-        elif temporal_unit == '1y': return (start_date_date + relativedelta(years = -1)).strftime('%Y-%m-%d')
+        elif temporal_unit == '1m': return (start_date_date + relativedelta(days = -30)).strftime('%Y-%m-%d')
+        elif temporal_unit == '3m': return (start_date_date + relativedelta(days = -90)).strftime('%Y-%m-%d')
+        elif temporal_unit == '1y': return (start_date_date + relativedelta(days = -365)).strftime('%Y-%m-%d')
 
     def period_where_clause(self):
         return f" date > '{self._start_period_date}' and date <= '{self._start_date}'"
@@ -105,9 +105,9 @@ order by 1 desc limit {2}'''}
     def __get_period_settings(self):
         if self._temporal_unit == '7d': return 7,'day',self._query_limit*7
         elif self._temporal_unit == '15d': return 15,'day',self._query_limit*15
-        elif self._temporal_unit == '1m': return 1,'month',self._query_limit*1
-        elif self._temporal_unit == '3m': return 3,'month',self._query_limit*3
-        elif self._temporal_unit == '1y': return 1,'year',self._query_limit*1
+        elif self._temporal_unit == '1m': return 30,'day',self._query_limit*30
+        elif self._temporal_unit == '3m': return 90,'day',self._query_limit*90
+        elif self._temporal_unit == '1y': return 365,'day',self._query_limit*365
 
     def __get_temporal_unit_sql(self):
         # default column to sum statistics
