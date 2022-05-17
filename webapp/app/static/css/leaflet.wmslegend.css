@@ -22,9 +22,6 @@
     text-align: start;
     background-color: #FFFFFF;
 }
-.leaflet-control-wms-legend:hover{
-    background-color: #F4F4F4;
-}
 .wms-label-legend{
     color: #00796b;
     font-weight: 500;
