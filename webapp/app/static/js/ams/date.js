@@ -61,6 +61,30 @@ ams.Date = {
 			return numDays;
 		}
 
+		this.getPeriodByDays = function(numdays){
+			let period;
+			switch(numdays) {
+				case 7:
+					period='7d';
+					break;
+				case 15:
+					period='15d';
+					break;
+				case 30:
+					period='1m';
+					break;
+				case 90:
+					period='3m';
+					break;
+				case 365:
+					period='1y';
+					break;
+				default:
+					period='7d';
+			}
+			return period;
+		}
+
 		this.setPeriod = function(startdate, period) {
 			this.period=period;
 			this.startdate = startdate;

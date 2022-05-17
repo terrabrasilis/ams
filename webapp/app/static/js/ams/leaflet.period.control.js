@@ -18,13 +18,24 @@ L.Control.PeriodHandler = L.Control.extend({
         let className='leaflet-period-control';
         let container = L.DomUtil.create('div', className);
 
+        let info = L.DomUtil.create('div', className+'-form '+className+'-info ');
+        let select='<select name="numdays" id="numdays">'
+        +'<option value="7">7 dias</option>'
+        +'<option value="15">15 dias</option>'
+        +'<option value="30">30 dias</option>'
+        +'<option value="90">90 dias</option>'
+        +'<option value="365">365 dias</option>'
+        +'</select>';
+        info.innerHTML='Controle da unidade temporal - '+select+' ';
+        container.appendChild(info);
+
         let form = L.DomUtil.create('div', className+'-form');
         form.innerHTML='<i onclick="ams.PeriodHandler.previousPeriod()" '
         + 'title="Período anterior" '
         + 'class="material-icons icon-period-control noselect">chevron_left</i>'
         + '<label class="period-control">'
         + '<span class="period-control"> de </span>'
-        + '<input type="text" id="datepicker-end" size="7" disabled'
+        + '<input type="text" id="datepicker-end" size="7" disabled '
         + 'title="Data inicial do período"/></label>'
         + '<label class="period-control">'
         + '<span class="period-control"> até </span>'
@@ -97,6 +108,33 @@ L.Control.PeriodHandler = L.Control.extend({
 			changeYear: true,	
 			todayBtn: "linked"
 		}).val(enddate.toLocaleDateString("pt-BR"));
+
+        // about new period selector
+        $('#numdays').on('change',(ev)=>{
+            let options=ev.target;
+            let numdays;
+            for (let i=0;i<options.length;i++){
+                if(options[i].selected){
+                    numdays=+options[i].value;
+                    break;
+                }
+            }
+            let obj={
+                "acronym": ams.App._dateControl.getPeriodByDays(numdays),
+                "name": "Agregado "+numdays+" dias",
+                "group": {
+                    "name": "UNIDADE TEMPORAL"
+                }
+            }
+            // dispache event to update layers using selected filters
+            ams.App._map.fire('changectrl', obj);
+        });
+        let numdays = ams.App._dateControl.getNumberOfDays();
+        let options=$('#numdays')[0];
+        for (let option in options){
+            if(option.value==numdays)
+                option.selected=true;
+        }
     },
   
     onAdd: function (map) {

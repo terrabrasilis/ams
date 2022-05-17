@@ -199,6 +199,8 @@ L.Control.GroupedLayers = L.Control.extend({
         groupContainer = document.createElement('div');
         groupContainer.className = 'leaflet-control-layers-group';
         groupContainer.id = 'leaflet-control-layers-group-' + obj.group.id;
+        if( obj.group.name=="UNIDADE TEMPORAL")
+          groupContainer.style="display:none;";
 
         var groupLabel = document.createElement('label');
         groupLabel.className = 'leaflet-control-layers-group-label';

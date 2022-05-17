@@ -16,14 +16,23 @@
 }
 
 .leaflet-period-control-form{
-  background-color: #00796b;
+  background-color: #f8f9facf;
   padding: 4px 0px 4px 6px;
-  color: white;
-  border-radius: 6px;
-  border: 2px solid #d9ed3d;
+  color: #00796b;
+  border-radius: 0px 0px 6px 6px;
+  border: solid #d9ed3d;
+  border-width: 0px 2px 2px 2px;
   text-align: center;
   display: flex;
   justify-content: space-between;
+}
+.leaflet-period-control-info{
+  font-weight: bold;
+  font-size: large;
+  padding-bottom: unset;
+  border-radius: 6px 6px 0px 0px;
+  border-width: 2px 2px 1px 2px;
+  border-bottom: 1px solid #94a97f;
 }
 .period-control{
   font-weight: bold;
@@ -35,7 +44,7 @@
   font-weight: bold !important;
   margin-right: 0.2rem;
   font-size: 28px !important;
-  background-color: #d8f9b7;
+  background-color: #ffc107;
   color: #00796b;
   border-radius: 15px;
   height: fit-content;
@@ -45,6 +54,13 @@
 #datepicker-end{
   background-color: #dbdbdb;
   color: gray;
+}
+#numdays{
+  border: none;
+  background-color: rgb(0, 121, 107);
+  color: aliceblue;
+  border-radius: 5px;
+  margin: 0px 5px 5px 2px;
 }
 /** https://stackoverflow.com/a/4407335/6710366 */
 .noselect {

@@ -29,3 +29,7 @@
   padding: 6px;
   text-align: center;
 }
+/** overwrite style of scale control */
+.leaflet-bottom .leaflet-control-scale {
+  margin-bottom: 25px;
+}
