@@ -1,2 +1,2 @@
 from .get_config_controller import GetConfigController
-from .initializer_controller import InitializerController
+#from .initializer_controller import InitializerController

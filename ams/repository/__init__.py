@@ -1,4 +1,4 @@
-from .deter_repository import DeterRepository, DeterHistoricalRepository
+#from .deter_repository import DeterRepository, DeterHistoricalRepository
 from .spatial_unit_repository import SpatialUnitRepository
 from .spatial_unit_info_repository import SpatialUnitInfoRepository
 from .risk_indicators_repository import RiskIndicatorsRepository
