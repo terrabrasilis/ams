@@ -297,12 +297,12 @@ ams.Map = {
 	},
 
 	TemporalUnits: function() {
-		this.aggregates = {		
-			0: {"key": "7d", "value": "Agregado Semanal"},
-			1: {"key": "15d", "value": "Agregado 15 Dias"},
-			2: {"key": "1m", "value": "Agregado Mensal"},
-			3: {"key": "3m", "value": "Agregado 3 Meses"},
-			4: {"key": "1y", "value": "Agregado Anual"},
+		this.aggregates = {
+			0: {"key": "7d", "value": "Agregado 7 dias"},
+			1: {"key": "15d", "value": "Agregado 15 dias"},
+			2: {"key": "1m", "value": "Agregado 30 dias"},
+			3: {"key": "3m", "value": "Agregado 90 dias"},
+			4: {"key": "1y", "value": "Agregado 365 dias"},
 		};
 
 		this.differeces = {
