@@ -219,10 +219,15 @@ ams.Map = {
 				"amz_municipalities": "MUNIC",
 			};
 			let baseName = layerName.substring(layerName.indexOf(':') + 1).replace("_view", "");
+
+			let sdt=ams.PeriodHandler._startdate.toLocaleDateString().replaceAll('/','-');
+			let edt=ams.PeriodHandler._enddate.toLocaleDateString().replaceAll('/','-');
+			let pdt=ams.PeriodHandler._previousdate.toLocaleDateString().replaceAll('/','-');
+
 			let diff = '';
 			const _diff = "diff";
 			if (baseName.indexOf(_diff) > 0) {
-				diff = "_" + viewParams.prevdate;
+				diff = "_" + pdt; //viewParams.prevdate;
 				baseName = baseName.replace(_diff, "");
 			}
 			let resolution = _viewToResolution[baseName];
@@ -235,9 +240,9 @@ ams.Map = {
 						+ "_"
 						+ viewParams.classname
 						+ "_"
-						+ viewParams.startdate
+						+ sdt
 						+ "_"
-						+ viewParams.enddate
+						+ edt
 						+ diff
 						+ "."
 						+ extension;

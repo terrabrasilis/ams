@@ -1,16 +1,35 @@
 var ams = ams || {};
 
 ams.PeriodHandler = {
-    _startdate: null,
-    _enddate: null,
+    _startdate: null,// used to display date information
+    _enddate: null,// used to display date information
+    _previousdate: null,// used to display date information
     _control: null,
 
-    init: function(map, startDate){
-        this._startdate=startDate;
+    init: function(map){
+        this._updatePeriodInfo();
+
         this._control = L.control.PeriodHandler({
-            startDate:startDate
+            startDate:this._startdate
         }).addTo(map);
         this._control._setDatepicker();
+    },
+
+    /**
+     * Changes the period dates to be used to display
+     * information in outputs to the user, in export files for example.
+     */
+    _updatePeriodInfo: function(){
+        this._startdate=new Date(ams.App._dateControl.startdate + "T00:00:00");
+        /**
+         * Change the end date and previous date just to display the value
+         * as the range in the compare filter uses "is greater than this date",
+         * so it doesn't include that day's data
+         */
+        this._enddate=new Date(ams.App._dateControl.enddate + "T00:00:00");
+        this._enddate.setUTCDate(this._enddate.getUTCDate()+1);
+        this._previousdate=new Date(ams.App._dateControl.prevdate+'T00:00:00');
+        this._previousdate.setUTCDate(this._previousdate.getUTCDate()+1);
     },
 
     changeDate: function(date){
@@ -20,16 +39,9 @@ ams.PeriodHandler = {
         ams.App._priorViewParams.updateDates(ams.App._dateControl);
         ams.App._updateSpatialUnitLayer();
         ams.App._updateReferenceLayer();
-        let startdate= new Date(ams.App._dateControl.startdate + "T00:00:00");
-        $('#datepicker-start').datepicker().val(startdate.toLocaleDateString("pt-BR"));
-        let enddate= new Date(ams.App._dateControl.enddate + "T00:00:00");
-        /**
-         * Change the end date just to display the value
-         * as the range in the compare filter uses "is greater than this date",
-         * so it doesn't include that day's data
-         */
-        enddate.setUTCDate(enddate.getUTCDate()+1);
-        $('#datepicker-end').datepicker().val(enddate.toLocaleDateString("pt-BR"));
+        this._updatePeriodInfo();
+        $('#datepicker-start').datepicker().val(this._startdate.toLocaleDateString("pt-BR"));
+        $('#datepicker-end').datepicker().val(this._enddate.toLocaleDateString("pt-BR"));
         // if no have more periods, disable the next button
         if(ams.App._dateControl.hasNext(ams.App._dateControl.getNext())){
             $('#next-period').css('visibility','unset');

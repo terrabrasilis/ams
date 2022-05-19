@@ -175,7 +175,7 @@ ams.App = {
 		}).addTo(map);
 
 		// Adding period control over map
-		ams.PeriodHandler.init(map, currStartdate);
+		ams.PeriodHandler.init(map);
 
 		(function addPriorizationControl() {
 			$('<div class="leaflet-control-layers-group" id="prioritization-control-layers-group">'

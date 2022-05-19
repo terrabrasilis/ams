@@ -70,16 +70,15 @@ L.Control.PeriodHandler = L.Control.extend({
     },
 
     _setDatepicker: function() {
-        let defaultDate = new Date(this.options.startDate + "T00:00:00")
 		let datepicker = new ams.datepicker.Datepicker();
 		$.datepicker.regional['br'] = datepicker.regional("br");
 		$.datepicker.setDefaults($.datepicker.regional["br"]);
 
 		$('#datepicker-start').datepicker({
 			showButtonPanel: true,
-			defaultDate: defaultDate,
+			defaultDate: this.options.startDate,
 			minDate: new Date("2017-01-01T00:00:00"),
-			maxDate: defaultDate,
+			maxDate: this.options.startDate,
 			changeMonth: true,
 			changeYear: true,	
 			todayBtn: "linked",	
@@ -94,20 +93,17 @@ L.Control.PeriodHandler = L.Control.extend({
 					$('.ui-datepicker').css('z-index', 99999999999999);
 				}, 0);
 			}
-		}).val(defaultDate.toLocaleDateString("pt-BR"));
-
-        let enddate=new Date(ams.App._dateControl.enddate + "T00:00:00");
-        enddate.setUTCDate(enddate.getUTCDate()+1);
+		}).val(this.options.startDate.toLocaleDateString("pt-BR"));
 
         $('#datepicker-end').datepicker({
 			showButtonPanel: true,
-			defaultDate: enddate,
+			defaultDate: ams.PeriodHandler._enddate,
 			minDate: new Date("2017-01-01T00:00:00"),
-			maxDate: enddate,
+			maxDate: ams.PeriodHandler._enddate,
 			changeMonth: true,
 			changeYear: true,	
 			todayBtn: "linked"
-		}).val(enddate.toLocaleDateString("pt-BR"));
+		}).val(ams.PeriodHandler._enddate.toLocaleDateString("pt-BR"));
 
         // about new period selector
         $('#numdays').on('change',(ev)=>{
