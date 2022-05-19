@@ -24,17 +24,21 @@ L.Control.WMSLegend = L.Control.extend({
         this.ll.innerText='LEGENDA';
         let container = L.DomUtil.create('div', controlClassName, this.fcontainer);
         // static deter legend
-        let ldl = L.DomUtil.create('span', 'wms-label-legend', container);
-        ldl.innerText='DETER';
-        let dl = L.DomUtil.create('img', legendClassName, container);
-        dl.src = this.options.static.deter.url;
-        dl.alt = 'DETER Legend';
+        if(this.options.static.deter.url){
+            let ldl = L.DomUtil.create('span', 'wms-label-legend', container);
+            ldl.innerText='DETER';
+            let dl = L.DomUtil.create('img', legendClassName, container);
+            dl.src = this.options.static.deter.url;
+            dl.alt = 'DETER Legend';
+        }
         // static active fires legend
-        let lafl = L.DomUtil.create('span', 'wms-label-legend', container);
-        lafl.innerText='Focos de Queimadas';
-        let afl = L.DomUtil.create('img', legendClassName, container);
-        afl.src = this.options.static.af.url;
-        afl.alt = 'Active Fires Legend';
+        if(this.options.static.af.url){
+            let lafl = L.DomUtil.create('span', 'wms-label-legend', container);
+            lafl.innerText='Focos de Queimadas';
+            let afl = L.DomUtil.create('img', legendClassName, container);
+            afl.src = this.options.static.af.url;
+            afl.alt = 'Active Fires Legend';
+        }
         // dinamic spatial unit legend
         let limg = L.DomUtil.create('span', 'wms-label-legend', container);
         limg.innerText='Unidade espacial';

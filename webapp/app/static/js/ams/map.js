@@ -367,6 +367,7 @@ ams.Map = {
 		}
 
 		this.update = function(layerName, layerStyle) {
+			this._setStaticLegends();
 			this._setWMSControl(layerName, layerStyle);
 			this._map.removeControl(this._wmsLegendControl);
 			this._map.addControl(this._wmsLegendControl);
@@ -382,10 +383,15 @@ ams.Map = {
 			let baseurl = this._wmsUrl
 			+ "?REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20"
 			+ ((ams.Auth.isAuthenticated())?("&access_token="+Authentication.getToken()):(""));
-			let deterurl = baseurl + "&LAYER=" + ams.Config.defaultLayers.deterAmz;
-			this._wmsLegendControl.options.static.deter.url = deterurl;
-			let afurl = baseurl + "&LAYER=" + ams.Config.defaultLayers.activeFireAmz;
-			this._wmsLegendControl.options.static.af.url = afurl;
+			if(ams.App._referenceLayerName.includes(ams.Config.defaultLayers.deterAmz)){
+				let deterurl = baseurl + "&LAYER=" + ams.App._referenceLayerName;
+				this._wmsLegendControl.options.static.deter.url = deterurl;
+				this._wmsLegendControl.options.static.af.url=null;
+			}else{
+				let afurl = baseurl + "&LAYER=" + ams.App._referenceLayerName;
+				this._wmsLegendControl.options.static.af.url = afurl;
+				this._wmsLegendControl.options.static.deter.url=null;
+			}
 		}
 	}
 };
