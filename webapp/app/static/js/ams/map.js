@@ -379,6 +379,12 @@ ams.Map = {
 			this._wmsLegendControl.options.position = "middleright";
 		}
 
+		/**
+		 * Defines which layer will be displayed in the legend and the settings
+		 * that will be used for the image to be displayed. 
+		 * 
+		 * https://docs.geoserver.org/stable/en/user/services/wms/get_legend_graphic/index.html
+		 */
 		this._setStaticLegends = function() {
 			let baseurl = this._wmsUrl
 			+ "?REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20"
