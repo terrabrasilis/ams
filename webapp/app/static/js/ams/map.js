@@ -382,9 +382,11 @@ ams.Map = {
 		this._setStaticLegends = function() {
 			let baseurl = this._wmsUrl
 			+ "?REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20"
+			+ "&LEGEND_OPTIONS=hideEmptyRules:true"
 			+ ((ams.Auth.isAuthenticated())?("&access_token="+Authentication.getToken()):(""));
 			if(ams.App._referenceLayerName.includes(ams.Config.defaultLayers.deterAmz)){
-				let deterurl = baseurl + "&LAYER=" + ams.App._referenceLayerName;
+				let cql=ams.App._appClassGroups.getCqlFilter(ams.App._suViewParams, ams.App._hasClassFilter);
+				let deterurl = baseurl + "&LAYER=" + ams.App._referenceLayerName + "&CQL_FILTER=" + cql;
 				this._wmsLegendControl.options.static.deter.url = deterurl;
 				this._wmsLegendControl.options.static.af.url=null;
 			}else{
