@@ -382,7 +382,7 @@ ams.Map = {
 		this._setStaticLegends = function() {
 			let baseurl = this._wmsUrl
 			+ "?REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20"
-			+ "&LEGEND_OPTIONS=hideEmptyRules:true"
+			+ "&LEGEND_OPTIONS=hideEmptyRules:true;forceLabels:on;"
 			+ ((ams.Auth.isAuthenticated())?("&access_token="+Authentication.getToken()):(""));
 			if(ams.App._referenceLayerName.includes(ams.Config.defaultLayers.deterAmz)){
 				let cql=ams.App._appClassGroups.getCqlFilter(ams.App._suViewParams, ams.App._hasClassFilter);
