@@ -267,12 +267,19 @@ order by 1 desc limit {2}'''}
                      title=chart_title )
  
         # sort=False is used to keep legend order like ordered in dataset
-        fig.update_traces(sort=False,textposition='inside')
+        # fig.update_traces(sort=False,textposition='inside')
+        fig.update_traces(
+            sort=False,
+            textposition='inside',
+            textfont_size=14,
+            marker=dict(colors=px.colors.sequential.RdBu, line=dict(color='#C0C0C0', width=1))
+        )
         fig.update_layout(
             paper_bgcolor='#f3f9f8',
             height=300,
             width=700,
-            uniformtext_minsize=10, uniformtext_mode='hide',
+            uniformtext_minsize=10,
+            uniformtext_mode='hide',
             legend=dict(font=dict(size=12)),
             margin=dict(
                 l=0,
