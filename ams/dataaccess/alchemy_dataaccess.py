@@ -61,11 +61,15 @@ class SessionProxy():
 			self._session.commit()
 		except exc.IntegrityError as e:
 			self._session.rollback()
-			self._session.close()
 			if 'NotNullViolation' in str(e):
 				raise NotNullViolationExceptionError('Object violates not-null constraint.')
 			else:
 				raise e
+		finally:
+			self._session.close()
+
+	def rollback(self):
+		self._session.rollback()
 
 	def add(self, object):
 		self._session.add(object)

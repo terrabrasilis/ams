@@ -3,4 +3,4 @@ __pycache__
 venv/
 .idea/
 .vscode/
-/data/estrutura_fundiaria_cst_reclass_lzw_EPSG4326.tif
+/data/*.tif

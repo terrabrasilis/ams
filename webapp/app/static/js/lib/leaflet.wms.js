@@ -154,8 +154,9 @@ wms.Source = L.Layer.extend({
     'getFeatureInfo': function(point, latlng, layers, callback) {
         // Request WMS GetFeatureInfo and call callback with results
         // (split from identify() to faciliate use outside of map events)
-        var params = this.getFeatureInfoParams(point, layers),
-            url = this._url + L.Util.getParamString(params, this._url);
+        let params = this.getFeatureInfoParams(point, layers);
+        params['info_format']='application/json';// for response in JSON format
+        let url = this._url + L.Util.getParamString(params, this._url);
 
         this.showWaiting();
         this.ajax(url, done);

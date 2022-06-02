@@ -18,9 +18,9 @@ fi
 VERSION=$(git describe --tags --abbrev=0)
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
-# if current branch isn't master then change version tag
+# if current branch isn't master then change version tag to release candidate "rc"
 if [[ ! "${BRANCH}" = "master" ]]; then
-    TAG_VERSION="${VERSION}.homologation"
+    TAG_VERSION="${VERSION}.rc"
 else
     TAG_VERSION=${VERSION}
 fi

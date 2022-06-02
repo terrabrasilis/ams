@@ -19,15 +19,23 @@ class AreaProfile():
         self._db = AlchemyDataAccess()
         self._query_limit = 20
         self._classname = params['className']
+        # default column to sum statistics
+        default_column="area"
+        if(self._classname=='AF'):
+            default_column="counts"
+
         self._spatial_unit = params['spatialUnit']
         self._start_date = params['startDate']
         self._temporal_unit = params['tempUnit']
         self._start_period_date = self.get_prev_date_temporal_unit(temporal_unit=self._temporal_unit)
-        self._name=params['click']['name'].replace('|',' ')
+        #self._name=params['click']['name'].replace('|',' ')
+        self._name=params['suName'].replace('|',' ')
         self._tableinfo = {
-            'csAmz_150km': {'description': 'C&#233;lula 150x150 Km&#178',
+            'csAmz_25km': {'description': 'C&#233;lula 25x25 km&#178',
                             'key' : 'id'},
-            'csAmz_300km': {'description': 'C&#233;lula 300x300 Km&#178',
+            'csAmz_150km': {'description': 'C&#233;lula 150x150 km&#178',
+                            'key' : 'id'},
+            'csAmz_300km': {'description': 'C&#233;lula 300x300 km&#178',
                             'key' : 'id'},
             'amz_municipalities': {'description': 'Município',
                             'key' : 'nm_municip'},
@@ -35,35 +43,35 @@ class AreaProfile():
                             'key' : 'NM_ESTADO'}
         }
         self._classes = pd.DataFrame(
-            {'code': pd.Series(['DS','DG', 'CS', 'MN'], dtype='str'),
+            {'code': pd.Series(['DS','DG', 'CS', 'MN', 'AF'], dtype='str'),
              'name': pd.Series(['Desmatamento','Degrada&#231;&#227;o',
-                      'Corte-Seletivo','Minera&#231;&#227;o'], dtype='str'),
+                      'Corte-Seletivo','Minera&#231;&#227;o', 'Focos'], dtype='str'),
              'color': pd.Series(['#0d0887', '#46039f', '#7201a8', '#9c179e'], dtype='str')})
         self._temporal_units = {
-            "7d": "Agregado Semanal",
-            "15d": "Agregado 15 Dias",
-            "1m": "Agregado Mensal",
-            "3m": "Agregado 3 Meses",
-            "1y": "Agregado Anual"}
+            "7d": "Agregado 7 dias",
+            "15d": "Agregado 15 dias",
+            "1m": "Agregado 30 dias",
+            "3m": "Agregado 90 dias",
+            "1y": "Agregado 365 dias"}
         self._temporal_unit_sql = {
-7:'''select TO_CHAR(date, 'YYYY/WW') as period,classname,sum(area) as 
-area from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
+7:'''select TO_CHAR(date, 'YYYY/WW') as period,classname,sum('''+default_column+''') as 
+resultsum from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
 group by TO_CHAR(date, 'YYYY/WW'), classname
 order by 1 desc limit {2}''',
 15: '''select concat(TO_CHAR(date, 'YYYY'),'/',to_char(TO_CHAR(date, 'WW')::int/2+1,'FM00')) as period,
-classname,sum(area) as area from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
+classname,sum('''+default_column+''') as resultsum from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
 group by concat(TO_CHAR(date, 'YYYY'),'/',to_char(TO_CHAR(date, 'WW')::int/2+1,'FM00')), classname
 order by 1 desc limit {2}''',
-31: '''select TO_CHAR(date, 'YYYY/MM') as period,classname,sum(area) as 
-area from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
+31: '''select TO_CHAR(date, 'YYYY/MM') as period,classname,sum('''+default_column+''') as 
+resultsum from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
 group by TO_CHAR(date, 'YYYY/MM'), classname
 order by 1 desc limit {2}''',
-124: '''select TO_CHAR(date, 'YYYY/Q') as period,classname, sum(area) as 
-area from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
+124: '''select TO_CHAR(date, 'YYYY/Q') as period,classname, sum('''+default_column+''') as 
+resultsum from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
 group by TO_CHAR(date, 'YYYY/Q'),classname
 order by 1 desc limit {2}''',
-366: '''select TO_CHAR(date, 'YYYY') as period,classname,sum(area) as 
-area from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
+366: '''select TO_CHAR(date, 'YYYY') as period,classname,sum('''+default_column+''') as 
+resultsum from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
 group by TO_CHAR(date, 'YYYY'),classname
 order by 1 desc limit {2}'''}
 
@@ -87,9 +95,9 @@ order by 1 desc limit {2}'''}
         start_date_date = datetime.strptime(self._start_date, '%Y-%m-%d')
         if temporal_unit == '7d': return (start_date_date + relativedelta(days = -7)).strftime('%Y-%m-%d')
         elif temporal_unit == '15d': return (start_date_date + relativedelta(days = -15)).strftime('%Y-%m-%d')
-        elif temporal_unit == '1m': return (start_date_date + relativedelta(months = -1)).strftime('%Y-%m-%d')
-        elif temporal_unit == '3m': return (start_date_date + relativedelta(months = -3)).strftime('%Y-%m-%d')
-        elif temporal_unit == '1y': return (start_date_date + relativedelta(years = -1)).strftime('%Y-%m-%d')
+        elif temporal_unit == '1m': return (start_date_date + relativedelta(days = -30)).strftime('%Y-%m-%d')
+        elif temporal_unit == '3m': return (start_date_date + relativedelta(days = -90)).strftime('%Y-%m-%d')
+        elif temporal_unit == '1y': return (start_date_date + relativedelta(days = -365)).strftime('%Y-%m-%d')
 
     def period_where_clause(self):
         return f" date > '{self._start_period_date}' and date <= '{self._start_date}'"
@@ -97,11 +105,18 @@ order by 1 desc limit {2}'''}
     def __get_period_settings(self):
         if self._temporal_unit == '7d': return 7,'day',self._query_limit*7
         elif self._temporal_unit == '15d': return 15,'day',self._query_limit*15
-        elif self._temporal_unit == '1m': return 1,'month',self._query_limit*1
-        elif self._temporal_unit == '3m': return 3,'month',self._query_limit*3
-        elif self._temporal_unit == '1y': return 1,'year',self._query_limit*1
+        elif self._temporal_unit == '1m': return 30,'day',self._query_limit*30
+        elif self._temporal_unit == '3m': return 90,'day',self._query_limit*90
+        elif self._temporal_unit == '1y': return 365,'day',self._query_limit*365
 
     def __get_temporal_unit_sql(self):
+        # default column to sum statistics
+        default_column="area"
+        round_factor=4
+        if(self._classname=='AF'):
+            default_column="counts"
+            round_factor=0
+        
         interval_val,period_unit,period_series=self.__get_period_settings()
         calendar=f"""
         SELECT ((ld::date - interval '{interval_val} {period_unit}') + interval '1 day')::date as fd,
@@ -113,7 +128,7 @@ order by 1 desc limit {2}'''}
         group_by_periods=f"""
         WITH calendar AS ({calendar}),
         bar_chart AS (
-            SELECT (calendar.fd || '/' || calendar.ld) as period, ROUND(sum(area)::numeric,4) as area
+            SELECT (calendar.fd || '/' || calendar.ld) as period, ROUND(sum({default_column})::numeric,{round_factor}) as resultsum
             FROM calendar, "{self._spatial_unit}_land_use" a inner join "{self._spatial_unit}" b on a.suid = b.suid
             WHERE b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}'
             AND classname = '{self._classname}'
@@ -123,7 +138,7 @@ order by 1 desc limit {2}'''}
             ORDER BY period DESC LIMIT {self._query_limit}
         )
         SELECT TO_CHAR(cd.fd::date, 'dd/mm/yyyy')|| '-' ||TO_CHAR(cd.ld::date, 'dd/mm/yyyy') as period,
-        cd.fd as firstday, COALESCE(bc.area,0) as area
+        cd.fd as firstday, COALESCE(bc.resultsum,0) as resultsum
         FROM calendar cd left join bar_chart bc on (cd.fd || '/' || cd.ld)=bc.period
         ORDER BY 2 ASC"""
 
@@ -163,33 +178,45 @@ order by 1 desc limit {2}'''}
     def resultset_as_list(self, sql):
         return [row[0] for row in self.execute_sql(sql)]
 
-    def area_per_year_table_class(self):
-        df = self.resultset_as_dataframe(
-            self.get_temporal_unit_sql())
-        df.columns = ['Período', 'Classe', 'Área (km²)']
-        df['Área (km²)'] = df['Área (km²)'].round(2)
-        return df
+    # def area_per_year_table_class(self):
+    #     df = self.resultset_as_dataframe(
+    #         self.get_temporal_unit_sql())
+    #     df.columns = ['Período', 'Classe', 'Área (km²)']
+    #     df['Área (km²)'] = df['Área (km²)'].round(2)
+    #     return df
 
     def __area_by_period(self):
+        # default column to sum statistics
+        default_col_name="Área (km²)"
+        if(self._classname=='AF'):
+            default_col_name="Unidades"
+
         df = self.resultset_as_dataframe(
             self.__get_temporal_unit_sql())
-        df.columns = ['Período', 'Data de referência', 'Área (km²)']
-        df['Área (km²)'] = df['Área (km²)'].round(2)
+        df.columns = ['Período', 'Data de referência', default_col_name]
+        df[default_col_name] = df[default_col_name].round(2)
         return df
 
     def area_per_land_use(self):
+        # default column to sum statistics
+        default_column="area"
+        default_col_name="Área (km²)"
+        if(self._classname=='AF'):
+            default_column="counts"
+            default_col_name="Unidades"
+
         df = self.resultset_as_dataframe(
-            f"select a.name,coalesce(Area, 0) as Area from land_use a "
+            f"select a.name,coalesce(resultsum, 0) as resultsum from land_use a "
             f"left join "
-            f"(select a.land_use_id, sum(area) as Area from \"{self._spatial_unit}_land_use\" a "
+            f"(select a.land_use_id, sum({default_column}) as resultsum from \"{self._spatial_unit}_land_use\" a "
             f"inner join \"{self._spatial_unit}\" b on a.suid = b.suid "
             f"where b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name.replace('|',' ')}' "
             f"and {self.period_where_clause()} "
             f"and classname = '{self._classname}' "
             f"group by a.land_use_id) b on a.id = b.land_use_id ORDER BY a.priority ASC "
         )
-        df.columns = ['Categoria Fundiária', 'Área (km²)']
-        df['Área (km²)'] = df['Área (km²)'].round(2)
+        df.columns = ['Categoria Fundiária', default_col_name]
+        df[default_col_name] = df[default_col_name].round(2)
         return df
 
     def form_title(self):
@@ -202,32 +229,57 @@ order by 1 desc limit {2}'''}
         spation_description=self._tableinfo[self._spatial_unit]['description']
         temporal_unit=self._temporal_units[self._temporal_unit]
 
-        title="""Usando dados de <b>{0}</b> do DETER até <b>{1}</b>,
-        com recorte na unidade espacial <b>{2}</b> ({3})
-        e unidade temporal <b>{4}</b>.
-        """.format(indicador,last_date,spatial_unit,spation_description,temporal_unit)
+        datasource="do DETER"
+        if(self._classname=='AF'):
+            datasource="de Queimadas"
+
+        title=f"""Usando dados de <b>{indicador}</b> {datasource} até <b>{last_date}</b>,
+        com recorte na unidade espacial <b>{spatial_unit}</b> ({spation_description})
+        e unidade temporal <b>{temporal_unit}</b>.
+        """
 
         return title
 
     def fig_area_per_land_use(self):
+        """
+        Pie chart structs to construct chart in frontend with plotly
+        """
+        # default column to sum statistics
+        default_col_name="Área (km²)"
+        if(self._classname=='AF'):
+            default_col_name="Unidades"
+
         df = self.area_per_land_use()
         indicador=self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
         unid_temp=self._temporal_units[self._temporal_unit]
-        total_area = df['Área (km²)'].sum()
-        chart_title=f"""Porcentagem de <b>{indicador}</b> por categoria fundiária<br>"""
-        chart_title=f"""{chart_title}no último período do <b>{unid_temp}. Área total: {total_area.round(2)} km²</b>"""
+        total_area = df[default_col_name].sum()
 
-        fig = px.pie(df, values='Área (km²)', names='Categoria Fundiária', template='plotly',
+        # default column to sum statistics
+        abstract_data=f"Área total: {total_area.round(2)} km²"
+        if(self._classname=='AF'):
+            abstract_data=f"Total de focos: {total_area.round(0)} "
+
+        chart_title=f"""Porcentagem de <b>{indicador}</b> por categoria fundiária<br>"""
+        chart_title=f"""{chart_title}no último período do <b>{unid_temp}. {abstract_data}</b>"""
+
+        fig = px.pie(df, values=default_col_name, names='Categoria Fundiária', template='plotly',
                      color_discrete_sequence=px.colors.sequential.RdBu,
                      title=chart_title )
  
         # sort=False is used to keep legend order like ordered in dataset
-        fig.update_traces(sort=False,textposition='inside')
+        # fig.update_traces(sort=False,textposition='inside')
+        fig.update_traces(
+            sort=False,
+            textposition='inside',
+            textfont_size=14,
+            marker=dict(colors=px.colors.sequential.RdBu, line=dict(color='#C0C0C0', width=1))
+        )
         fig.update_layout(
             paper_bgcolor='#f3f9f8',
             height=300,
             width=700,
-            uniformtext_minsize=10, uniformtext_mode='hide',
+            uniformtext_minsize=10,
+            uniformtext_mode='hide',
             legend=dict(font=dict(size=12)),
             margin=dict(
                 l=0,
@@ -263,18 +315,27 @@ order by 1 desc limit {2}'''}
 
         indicador=self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
         unid_temp=self._temporal_units[self._temporal_unit]
-        chart_title="Evolução temporal de <b>{0}</b><br>para os períodos do <b>{1}</b> (limitado aos últimos {2} períodos).".format(indicador,unid_temp,self._query_limit)
+        chart_title=f"""Evolução temporal de <b>{indicador}</b>
+        <br>para os períodos do <b>{unid_temp}</b>
+        (limitado aos últimos {self._query_limit} períodos)."""
 
         cto=df['Data de referência'].to_list()
         df['Data de referência']=df['Data de referência'].apply(self.formatDate)
 
-        fig = px.bar(df, x='Data de referência', y='Área (km²)', title=chart_title,
+        # default column to sum statistics
+        default_col_name="Área (km²)"
+        round_factor=1
+        if(self._classname=='AF'):
+            default_col_name="Unidades"
+            round_factor=0
+
+        fig = px.bar(df, x='Data de referência', y=default_col_name, title=chart_title,
                      category_orders = {'Data de referência': cto},
                      color='Data de referência',
                      color_discrete_sequence=color_discrete_sequence,
                      hover_data=["Período"])
 
-        offset_annotation = df['Área (km²)'].max() * 0.03
+        offset_annotation = df[default_col_name].max() * 0.03
         fig.update_layout(
             paper_bgcolor='#f3f9f8',
             plot_bgcolor='#f3f9f8',
@@ -298,7 +359,7 @@ order by 1 desc limit {2}'''}
             ),
             annotations=[
                 {'x': x, 'y': total + offset_annotation, 'text': f'{total}', 'showarrow': False}
-                for x, total in zip(df.index, df['Área (km²)'].astype(float).round(1))
+                for x, total in zip(df.index, df[default_col_name].astype(float).round(round_factor))
             ]
         )
         fig.update_yaxes(

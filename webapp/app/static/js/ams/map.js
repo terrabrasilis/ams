@@ -1,50 +1,44 @@
 var ams = ams || {};
 
 ams.Map = {
-	update: function(source, layerName, viewParams, layerStyle) {
-		source._subLayers = {};
-		source._subLayers[layerName] = true;		
-		source.options["viewparams"] = viewParams.toWmsFormat();
-		source._overlay.wmsParams.layers = layerName;
-		if(layerStyle) {
-			source.options["sld_body"] = layerStyle.getSLD();
-			source._overlay.setParams({
-				"viewparams": viewParams.toWmsFormat(),
-				"sld_body": layerStyle.getSLD(),
-			});				
-		}
-		else {
-			source._overlay.setParams({
-				"viewparams": viewParams.toWmsFormat(),
-			});	
-		}	
+	/**
+	 * Used to control the popup content
+	 */
+	PopupControl: {
+		_popupReference:null,
+		_infoBody:[]
 	},
-
-	ViewParams: function(classname, dateControll, limit) {
+	ViewParams: function(classname, dateControll, propertyName, limit) {
 		this.classname = classname;
 		this.startdate = dateControll.startdate;
 		this.enddate = dateControll.enddate;
 		this.prevdate = dateControll.prevdate;
+		this.propertyName = propertyName;
 		this.limit = limit;
 		this.toWmsFormat = function() {
 			return "classname:" + this.classname
 					+ ";startdate:" + this.startdate
 					+ ";enddate:" + this.enddate
 					+ ";prevdate:" + this.prevdate
+					+ ";orderby:" + this.propertyName
 					+ ";limit:" + this.limit;
-		}
+		};
 
 		this.updateDates = function(dateControll) {
 			this.startdate = dateControll.startdate;
 			this.enddate = dateControll.enddate;
 			this.prevdate = dateControll.prevdate;
-		}
+		};
+
+		this.updatePropertyName = function(propertyName) {
+			this.propertyName = propertyName;
+		};
 	},
 
 	SpatialUnits: function(spatialUnits, suDefaultName) {
 		this._suNamesMap = {
-			"csAmz_150km": "C&#233;lulas 150x150 Km&#178;",
-			"csAmz_300km": "C&#233;lulas 300x300 Km&#178;",
+			"csAmz_25km": "C&#233;lulas 25x25 km&#178;",
+			"csAmz_150km": "C&#233;lulas 150x150 km&#178;",
 			"amz_states": "Estados",
 			"amz_municipalities": "Munic&#237;pios",
 		};
@@ -76,34 +70,22 @@ ams.Map = {
 
 		this.default = this.getSpatialUnit(suDefaultName);
 
-		this.isSpatialUnit = function(name) {
-			for(var i = 0; i < this.spatialUnits.length; i++) {
-				if(this.spatialUnits[i].name == name) {
-					return true;
-				}
-			}
-			return false;			
-		}
-
 		this.length = function() {
 			return this.spatialUnits.length;
 		}
 
 		this.at = function(pos) {
 			return this.spatialUnits[pos];
-		}	
-
-		this.getDataName = function(name) {
-			return this._suDataNamesMap[name];
 		}
 	},
 
-	DeterClassGroups: function(groups) {
+	AppClassGroups: function(groups) {
 		this._groupNamesMap = {
 			"DS": "DETER Desmatamento",
 			"DG": "DETER Degrada&#231;&#227;o",
 			"CS": "DETER Corte-Seletivo",
 			"MN": "DETER Minera&#231;&#227;o",
+			"AF": "Focos \"Programa Queimadas\""
 		}
 
 		this._setNames = function(groups) {
@@ -146,13 +128,14 @@ ams.Map = {
 			return res;
 		}
 
-		this.getCqlFilter = function(viewParams) {
+		this.getCqlFilter = function(viewParams, useClass) {
+			useClass=(typeof useClass=='undefined')?(true):(useClass);
+			let classFilter=((useClass)?("AND ("+this._filterClasses(viewParams.classname)+")"):(""));
 			return "(view_date > " + viewParams.enddate
 					+ ") AND (view_date <= "
 					+ viewParams.startdate
-					+ ") AND ("
-					+ this._filterClasses(viewParams.classname)
-					+ ")";
+					+ ") "
+					+ classFilter;
 		}	
 
 		this.getGroupName = function(acronym) {
@@ -172,8 +155,9 @@ ams.Map = {
 										+ ";enddate:" + viewParams.enddate
 										+ ";prevdate:" + viewParams.prevdate
 										+ ";order:" + (isMin ? 'ASC' : 'DESC')
+										+ ";orderby:" + propertyName
 										+ ";limit:1";
-			let res = 10; // T6 DEBUG: don't copy. When no success, res is undefined
+			let res;
 			$.ajax({
 				dataType: "json",
 				url: wfsUrl,
@@ -183,9 +167,12 @@ ams.Map = {
 					( (ams.Auth.isAuthenticated())?(Authentication.getToken()):("") )
 				},
 				success: function(data) {
-					res = data["features"][0]["properties"][propertyName];
+					res = (data.totalFeatures>0)?(data["features"][0]["properties"][propertyName]):(false);
+				},
+				error: function() {
+					res = false;
 				}
-			});		
+			});
 			return res;
 		}
 		this.getMax = function(layerName, propertyName, viewParams) {		
@@ -213,6 +200,9 @@ ams.Map = {
 				},
 				success: function(data) {
 					res = data["features"][0]["properties"][propertyName];
+				},
+				error: function() {
+					res = false;
 				}
 			});		
 			return res;	
@@ -220,19 +210,24 @@ ams.Map = {
 
 		this.getFile = function(layerName, viewParams, 
 								outputFormat, extension,
-								propertyName){
+								properties, propertyName){
 
 			let _viewToResolution = {
-				"csAmz_150km": "CELL_150Km",
-				"csAmz_300km": "CELL_300Km",
+				"csAmz_25km": "CELL_25km",
+				"csAmz_150km": "CELL_150km",
 				"amz_states": "ESTADO",
 				"amz_municipalities": "MUNIC",
 			};
 			let baseName = layerName.substring(layerName.indexOf(':') + 1).replace("_view", "");
+
+			let sdt=ams.PeriodHandler._startdate.toLocaleDateString().replaceAll('/','-');
+			let edt=ams.PeriodHandler._enddate.toLocaleDateString().replaceAll('/','-');
+			let pdt=ams.PeriodHandler._previousdate.toLocaleDateString().replaceAll('/','-');
+
 			let diff = '';
 			const _diff = "diff";
 			if (baseName.indexOf(_diff) > 0) {
-				diff = "_" + viewParams.prevdate;
+				diff = "_" + pdt; //viewParams.prevdate;
 				baseName = baseName.replace(_diff, "");
 			}
 			let resolution = _viewToResolution[baseName];
@@ -245,9 +240,9 @@ ams.Map = {
 						+ "_"
 						+ viewParams.classname
 						+ "_"
-						+ viewParams.startdate
+						+ sdt
 						+ "_"
-						+ viewParams.enddate
+						+ edt
 						+ diff
 						+ "."
 						+ extension;
@@ -257,11 +252,12 @@ ams.Map = {
 						+ "&outputFormat=" + outputFormat
 						+ "&format_options=filename:" + filename
 						+ "&version=1.0.0"
-						+ "&propertyName=" + (propertyName ? propertyName : "")
+						+ "&propertyName=" + (properties ? properties : "")
 						+ "&viewparams=classname:" + viewParams.classname
 										+ ";startdate:" + viewParams.startdate
 										+ ";enddate:" + viewParams.enddate
 										+ ";prevdate:" + viewParams.prevdate
+										+ ";orderby:" + propertyName
 										+ ";limit:" + viewParams.limit;
 
 			if (extension == 'csv') {
@@ -279,7 +275,7 @@ ams.Map = {
 						a.download = filename;
 						a.click();
 					},
-					fail: function (jqXHR, textStatus) {
+					error: function (jqXHR, textStatus) {
 						window.console.log(textStatus);
 					}
 				});
@@ -292,29 +288,31 @@ ams.Map = {
         }
 
 		this.getShapeZip = function(layerName, viewParams) {
-			let propertyName = "name,area,percentage,geometry";
-			this.getFile(layerName, viewParams, "shape-zip", "zip", propertyName);
+			let properties = "name,"+
+			((ams.App._propertyName=="area")?("area,percentage"):(ams.App._propertyName))+
+			",geometry";
+			this.getFile(layerName, viewParams, "shape-zip", "zip", properties, ams.App._propertyName);
 		} 
 
 		this.getCsv = function(layerName, viewParams) {
-			let propertyName = "name,area,percentage";
-			this.getFile(layerName, viewParams, "csv", "csv", propertyName);
+			let properties = "name,"+
+			((ams.App._propertyName=="area")?("area,percentage"):(ams.App._propertyName));
+			this.getFile(layerName, viewParams, "csv", "csv", properties, ams.App._propertyName);
 		} 
 	},
 
 	TemporalUnits: function() {
-		this.aggregates = {		
-			0: {"key": "7d", "value": "Agregado Semanal"},
-			1: {"key": "15d", "value": "Agregado 15 Dias"},
-			2: {"key": "1m", "value": "Agregado Mensal"},
-			3: {"key": "3m", "value": "Agregado 3 Meses"},
-			4: {"key": "1y", "value": "Agregado Anual"},
+		this.aggregates = {
+			0: {"key": "7d", "value": "Agregado 7 dias"},
+			1: {"key": "15d", "value": "Agregado 15 dias"},
+			2: {"key": "1m", "value": "Agregado 30 dias"},
+			3: {"key": "3m", "value": "Agregado 90 dias"},
+			4: {"key": "1y", "value": "Agregado 365 dias"},
 		};
 
 		this.differeces = {
-			0: {"key": "none", "value": "No Per&#237;odo"},
-			1: {"key": "1m", "value": "Diferen&#231;a Per&#237;odo Anterior"},
-			// 2: {"key": "1y", "value": "Previous Year"}, TODO
+			0: {"key": "onPeriod", "value": "No Per&#237;odo"},
+			1: {"key": "periodDiff", "value": "Diferen&#231;a Per&#237;odo Anterior"}
 		}
 
 		this.getCurrentName = function() {
@@ -363,11 +361,13 @@ ams.Map = {
 		}
 
 		this.init = function(layerName, layerStyle)	{
+			this._setStaticLegends();// for default layers defined in config.js
 			this._setWMSControl(layerName, layerStyle);
 			this._map.addControl(this._wmsLegendControl);
 		}
 
 		this.update = function(layerName, layerStyle) {
+			this._setStaticLegends();
 			this._setWMSControl(layerName, layerStyle);
 			this._map.removeControl(this._wmsLegendControl);
 			this._map.addControl(this._wmsLegendControl);
@@ -376,7 +376,30 @@ ams.Map = {
 		this._setWMSControl = function(layerName, layerStyle) {
 			this.setUrl(layerName, layerStyle);
 			this._wmsLegendControl.options.uri = this._url;
-			this._wmsLegendControl.options.position = "bottomright";
+			this._wmsLegendControl.options.position = "middleright";
+		}
+
+		/**
+		 * Defines which layer will be displayed in the legend and the settings
+		 * that will be used for the image to be displayed. 
+		 * 
+		 * https://docs.geoserver.org/stable/en/user/services/wms/get_legend_graphic/index.html
+		 */
+		this._setStaticLegends = function() {
+			let baseurl = this._wmsUrl
+			+ "?REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20"
+			+ "&LEGEND_OPTIONS=hideEmptyRules:true;forceLabels:on;"
+			+ ((ams.Auth.isAuthenticated())?("&access_token="+Authentication.getToken()):(""));
+			if(ams.App._referenceLayerName.includes(ams.Config.defaultLayers.deterAmz)){
+				let cql=ams.App._appClassGroups.getCqlFilter(ams.App._suViewParams, ams.App._hasClassFilter);
+				let deterurl = baseurl + "&LAYER=" + ams.App._referenceLayerName + "&CQL_FILTER=" + cql;
+				this._wmsLegendControl.options.static.deter.url = deterurl;
+				this._wmsLegendControl.options.static.af.url=null;
+			}else{
+				let afurl = baseurl + "&LAYER=" + ams.App._referenceLayerName;
+				this._wmsLegendControl.options.static.af.url = afurl;
+				this._wmsLegendControl.options.static.deter.url=null;
+			}
 		}
 	}
 };

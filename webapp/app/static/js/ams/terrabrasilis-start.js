@@ -29,7 +29,7 @@ $(document).ready(function () {
         let version = data.version;
         versionDiv.append('<a href="https://github.com/terrabrasilis/ams/releases/tag/'+version+'" target="_blank" title="Veja este release no GitHub">'+version+'</a>');
         if(window.location.pathname.includes("homologation")){
-          $('#header-panel').append("<span style='font-size:18px;font-weight:600;color:#ffff00;'> (Versão de homologação)</span>")
+          $('#header-panel').append("<span style='font-size:18px;font-weight:600;color:#ffff00;'> (Versão de homologação)</span>");
         }
     });
   }
@@ -41,7 +41,8 @@ $(document).ready(function () {
    * to restart the webapp based on the definitions in index.html and the status
    * of the authentication chain.
    */
-  Authentication.init(Lang.language, ams.Utils.restartApp);
+  if(typeof Authentication != 'undefined')
+    Authentication.init(Lang.language, ams.Utils.restartApp);
 
   /** Launch the app when loading the page for the first time */
   startApp();

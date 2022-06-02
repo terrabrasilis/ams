@@ -94,3 +94,8 @@ docker run --env INPUT_GEOTIFF_FUNDIARY_STRUCTURE="estrutura_fundiaria_cst_lzw_4
 -v "/some/local/dir/data:/usr/local/data" \
 -d --rm --name ams-sync terrabrasilis/ams-sync:v<x.y.z>
 ```
+
+## References
+
+About env vars for runtime app.
+https://dlukes.github.io/flask-wsgi-url-prefix.html

@@ -1,17 +1,30 @@
-.leaflet-control-wms-legend
-{
-    display: block;
+.leaflet-control-legend{
+    background-color: #00796b;
+    border-radius: 4px 0px 0px 4px;
+    margin-right: auto !important;
+}
+.label-legend{
+    color: #f8f9fa;
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    font-weight: bold;
+    display: none;
+    cursor: pointer;
+}
+.leaflet-control-wms-legend{
+    display: inline-grid;
     padding: 3px;
     border-radius: 4px;
     -webkit-border-radius: 4px;
     -moz-border-radius: 4px;
     box-shadow: 0 1px 7px rgba(0, 0, 0, 0.65);
     cursor: auto;
-    text-align: center;
+    text-align: start;
     background-color: #FFFFFF;
 }
-
-.leaflet-control-wms-legend:hover
-{
-    background-color: #F4F4F4;
+.wms-label-legend{
+    color: #00796b;
+    font-weight: 500;
+    background-color: #f3f3f3;
+    border-radius: inherit;
 }

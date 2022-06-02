@@ -1,138 +1,66 @@
-[![Build Status](https://travis-ci.com/AmazonSR/ams.svg?branch=master)](https://travis-ci.com/AmazonSR/ams)
-[![codecov](https://codecov.io/gh/AmazonSR/ams/branch/master/graph/badge.svg?token=RM6BDOL70Y)](https://codecov.io/gh/AmazonSR/ams)
-
 # AMS - Amazon Situation Room
+
 AMS is a Web Mapping GIS application, which integrates with REST and OGC web services that provide spatial data on deforestation of Brazil Amazon rainforest obtained by satellites. In this way, the application provides visualization of the areas that are being deforested in different spatial resolutions and periods. In addition, the application provides graphs and reports to help analyze the data.
 
-## Environment
-* **Ubuntu** >= 20.04
-* **Python** >= 3.8.5
-* **PostgreSQL** >= 13 & **PostGIS** >= 3
-* **GeoServer** >= 2.19
+## Backend
 
-## To Install
-### Ubuntu
-```bash
-sudo apt -y install vim bash-completion wget
-wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-echo "deb [arch=amd64] http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
-sudo apt update
-sudo apt install postgresql-13-postgis-3
-sudo passwd postgres
-[[postgres]]
-su postgres
-psql -c "ALTER USER postgres WITH PASSWORD 'postgres'" -d postgres
-exit
-sudo -u postgres createuser --superuser $USER
-sudo -u postgres psql
-\password $USER #note: $USER here needs to be written# 
-``` 
-### Development
-#### Core 
-```bash
-cd ~
-mkdir -p ~/ams/git
-cd ams
-git clone https://github.com/$GitHub_User/ams.git ams #note: it must be your fork for development
-sudo apt-get install python3-venv
-python3 -m venv venv
-source ~/ams/venv/bin/activate
-pip install -r ~/ams/git/ams/requirements.txt
-createdb -h localhost -p 5432 -U postgres DETER-B
-pg_restore --host "localhost" --port "5432" --username "postgres" --dbname "DETER-B" --verbose  git/ams/data/deter-b-2019-2021.backup
-cd ~/ams/git/ams/tests
-export PYTHONPATH=~/ams/git/ams
-pytest -v --cov
-flake8 ..
-python ~/ams/git/ams/scripts/startup.py
-```
-### GeoServer
+The backend consists of some tasks initiated by a cronjob and aims to synchronize DETER and Active Fires data from external databases and pre-process the statistics for the layers of spatial units.
 
-#### Install and start
+### Database requirements
 
-```bash
-cd ~
-wget http://sourceforge.net/projects/geoserver/files/GeoServer/2.19.0/geoserver-2.19.0-bin.zip
-sudo apt install unzip
-unzip geoserver-2.19.0-bin.zip -d geoserver
-sudo apt install openjdk-11-jre-headless
-echo "export GEOSERVER_HOME=/home/$USER*/geoserver" >> ~/.area_profile #note: $USER here needs to be written#
-source ~/.area_profile
-~/geoserver/bin/startup.sh &
-```
-##### Config
+Database requirements to support backend tasks are:
 
-###### Accessing GeoServer Context Path to create the objects:  
-http://**[geoserverip]**:8080/geoserver/web
-###### Click Workspaces/Add new workspace  
-**Name:** ams\
-Click **Save**
+    - Existence of SQL Views in the database for DETER and Active Fires;
 
-###### Click Stores/Add 
-**Note:** A store is a data repository, a Postgres database f.e.\
-**Workspace**: ams\
-**Data Source Name**: AMS\
-**host**: locallhost (or another valid Postgres server IP)\
-**port**: 5432\
-**database**: AMS\
-**schema**: public\
-**user**: postgres\
-**passwd**: postgres
+    - Existence of DETER and Active Fires Schemas and tables in database;
+    - Existence of "spatial_units" table with related data;
+    - Existence of "deter_class" and "deter_class_group" tables with related data;
 
-Click **Save**
+To start the new database, use the scripts/startup.sql file and the data/shapefiles* files
 
-###### Click Layers/Add a new Layer
+The startup.sql file has SQL scripts to prepare resources to provide input data for topics of interest.
 
-In **Add layer from** choose ams:AMS\
-Click in **Publish** to publish a table in the list that appears below.\
-Publish the following tables:
-```
-csAmz_150km, csAmz_150km_risk_indicators
-csAmz_300km, csAmz_300km_risk_indicators 
-amz_municipalities, amz_municipalities_risk_indicators 
-amz_states, amz_states_risk_indicators
+Shapefiles represent the spatial units needed to perform statistical processing. Import these shapefiles into the public schema in the database before starting backend tasks.
+
+By default, the tables will be expected before import shapes (on public schema):
+ - csAmz_25km
+ - csAmz_150km
+ - csAmz_300km
+ - amz_states
+ - amz_municipalities
+
+ > if it's not the real scenario, you have to tweak the names and other details in the init scripts and so on.
+
+The "spatial_units" table is used to record each spatial unit layer imported into the database, using the external shapefiles. The name of each table and the unique identifier column must be registered in this table. If you use the default names described above, the insert script was provided in the startup.sql file.
+
+The "deter_class" and "deter_class_group" tables are used to record each class name and an acronym of a class group.
+
+The steps are (follow the sessions in startup.sql script):
+    1) Create the database (below);
+    2) Create the database model with SQL Views and tables;
+    3) Insert the starter metadata;
+    4) Create some functions helper used into SQL View inside GeoServer configuration layers;
+    
+```sql
+-- -------------------------------------------------------------------------
+-- To create the database, run it in the separate SQL Query window
+-- -------------------------------------------------------------------------
+
+-- Database: AMS
+
+-- DROP DATABASE IF EXISTS "AMS";
+
+CREATE DATABASE "AMS"
+    WITH 
+    OWNER = postgres
+    ENCODING = 'UTF8'
+    LC_COLLATE = 'en_US.utf8'
+    LC_CTYPE = 'en_US.utf8'
+    TABLESPACE = pg_default
+    CONNECTION LIMIT = -1;
+
+COMMENT ON DATABASE "AMS" IS 'The new AMS database';
 ```
 
-###### Click Layers/Add a new Layer
 
-**Note:** Before that, check if the functions that are shown\
-in **~/git/ams/geoserver/sqlviews** folder exists in AMS database.\
-If they don't, you should create it.
-
-In **Add layer from** choose ams:AMS\
-Click **Configure a new SQL view...** \
-**View Name:** csAmz_150km_view
-
-**SQL statement:** get the corresponding (by name) SQL statement\
-in **~/git/ams/geoserver/sqlviews** folder.\
-**Note:** remove comments and any other text than the SQL itself.
-
-Click **Guess parameters from SQL** link\
-Copy the values for **Default value** and **Validation regular expression** \
-from the original SQL statement comments.\ 
-Check checkbox **Get geometry type and SRID** \
-In **Atributes**, click **Refresh** \
-Click **Save**
-
-In the next form:\
-In **Bounding Boxes\Native Bounding Box**, click **Compute from data** \
-In **Bounding Boxes\Lat/Lon Bounding Box**, click **Compute from native bounds** \
-Click **Save**
-
-You must create the other views found in **~/git/ams/geoserver/sqlviews** folder.\
-The view names are the same as the file names, replacing hyphens with underscores.
-
-### Web App
-Create a file `.env` within `~/git/ams/tests` whith following content:
-```
-export FLASK_APP=~/ams/git/ams/webapp/main.py 
-export FLASK_DEBUG=1
-export PYTHONPATH=~/ams/git/ams
-source ~/git/ams/venv/bin/activate
-```
-Then
-```bash
-cd ~/ams/git/ams/tests
-source .env
-flask run
-```
+## Frontend
