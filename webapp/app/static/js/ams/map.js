@@ -388,15 +388,17 @@ ams.Map = {
 		this._setStaticLegends = function() {
 			let baseurl = this._wmsUrl
 			+ "?REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20"
-			+ "&LEGEND_OPTIONS=hideEmptyRules:true;forceLabels:on;"
 			+ ((ams.Auth.isAuthenticated())?("&access_token="+Authentication.getToken()):(""));
 			if(ams.App._referenceLayerName.includes(ams.Config.defaultLayers.deterAmz)){
 				let cql=ams.App._appClassGroups.getCqlFilter(ams.App._suViewParams, ams.App._hasClassFilter);
-				let deterurl = baseurl + "&LAYER=" + ams.App._referenceLayerName + "&CQL_FILTER=" + cql;
+				let deterurl = baseurl + "&LAYER=" + ams.App._referenceLayerName
+				+ "&LEGEND_OPTIONS=hideEmptyRules:true;forceLabels:on;"
+				+ "&CQL_FILTER=" + cql;
 				this._wmsLegendControl.options.static.deter.url = deterurl;
 				this._wmsLegendControl.options.static.af.url=null;
 			}else{
-				let afurl = baseurl + "&LAYER=" + ams.App._referenceLayerName;
+				let afurl = baseurl + "&LAYER=" + ams.App._referenceLayerName
+				+ "&LEGEND_OPTIONS=forceLabels:on;";
 				this._wmsLegendControl.options.static.af.url = afurl;
 				this._wmsLegendControl.options.static.deter.url=null;
 			}
