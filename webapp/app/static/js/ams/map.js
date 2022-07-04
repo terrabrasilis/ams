@@ -50,8 +50,9 @@ ams.Map = {
 		}
 
 		this.getSpatialUnit = function getSpatialUnit(name) {
+			let nm=(name.split(':').length==2)?(name.split(':')[1]):(name);// to remove workspace name.
 			for(var i = 0; i < this.spatialUnits.length; i++) {
-				if(this.spatialUnits[i].dataname == name) {
+				if(this.spatialUnits[i].dataname == nm) {
 					return this.spatialUnits[i];
 				}
 			}
