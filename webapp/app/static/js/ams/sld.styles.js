@@ -3,6 +3,30 @@ var ams = ams || {};
 ams.SLDStyles = {
 	AreaStyle: function(layerName, propertyName, minValue, maxValue,
 							isPriorization, priorColorHex) {
+
+		let unit="focos";
+		if(propertyName=="area" && minValue>=0){
+			if(maxValue-minValue<1){
+				unit="ha";
+				minValue=minValue*100;
+				maxValue=maxValue*100;
+			}else{
+				unit="km&#178;";
+			}
+		}
+
+		this.stroke = "";
+		this.fillOpacity = 1;
+		this.maxValue = maxValue;
+		this.minValue = minValue;
+		this.colorRange;
+		this.colorDomain;
+		this._unit = unit;
+		this._propertyName = propertyName;
+		this._numberOfTicks = 0;
+		this._numberOfTicksN = 0;
+		this._numberOfTicksP = 0;
+
 		this.setStroke = function(isPriorization) {
 			if(isPriorization) {
 				this.fillOpacity = 0;
@@ -14,6 +38,8 @@ ams.SLDStyles = {
 							+ '</Stroke>';     
 			}
 		}
+		// change fill and stroke by priorization
+		this.setStroke(isPriorization);
 
 		this.setLegendDomainAndRange = function() {
 			if(this.minValue < 0) {
@@ -32,23 +58,9 @@ ams.SLDStyles = {
 				this.colorRange = ["#f0f0f0", "#ff3838"];
 				this.colorDomain = [this.minValue, this.maxValue];
 				let tt=Math.ceil(this.maxValue);
-				this._numberOfTicks = ( (tt<10)?(tt):(10) );//10; 
+				this._numberOfTicks = ( (tt<10)?(tt==1?2:tt):(10) );//10; 
 			}
 		}
-
-		this.stroke = "";
-		this.fillOpacity = 1;
-		this.setStroke(isPriorization);
-		this.maxValue = maxValue;
-		this.minValue = minValue;
-		this.colorRange;
-		this.colorDomain;
-		this._unit = (propertyName=="area")?("km&#178;"):("focos");
-		this._propertyName = propertyName;
-		this._numberOfTicks = 0;
-		this._numberOfTicksN = 0;
-		this._numberOfTicksP = 0;
-
 
 		this.createFill = function(value, color) {
 			let fill = "";
@@ -87,12 +99,13 @@ ams.SLDStyles = {
 
 		this.createFirstRule = function(v1, v2, color, vMaxLength) {
 			let fill = this.createFill(v1, color);
+			let l2 = (this._unit=='ha')?(v2/100):(v2);
 			return '<Rule>'
 					+ this.createTitle(v1, v2, vMaxLength)
 					+ '<ogc:Filter>'
 					+ 	'<ogc:PropertyIsLessThanOrEqualTo>'
 					+ 	'<ogc:PropertyName>' + this._propertyName + '</ogc:PropertyName>'
-					+ 	'<ogc:Literal>' + v2 + '</ogc:Literal>'
+					+ 	'<ogc:Literal>' + l2 + '</ogc:Literal>'
 					+ 	'</ogc:PropertyIsLessThanOrEqualTo>'
 					+ '</ogc:Filter>'
 					+ '<PolygonSymbolizer>' + fill + this.stroke + '</PolygonSymbolizer>'
@@ -101,12 +114,13 @@ ams.SLDStyles = {
 
 		this.createLastRule = function(v1, v2, color, vMaxLength) {
 			let fill = this.createFill(v1, color, vMaxLength);
+			let l1 = (this._unit=='ha')?(v1/100):(v1);
 			return '<Rule>'
 					+ this.createTitle(v1, v2, vMaxLength)
 					+ '<ogc:Filter>'
 					+ 	'<ogc:PropertyIsGreaterThan>'
 					+ 	'<ogc:PropertyName>' + this._propertyName + '</ogc:PropertyName>'
-					+ 	'<ogc:Literal>' + v1 + '</ogc:Literal>'
+					+ 	'<ogc:Literal>' + l1 + '</ogc:Literal>'
 					+ 	'</ogc:PropertyIsGreaterThan>'
 					+ '</ogc:Filter>'
 					+ '<PolygonSymbolizer>' + fill + this.stroke + '</PolygonSymbolizer>'
@@ -115,17 +129,19 @@ ams.SLDStyles = {
 
 		this.createRule = function(v1, v2, color, vMaxLength) {
 			let fill = this.createFill(v1, color);
+			let l1 = (this._unit=='ha')?(v1/100):(v1);
+			let l2 = (this._unit=='ha')?(v2/100):(v2);
 			return '<Rule>'
 					+ this.createTitle(v1, v2, vMaxLength)
 					+ '<ogc:Filter>'
 					+	'<ogc:And>'
 					+ 	'<ogc:PropertyIsGreaterThan>'
 					+ 	'<ogc:PropertyName>' + this._propertyName + '</ogc:PropertyName>'
-					+ 	'<ogc:Literal>' + v1 + '</ogc:Literal>'
+					+ 	'<ogc:Literal>' + l1 + '</ogc:Literal>'
 					+ 	'</ogc:PropertyIsGreaterThan>'
 					+ 	'<ogc:PropertyIsLessThanOrEqualTo>'
 					+ 	'<ogc:PropertyName>' + this._propertyName + '</ogc:PropertyName>'
-					+ 	'<ogc:Literal>' + v2 + '</ogc:Literal>'
+					+ 	'<ogc:Literal>' + l2 + '</ogc:Literal>'
 					+ 	'</ogc:PropertyIsLessThanOrEqualTo>'
 					+	'</ogc:And>'
 					+ '</ogc:Filter>'
@@ -246,5 +262,5 @@ ams.SLDStyles = {
 		this.getEncodeURI = function() {
 			return encodeURIComponent(this.sld);
 		}
-	} 
+	}
 };
