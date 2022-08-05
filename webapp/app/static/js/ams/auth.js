@@ -41,7 +41,7 @@ ams.Auth = {
    * Must have a homologation workspace on the geoserver
    */
   getWorkspace: function() {
-	if(window.location.pathname.includes("homologation") || window.location.hostname=='127.0.0.1'){
+	if(ams.Utils.isHomologationEnvironment()){
 		this.gsWorkspace='amsh';
 	}
     return this.gsWorkspace+this.gsAuthSuffix;

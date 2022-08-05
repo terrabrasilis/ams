@@ -25,6 +25,11 @@ ams.App = {
 		this._wfs = new ams.Map.WFS(geoserverUrl);
 		var ldLayerName = ams.Auth.getWorkspace() + ":last_date";
 
+		// set the appropriate workspace name if it is homologation environment
+		if(ams.Utils.isHomologationEnvironment()){
+			ams.Config.defaultLayers.activeFireAmz=ams.Config.defaultLayers.activeFireAmz.replace('ams','amsh');
+		}
+
 		var temporalUnits = new ams.Map.TemporalUnits();
 		this._dateControl = new ams.Date.DateController();
 		let anonimousLastDate = this._wfs.getLastDate(ldLayerName);
