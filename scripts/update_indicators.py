@@ -14,7 +14,7 @@ alldata=False
 deterupdate = DeterDaily(Config.DATABASE_URL, alldata)
 deterupdate.execute()
 
-firesupdate = ActiveFires(Config.DATABASE_URL, alldata)
+firesupdate = ActiveFires(Config.DATABASE_URL, alldata=True)
 firesupdate.execute()
 
 class_deter_polys = ClassifyByLandUse(Config.DATABASE_URL, Config.INPUT_GEOTIFF_FUNDIARY_STRUCTURE, alldata)
