@@ -58,4 +58,4 @@ text.gtitle{font-size:15px !important;}
   font-weight: bold;
 }
 .card-header {padding: 0.25rem 0.5rem; background-color: #108d6f;}
-.card-body {padding: 0.35rem;}
+.card-body {padding: 0.35rem; overflow-x: auto;}
