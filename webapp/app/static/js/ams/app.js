@@ -500,13 +500,30 @@ ams.App = {
 			suLayerMax:max
 		};
 		if(mm.suLayerMax == mm.suLayerMin) {
-			alert("Não existem dados para o periodo selecionado.");
+			$('.toast').toast('show');
+			$('.toast-body').html("Não existem dados para o periodo selecionado.");
+			this._resetMap();
 			return false;
 		}else if(ams.App._diffOn && mm.suLayerMin>=0) {
-			alert("Não há redução de valores para o periodo selecionado.");
+			$('.toast').toast('show');
+			$('.toast-body').html("Não há redução de valores para o periodo selecionado.");
+			this._resetMap();
 			return false;
 		}
+		let l=ams.App._getLayerByName(ams.App._getLayerPrefix());
+		if(l && !ams.App._map.hasLayer(l)){
+			ams.App._addSpatialUnitLayer(ams.App._getLayerPrefix(),ams.App._propertyName);
+		}
 		return mm;
+	},
+
+	_resetMap: function() {
+		this._map.closePopup();
+		let oLayerName=ams.App._getLayerPrefix();
+		// remove the main spatial unit layer, and
+		this._removeLayer(oLayerName);
+		// each spatial unit layer has an priority layer to display the highlight border, should be remove too
+		this._removeLayer(oLayerName+'_prior');
 	},
 
 	/**
