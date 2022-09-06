@@ -559,7 +559,7 @@ background: #49bc95;
 
 a[data-toggle="collapse"] {
 position: relative;
-
+white-space: nowrap;
 }
 
 #sidebar .dropdown-toggle::after {

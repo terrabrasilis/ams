@@ -139,24 +139,26 @@ ams.LeafletWms = {
                 + "<td>" + result["counts"] + "</td>"
                 + "</tr>";
             }else{
+                let unit=(result["area"]<=2)?('ha'):('km&#178;');
+                let area=(result["area"]<=2)?(result["area"]*100):(result["area"]);
                 deter=""
                 + "<tr>"
-                + "<td>&#193;rea (km&#178;)   </td>"
-                + "<td>" + result["area"] + "</td>"
+                + "<td>&#193;rea ("+unit+")</td>"
+                + "<td>" + area + "</td>"
                 + "</tr>"
                 + "<tr>"
                 + "<td>Porcentagem   </td>"
                 + "<td>" + result["percentage"] + "%</td>"
                 + "</tr>";
             }
-            return '<table class="popup-spatial-unit-table" style="width:100%">'
+            return '<table class="popup-spatial-unit-table">'
                 + "<tr>"
                 + "<th></th>"
                 + "<th></th>"
                 + "</tr>"
                 + "<tr>"
                 + "<td>Unidade Espacial   </td>"
-                + "<td>" + result["name"] + "</td>"
+                + "<td style='text-align-last: center;'>" + result["name"] + "</td>"
                 + "</tr>"
                 + "<tr>"
                 + "<td>Classe   </td>"
