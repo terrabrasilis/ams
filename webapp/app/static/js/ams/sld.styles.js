@@ -6,7 +6,7 @@ ams.SLDStyles = {
 
 		let unit="focos";
 		if(propertyName=="area" && minValue>=0){
-			if(maxValue-minValue<1){
+			if(maxValue-minValue<=2){
 				unit="ha";
 				minValue=minValue*100;
 				maxValue=maxValue*100;
@@ -90,11 +90,11 @@ ams.SLDStyles = {
 		}
 
 		this.createTitle = function(v1, v2, vMaxLength) {
-			return  '<Title>' 
-						+ 'entre ' + this._formatValue(v1, vMaxLength)
-						+ ' e ' + this._formatValue(v2, vMaxLength)  
-						+ (this._unit==''?'':' ('+this._unit+')')
-				+ ' </Title>';
+			return  '<Title>'
+					+ ' &gt; ' + this._formatValue(v1, vMaxLength)
+					+ ' &lt;= ' + this._formatValue(v2, vMaxLength)
+					+ (this._unit==''?'':' ('+this._unit+')')
+					+ ' </Title>';
 		}
 
 		this.createFirstRule = function(v1, v2, color, vMaxLength) {
@@ -218,7 +218,7 @@ ams.SLDStyles = {
 				let color =  legend(ticks[i]);
 			}
 			if(!isPriorization) {
-				if(ticks.length >= 2) {			
+				if(ticks.length >= 2) {
 					let vMaxLength = this.getMaxLength(ticks);
 					let fixedValue = ( (this._propertyName=='area')?(1):(0) );
 					firstRule = this.createFirstRule(ticks[0].toFixed(fixedValue), 
