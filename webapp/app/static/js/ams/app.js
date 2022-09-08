@@ -583,11 +583,13 @@ ams.App = {
 					$('#modal-container-general-info').modal();
 				} else {
 					console.log("HTTP-Error: " + response.status + " on area_profile");
-					alert("Encontrou um erro na solicitação ao servidor.");
+					$('.toast').toast('show');
+					$('.toast-body').html("Encontrou um erro na solicitação ao servidor.");
 				}
 			} else {
 				console.log("HTTP-Error: " + response.status + " on area_profile");
-				alert("Encontrou um erro na solicitação ao servidor.");
+				$('.toast').toast('show');
+				$('.toast-body').html("Encontrou um erro na solicitação ao servidor.");
 			}
 		}
 		if (jsConfig.className != 'null'){
