@@ -524,6 +524,7 @@ ams.App = {
 		this._removeLayer(oLayerName);
 		// each spatial unit layer has an priority layer to display the highlight border, should be remove too
 		this._removeLayer(oLayerName+'_prior');
+		ams.App._legendControl.disable();
 	},
 
 	/**

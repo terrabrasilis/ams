@@ -367,6 +367,10 @@ ams.Map = {
 			this._map.addControl(this._wmsLegendControl);
 		}
 
+		this.disable = function(){
+			this._map.removeControl(this._wmsLegendControl);
+		}
+
 		this.update = function(layerName, layerStyle) {
 			this._setStaticLegends();
 			this._setWMSControl(layerName, layerStyle);
