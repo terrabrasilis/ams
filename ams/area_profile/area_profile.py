@@ -178,13 +178,6 @@ order by 1 desc limit {2}'''}
     def resultset_as_list(self, sql):
         return [row[0] for row in self.execute_sql(sql)]
 
-    # def area_per_year_table_class(self):
-    #     df = self.resultset_as_dataframe(
-    #         self.get_temporal_unit_sql())
-    #     df.columns = ['Período', 'Classe', 'Área (km²)']
-    #     df['Área (km²)'] = df['Área (km²)'].round(2)
-    #     return df
-
     def __area_by_period(self):
         # default column to sum statistics
         default_col_name="Área (km²)"
@@ -194,7 +187,6 @@ order by 1 desc limit {2}'''}
         df = self.resultset_as_dataframe(
             self.__get_temporal_unit_sql())
         df.columns = ['Período', 'Data de referência', default_col_name]
-        df[default_col_name] = df[default_col_name].round(2)
         return df
 
     def area_per_land_use(self):
@@ -216,7 +208,7 @@ order by 1 desc limit {2}'''}
             f"group by a.land_use_id) b on a.id = b.land_use_id ORDER BY a.priority ASC "
         )
         df.columns = ['Categoria Fundiária', default_col_name]
-        df[default_col_name] = df[default_col_name].round(2)
+        # df[default_col_name] = df[default_col_name].round(2)
         return df
 
     def form_title(self):
@@ -244,20 +236,36 @@ order by 1 desc limit {2}'''}
         """
         Pie chart structs to construct chart in frontend with plotly
         """
+        # default area unit
+        area_unit="km²"
+        # standard area rounding
+        round_factor=1
+
         # default column to sum statistics
         default_col_name="Área (km²)"
         if(self._classname=='AF'):
             default_col_name="Unidades"
+            round_factor=0
 
         df = self.area_per_land_use()
         indicador=self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
         unid_temp=self._temporal_units[self._temporal_unit]
         total_area = df[default_col_name].sum()
 
+        if(self._classname!='AF' and total_area<=2):
+            area_unit="ha"
+            df["Área (ha)"]=df[default_col_name]*100
+            default_col_name="Área (ha)"
+            total_area = df[default_col_name].sum()
+            round_factor=2
+        
+        # area values rounded off only after treating the appropriate scale unit
+        df[default_col_name] = df[default_col_name].round(round_factor)
+
         # default column to sum statistics
-        abstract_data=f"Área total: {total_area.round(2)} km²"
+        abstract_data=f"Área total: {total_area.round(round_factor)} {area_unit}"
         if(self._classname=='AF'):
-            abstract_data=f"Total de focos: {total_area.round(0)} "
+            abstract_data=f"Total de focos: {total_area.round(round_factor)} "
 
         chart_title=f"""Porcentagem de <b>{indicador}</b> por categoria fundiária<br>"""
         chart_title=f"""{chart_title}no último período do <b>{unid_temp}. {abstract_data}</b>"""
@@ -267,7 +275,6 @@ order by 1 desc limit {2}'''}
                      title=chart_title )
  
         # sort=False is used to keep legend order like ordered in dataset
-        # fig.update_traces(sort=False,textposition='inside')
         fig.update_traces(
             sort=False,
             textposition='inside',
@@ -324,10 +331,22 @@ order by 1 desc limit {2}'''}
 
         # default column to sum statistics
         default_col_name="Área (km²)"
+        # standard area rounding
         round_factor=1
+        
+        # total_area is used only to decide if we use the km² or ha
+        total_area = (df[default_col_name].sum())/self._query_limit
+        if(self._classname!='AF' and total_area<=2):
+            df["Área (ha)"]=df[default_col_name]*100
+            default_col_name="Área (ha)"
+            round_factor=2
+
         if(self._classname=='AF'):
             default_col_name="Unidades"
             round_factor=0
+        
+        # apply rounding factor to normalize values
+        df[default_col_name]=df[default_col_name].round(round_factor)
 
         fig = px.bar(df, x='Data de referência', y=default_col_name, title=chart_title,
                      category_orders = {'Data de referência': cto},
