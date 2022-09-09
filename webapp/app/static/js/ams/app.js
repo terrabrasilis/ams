@@ -518,7 +518,6 @@ ams.App = {
 	},
 
 	_resetMap: function() {
-		this._map.closePopup();
 		let oLayerName=ams.App._getLayerPrefix();
 		// remove the main spatial unit layer, and
 		this._removeLayer(oLayerName);
@@ -549,6 +548,7 @@ ams.App = {
 			// remove all sublayers for a layer
 			this._removeSubLayer(l);
 		}
+		this._map.closePopup();
 	},
 
 	_removeSubLayer: function(l){
