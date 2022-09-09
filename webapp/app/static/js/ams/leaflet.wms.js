@@ -82,8 +82,14 @@ ams.LeafletWms = {
             let fProperties=featureInfo.features[0].properties;
             for (let i in fProperties) {
                 let v = ((fProperties[i]==null || fProperties[i]=="")?("-"):(fProperties[i]));
-                if (i in result)
+                if (i in result){
+                    // swap area unit from km² to ha
+                    if (i=="area" && v<=2) {
+                        v=v*100;
+                        result["area_unit"]="ha";
+                    }
                     result[i] = isNaN(v) ? v : ams.Utils.numberFormat(v);
+                }
             }
         },
 
@@ -94,6 +100,7 @@ ams.LeafletWms = {
                 "area": 0,
                 "counts": 0,
                 "percentage": 0,
+                "area_unit": "km²"
             };
             this._updateResults(result, featureInfo);
             let sButton = "";
@@ -139,12 +146,10 @@ ams.LeafletWms = {
                 + "<td>" + result["counts"] + "</td>"
                 + "</tr>";
             }else{
-                let unit=(result["area"]<=2)?('ha'):('km&#178;');
-                let area=(result["area"]<=2)?(result["area"]*100):(result["area"]);
                 deter=""
                 + "<tr>"
-                + "<td>&#193;rea ("+unit+")</td>"
-                + "<td>" + area + "</td>"
+                + "<td>&#193;rea ("+result["area_unit"]+")</td>"
+                + "<td>" + result["area"] + "</td>"
                 + "</tr>"
                 + "<tr>"
                 + "<td>Porcentagem   </td>"
@@ -153,8 +158,8 @@ ams.LeafletWms = {
             }
             return '<table class="popup-spatial-unit-table">'
                 + "<tr>"
-                + "<th></th>"
-                + "<th></th>"
+                + "<th>Nome</th>"
+                + "<th>Valor</th>"
                 + "</tr>"
                 + "<tr>"
                 + "<td>Unidade Espacial   </td>"
