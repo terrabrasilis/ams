@@ -583,6 +583,22 @@ ams.App = {
 					Plotly.react('AreaPerYearTableClass', JSON.parse(profileJson['AreaPerYearTableClass']), {});
 					Plotly.react('AreaPerLandUse', JSON.parse(profileJson['AreaPerLandUse']), {});
 					$('#modal-container-general-info').modal();
+					// for adding tooltip on pie chart legend
+					let leg=$('g.legend');
+					leg.attr('data-html','true');
+					leg.attr('title', 'Descrição das categorias fundiárias.<br />'+
+					'-----------------------------------------------------------------------<br />'+
+					'TI: Terras Indígenas;<br />'+
+					'UC: Unidades de Conservação;<br />'+
+					'Assentamentos: Projetos de assentamentos de todos os tipos;<br />'+
+					'APA: Área de Proteção Ambiental;<br />'+
+					'CAR: Cadastro Ambiental Rural;<br />'+
+					'FPND: Florestas Públicas Não Destinadas;<br />'+
+					'Indefinida: Todas as demais áreas');
+					leg.mouseover(function(){
+						let l=$('g.legend');
+						l.tooltip('show');
+					});
 				} else {
 					console.log("HTTP-Error: " + response.status + " on area_profile");
 					$('.toast').toast('show');

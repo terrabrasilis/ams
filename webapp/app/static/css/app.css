@@ -59,3 +59,11 @@ text.gtitle{font-size:15px !important;}
 }
 .card-header {padding: 0.25rem 0.5rem; background-color: #108d6f;}
 .card-body {padding: 0.35rem; overflow-x: auto;}
+
+.tooltip-inner {
+  max-width: 440px;
+  text-align: start;
+  background-color: #000;
+  white-space: nowrap;
+  font-size: 14px;
+}
