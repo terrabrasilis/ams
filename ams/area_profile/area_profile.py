@@ -20,6 +20,7 @@ class AreaProfile():
         self._db = AlchemyDataAccess()
         self._query_limit = 20
         self._classname = params['className']
+
         # default column to sum statistics
         default_column="area"
         if(self._classname=='AF'):
@@ -30,6 +31,14 @@ class AreaProfile():
         self._temporal_unit = params['tempUnit']
         self._start_period_date = self.get_prev_date_temporal_unit(temporal_unit=self._temporal_unit)
         self._name=params['suName'].replace('|',' ')
+        # app unit measure
+        unit=params['unit']
+        if(unit is None):
+            # default area unit
+            self.area_unit="km²"
+        else:
+            self.area_unit=unit
+        
         self._tableinfo = {
             'csAmz_25km': {'description': 'C&#233;lula 25x25 km&#178',
                             'key' : 'id'},
@@ -230,8 +239,6 @@ order by 1 desc limit {2}'''}
         """
         Pie chart structs to construct chart in frontend with plotly
         """
-        # default area unit
-        self.area_unit="km²"
         # standard area rounding
         self.round_factor=2
 
@@ -246,8 +253,7 @@ order by 1 desc limit {2}'''}
         unid_temp=self._temporal_units[self._temporal_unit]
         total_area = df[self.default_col_name].sum()
 
-        if(self._classname!='AF' and total_area<=2):
-            self.area_unit="ha"
+        if(self._classname!='AF' and self.area_unit=="ha"):
             df["Área (ha)"]=df[self.default_col_name]*100
             self.default_col_name="Área (ha)"
             total_area = df[self.default_col_name].sum()

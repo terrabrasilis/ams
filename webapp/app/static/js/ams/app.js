@@ -572,6 +572,7 @@ ams.App = {
 
 	displayGraph: function( jsConfig ) {
 		async function getGraphics(  jsConfig ) {
+			jsConfig["unit"]=ams.Map.PopupControl._unit;
 			let jsConfigStr = JSON.stringify(jsConfig);
 			let response = await fetch("callback/area_profile?sData=" + jsConfigStr);
 			$("#loading_data_info").css('display','none')

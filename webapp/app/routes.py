@@ -31,6 +31,8 @@ def get_profile(endpoint):
         start_date = params['startDate']
         temporal_unit = params['tempUnit']
         name=params['suName']
+        # app unit measure
+        unit=params['unit']
     except KeyError as ke:
         #exception KeyError
         #Raised when a mapping (dictionary) key is not found in the set of existing keys.
