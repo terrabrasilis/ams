@@ -6,6 +6,7 @@ ams.Map = {
 	 */
 	PopupControl: {
 		_popupReference:null,
+		_unit:'km²',
 		_infoBody:[]
 	},
 	ViewParams: function(classname, dateControll, propertyName, limit) {

@@ -15,7 +15,11 @@ ams.LeafletWms = {
         },
 
         'showFeatureInfo': function (latlng, jsonTxt) {
-            if(jsonTxt.includes("no features were found")) return;
+            if(jsonTxt.includes("no features were found")) {
+                $('.toast').toast('show');
+			    $('.toast-body').html("Sem informações para este local.");
+                return;
+            }
             let featureInfo = JSON.parse(jsonTxt);
             let htmlInfo="",name="",type="";
             if(featureInfo.numberReturned>=1){
@@ -84,9 +88,9 @@ ams.LeafletWms = {
                 let v = ((fProperties[i]==null || fProperties[i]=="")?("-"):(fProperties[i]));
                 if (i in result){
                     // swap area unit from km² to ha
-                    if (i=="area" && v<=2) {
+                    if (i=="area" && ams.Map.PopupControl._unit=='ha') {
                         v=v*100;
-                        result["area_unit"]="ha";
+                        result["area_unit"]=ams.Map.PopupControl._unit;
                     }
                     result[i] = isNaN(v) ? v : ams.Utils.numberFormat(v);
                 }

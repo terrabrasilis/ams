@@ -5,13 +5,14 @@ ams.SLDStyles = {
 							isPriorization, priorColorHex) {
 
 		let unit="focos";
-		if(propertyName=="area" && minValue>=0){
-			if(maxValue-minValue<=2){
+		if(propertyName=="area"){
+			let diff=( (minValue>=0)?(maxValue-minValue):(maxValue + (minValue*-1)) );
+			if(diff<=2){
 				unit="ha";
 				minValue=minValue*100;
 				maxValue=maxValue*100;
 			}else{
-				unit="km&#178;";
+				unit="km²";
 			}
 		}
 
@@ -26,6 +27,15 @@ ams.SLDStyles = {
 		this._numberOfTicks = 0;
 		this._numberOfTicksN = 0;
 		this._numberOfTicksP = 0;
+
+		if(ams.Map.PopupControl._unit!=unit){
+			let txt1=(unit=='focos')?(""):(" de área");
+			let txt2=(unit=='ha')?("hectare (ha)"):( (unit=='focos')?("número de focos"):("quilômetro quadrado (km²)") );
+			$('.toast').toast('show');
+			$('.toast-body').html("Atenção, a unidade de medida"+txt1+" foi alterada para "+txt2+".");
+			// used to control the unit on the popup map
+			ams.Map.PopupControl._unit=unit;
+		}
 
 		this.setStroke = function(isPriorization) {
 			if(isPriorization) {
