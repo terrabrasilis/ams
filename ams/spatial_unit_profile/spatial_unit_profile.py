@@ -12,8 +12,21 @@ import re
 from ams.dataaccess import AlchemyDataAccess
 from dateutil.relativedelta import relativedelta
 
-class AreaProfile():
-    """Profile"""
+class SpatialUnitProfile():
+    """
+    Data extraction to generate the profile graph panel for a spatial unit.
+
+    Called by the endpoint API. See the routes.py at webapp directory.
+
+    There are required input parameters:
+
+        params['className'], Data class name.
+        params['spatialUnit'], The Spatial Unit data table prefix. Ex.: 'csAmz_150km'
+        params['startDate'], The reference start date.
+        params['tempUnit'], The selected temporal unit code. Ex.: {'7d','15d','1m','3m','1y'}
+        params['suName'], The selected Spatial Unit name. Ex.: 'C13L08'
+        params['unit'], The current unit measure in the App. Ex.: {'km²','ha','focos'}
+    """
 
     def __init__(self, config, params):
         self._config = config

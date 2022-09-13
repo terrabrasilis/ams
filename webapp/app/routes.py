@@ -1,7 +1,7 @@
 from flask import render_template, request
 import json
 
-from ams.area_profile import AreaProfile
+from ams.spatial_unit_profile import SpatialUnitProfile
 from .controllers import GetConfigController
 from .config import Config
 from . import bp as app
@@ -19,7 +19,7 @@ def get_config():
 
 @app.route('/callback/<endpoint>', methods=['GET'])
 def get_profile(endpoint):
-    if endpoint != 'area_profile':
+    if endpoint != 'spatial_unit_profile':
         return "Bad endpoint", 404
 
     args = request.args
@@ -40,11 +40,11 @@ def get_profile(endpoint):
         return "Input parameters are missing: {0}".format(str(ke)), 412
     
     try:
-        area_profile = AreaProfile(Config, params)
+        spatial_unit_profile = SpatialUnitProfile(Config, params)
         return json.dumps(
-            {'FormTitle': area_profile.form_title(),
-            'AreaPerLandUse': area_profile.fig_area_per_land_use(),
-            'AreaPerYearTableClass': area_profile.fig_area_by_period()}
+            {'FormTitle': spatial_unit_profile.form_title(),
+            'AreaPerLandUse': spatial_unit_profile.fig_area_per_land_use(),
+            'AreaPerYearTableClass': spatial_unit_profile.fig_area_by_period()}
         )
     except Exception as e:
         return "Something is wrong on the server. Please, send this error to our support service: terrabrasilis@inpe.br", 500

@@ -11,7 +11,7 @@ class Config:
 	SERVER_NAME = os.environ.get('SERVER_NAME') or '127.0.0.1:5000'
 	APPLICATION_ROOT = os.environ.get('APPLICATION_ROOT') or ''
 	INPUT_GEOTIFF_FUNDIARY_STRUCTURE = os.environ.get('INPUT_GEOTIFF_FUNDIARY_STRUCTURE') or \
-		'estrutura_fundiaria_cst_lzw_4326.tif'
+		'estrutura_fundiaria_cst_2022.tif'
 
 	if os.path.exists(DATABASE_URL):
 		DATABASE_URL = open(DATABASE_URL, 'r').read()

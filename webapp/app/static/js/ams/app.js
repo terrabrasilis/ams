@@ -574,7 +574,7 @@ ams.App = {
 		async function getGraphics(  jsConfig ) {
 			jsConfig["unit"]=ams.Map.PopupControl._unit;
 			let jsConfigStr = JSON.stringify(jsConfig);
-			let response = await fetch("callback/area_profile?sData=" + jsConfigStr);
+			let response = await fetch("callback/spatial_unit_profile?sData=" + jsConfigStr);
 			$("#loading_data_info").css('display','none')
 			if (response.ok) {
 				let profileJson = await response.json();
@@ -600,12 +600,12 @@ ams.App = {
 						l.tooltip('show');
 					});
 				} else {
-					console.log("HTTP-Error: " + response.status + " on area_profile");
+					console.log("HTTP-Error: " + response.status + " on spatial_unit_profile");
 					$('.toast').toast('show');
 					$('.toast-body').html("Encontrou um erro na solicitação ao servidor.");
 				}
 			} else {
-				console.log("HTTP-Error: " + response.status + " on area_profile");
+				console.log("HTTP-Error: " + response.status + " on spatial_unit_profile");
 				$('.toast').toast('show');
 				$('.toast-body').html("Encontrou um erro na solicitação ao servidor.");
 			}
