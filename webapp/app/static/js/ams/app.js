@@ -64,9 +64,9 @@ ams.App = {
 
 		this._baseLayers["blank"] = new L.TileLayer("");
 
-		L.control.zoom({
-			position: 'topright'
-		}).addTo(map);
+		// L.control.zoom({
+		// 	position: 'topright'
+		// }).addTo(map);
 
 		L.control.scale({position: 'bottomright'}).addTo(map);
     
