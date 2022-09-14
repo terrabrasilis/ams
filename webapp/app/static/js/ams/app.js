@@ -3,7 +3,10 @@ var ams = ams || {};
 ams.App = {
 
 	zoomThreshold: 11, // used to change the zIndex of the DETER layer in the map layer stack.
+	_layerControl: null,
+	_baseLayers: [],
 	_addedLayers: [],
+	_biomeLayer: null,
 	_appClassGroups: null,
 	_suViewParams: null,
 	_priorViewParams: null,
@@ -53,11 +56,13 @@ ams.App = {
 
 		map.setView([spatialUnits.default.center_lat, spatialUnits.default.center_lng], 5);
 
-		var osmLayer = new L.TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		this._baseLayers["osm"] = new L.TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
 			maxZoom: 18,
 			crs: L.CRS.EPSG4326,
 		}).addTo(map);
+
+		this._baseLayers["blank"] = new L.TileLayer("");
 
 		L.control.zoom({
 			position: 'topright'
@@ -67,11 +72,10 @@ ams.App = {
     
 		map.on('zoomend',function(e){
 			let currZoom = map.getZoom();
-			if(currZoom >= ams.App.zoomThreshold){
-				if(tbDeterAlertsLayer) tbDeterAlertsLayer.bringToFront();
-			}else if(currZoom < ams.App.zoomThreshold) {
-				if(tbDeterAlertsLayer) tbDeterAlertsLayer.bringToBack();
-			}
+			let l=ams.App._getLayerByName(ams.App._referenceLayerName);
+			if(!l) return;
+			if(currZoom >= ams.App.zoomThreshold) l.bringToFront();
+			else l.bringToBack();
 		});
 
 		// Starting viewParams
@@ -117,8 +121,8 @@ ams.App = {
 		var onlyWmsBase = {identify:false};// set this to disable GetFeatureInfo
 		ams.App._addWmsOptionsBase(onlyWmsBase);
 		var tbBiomeSource = new ams.LeafletWms.Source(this._baseURL, onlyWmsBase, this._appClassGroups);
-		var tbBiomeLayer = tbBiomeSource.getLayer(tbBiomeLayerName).addTo(map);
-		tbBiomeLayer.bringToBack();
+		ams.App._biomeLayer = tbBiomeSource.getLayer(tbBiomeLayerName);
+		ams.App._biomeLayer.addTo(map).bringToBack();
 
 		// ---------------------------------------------------------------------------------
 		// this structure is used into leaflet.groupedlayercontrol.js to create controls for filters panel...
@@ -181,6 +185,9 @@ ams.App = {
 
 		// Adding period control over map
 		ams.PeriodHandler.init(map);
+
+		// Adding control layer over map
+		this._addControlLayer();
 
 		(function addPriorizationControl() {
 			$('<div class="leaflet-control-layers-group" id="prioritization-control-layers-group">'
@@ -310,18 +317,6 @@ ams.App = {
 		$("#csv-download-button").click(function() {
 			ams.App._wfs.getCsv(ams.App._getLayerPrefix(), ams.App._priorViewParams);	
 			return false;
-		});		
-
-		$("#deter-checkbox").change(function() {
-			if(this.checked) 
-			{
-				ams.App._updateReferenceLayer();//tbDeterAlertsLayer, appClassGroups);
-				map.addControl(tbDeterAlertsLayer);
-			}
-			else {
-				map.removeControl(tbDeterAlertsLayer);
-			}
-			return false;
 		});
 	},// end of run method
 
@@ -405,6 +400,27 @@ ams.App = {
 		}
 	},
 
+	_addControlLayer: function(){
+		if(ams.App._layerControl){
+			ams.App._map.removeControl(ams.App._layerControl);
+		}
+		let bs={
+			"OpenStreetMap": ams.App._baseLayers["osm"],
+			"Em branco": ams.App._baseLayers["blank"]
+		};
+		let ol={};
+		for (let ll in ams.App._addedLayers) {
+			let lname=( (ll.includes('deter'))?("DETER"):( (ll.includes('fire'))?("Focos"):(false) ) );
+			if(ams.App._map.hasLayer(ams.App._addedLayers[ll])){
+				if(lname!=false) ol[lname]=ams.App._addedLayers[ll];
+			}
+		}
+		if(ams.App._biomeLayer) {
+			ol["Amazônia"]=ams.App._biomeLayer;
+		}
+		ams.App._layerControl=L.control.layers(bs,ol).addTo(ams.App._map);
+	},
+
 	/**
 	 * Changes the reference layer on map.
 	 * Both layerToDel and layerToAdd can be, deter or queimadas, see the names on Config.js
@@ -424,6 +440,7 @@ ams.App = {
 			layer.addTo(this._map);
 			layer.bringToBack();
 		}
+		this._addControlLayer();
 	},
 
 	/**
