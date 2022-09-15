@@ -26,7 +26,7 @@ L.Control.PeriodHandler = L.Control.extend({
         +'<option value="90">90 dias</option>'
         +'<option value="365">365 dias</option>'
         +'</select>';
-        info.innerHTML='Controle da unidade temporal - '+select+' ';
+        info.innerHTML='Controle da unidade temporal '+select+' ';
         container.appendChild(info);
 
         let form = L.DomUtil.create('div', className+'-form');

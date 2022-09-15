@@ -67,3 +67,19 @@ text.gtitle{font-size:15px !important;}
   white-space: nowrap;
   font-size: 14px;
 }
+input.threshold{
+  width: 45px;
+  height: 28px;
+  font-size: initial;
+  border: 1px #dddddd solid;
+  border-radius: 4px;
+  background: #ebfbeb;
+}
+.input-label{
+  font: 0.9rem/1.1 'Roboto', "Helvetica Neue", Arial, Helvetica, sans-serif;
+  white-space: nowrap;
+  color:rgb(53, 53, 53);
+}
+.configtext{
+  font-size: 0.9rem;
+}

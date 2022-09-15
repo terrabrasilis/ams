@@ -318,6 +318,30 @@ ams.App = {
 			ams.App._wfs.getCsv(ams.App._getLayerPrefix(), ams.App._priorViewParams);	
 			return false;
 		});
+
+		$("#threshold").on("change", ()=>{
+			let v=+$("#threshold").val();
+			ams.Config.general.area.threshold=v;
+			localStorage.setItem('ams.Config.general.area.threshold', v);
+		});
+
+		$("#changeunit").on("change", ()=>{
+			let v=$("#changeunit")[0].checked;
+			if(v) ams.Config.general.area.changeunit="auto";
+			else ams.Config.general.area.changeunit="no";
+			localStorage.setItem('ams.Config.general.area.changeunit', ams.Config.general.area.changeunit);
+		});
+
+		$(function() {
+			if(localStorage.getItem('ams.Config.general.area.changeunit')!==null){
+				ams.Config.general.area.changeunit=localStorage.getItem('ams.Config.general.area.changeunit');
+			}
+			if(localStorage.getItem('ams.Config.general.area.threshold')!==null){
+				ams.Config.general.area.threshold=localStorage.getItem('ams.Config.general.area.threshold');
+			}
+			$("#threshold").val(ams.Config.general.area.threshold);
+			$("#changeunit")[0].checked=ams.Config.general.area.changeunit=="auto";
+		});
 	},// end of run method
 
 	/**

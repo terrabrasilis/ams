@@ -6,13 +6,14 @@ ams.SLDStyles = {
 
 		let unit="focos";
 		if(propertyName=="area"){
-			let diff=( (minValue>=0)?(maxValue-minValue):(maxValue + (minValue*-1)) );
-			if(diff<=2){
-				unit="ha";
-				minValue=minValue*100;
-				maxValue=maxValue*100;
-			}else{
-				unit="km²";
+			unit="km²";// default if auto is disabled
+			if(ams.Config.general.area.changeunit=="auto"){
+				let diff=( (minValue>=0)?(maxValue-minValue):(maxValue + (minValue*-1)) );
+				if(diff<=ams.Config.general.area.threshold){
+					unit="ha";
+					minValue=minValue*100;
+					maxValue=maxValue*100;
+				}
 			}
 		}
 
@@ -28,6 +29,7 @@ ams.SLDStyles = {
 		this._numberOfTicksN = 0;
 		this._numberOfTicksP = 0;
 
+		// if unit for area changes, raise notice and set globally
 		if(ams.Map.PopupControl._unit!=unit){
 			let txt1=(unit=='focos')?(""):(" de área");
 			let txt2=(unit=='ha')?("hectare (ha)"):( (unit=='focos')?("número de focos"):("quilômetro quadrado (km²)") );

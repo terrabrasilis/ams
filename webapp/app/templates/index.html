@@ -140,12 +140,17 @@
   						</a>
 					</li>
 
+					<li class="nav-item">
+						<a class="nav-link" href="#modal-container-menu-config" id="goto_menu-config" data-toggle="modal" title="Abrir as configurações do aplicativo">
+							<span id="config-menu">Configurações</span>
+  						</a>
+					</li>
+
 					<li class="nav-item active">
 						<a class="nav-link" target="_blank" href="http://www.inpe.br/ouvidoria/" title="Envie sugestões, perguntas, elogios ou reclamações.">
 							<span id="contactus-menu">Fale Conosco</span>
 						</a>
 					</li>
-
 				</ul>
 			</div>
 		</nav>
@@ -180,6 +185,42 @@
 	<div class="container">
 		<div class="row box">
 			<div class="col-md-12">
+
+				<!-- modal window for Menu Config -->
+				<div class="modal fade" id="modal-container-menu-config" role="dialog" aria-labelledby="menu-config" aria-hidden="true">
+					<div class="modal-dialog">
+						<div class="modal-content modalinf">
+							<div class="modal-header fechar">
+								<h5 class="modal-title boxtitletable"><span class="alerttitle">Configurações do aplicativo</span></h5>
+								<button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="material-icons">clear</i></button>
+							</div>
+							<div class="modal-body">
+								<input type="checkbox" checked="checked" name="changeunit" id="changeunit"><span class="input-label"> Permitir alteração automática da unidade de medida de área.<b>*</b></span>
+								<div class="alert alert-light configtext" role="alert">
+								Quando este comportamento é útil?<br />
+									<small>
+										Quando os valores de área em uma unidade espacial, para o período selecionado, forem muito pequenos.
+										Valores pequenos, menores que 2 km², dificultam a apresentação dos dados e a análise, e muitas vezes tendem a zero quando são arredondados.
+										Geralmente os valores de área do DETER são calculados e apresentados em kilômetros quadrados (km²).
+									</small>
+								</div>
+
+								<input type="number" value="2" name="threshold" id="threshold" class="threshold"><span class="input-label"> Valor do limiar (km²).</span>
+								<div class="alert alert-light configtext" role="alert">
+									O que é e para que é usado?<br />
+									<small>
+										Valor mínimo de apresentação da unidade de medida de área em km².
+										A unidade de medida de área será alterada para hectare (ha) quando o valor encontrado for menor ou igual ao limiar.
+									</small>
+								</div>
+
+								<div class="alert alert-warning configtext" role="alert">
+									<b>*</b><small>Ao desabilitar o modo automático a unidade será forçada para km² na próxima interação, independente do valor encontrado.</small>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
 
 				<!-- modal window for Menu About -->
 				<div class="modal fade" id="modal-container-menu-about" role="dialog" aria-labelledby="menu-about" aria-hidden="true">

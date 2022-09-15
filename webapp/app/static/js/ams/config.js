@@ -21,5 +21,11 @@ ams.Config = {
   propertyName: {
     deter:"area",// can be "area", if reference layer is DETER
     af:"counts" // or "counts", if reference layer is AF - Active Fire (Focos de Queimadas)
+  },
+  general:{
+    area:{
+      changeunit: "auto", // used to automatically change the area unit between km² and ha when the threshold changes
+      threshold: 2 // if the absolute area value is less than threshold, the unit will be changed to ha
+    }
   }
 };
