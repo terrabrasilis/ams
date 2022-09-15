@@ -403,7 +403,9 @@ ams.Map = {
 				this._wmsLegendControl.options.static.deter.url = deterurl;
 				this._wmsLegendControl.options.static.af.url=null;
 			}else{
+				// here we force a different style to get the legend without 3 entries
 				let afurl = baseurl + "&LAYER=" + ams.App._referenceLayerName
+				+ "&STYLE=active_fires_legend"
 				+ "&LEGEND_OPTIONS=forceLabels:on;";
 				this._wmsLegendControl.options.static.af.url = afurl;
 				this._wmsLegendControl.options.static.deter.url=null;
