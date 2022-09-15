@@ -99,6 +99,7 @@ class ClassifyByLandUse:
             classname varchar(2) NOT NULL,
             "date" date NOT NULL,
             area double precision,
+            percentage double precision,
             counts integer,
             CONSTRAINT "{spatial_unit}_land_use_pkey" PRIMARY KEY (id)
         );''')
@@ -162,6 +163,20 @@ class ClassifyByLandUse:
                     '{key[3].year}-{key[3].month}-{key[3].day}',{value});""")
                     bar()
 
+    def percentage_calculation_for_areas(self):
+        print('Using Spatial Units areas and DETER areas to calculate percentage.')
+        cur = self._conn.cursor()
+        for spatial_unit in self._spatial_units.keys():
+            print(f'Processing {spatial_unit}...')
+            cur.execute(
+            f"""WITH su AS (
+                SELECT suid, ST_Area(geometry::geography)/1000000 AS ar
+                FROM public."{spatial_unit}"
+            )
+            UPDATE public."{spatial_unit}_land_use" SET percentage=area/su.ar*100
+            FROM su WHERE public."{spatial_unit}_land_use".suid=su.suid""")
+
+
     def execute(self):
         try:
             print("Starting at: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
@@ -170,6 +185,7 @@ class ClassifyByLandUse:
             self.process_fires_land_structure()
             self.create_land_structure_tables()
             self.insert_fires_in_land_structure_tables()
+            self.percentage_calculation_for_areas()
             print("Finished in: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
             self._conn.commit()
         except Exception as e:
