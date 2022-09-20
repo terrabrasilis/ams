@@ -190,7 +190,8 @@ ams.Map = {
 			let wfsUrl = this.url 
 						+ "&typeName=" + layerName
 						+ "&propertyName=" + propertyName
-						+ "&outputFormat=json";
+						+ "&outputFormat=json"
+						+ "&viewparams=classname:"+ams.App._suViewParams;
 			let res;
 			$.ajax({
 				dataType: "json",
