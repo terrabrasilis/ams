@@ -269,7 +269,7 @@ class DeterDaily:
             self._conn.commit()
         except Exception as e:
             self._conn.rollback()
-            print('Error on statistics generation for Active Fires')
+            print('Error executing DETER data update')
             print(e.__str__())
             raise e
 
