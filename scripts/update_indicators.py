@@ -8,8 +8,6 @@ from ams.usecases import ActiveFires
 from ams.usecases import DeterDaily
 from ams.usecases.classify_by_land_use import ClassifyByLandUse
 
-biome=""" 'Amazônia' """
-
 # Update all data including deter history?
 alldata=True
 # For a new database or if deter_history changes at source, use True at least once.
@@ -17,7 +15,7 @@ alldata=True
 deterupdate = DeterDaily(Config.DATABASE_URL, alldata)
 deterupdate.execute()
 
-firesupdate = ActiveFires(Config.DATABASE_URL, biome, alldata)
+firesupdate = ActiveFires(Config.DATABASE_URL, Config.BIOME, alldata)
 firesupdate.execute()
 
 class_deter_polys = ClassifyByLandUse(Config.DATABASE_URL, Config.INPUT_GEOTIFF_FUNDIARY_STRUCTURE, alldata)
