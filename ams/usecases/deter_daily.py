@@ -23,9 +23,10 @@ class DeterDaily:
 
     """
 
-    def __init__(self, db_url: str, alldata=False):
+    def __init__(self, db_url: str, biome: str, alldata=False):
         self._conn = connect(db_url)
         self._alldata = alldata
+        self._biome = biome
         # ignore classes that are not related to DETER data.
         # For more than one, use single quotes and comma like this: "'AF','DS','EX'"
         self.ignore_classes="'AF'" # AF=Active Fires by now.
@@ -103,7 +104,8 @@ class DeterDaily:
             """
             cur.execute(truncate)
             cur.execute(insert)
-            cur.execute(update)
+            if(self._biome=="'Amazônia'"):
+                cur.execute(update)
             print(f'DETER alerts for {table} have been updated.')
 
     def drop_tmp_table(self):
@@ -151,6 +153,28 @@ class DeterDaily:
         cur.execute(index)
         print('The DETER temp table has been created.')
 
+    def create_publish_date_table(self):
+        """
+        Create a publish date table from DETER publish date original data.
+        *Required to improve SQL runtime because this table is used in GeoServer SQL VIEW layer.
+
+        Prerequisites (see database requirements section in README.md):
+         - Existence of "public.deter_publish_date" SQL VIEW in the database;
+         - Existence of "deter" Schema in database;
+        """
+        # drop the deter.deter_publish_date table if exists
+        drop="""DROP TABLE IF EXISTS deter.deter_publish_date;"""
+        
+        # recreate deter.deter_publish_date
+        create="""
+        CREATE TABLE IF NOT EXISTS deter.deter_publish_date AS
+        SELECT date FROM public.deter_publish_date
+        """
+        cur = self._conn.cursor()
+        cur.execute(drop)
+        cur.execute(create)
+        print('The deter.deter_publish_date table has been created.')
+
     def statistics_processing(self):
         """
         Processing of statistics for DETER alerts crossing with tables of spatial units
@@ -164,6 +188,8 @@ class DeterDaily:
         # self.create_spatial_risk_tables()
         # update the current DETER data table
         self.update_current_tables()
+        # recreate the publish date table
+        self.create_publish_date_table()
         # create the DETER temporary data table
         self.create_tmp_table()
         # update data into spatial risk tables

@@ -12,7 +12,7 @@ class Config:
 	APPLICATION_ROOT = os.environ.get('APPLICATION_ROOT') or ''
 	INPUT_GEOTIFF_FUNDIARY_STRUCTURE = os.environ.get('INPUT_GEOTIFF_FUNDIARY_STRUCTURE') or \
 		'estrutura_fundiaria_cst_2022.tif'
-	BIOME = os.environ.get('BIOME') or """ 'Amazônia' """
+	BIOME = os.environ.get('BIOME') or "'Amazônia'"
 
 	if os.path.exists(DATABASE_URL):
 		DATABASE_URL = open(DATABASE_URL, 'r').read()

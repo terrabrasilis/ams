@@ -420,7 +420,7 @@ SELECT
 	su.suid AS suid, su.id AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
 FROM 
 	public."csAmz_25km" su
-LEFT JOIN (
+INNER JOIN (
 	SELECT 
 		rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total, SUM(rii.counts) AS counts
 	FROM 
@@ -460,7 +460,7 @@ SELECT
 	su.suid AS suid, su.id AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
 FROM 
 	public."csAmz_150km" su
-LEFT JOIN (
+INNER JOIN (
 	SELECT 
 		rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total, SUM(rii.counts) AS counts
 	FROM 
@@ -500,7 +500,7 @@ SELECT
 	su.suid AS suid, su.id AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
 FROM 
 	public."csAmz_300km" su
-LEFT JOIN (
+INNER JOIN (
 	SELECT 
 		rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total, SUM(rii.counts) AS counts
 	FROM 
@@ -540,7 +540,7 @@ SELECT
 	su.suid AS suid, su.uf AS state, su.nm_municip AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
 FROM 
 	public."amz_municipalities" su
-LEFT JOIN (
+INNER JOIN (
 	SELECT 
 		rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total , SUM(rii.counts) AS counts
 	FROM 
@@ -580,7 +580,7 @@ SELECT
 	su.suid AS suid, su."NM_ESTADO" AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
 FROM 
 	public."amz_states" su
-LEFT JOIN (
+INNER JOIN (
 	SELECT 
 		rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total, SUM(rii.counts) AS counts
 	FROM 

@@ -12,7 +12,7 @@ from ams.usecases.classify_by_land_use import ClassifyByLandUse
 alldata=True
 # For a new database or if deter_history changes at source, use True at least once.
 
-deterupdate = DeterDaily(Config.DATABASE_URL, alldata)
+deterupdate = DeterDaily(Config.DATABASE_URL, Config.BIOME, alldata)
 deterupdate.execute()
 
 firesupdate = ActiveFires(Config.DATABASE_URL, Config.BIOME, alldata)
