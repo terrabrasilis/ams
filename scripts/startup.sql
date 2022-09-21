@@ -35,8 +35,6 @@ CREATE OR REPLACE VIEW public.deter
     remote_data.quadrant,
     remote_data.orbitpoint,
     remote_data.date,
-    remote_data.date_audit,
-    remote_data.lot,
     remote_data.sensor,
     remote_data.satellite,
     remote_data.areatotalkm,
@@ -47,7 +45,7 @@ CREATE OR REPLACE VIEW public.deter
     remote_data.uc,
     remote_data.geom,
     remote_data.month_year
-   FROM dblink('hostaddr=<IP or hostname> port=5432 dbname=<DB_NAME> user=postgres password=postgres'::text, 'SELECT gid, origin_gid, classname, quadrant, orbitpoint, date, date_audit, lot, sensor, satellite, areatotalkm, areamunkm, areauckm, mun, uf, uc, geom, month_year FROM public.deter_ams'::text) remote_data(gid text, origin_gid integer, classname character varying(254), quadrant character varying(5), orbitpoint character varying(10), date date, date_audit date, lot character varying(254), sensor character varying(10), satellite character varying(13), areatotalkm double precision, areamunkm double precision, areauckm double precision, mun character varying(254), uf character varying(2), uc character varying(254), geom geometry(MultiPolygon,4674), month_year character varying(10));
+   FROM dblink('hostaddr=<IP or hostname> port=5432 dbname=<DB_NAME> user=postgres password=postgres'::text, 'SELECT gid, origin_gid, classname, quadrant, orbitpoint, date, sensor, satellite, areatotalkm, areamunkm, areauckm, mun, uf, uc, geom, month_year FROM public.deter_ams'::text) remote_data(gid text, origin_gid integer, classname character varying(254), quadrant character varying(5), orbitpoint character varying(10), date date, sensor character varying(10), satellite character varying(13), areatotalkm double precision, areamunkm double precision, areauckm double precision, mun character varying(254), uf character varying(2), uc character varying(254), geom geometry(MultiPolygon,4674), month_year character varying(10));
 
 -- View: public.deter_auth
 
@@ -61,8 +59,6 @@ CREATE OR REPLACE VIEW public.deter_auth
     remote_data.quadrant,
     remote_data.orbitpoint,
     remote_data.date,
-    remote_data.date_audit,
-    remote_data.lot,
     remote_data.sensor,
     remote_data.satellite,
     remote_data.areatotalkm,
@@ -73,7 +69,7 @@ CREATE OR REPLACE VIEW public.deter_auth
     remote_data.uc,
     remote_data.geom,
     remote_data.month_year
-   FROM dblink('hostaddr=<IP or hostname> port=5432 dbname=<DB_NAME> user=postgres password=postgres'::text, 'SELECT gid, origin_gid, classname, quadrant, orbitpoint, date, date_audit, lot, sensor, satellite, areatotalkm, areamunkm, areauckm, mun, uf, uc, geom, month_year FROM public.deter_auth_ams'::text) remote_data(gid text, origin_gid integer, classname character varying(254), quadrant character varying(5), orbitpoint character varying(10), date date, date_audit date, lot character varying(254), sensor character varying(10), satellite character varying(13), areatotalkm double precision, areamunkm double precision, areauckm double precision, mun character varying(254), uf character varying(2), uc character varying(254), geom geometry(MultiPolygon,4674), month_year character varying(10));
+   FROM dblink('hostaddr=<IP or hostname> port=5432 dbname=<DB_NAME> user=postgres password=postgres'::text, 'SELECT gid, origin_gid, classname, quadrant, orbitpoint, date, sensor, satellite, areatotalkm, areamunkm, areauckm, mun, uf, uc, geom, month_year FROM public.deter_auth_ams'::text) remote_data(gid text, origin_gid integer, classname character varying(254), quadrant character varying(5), orbitpoint character varying(10), date date, sensor character varying(10), satellite character varying(13), areatotalkm double precision, areamunkm double precision, areauckm double precision, mun character varying(254), uf character varying(2), uc character varying(254), geom geometry(MultiPolygon,4674), month_year character varying(10));
 
 
 -- View: public.deter_history
@@ -88,8 +84,6 @@ CREATE OR REPLACE VIEW public.deter_history
     remote_data.quadrant,
     remote_data.orbitpoint,
     remote_data.date,
-    remote_data.date_audit,
-    remote_data.lot,
     remote_data.sensor,
     remote_data.satellite,
     remote_data.areatotalkm,
@@ -101,12 +95,12 @@ CREATE OR REPLACE VIEW public.deter_history
     remote_data.geom,
     remote_data.month_year
    FROM dblink('hostaddr=<IP or hostname> port=5432 dbname=<DB_NAME> user=postgres password=postgres'::text, '
-			   SELECT id as gid, gid as origin_gid, classname, quadrant, orbitpoint, date, date_audit, lot,
+			   SELECT id as gid, gid as origin_gid, classname, quadrant, orbitpoint, date,
                 sensor, satellite, areatotalkm, areamunkm, areauckm, county as mun, uf, uc,
                 st_multi(geom)::geometry(MultiPolygon,4674) AS geom,
                 to_char(timezone(''UTC''::text, date::timestamp with time zone), ''MM-YYYY''::text) AS month_year
                 FROM public.deter_history WHERE areatotalkm>=0.01
-			   '::text) remote_data(gid text, origin_gid integer, classname character varying(254), quadrant character varying(5), orbitpoint character varying(10), date date, date_audit date, lot character varying(254), sensor character varying(10), satellite character varying(13), areatotalkm double precision, areamunkm double precision, areauckm double precision, mun character varying(254), uf character varying(2), uc character varying(254), geom geometry(MultiPolygon,4674), month_year character varying(10));
+			   '::text) remote_data(gid text, origin_gid integer, classname character varying(254), quadrant character varying(5), orbitpoint character varying(10), date date, sensor character varying(10), satellite character varying(13), areatotalkm double precision, areamunkm double precision, areauckm double precision, mun character varying(254), uf character varying(2), uc character varying(254), geom geometry(MultiPolygon,4674), month_year character varying(10));
 
 
 -- View: public.deter_aggregated_ibama
