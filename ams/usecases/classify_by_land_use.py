@@ -121,9 +121,9 @@ class ClassifyByLandUse:
             counts integer,
             CONSTRAINT "{spatial_unit}_land_use_pkey" PRIMARY KEY (id)
         );
-        CREATE INDEX IF NOT EXISTS "{spatial_unit}_land_use_classname_idx ON "{spatial_unit}_land_use
+        CREATE INDEX IF NOT EXISTS "{spatial_unit}_land_use_classname_idx" ON "{spatial_unit}_land_use"
         USING btree (classname ASC NULLS LAST);
-        CREATE INDEX IF NOT EXISTS "{spatial_unit}_land_use_date_idx ON "{spatial_unit}_land_use
+        CREATE INDEX IF NOT EXISTS "{spatial_unit}_land_use_date_idx" ON "{spatial_unit}_land_use"
         USING btree (date DESC NULLS LAST);''')
 
     def insert_deter_in_land_use_tables(self):
