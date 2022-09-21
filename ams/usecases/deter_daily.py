@@ -161,12 +161,16 @@ class DeterDaily:
         See the README.md file for instructions.
         """
         # create spatial unit tables if not exists
-        self.create_spatial_risk_tables()
+        # self.create_spatial_risk_tables()
         # update the current DETER data table
         self.update_current_tables()
         # create the DETER temporary data table
         self.create_tmp_table()
-        
+        # update data into spatial risk tables
+        # self.update_spatial_risk_tables()
+
+
+    def update_spatial_risk_tables(self):
         cur = self._conn.cursor()
         for spatial_unit, id in self._spatial_units.items():
             

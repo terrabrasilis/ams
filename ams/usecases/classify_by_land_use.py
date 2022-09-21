@@ -18,7 +18,8 @@ class ClassifyByLandUse:
         self._amazon_class_fname = input_tif
         self._conn = connect(db_url)
         self._pixel_land_use_area = 29.875 * 29.875 * (10 ** -6)
-        self._deter_table = 'deter.tmp_data' if alldata else 'deter.deter_auth'
+        self._alldata = alldata
+        self._deter_table = 'deter.tmp_data'
         self._fires_input_table = 'fires.active_fires'
 
     def read_spatial_units(self):
@@ -38,16 +39,21 @@ class ClassifyByLandUse:
     def process_deter_land_structure(self):
         print('Creating and filling deter_land_structure.')
         cur = self._conn.cursor()
-        cur.execute('''
-        DROP TABLE IF EXISTS deter_land_structure;
-        CREATE TABLE deter_land_structure (
-        	id serial NOT NULL,
-        	gid varchar NULL,
-        	land_use_id int4 NULL,
-        	num_pixels int4 NULL,
-        	CONSTRAINT deter_poly_classes_pk PRIMARY KEY (id)
-        );
-        CREATE INDEX deter_land_structure_gid_idx ON public.deter_land_structure USING btree (gid);''')
+        if self._alldata:
+            cur.execute('''
+            DROP TABLE IF EXISTS deter_land_structure;
+            CREATE TABLE IF NOT EXISTS deter_land_structure (
+                id serial NOT NULL,
+                gid varchar NULL,
+                land_use_id int4 NULL,
+                num_pixels int4 NULL,
+                CONSTRAINT deter_poly_classes_pk PRIMARY KEY (id)
+            );
+            CREATE INDEX IF NOT EXISTS deter_land_structure_gid_idx ON deter_land_structure USING btree (gid);''')
+        else:
+            # here, we expect deter.tmp_data to only have DETER data coming from the current table
+            cur.execute("DELETE FROM deter_land_structure WHERE gid like '%_curr';")
+        
         amazon_class = rasterio.open(f'{self._datapath}/{self._amazon_class_fname}')
         deter = gpd.GeoDataFrame.from_postgis(f'SELECT gid, geom FROM {self._deter_table}', self._conn)
         with alive_bar(len(deter)) as bar:
@@ -66,19 +72,27 @@ class ClassifyByLandUse:
 
     def process_fires_land_structure(self):
         print('Creating and filling fires_land_structure.')
+        
+        fires_where = ""
         cur = self._conn.cursor()
-        cur.execute('''
-        DROP TABLE IF EXISTS public.fires_land_structure;
-        CREATE TABLE fires_land_structure (
-        	id serial NOT NULL,
-        	gid integer NOT NULL,
-        	land_use_id int4 NULL,
-        	num_pixels int4 NULL,
-        	CONSTRAINT fires_land_structure_pk PRIMARY KEY (id)
-        );
-        CREATE INDEX fires_land_structure_gid_idx ON public.fires_land_structure USING btree (gid);''')
+
+        if self._alldata:
+            cur.execute(f'''
+            DROP TABLE IF EXISTS public.fires_land_structure;
+            CREATE TABLE IF NOT EXISTS fires_land_structure (
+                id serial NOT NULL,
+                gid integer NOT NULL,
+                land_use_id int4 NULL,
+                num_pixels int4 NULL,
+                CONSTRAINT fires_land_structure_pk PRIMARY KEY (id)
+            );
+            CREATE INDEX IF NOT EXISTS fires_land_structure_gid_idx ON public.fires_land_structure USING btree (gid);''')
+        else:
+            fires_where = f""" WHERE view_date > (SELECT MAX(date) FROM "{list(self._spatial_units.keys())[0]}_land_use" WHERE classname='AF')"""
+        
+        # crossing fires and raster land use data
         amazon_class = rasterio.open(f'{self._datapath}/{self._amazon_class_fname}')
-        fires = gpd.GeoDataFrame.from_postgis(f'SELECT id as gid, geom FROM {self._fires_input_table}', self._conn)
+        fires = gpd.GeoDataFrame.from_postgis(f'SELECT id as gid, geom FROM {self._fires_input_table} {fires_where}', self._conn)
         coord_list = [(x,y) for x,y in zip(fires['geom'].x , fires['geom'].y)]
         fires['value'] = [x for x in amazon_class.sample(coord_list)]
         with alive_bar(len(fires)) as bar:
@@ -89,10 +103,14 @@ class ClassifyByLandUse:
                         f"VALUES('{point.gid}', {point['value'][0]}, 1)")
                 bar()
 
-    def _create_table(self, spatial_unit):
+    def _recreate_spatial_table(self, spatial_unit):
+        """
+        Even if "alldata" is true, we recreate the final land_use table.
+        *The control is made in intermediary table called "deter_land_structure"
+        """
         cur = self._conn.cursor()
         cur.execute(f'''DROP TABLE IF EXISTS "{spatial_unit}_land_use"; 
-        CREATE TABLE "{spatial_unit}_land_use" (
+        CREATE TABLE IF NOT EXISTS "{spatial_unit}_land_use" (
             id serial NOT NULL,
             suid int NOT NULL,
             land_use_id int NOT NULL,
@@ -102,10 +120,14 @@ class ClassifyByLandUse:
             percentage double precision,
             counts integer,
             CONSTRAINT "{spatial_unit}_land_use_pkey" PRIMARY KEY (id)
-        );''')
+        );
+        CREATE INDEX IF NOT EXISTS "{spatial_unit}_land_use_classname_idx ON "{spatial_unit}_land_use
+        USING btree (classname ASC NULLS LAST);
+        CREATE INDEX IF NOT EXISTS "{spatial_unit}_land_use_date_idx ON "{spatial_unit}_land_use
+        USING btree (date DESC NULLS LAST);''')
 
-    def create_land_structure_tables(self):
-        print('Creating land structure/spatial units tables.')
+    def insert_deter_in_land_use_tables(self):
+        print('Insert DETER data in land use tables for each spatial units.')
         cur = self._conn.cursor()
         land_structure = gpd.GeoDataFrame.from_postgis(f''' 
         SELECT a.id,a.land_use_id,a.num_pixels,d.name as classname,b.date,b.geom as geometry
@@ -118,7 +140,7 @@ class ClassifyByLandUse:
         ON c.group_id = d.id ''', self._conn, geom_col='geometry')
         for spatial_unit in self._spatial_units.keys():
             print(f'Processing {spatial_unit}...')
-            self._create_table(spatial_unit)
+            self._recreate_spatial_table(spatial_unit)
             spatial_units = gpd.GeoDataFrame.from_postgis(
                 f'SELECT suid, geometry FROM "{spatial_unit}"',
                 self._conn, geom_col='geometry')
@@ -136,8 +158,8 @@ class ClassifyByLandUse:
                     '{key[3].year}-{key[3].month}-{key[3].day}',{value * self._pixel_land_use_area});""")
                     bar()
 
-    def insert_fires_in_land_structure_tables(self):
-        print('insert active fires in land structure tables for each spatial units.')
+    def insert_fires_in_land_use_tables(self):
+        print('Insert active fires in land use tables for each spatial units.')
         cur = self._conn.cursor()
         land_structure = gpd.GeoDataFrame.from_postgis(f''' 
         SELECT a.id,a.land_use_id,a.num_pixels,'AF' as classname,b.view_date as date,b.geom as geometry
@@ -183,8 +205,8 @@ class ClassifyByLandUse:
             self.read_spatial_units()
             self.process_deter_land_structure()
             self.process_fires_land_structure()
-            self.create_land_structure_tables()
-            self.insert_fires_in_land_structure_tables()
+            self.insert_deter_in_land_use_tables()
+            self.insert_fires_in_land_use_tables()
             self.percentage_calculation_for_areas()
             print("Finished in: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
             self._conn.commit()
