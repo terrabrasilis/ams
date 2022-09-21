@@ -221,7 +221,7 @@ CREATE SCHEMA IF NOT EXISTS deter AUTHORIZATION postgres;
 -- DROP TABLE IF EXISTS deter.deter_history;
 
 CREATE TABLE IF NOT EXISTS deter.deter_history AS
-SELECT gid, origin_gid, classname, quadrant, orbitpoint, date, date_audit, lot, sensor, satellite, areatotalkm,
+SELECT gid, origin_gid, classname, quadrant, orbitpoint, date, sensor, satellite, areatotalkm,
 areamunkm, areauckm, mun, uf, uc, geom, month_year,
 NULL::integer as ncar_ids, NULL::text as car_imovel, NULL::integer as continuo, NULL::numeric as velocidade,
 NULL::integer as deltad, NULL::character varying(254) as est_fund, NULL::character varying(254) as dominio, 
@@ -240,8 +240,6 @@ CREATE TABLE IF NOT EXISTS deter.deter
     quadrant character varying(5),
     orbitpoint character varying(10),
     date date,
-    date_audit date,
-    lot character varying(254),
     sensor character varying(10),
     satellite character varying(13),
     areatotalkm double precision,
@@ -276,8 +274,6 @@ CREATE TABLE IF NOT EXISTS deter.deter_auth
     quadrant character varying(5),
     orbitpoint character varying(10),
     date date,
-    date_audit date,
-    lot character varying(254),
     sensor character varying(10),
     satellite character varying(13),
     areatotalkm double precision,
@@ -424,7 +420,7 @@ INNER JOIN (
 	SELECT 
 		rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total, SUM(rii.counts) AS counts
 	FROM 
-		public."csAmz_25km_risk_indicators" rii
+		public."csAmz_25km_land_use" rii
 	WHERE
 		rii.classname = clsname
 		AND
@@ -464,7 +460,7 @@ INNER JOIN (
 	SELECT 
 		rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total, SUM(rii.counts) AS counts
 	FROM 
-		public."csAmz_150km_risk_indicators" rii
+		public."csAmz_150km_land_use" rii
 	WHERE
 		rii.classname = clsname
 		AND
@@ -504,7 +500,7 @@ INNER JOIN (
 	SELECT 
 		rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total, SUM(rii.counts) AS counts
 	FROM 
-		public."csAmz_300km_risk_indicators" rii
+		public."csAmz_300km_land_use" rii
 	WHERE
 		rii.classname = clsname
 		AND
@@ -537,14 +533,14 @@ AS $BODY$
 begin
 	return query
 SELECT
-	su.suid AS suid, su.uf AS state, su.nm_municip AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
+	su.suid AS suid, su.uf AS state, su.nome AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
 FROM 
 	public."amz_municipalities" su
 INNER JOIN (
 	SELECT 
 		rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total , SUM(rii.counts) AS counts
 	FROM 
-		public."amz_municipalities_risk_indicators" rii
+		public."amz_municipalities_land_use" rii
 	WHERE
 		rii.classname = clsname
 		AND
@@ -577,14 +573,14 @@ AS $BODY$
 begin
 	return query
 SELECT 
-	su.suid AS suid, su."NM_ESTADO" AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
+	su.suid AS suid, su.nome AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
 FROM 
 	public."amz_states" su
 INNER JOIN (
 	SELECT 
 		rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total, SUM(rii.counts) AS counts
 	FROM 
-		public."amz_states_risk_indicators" rii
+		public."amz_states_land_use" rii
 	WHERE
 		rii.classname = clsname
 		AND

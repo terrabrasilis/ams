@@ -80,12 +80,12 @@ class DeterDaily:
             truncate=f"""TRUNCATE deter.{table};"""
             insert=f"""
             INSERT INTO deter.{table}(
-                gid, origin_gid, classname, quadrant, orbitpoint, date, date_audit, lot, sensor, satellite,
+                gid, origin_gid, classname, quadrant, orbitpoint, date, sensor, satellite,
                 areatotalkm, areamunkm, areauckm, mun, uf, uc, geom, month_year, ncar_ids, car_imovel, continuo,
                 velocidade, deltad, est_fund, dominio, tp_dominio
             )
             SELECT deter.gid, deter.origin_gid, deter.classname, deter.quadrant, deter.orbitpoint, deter.date,
-            deter.date_audit, deter.lot, deter.sensor, deter.satellite, deter.areatotalkm,
+            deter.sensor, deter.satellite, deter.areatotalkm,
             deter.areamunkm, deter.areauckm, deter.mun, deter.uf, deter.uc, deter.geom, deter.month_year,
             0::integer as ncar_ids, ''::text as car_imovel,
             0::integer as continuo, 0::numeric as velocidade,
