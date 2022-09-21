@@ -13,6 +13,7 @@ class Config:
 	INPUT_GEOTIFF_FUNDIARY_STRUCTURE = os.environ.get('INPUT_GEOTIFF_FUNDIARY_STRUCTURE') or \
 		'estrutura_fundiaria_cerrado_cst_lzw.tif'
 	BIOME = os.environ.get('BIOME') or "'Cerrado'"
+	ALL_DATA = os.environ.get('ALL_DATA') or True
 
 	if os.path.exists(DATABASE_URL):
 		DATABASE_URL = open(DATABASE_URL, 'r').read()
