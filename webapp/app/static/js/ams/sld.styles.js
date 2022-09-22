@@ -226,13 +226,14 @@ ams.SLDStyles = {
 			let rules = "";
 			let firstRule = "";
 			let lastRule = "";
-			for(let i = 0; i < ticks.length; i++) {
-				let color =  legend(ticks[i]);
-			}
+			
 			if(!isPriorization) {
+				let fixedValue = ( (this._propertyName=='area')?(1):(0) );
+				for (let t in ticks) {
+					ticks[t] = +(ticks[t].toFixed(1));
+				}
 				if(ticks.length >= 2) {
 					let vMaxLength = this.getMaxLength(ticks);
-					let fixedValue = ( (this._propertyName=='area')?(1):(0) );
 					firstRule = this.createFirstRule(ticks[0].toFixed(fixedValue), 
 												ticks[1].toFixed(fixedValue), 
 												legend(ticks[0]), vMaxLength)
