@@ -20,9 +20,9 @@ BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
 # if current branch isn't master then change version tag
 if [[ ! "${BRANCH}" = "master" ]]; then
-    TAG_VERSION="${VERSION}.rc"
+    TAG_VERSION="${VERSION}.${BRANCH}.rc"
 else
-    TAG_VERSION=${VERSION}
+    TAG_VERSION=${VERSION}.${BRANCH}
 fi
 
 echo 
