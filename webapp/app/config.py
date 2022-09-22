@@ -13,7 +13,7 @@ class Config:
 	INPUT_GEOTIFF_FUNDIARY_STRUCTURE = os.environ.get('INPUT_GEOTIFF_FUNDIARY_STRUCTURE') or \
 		'estrutura_fundiaria_cst_2022.tif'
 	BIOME = os.environ.get('BIOME') or "'Amazônia'"
-	ALL_DATA = os.environ.get('ALL_DATA') or True
+	ALL_DATA = os.environ.get('ALL_DATA')=='True'
 
 	if os.path.exists(DATABASE_URL):
 		DATABASE_URL = open(DATABASE_URL, 'r').read()
