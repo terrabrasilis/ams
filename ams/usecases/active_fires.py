@@ -11,14 +11,17 @@ class ActiveFires:
 
     @param {boolean} alldata, Default is False, if True, all data of RAW database will be processed.
     Otherwise, only new data is processed.
+
+    @param {str} biome, the name of biome used to filter active fires data.
+    See the names in raw_active_fires table. Ex.: """ 'Amazônia' """
+    
     """
 
-    def __init__(self, db_url: str, alldata=False):
+    def __init__(self, db_url: str, biome: str, alldata=False):
         self._conn = connect(db_url)
         self._alldata = alldata
         self._fires_input_table = 'fires.active_fires'
-        # The biome names as list to filter by biomes used in "IN" clause
-        self._biomes=""" 'Amazônia' """ # Ex.: """ 'biome1','biome2','biome3' """
+        self._biome = biome 
         print(f'Processing the Active Fires data...')
 
     def read_spatial_units(self):
@@ -41,19 +44,21 @@ class ActiveFires:
         Load active fire data from raw database using a SQL View resource named public.raw_active_fires
         *raw database has an independent sync task.
         """
-        onlynews=f" AND a.view_date>(SELECT COALESCE(MAX(view_date),'2016-01-01'::date) FROM {self._fires_input_table})"
+        
+        bydate = " AND a.view_date > '2016-01-01'::date "
         cur = self._conn.cursor()
 
         if(self._alldata):
-            onlynews=""
             cur.execute(f"TRUNCATE {self._fires_input_table};")
+        else:
+            bydate = f" AND a.view_date > ( SELECT MAX(view_date) FROM {self._fires_input_table} )"
 
         update = f"""
         INSERT INTO {self._fires_input_table}(id, view_date, satelite, estado, municipio, diasemchuva, precipitacao, riscofogo, geom)
         SELECT a.id, a.view_date, a.satelite, a.estado, a.municipio, a.diasemchuva, a.precipitacao, a.riscofogo, a.geom
         FROM public.raw_active_fires a
-        WHERE a.bioma IN ({self._biomes})
-        {onlynews}
+        WHERE a.bioma = {self._biome}
+        {bydate}
         """
         cur.execute(update)
 
@@ -94,7 +99,7 @@ class ActiveFires:
             print("Starting at: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
             self.read_spatial_units()
             self.update_focuses_table()
-            self.statistics_processing()
+            # self.statistics_processing()
             print("Finished in: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
             self._conn.commit()
         except Exception as e:

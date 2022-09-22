@@ -3,6 +3,42 @@ var ams = ams || {};
 ams.SLDStyles = {
 	AreaStyle: function(layerName, propertyName, minValue, maxValue,
 							isPriorization, priorColorHex) {
+
+		let unit="focos";
+		if(propertyName=="area"){
+			unit="km²";// default if auto is disabled
+			if(ams.Config.general.area.changeunit=="auto"){
+				let diff=( (minValue>=0)?(maxValue-minValue):(maxValue + (minValue*-1)) );
+				if(diff<=ams.Config.general.area.threshold){
+					unit="ha";
+					minValue=minValue*100;
+					maxValue=maxValue*100;
+				}
+			}
+		}
+
+		this.stroke = "";
+		this.fillOpacity = 1;
+		this.maxValue = maxValue;
+		this.minValue = minValue;
+		this.colorRange;
+		this.colorDomain;
+		this._unit = unit;
+		this._propertyName = propertyName;
+		this._numberOfTicks = 0;
+		this._numberOfTicksN = 0;
+		this._numberOfTicksP = 0;
+
+		// if unit for area changes, raise notice and set globally
+		if(ams.Map.PopupControl._unit!=unit){
+			let txt1=(unit=='focos')?(""):(" de área");
+			let txt2=(unit=='ha')?("hectare (ha)"):( (unit=='focos')?("número de focos"):("quilômetro quadrado (km²)") );
+			$('.toast').toast('show');
+			$('.toast-body').html("Atenção, a unidade de medida"+txt1+" foi alterada para "+txt2+".");
+			// used to control the unit on the popup map
+			ams.Map.PopupControl._unit=unit;
+		}
+
 		this.setStroke = function(isPriorization) {
 			if(isPriorization) {
 				this.fillOpacity = 0;
@@ -14,6 +50,8 @@ ams.SLDStyles = {
 							+ '</Stroke>';     
 			}
 		}
+		// change fill and stroke by priorization
+		this.setStroke(isPriorization);
 
 		this.setLegendDomainAndRange = function() {
 			if(this.minValue < 0) {
@@ -32,23 +70,9 @@ ams.SLDStyles = {
 				this.colorRange = ["#f0f0f0", "#ff3838"];
 				this.colorDomain = [this.minValue, this.maxValue];
 				let tt=Math.ceil(this.maxValue);
-				this._numberOfTicks = ( (tt<10)?(tt):(10) );//10; 
+				this._numberOfTicks = ( (tt<10)?(tt==1?2:tt):(10) );//10; 
 			}
 		}
-
-		this.stroke = "";
-		this.fillOpacity = 1;
-		this.setStroke(isPriorization);
-		this.maxValue = maxValue;
-		this.minValue = minValue;
-		this.colorRange;
-		this.colorDomain;
-		this._unit = (propertyName=="area")?("km&#178;"):("focos");
-		this._propertyName = propertyName;
-		this._numberOfTicks = 0;
-		this._numberOfTicksN = 0;
-		this._numberOfTicksP = 0;
-
 
 		this.createFill = function(value, color) {
 			let fill = "";
@@ -78,21 +102,22 @@ ams.SLDStyles = {
 		}
 
 		this.createTitle = function(v1, v2, vMaxLength) {
-			return  '<Title>' 
-						+ 'entre ' + this._formatValue(v1, vMaxLength)
-						+ ' e ' + this._formatValue(v2, vMaxLength)  
-						+ (this._unit==''?'':' ('+this._unit+')')
-				+ ' </Title>';
+			return  '<Title>'
+					+ ' &gt; ' + this._formatValue(v1, vMaxLength)
+					+ ' &lt;= ' + this._formatValue(v2, vMaxLength)
+					+ (this._unit==''?'':' ('+this._unit+')')
+					+ ' </Title>';
 		}
 
 		this.createFirstRule = function(v1, v2, color, vMaxLength) {
 			let fill = this.createFill(v1, color);
+			let l2 = (this._unit=='ha')?(v2/100):(v2);
 			return '<Rule>'
 					+ this.createTitle(v1, v2, vMaxLength)
 					+ '<ogc:Filter>'
 					+ 	'<ogc:PropertyIsLessThanOrEqualTo>'
 					+ 	'<ogc:PropertyName>' + this._propertyName + '</ogc:PropertyName>'
-					+ 	'<ogc:Literal>' + v2 + '</ogc:Literal>'
+					+ 	'<ogc:Literal>' + l2 + '</ogc:Literal>'
 					+ 	'</ogc:PropertyIsLessThanOrEqualTo>'
 					+ '</ogc:Filter>'
 					+ '<PolygonSymbolizer>' + fill + this.stroke + '</PolygonSymbolizer>'
@@ -101,12 +126,13 @@ ams.SLDStyles = {
 
 		this.createLastRule = function(v1, v2, color, vMaxLength) {
 			let fill = this.createFill(v1, color, vMaxLength);
+			let l1 = (this._unit=='ha')?(v1/100):(v1);
 			return '<Rule>'
 					+ this.createTitle(v1, v2, vMaxLength)
 					+ '<ogc:Filter>'
 					+ 	'<ogc:PropertyIsGreaterThan>'
 					+ 	'<ogc:PropertyName>' + this._propertyName + '</ogc:PropertyName>'
-					+ 	'<ogc:Literal>' + v1 + '</ogc:Literal>'
+					+ 	'<ogc:Literal>' + l1 + '</ogc:Literal>'
 					+ 	'</ogc:PropertyIsGreaterThan>'
 					+ '</ogc:Filter>'
 					+ '<PolygonSymbolizer>' + fill + this.stroke + '</PolygonSymbolizer>'
@@ -115,17 +141,19 @@ ams.SLDStyles = {
 
 		this.createRule = function(v1, v2, color, vMaxLength) {
 			let fill = this.createFill(v1, color);
+			let l1 = (this._unit=='ha')?(v1/100):(v1);
+			let l2 = (this._unit=='ha')?(v2/100):(v2);
 			return '<Rule>'
 					+ this.createTitle(v1, v2, vMaxLength)
 					+ '<ogc:Filter>'
 					+	'<ogc:And>'
 					+ 	'<ogc:PropertyIsGreaterThan>'
 					+ 	'<ogc:PropertyName>' + this._propertyName + '</ogc:PropertyName>'
-					+ 	'<ogc:Literal>' + v1 + '</ogc:Literal>'
+					+ 	'<ogc:Literal>' + l1 + '</ogc:Literal>'
 					+ 	'</ogc:PropertyIsGreaterThan>'
 					+ 	'<ogc:PropertyIsLessThanOrEqualTo>'
 					+ 	'<ogc:PropertyName>' + this._propertyName + '</ogc:PropertyName>'
-					+ 	'<ogc:Literal>' + v2 + '</ogc:Literal>'
+					+ 	'<ogc:Literal>' + l2 + '</ogc:Literal>'
 					+ 	'</ogc:PropertyIsLessThanOrEqualTo>'
 					+	'</ogc:And>'
 					+ '</ogc:Filter>'
@@ -198,27 +226,28 @@ ams.SLDStyles = {
 			let rules = "";
 			let firstRule = "";
 			let lastRule = "";
-			for(let i = 0; i < ticks.length; i++) {
-				let color =  legend(ticks[i]);
-			}
+
 			if(!isPriorization) {
-				if(ticks.length >= 2) {			
+				let fixedValue = ( (this._propertyName=='area')?(1):(0) );
+				for (let t in ticks) {
+					ticks[t] = +(ticks[t].toFixed(fixedValue));
+				}
+				if(ticks.length >= 2) {
 					let vMaxLength = this.getMaxLength(ticks);
-					let fixedValue = ( (this._propertyName=='area')?(1):(0) );
-					firstRule = this.createFirstRule(ticks[0].toFixed(fixedValue), 
-												ticks[1].toFixed(fixedValue), 
+					firstRule = this.createFirstRule(ticks[0], 
+												ticks[1], 
 												legend(ticks[0]), vMaxLength)
 					for(let i = 1; i < ticks.length - 2; i++) {
 						let v1 = ticks[i];
 						let v2 = ticks[i+1];
 						let color = legend(v1);
-						rules = `${rules}${this.createRule(v1.toFixed(fixedValue), 
-															v2.toFixed(fixedValue), 
+						rules = `${rules}${this.createRule(v1, 
+															v2, 
 															color, vMaxLength)}`;
 					}     
 					let lastIdx = ticks.length - 1;
-					lastRule = this.createLastRule(ticks[lastIdx - 1].toFixed(fixedValue), 
-												ticks[lastIdx].toFixed(fixedValue), 
+					lastRule = this.createLastRule(ticks[lastIdx - 1], 
+												ticks[lastIdx], 
 												legend(ticks[lastIdx - 1]), vMaxLength);
 				}
 			}
@@ -246,5 +275,5 @@ ams.SLDStyles = {
 		this.getEncodeURI = function() {
 			return encodeURIComponent(this.sld);
 		}
-	} 
+	}
 };

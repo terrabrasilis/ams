@@ -62,5 +62,45 @@ CREATE DATABASE "AMS"
 COMMENT ON DATABASE "AMS" IS 'The new AMS database';
 ```
 
+### Dockerize backend
+
+still missing...
 
 ## Frontend
+
+### Development
+
+I use VSCode for development environment. The steps are:
+
+   - install all python dependencies using pip install -r requirements.txt;
+   - create or edit launch.json and add configuration entry as below to provide an easy way to debug frontend application;
+   - prepare the backend services to use behind the application, database and Geoserver as needed (see the dockerize backend for easy startup of this software tier);
+   - run the new entry to debug the application;
+
+configuration example to help with the debugging process.
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Flask",
+            "type": "python",
+            "request": "launch",
+            "module": "flask",
+            "env": {
+                "GEOSERVER_URL": "http://localhost/geoserver",
+                "DATABASE_URL": "postgresql://postgres:postgres@192.168.15.49:5444/AMS",
+                "DETER_DATABASE_URL": "postgresql://postgres:postgres@192.168.15.49:5444/DETERB",
+                "FLASK_APP": "webapp/wsgi.py",
+                "FLASK_ENV": "development",
+                "PYTHONPATH": "."
+            },
+            "args": [
+                "run",
+                "--no-debugger"
+            ],
+            "jinja": true
+        }
+    ]
+}
+```

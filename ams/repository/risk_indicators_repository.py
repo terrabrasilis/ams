@@ -15,7 +15,7 @@ class RiskIndicatorsRepository:
 		self._engine = dataaccess.engine
 		self._spatial_unit_tablename = spatial_unit_tablename
 		self._spatial_unit_as_attribute_name = spatial_unit_as_attribute_name
-		self._tablename = f'{spatial_unit_tablename}_risk_indicators'
+		self._tablename = f'{spatial_unit_tablename}_land_use'
 
 	def list(self) -> 'list[RiskIndicator]': 
 		session = self._dataaccess.create_session()

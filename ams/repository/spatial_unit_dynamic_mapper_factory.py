@@ -12,7 +12,7 @@ class SpatialUnitDynamicMapperFactory:
 	def __init__(self):
 		self._types = {}
 		self._dataaccess = None
-		self._risk_indicator_suffix = '_risk_indicators'
+		self._risk_indicator_suffix = '_land_use'
 
 	@classmethod
 	def instance(cls):

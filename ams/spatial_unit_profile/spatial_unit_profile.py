@@ -1,24 +1,39 @@
 # -*- coding: utf-8 -*-
+from dataclasses import replace
 from unicodedata import category
 from plotly.graph_objs import layout
 from psycopg2.extras import DictCursor
 import pandas as pd
-import numpy as np
 import plotly
 import plotly.express as px
 from datetime import datetime
 import json
+import re
 from ams.dataaccess import AlchemyDataAccess
 from dateutil.relativedelta import relativedelta
 
-class AreaProfile():
-    """Profile"""
+class SpatialUnitProfile():
+    """
+    Data extraction to generate the profile graph panel for a spatial unit.
+
+    Called by the endpoint API. See the routes.py at webapp directory.
+
+    There are required input parameters:
+
+        params['className'], Data class name.
+        params['spatialUnit'], The Spatial Unit data table prefix. Ex.: 'csAmz_150km'
+        params['startDate'], The reference start date.
+        params['tempUnit'], The selected temporal unit code. Ex.: {'7d','15d','1m','3m','1y'}
+        params['suName'], The selected Spatial Unit name. Ex.: 'C13L08'
+        params['unit'], The current unit measure in the App. Ex.: {'km²','ha','focos'}
+    """
 
     def __init__(self, config, params):
         self._config = config
         self._db = AlchemyDataAccess()
         self._query_limit = 20
         self._classname = params['className']
+
         # default column to sum statistics
         default_column="area"
         if(self._classname=='AF'):
@@ -28,8 +43,15 @@ class AreaProfile():
         self._start_date = params['startDate']
         self._temporal_unit = params['tempUnit']
         self._start_period_date = self.get_prev_date_temporal_unit(temporal_unit=self._temporal_unit)
-        #self._name=params['click']['name'].replace('|',' ')
         self._name=params['suName'].replace('|',' ')
+        # app unit measure
+        unit=params['unit']
+        if(unit is None):
+            # default area unit
+            self.area_unit="km²"
+        else:
+            self.area_unit=unit
+        
         self._tableinfo = {
             'csAmz_25km': {'description': 'C&#233;lula 25x25 km&#178',
                             'key' : 'id'},
@@ -178,23 +200,10 @@ order by 1 desc limit {2}'''}
     def resultset_as_list(self, sql):
         return [row[0] for row in self.execute_sql(sql)]
 
-    # def area_per_year_table_class(self):
-    #     df = self.resultset_as_dataframe(
-    #         self.get_temporal_unit_sql())
-    #     df.columns = ['Período', 'Classe', 'Área (km²)']
-    #     df['Área (km²)'] = df['Área (km²)'].round(2)
-    #     return df
-
     def __area_by_period(self):
-        # default column to sum statistics
-        default_col_name="Área (km²)"
-        if(self._classname=='AF'):
-            default_col_name="Unidades"
-
         df = self.resultset_as_dataframe(
             self.__get_temporal_unit_sql())
-        df.columns = ['Período', 'Data de referência', default_col_name]
-        df[default_col_name] = df[default_col_name].round(2)
+        df.columns = ['Período', 'Data de referência', self.default_col_name]
         return df
 
     def area_per_land_use(self):
@@ -216,7 +225,6 @@ order by 1 desc limit {2}'''}
             f"group by a.land_use_id) b on a.id = b.land_use_id ORDER BY a.priority ASC "
         )
         df.columns = ['Categoria Fundiária', default_col_name]
-        df[default_col_name] = df[default_col_name].round(2)
         return df
 
     def form_title(self):
@@ -244,30 +252,42 @@ order by 1 desc limit {2}'''}
         """
         Pie chart structs to construct chart in frontend with plotly
         """
+        # standard area rounding
+        self.round_factor=2
+
         # default column to sum statistics
-        default_col_name="Área (km²)"
+        self.default_col_name="Área (km²)"
         if(self._classname=='AF'):
-            default_col_name="Unidades"
+            self.default_col_name="Unidades"
+            self.round_factor=0
 
         df = self.area_per_land_use()
         indicador=self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
         unid_temp=self._temporal_units[self._temporal_unit]
-        total_area = df[default_col_name].sum()
+        total_area = df[self.default_col_name].sum()
+
+        if(self._classname!='AF' and self.area_unit=="ha"):
+            df["Área (ha)"]=df[self.default_col_name]*100
+            self.default_col_name="Área (ha)"
+            total_area = df[self.default_col_name].sum()
+            self.round_factor=1
+        
+        # area values rounded off only after treating the appropriate scale unit
+        df[self.default_col_name] = df[self.default_col_name].round(self.round_factor)
 
         # default column to sum statistics
-        abstract_data=f"Área total: {total_area.round(2)} km²"
+        abstract_data=f"Área total: {total_area.round(self.round_factor)} {self.area_unit}"
         if(self._classname=='AF'):
-            abstract_data=f"Total de focos: {total_area.round(0)} "
+            abstract_data=f"Total de focos: {total_area.round(self.round_factor)} "
 
         chart_title=f"""Porcentagem de <b>{indicador}</b> por categoria fundiária<br>"""
         chart_title=f"""{chart_title}no último período do <b>{unid_temp}. {abstract_data}</b>"""
 
-        fig = px.pie(df, values=default_col_name, names='Categoria Fundiária', template='plotly',
+        fig = px.pie(df, values=self.default_col_name, names='Categoria Fundiária', template='plotly',
                      color_discrete_sequence=px.colors.sequential.RdBu,
                      title=chart_title )
  
         # sort=False is used to keep legend order like ordered in dataset
-        # fig.update_traces(sort=False,textposition='inside')
         fig.update_traces(
             sort=False,
             textposition='inside',
@@ -321,21 +341,32 @@ order by 1 desc limit {2}'''}
 
         cto=df['Data de referência'].to_list()
         df['Data de referência']=df['Data de referência'].apply(self.formatDate)
+        
+        # duplicate series to use in label chart
+        df["label"]=df[self.default_col_name]
 
-        # default column to sum statistics
-        default_col_name="Área (km²)"
-        round_factor=1
         if(self._classname=='AF'):
-            default_col_name="Unidades"
-            round_factor=0
+            df[self.default_col_name]=df[self.default_col_name].astype(int)
+            df["label"]=df["label"].astype(int).astype(str)
+        else:
+            if(self.area_unit=="ha"):
+                df[self.default_col_name]=df[self.default_col_name]*100
+                df["label"] = df["label"]*100
+            # apply rounding factor to normalize values
+            df[self.default_col_name]=df[self.default_col_name].round(self.round_factor)
+            # adjust values for label use only
+            df["label"] = df["label"].mask(df["label"]<1, df["label"].round(2))
+            df["label"] = df["label"].mask((df["label"]>1) & (df["label"]<100), df["label"].round(1))
+            df["label"] = df["label"].mask(df["label"]>=100, df["label"].round(0))
+            df["label"] = df["label"].astype(str).apply(lambda x: re.sub( r'\.0$', '', x) )
 
-        fig = px.bar(df, x='Data de referência', y=default_col_name, title=chart_title,
+        fig = px.bar(df, x='Data de referência', y=self.default_col_name, title=chart_title,
                      category_orders = {'Data de referência': cto},
                      color='Data de referência',
                      color_discrete_sequence=color_discrete_sequence,
                      hover_data=["Período"])
 
-        offset_annotation = df[default_col_name].max() * 0.03
+        offset_annotation = df[self.default_col_name].max() * 0.03
         fig.update_layout(
             paper_bgcolor='#f3f9f8',
             plot_bgcolor='#f3f9f8',
@@ -358,8 +389,8 @@ order by 1 desc limit {2}'''}
                 pad=0
             ),
             annotations=[
-                {'x': x, 'y': total + offset_annotation, 'text': f'{total}', 'showarrow': False}
-                for x, total in zip(df.index, df[default_col_name].astype(float).round(round_factor))
+                {'x': x, 'y': total + offset_annotation, 'text': f'{totall}', 'showarrow': False}
+                for x, total, totall in zip(df.index, df[self.default_col_name], df["label"])
             ]
         )
         fig.update_yaxes(

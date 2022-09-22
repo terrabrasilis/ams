@@ -26,7 +26,7 @@ L.Control.PeriodHandler = L.Control.extend({
         +'<option value="90">90 dias</option>'
         +'<option value="365">365 dias</option>'
         +'</select>';
-        info.innerHTML='Controle da unidade temporal - '+select+' ';
+        info.innerHTML='Controle da unidade temporal '+select+' ';
         container.appendChild(info);
 
         let form = L.DomUtil.create('div', className+'-form');
@@ -35,11 +35,11 @@ L.Control.PeriodHandler = L.Control.extend({
         + 'class="material-icons icon-period-control noselect">chevron_left</i>'
         + '<label class="period-control">'
         + '<span class="period-control"> de </span>'
-        + '<input type="text" id="datepicker-end" size="7" disabled '
+        + '<input type="text" id="datepicker-end" size="10" disabled '
         + 'title="Data inicial do período"/></label>'
         + '<label class="period-control">'
         + '<span class="period-control"> até </span>'
-        + '<input type="text" id="datepicker-start" size="7" '
+        + '<input type="text" id="datepicker-start" size="10" '
         + 'title="Data final do período - clique para alterar"/></label>'
         + '<i onclick="ams.PeriodHandler.nextPeriod()" '
         + 'title="Próximo período" id="next-period" style="visibility:hidden" '

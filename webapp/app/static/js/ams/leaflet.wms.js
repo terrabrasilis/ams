@@ -15,7 +15,11 @@ ams.LeafletWms = {
         },
 
         'showFeatureInfo': function (latlng, jsonTxt) {
-            if(jsonTxt.includes("no features were found")) return;
+            if(jsonTxt.includes("no features were found")) {
+                $('.toast').toast('show');
+			    $('.toast-body').html("Sem informações para este local.");
+                return;
+            }
             let featureInfo = JSON.parse(jsonTxt);
             let htmlInfo="",name="",type="";
             if(featureInfo.numberReturned>=1){
@@ -82,8 +86,14 @@ ams.LeafletWms = {
             let fProperties=featureInfo.features[0].properties;
             for (let i in fProperties) {
                 let v = ((fProperties[i]==null || fProperties[i]=="")?("-"):(fProperties[i]));
-                if (i in result)
+                if (i in result){
+                    // swap area unit from km² to ha
+                    if (i=="area" && ams.Map.PopupControl._unit=='ha') {
+                        v=v*100;
+                        result["area_unit"]=ams.Map.PopupControl._unit;
+                    }
                     result[i] = isNaN(v) ? v : ams.Utils.numberFormat(v);
+                }
             }
         },
 
@@ -94,6 +104,7 @@ ams.LeafletWms = {
                 "area": 0,
                 "counts": 0,
                 "percentage": 0,
+                "area_unit": "km²"
             };
             this._updateResults(result, featureInfo);
             let sButton = "";
@@ -141,7 +152,7 @@ ams.LeafletWms = {
             }else{
                 deter=""
                 + "<tr>"
-                + "<td>&#193;rea (km&#178;)   </td>"
+                + "<td>&#193;rea ("+result["area_unit"]+")</td>"
                 + "<td>" + result["area"] + "</td>"
                 + "</tr>"
                 + "<tr>"
@@ -149,14 +160,14 @@ ams.LeafletWms = {
                 + "<td>" + result["percentage"] + "%</td>"
                 + "</tr>";
             }
-            return '<table class="popup-spatial-unit-table" style="width:100%">'
+            return '<table class="popup-spatial-unit-table">'
                 + "<tr>"
-                + "<th></th>"
-                + "<th></th>"
+                + "<th>Nome</th>"
+                + "<th>Valor</th>"
                 + "</tr>"
                 + "<tr>"
                 + "<td>Unidade Espacial   </td>"
-                + "<td>" + result["name"] + "</td>"
+                + "<td style='text-align-last: center;'>" + result["name"] + "</td>"
                 + "</tr>"
                 + "<tr>"
                 + "<td>Classe   </td>"

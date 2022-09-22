@@ -3,6 +3,10 @@ var ams = ams || {};
 ams.Utils = {
   tid:null,
 
+  isHomologationEnvironment: function(){
+    return window.location.pathname.includes("homologation") || window.location.hostname=='127.0.0.1';
+  },
+
   setMapHeight: function(){
     $('#map').height(window.innerHeight-$('footer.footer').height()-$('#content').height());
   },

@@ -35,8 +35,6 @@ CREATE OR REPLACE VIEW public.deter
     remote_data.quadrant,
     remote_data.orbitpoint,
     remote_data.date,
-    remote_data.date_audit,
-    remote_data.lot,
     remote_data.sensor,
     remote_data.satellite,
     remote_data.areatotalkm,
@@ -47,7 +45,7 @@ CREATE OR REPLACE VIEW public.deter
     remote_data.uc,
     remote_data.geom,
     remote_data.month_year
-   FROM dblink('hostaddr=<IP or hostname> port=5432 dbname=<DB_NAME> user=postgres password=postgres'::text, 'SELECT gid, origin_gid, classname, quadrant, orbitpoint, date, date_audit, lot, sensor, satellite, areatotalkm, areamunkm, areauckm, mun, uf, uc, geom, month_year FROM public.deter_ams'::text) remote_data(gid text, origin_gid integer, classname character varying(254), quadrant character varying(5), orbitpoint character varying(10), date date, date_audit date, lot character varying(254), sensor character varying(10), satellite character varying(13), areatotalkm double precision, areamunkm double precision, areauckm double precision, mun character varying(254), uf character varying(2), uc character varying(254), geom geometry(MultiPolygon,4674), month_year character varying(10));
+   FROM dblink('hostaddr=<IP or hostname> port=5432 dbname=<DB_NAME> user=postgres password=postgres'::text, 'SELECT gid, origin_gid, classname, quadrant, orbitpoint, date, sensor, satellite, areatotalkm, areamunkm, areauckm, mun, uf, uc, geom, month_year FROM public.deter_ams'::text) remote_data(gid text, origin_gid integer, classname character varying(254), quadrant character varying(5), orbitpoint character varying(10), date date, sensor character varying(10), satellite character varying(13), areatotalkm double precision, areamunkm double precision, areauckm double precision, mun character varying(254), uf character varying(2), uc character varying(254), geom geometry(MultiPolygon,4674), month_year character varying(10));
 
 -- View: public.deter_auth
 
@@ -61,8 +59,6 @@ CREATE OR REPLACE VIEW public.deter_auth
     remote_data.quadrant,
     remote_data.orbitpoint,
     remote_data.date,
-    remote_data.date_audit,
-    remote_data.lot,
     remote_data.sensor,
     remote_data.satellite,
     remote_data.areatotalkm,
@@ -73,7 +69,7 @@ CREATE OR REPLACE VIEW public.deter_auth
     remote_data.uc,
     remote_data.geom,
     remote_data.month_year
-   FROM dblink('hostaddr=<IP or hostname> port=5432 dbname=<DB_NAME> user=postgres password=postgres'::text, 'SELECT gid, origin_gid, classname, quadrant, orbitpoint, date, date_audit, lot, sensor, satellite, areatotalkm, areamunkm, areauckm, mun, uf, uc, geom, month_year FROM public.deter_auth_ams'::text) remote_data(gid text, origin_gid integer, classname character varying(254), quadrant character varying(5), orbitpoint character varying(10), date date, date_audit date, lot character varying(254), sensor character varying(10), satellite character varying(13), areatotalkm double precision, areamunkm double precision, areauckm double precision, mun character varying(254), uf character varying(2), uc character varying(254), geom geometry(MultiPolygon,4674), month_year character varying(10));
+   FROM dblink('hostaddr=<IP or hostname> port=5432 dbname=<DB_NAME> user=postgres password=postgres'::text, 'SELECT gid, origin_gid, classname, quadrant, orbitpoint, date, sensor, satellite, areatotalkm, areamunkm, areauckm, mun, uf, uc, geom, month_year FROM public.deter_auth_ams'::text) remote_data(gid text, origin_gid integer, classname character varying(254), quadrant character varying(5), orbitpoint character varying(10), date date, sensor character varying(10), satellite character varying(13), areatotalkm double precision, areamunkm double precision, areauckm double precision, mun character varying(254), uf character varying(2), uc character varying(254), geom geometry(MultiPolygon,4674), month_year character varying(10));
 
 
 -- View: public.deter_history
@@ -88,8 +84,6 @@ CREATE OR REPLACE VIEW public.deter_history
     remote_data.quadrant,
     remote_data.orbitpoint,
     remote_data.date,
-    remote_data.date_audit,
-    remote_data.lot,
     remote_data.sensor,
     remote_data.satellite,
     remote_data.areatotalkm,
@@ -101,12 +95,12 @@ CREATE OR REPLACE VIEW public.deter_history
     remote_data.geom,
     remote_data.month_year
    FROM dblink('hostaddr=<IP or hostname> port=5432 dbname=<DB_NAME> user=postgres password=postgres'::text, '
-			   SELECT id as gid, gid as origin_gid, classname, quadrant, orbitpoint, date, date_audit, lot,
+			   SELECT id as gid, gid as origin_gid, classname, quadrant, orbitpoint, date,
                 sensor, satellite, areatotalkm, areamunkm, areauckm, county as mun, uf, uc,
                 st_multi(geom)::geometry(MultiPolygon,4674) AS geom,
                 to_char(timezone(''UTC''::text, date::timestamp with time zone), ''MM-YYYY''::text) AS month_year
                 FROM public.deter_history WHERE areatotalkm>=0.01
-			   '::text) remote_data(gid text, origin_gid integer, classname character varying(254), quadrant character varying(5), orbitpoint character varying(10), date date, date_audit date, lot character varying(254), sensor character varying(10), satellite character varying(13), areatotalkm double precision, areamunkm double precision, areauckm double precision, mun character varying(254), uf character varying(2), uc character varying(254), geom geometry(MultiPolygon,4674), month_year character varying(10));
+			   '::text) remote_data(gid text, origin_gid integer, classname character varying(254), quadrant character varying(5), orbitpoint character varying(10), date date, sensor character varying(10), satellite character varying(13), areatotalkm double precision, areamunkm double precision, areauckm double precision, mun character varying(254), uf character varying(2), uc character varying(254), geom geometry(MultiPolygon,4674), month_year character varying(10));
 
 
 -- View: public.deter_aggregated_ibama
@@ -221,7 +215,7 @@ CREATE SCHEMA IF NOT EXISTS deter AUTHORIZATION postgres;
 -- DROP TABLE IF EXISTS deter.deter_history;
 
 CREATE TABLE IF NOT EXISTS deter.deter_history AS
-SELECT gid, origin_gid, classname, quadrant, orbitpoint, date, date_audit, lot, sensor, satellite, areatotalkm,
+SELECT gid, origin_gid, classname, quadrant, orbitpoint, date, sensor, satellite, areatotalkm,
 areamunkm, areauckm, mun, uf, uc, geom, month_year,
 NULL::integer as ncar_ids, NULL::text as car_imovel, NULL::integer as continuo, NULL::numeric as velocidade,
 NULL::integer as deltad, NULL::character varying(254) as est_fund, NULL::character varying(254) as dominio, 
@@ -240,8 +234,6 @@ CREATE TABLE IF NOT EXISTS deter.deter
     quadrant character varying(5),
     orbitpoint character varying(10),
     date date,
-    date_audit date,
-    lot character varying(254),
     sensor character varying(10),
     satellite character varying(13),
     areatotalkm double precision,
@@ -276,8 +268,6 @@ CREATE TABLE IF NOT EXISTS deter.deter_auth
     quadrant character varying(5),
     orbitpoint character varying(10),
     date date,
-    date_audit date,
-    lot character varying(254),
     sensor character varying(10),
     satellite character varying(13),
     areatotalkm double precision,
@@ -420,11 +410,11 @@ SELECT
 	su.suid AS suid, su.id AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
 FROM 
 	public."csAmz_25km" su
-LEFT JOIN (
+INNER JOIN (
 	SELECT 
 		rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total, SUM(rii.counts) AS counts
 	FROM 
-		public."csAmz_25km_risk_indicators" rii
+		public."csAmz_25km_land_use" rii
 	WHERE
 		rii.classname = clsname
 		AND
@@ -460,11 +450,11 @@ SELECT
 	su.suid AS suid, su.id AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
 FROM 
 	public."csAmz_150km" su
-LEFT JOIN (
+INNER JOIN (
 	SELECT 
 		rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total, SUM(rii.counts) AS counts
 	FROM 
-		public."csAmz_150km_risk_indicators" rii
+		public."csAmz_150km_land_use" rii
 	WHERE
 		rii.classname = clsname
 		AND
@@ -500,11 +490,11 @@ SELECT
 	su.suid AS suid, su.id AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
 FROM 
 	public."csAmz_300km" su
-LEFT JOIN (
+INNER JOIN (
 	SELECT 
 		rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total, SUM(rii.counts) AS counts
 	FROM 
-		public."csAmz_300km_risk_indicators" rii
+		public."csAmz_300km_land_use" rii
 	WHERE
 		rii.classname = clsname
 		AND
@@ -537,14 +527,14 @@ AS $BODY$
 begin
 	return query
 SELECT
-	su.suid AS suid, su.uf AS state, su.nm_municip AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
+	su.suid AS suid, su.uf AS state, su.nome AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
 FROM 
 	public."amz_municipalities" su
-LEFT JOIN (
+INNER JOIN (
 	SELECT 
 		rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total , SUM(rii.counts) AS counts
 	FROM 
-		public."amz_municipalities_risk_indicators" rii
+		public."amz_municipalities_land_use" rii
 	WHERE
 		rii.classname = clsname
 		AND
@@ -577,14 +567,14 @@ AS $BODY$
 begin
 	return query
 SELECT 
-	su.suid AS suid, su."NM_ESTADO" AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
+	su.suid AS suid, su.nome AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
 FROM 
 	public."amz_states" su
-LEFT JOIN (
+INNER JOIN (
 	SELECT 
 		rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total, SUM(rii.counts) AS counts
 	FROM 
-		public."amz_states_risk_indicators" rii
+		public."amz_states_land_use" rii
 	WHERE
 		rii.classname = clsname
 		AND

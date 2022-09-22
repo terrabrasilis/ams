@@ -3,7 +3,10 @@ var ams = ams || {};
 ams.App = {
 
 	zoomThreshold: 11, // used to change the zIndex of the DETER layer in the map layer stack.
+	_layerControl: null,
+	_baseLayers: [],
 	_addedLayers: [],
+	_biomeLayer: null,
 	_appClassGroups: null,
 	_suViewParams: null,
 	_priorViewParams: null,
@@ -24,6 +27,11 @@ ams.App = {
 
 		this._wfs = new ams.Map.WFS(geoserverUrl);
 		var ldLayerName = ams.Auth.getWorkspace() + ":last_date";
+
+		// set the appropriate workspace name if it is homologation environment
+		if(ams.Utils.isHomologationEnvironment()){
+			ams.Config.defaultLayers.activeFireAmz=ams.Config.defaultLayers.activeFireAmz.replace('ams','amsh');
+		}
 
 		var temporalUnits = new ams.Map.TemporalUnits();
 		this._dateControl = new ams.Date.DateController();
@@ -48,25 +56,26 @@ ams.App = {
 
 		map.setView([spatialUnits.default.center_lat, spatialUnits.default.center_lng], 5);
 
-		var osmLayer = new L.TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		this._baseLayers["osm"] = new L.TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
 			maxZoom: 18,
 			crs: L.CRS.EPSG4326,
 		}).addTo(map);
 
-		L.control.zoom({
-			position: 'topright'
-		}).addTo(map);
+		this._baseLayers["blank"] = new L.TileLayer("");
+
+		// L.control.zoom({
+		// 	position: 'topright'
+		// }).addTo(map);
 
 		L.control.scale({position: 'bottomright'}).addTo(map);
     
 		map.on('zoomend',function(e){
 			let currZoom = map.getZoom();
-			if(currZoom >= ams.App.zoomThreshold){
-				if(tbDeterAlertsLayer) tbDeterAlertsLayer.bringToFront();
-			}else if(currZoom < ams.App.zoomThreshold) {
-				if(tbDeterAlertsLayer) tbDeterAlertsLayer.bringToBack();
-			}
+			let l=ams.App._getLayerByName(ams.App._referenceLayerName);
+			if(!l) return;
+			if(currZoom >= ams.App.zoomThreshold) l.bringToFront();
+			else l.bringToBack();
 		});
 
 		// Starting viewParams
@@ -112,8 +121,8 @@ ams.App = {
 		var onlyWmsBase = {identify:false};// set this to disable GetFeatureInfo
 		ams.App._addWmsOptionsBase(onlyWmsBase);
 		var tbBiomeSource = new ams.LeafletWms.Source(this._baseURL, onlyWmsBase, this._appClassGroups);
-		var tbBiomeLayer = tbBiomeSource.getLayer(tbBiomeLayerName).addTo(map);
-		tbBiomeLayer.bringToBack();
+		ams.App._biomeLayer = tbBiomeSource.getLayer(tbBiomeLayerName);
+		ams.App._biomeLayer.addTo(map).bringToBack();
 
 		// ---------------------------------------------------------------------------------
 		// this structure is used into leaflet.groupedlayercontrol.js to create controls for filters panel...
@@ -176,6 +185,9 @@ ams.App = {
 
 		// Adding period control over map
 		ams.PeriodHandler.init(map);
+
+		// Adding control layer over map
+		this._addControlLayer();
 
 		(function addPriorizationControl() {
 			$('<div class="leaflet-control-layers-group" id="prioritization-control-layers-group">'
@@ -305,18 +317,30 @@ ams.App = {
 		$("#csv-download-button").click(function() {
 			ams.App._wfs.getCsv(ams.App._getLayerPrefix(), ams.App._priorViewParams);	
 			return false;
-		});		
+		});
 
-		$("#deter-checkbox").change(function() {
-			if(this.checked) 
-			{
-				ams.App._updateReferenceLayer();//tbDeterAlertsLayer, appClassGroups);
-				map.addControl(tbDeterAlertsLayer);
+		$("#threshold").on("change", ()=>{
+			let v=+$("#threshold").val();
+			ams.Config.general.area.threshold=v;
+			localStorage.setItem('ams.Config.general.area.threshold', v);
+		});
+
+		$("#changeunit").on("change", ()=>{
+			let v=$("#changeunit")[0].checked;
+			if(v) ams.Config.general.area.changeunit="auto";
+			else ams.Config.general.area.changeunit="no";
+			localStorage.setItem('ams.Config.general.area.changeunit', ams.Config.general.area.changeunit);
+		});
+
+		$(function() {
+			if(localStorage.getItem('ams.Config.general.area.changeunit')!==null){
+				ams.Config.general.area.changeunit=localStorage.getItem('ams.Config.general.area.changeunit');
 			}
-			else {
-				map.removeControl(tbDeterAlertsLayer);
+			if(localStorage.getItem('ams.Config.general.area.threshold')!==null){
+				ams.Config.general.area.threshold=localStorage.getItem('ams.Config.general.area.threshold');
 			}
-			return false;
+			$("#threshold").val(ams.Config.general.area.threshold);
+			$("#changeunit")[0].checked=ams.Config.general.area.changeunit=="auto";
 		});
 	},// end of run method
 
@@ -400,6 +424,27 @@ ams.App = {
 		}
 	},
 
+	_addControlLayer: function(){
+		if(ams.App._layerControl){
+			ams.App._map.removeControl(ams.App._layerControl);
+		}
+		let bs={
+			"OpenStreetMap": ams.App._baseLayers["osm"],
+			"Em branco": ams.App._baseLayers["blank"]
+		};
+		let ol={};
+		for (let ll in ams.App._addedLayers) {
+			let lname=( (ll.includes('deter'))?("DETER"):( (ll.includes('fire'))?("Focos"):(false) ) );
+			if(ams.App._map.hasLayer(ams.App._addedLayers[ll])){
+				if(lname!=false) ol[lname]=ams.App._addedLayers[ll];
+			}
+		}
+		if(ams.App._biomeLayer) {
+			ol["Amazônia"]=ams.App._biomeLayer;
+		}
+		ams.App._layerControl=L.control.layers(bs,ol).addTo(ams.App._map);
+	},
+
 	/**
 	 * Changes the reference layer on map.
 	 * Both layerToDel and layerToAdd can be, deter or queimadas, see the names on Config.js
@@ -419,6 +464,7 @@ ams.App = {
 			layer.addTo(this._map);
 			layer.bringToBack();
 		}
+		this._addControlLayer();
 	},
 
 	/**
@@ -495,13 +541,30 @@ ams.App = {
 			suLayerMax:max
 		};
 		if(mm.suLayerMax == mm.suLayerMin) {
-			alert("Não existem dados para o periodo selecionado.");
+			$('.toast').toast('show');
+			$('.toast-body').html("Não existem dados para o periodo selecionado.");
+			this._resetMap();
 			return false;
 		}else if(ams.App._diffOn && mm.suLayerMin>=0) {
-			alert("Não há redução de valores para o periodo selecionado.");
+			$('.toast').toast('show');
+			$('.toast-body').html("Não há redução de valores para o periodo selecionado.");
+			this._resetMap();
 			return false;
 		}
+		let l=ams.App._getLayerByName(ams.App._getLayerPrefix());
+		if(l && !ams.App._map.hasLayer(l)){
+			ams.App._addSpatialUnitLayer(ams.App._getLayerPrefix(),ams.App._propertyName);
+		}
 		return mm;
+	},
+
+	_resetMap: function() {
+		let oLayerName=ams.App._getLayerPrefix();
+		// remove the main spatial unit layer, and
+		this._removeLayer(oLayerName);
+		// each spatial unit layer has an priority layer to display the highlight border, should be remove too
+		this._removeLayer(oLayerName+'_prior');
+		ams.App._legendControl.disable();
 	},
 
 	/**
@@ -526,6 +589,7 @@ ams.App = {
 			// remove all sublayers for a layer
 			this._removeSubLayer(l);
 		}
+		this._map.closePopup();
 	},
 
 	_removeSubLayer: function(l){
@@ -549,8 +613,9 @@ ams.App = {
 
 	displayGraph: function( jsConfig ) {
 		async function getGraphics(  jsConfig ) {
+			jsConfig["unit"]=ams.Map.PopupControl._unit;
 			let jsConfigStr = JSON.stringify(jsConfig);
-			let response = await fetch("callback/area_profile?sData=" + jsConfigStr);
+			let response = await fetch("callback/spatial_unit_profile?sData=" + jsConfigStr);
 			$("#loading_data_info").css('display','none')
 			if (response.ok) {
 				let profileJson = await response.json();
@@ -559,13 +624,31 @@ ams.App = {
 					Plotly.react('AreaPerYearTableClass', JSON.parse(profileJson['AreaPerYearTableClass']), {});
 					Plotly.react('AreaPerLandUse', JSON.parse(profileJson['AreaPerLandUse']), {});
 					$('#modal-container-general-info').modal();
+					// for adding tooltip on pie chart legend
+					let leg=$('g.legend');
+					leg.attr('data-html','true');
+					leg.attr('title', 'Descrição das categorias fundiárias.<br />'+
+					'-----------------------------------------------------------------------<br />'+
+					'TI: Terras Indígenas;<br />'+
+					'UC: Unidades de Conservação;<br />'+
+					'Assentamentos: Projetos de assentamentos de todos os tipos;<br />'+
+					'APA: Área de Proteção Ambiental;<br />'+
+					'CAR: Cadastro Ambiental Rural;<br />'+
+					'FPND: Florestas Públicas Não Destinadas;<br />'+
+					'Indefinida: Todas as demais áreas');
+					leg.mouseover(function(){
+						let l=$('g.legend');
+						l.tooltip('show');
+					});
 				} else {
-					console.log("HTTP-Error: " + response.status + " on area_profile");
-					alert("Encontrou um erro na solicitação ao servidor.");
+					console.log("HTTP-Error: " + response.status + " on spatial_unit_profile");
+					$('.toast').toast('show');
+					$('.toast-body').html("Encontrou um erro na solicitação ao servidor.");
 				}
 			} else {
-				console.log("HTTP-Error: " + response.status + " on area_profile");
-				alert("Encontrou um erro na solicitação ao servidor.");
+				console.log("HTTP-Error: " + response.status + " on spatial_unit_profile");
+				$('.toast').toast('show');
+				$('.toast-body').html("Encontrou um erro na solicitação ao servidor.");
 			}
 		}
 		if (jsConfig.className != 'null'){

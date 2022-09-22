@@ -21,6 +21,13 @@ html, body {
 .leaflet-container{
   font: 12px/1.5 'Roboto', "Helvetica Neue", Arial, Helvetica, sans-serif !important;
 }
+.leaflet-popup-content{
+  min-width: 220px !important;
+}
+.popup-spatial-unit-table {
+  width: 100%;
+  white-space: nowrap;
+}
 .popup-spatial-unit-table tr:nth-child(even) {
   background-color: #dcedc8;
 }
@@ -51,4 +58,28 @@ text.gtitle{font-size:15px !important;}
   font-weight: bold;
 }
 .card-header {padding: 0.25rem 0.5rem; background-color: #108d6f;}
-.card-body {padding: 0.35rem;}
+.card-body {padding: 0.35rem; overflow-x: auto;}
+
+.tooltip-inner {
+  max-width: 440px;
+  text-align: start;
+  background-color: #000;
+  white-space: nowrap;
+  font-size: 14px;
+}
+input.threshold{
+  width: 45px;
+  height: 28px;
+  font-size: initial;
+  border: 1px #dddddd solid;
+  border-radius: 4px;
+  background: #ebfbeb;
+}
+.input-label{
+  font: 0.9rem/1.1 'Roboto', "Helvetica Neue", Arial, Helvetica, sans-serif;
+  white-space: nowrap;
+  color:rgb(53, 53, 53);
+}
+.configtext{
+  font-size: 0.9rem;
+}

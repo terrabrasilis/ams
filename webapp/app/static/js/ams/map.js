@@ -6,6 +6,7 @@ ams.Map = {
 	 */
 	PopupControl: {
 		_popupReference:null,
+		_unit:'km²',
 		_infoBody:[]
 	},
 	ViewParams: function(classname, dateControll, propertyName, limit) {
@@ -50,8 +51,9 @@ ams.Map = {
 		}
 
 		this.getSpatialUnit = function getSpatialUnit(name) {
+			let nm=(name.split(':').length==2)?(name.split(':')[1]):(name);// to remove workspace name.
 			for(var i = 0; i < this.spatialUnits.length; i++) {
-				if(this.spatialUnits[i].dataname == name) {
+				if(this.spatialUnits[i].dataname == nm) {
 					return this.spatialUnits[i];
 				}
 			}
@@ -188,7 +190,8 @@ ams.Map = {
 			let wfsUrl = this.url 
 						+ "&typeName=" + layerName
 						+ "&propertyName=" + propertyName
-						+ "&outputFormat=json";
+						+ "&outputFormat=json"
+						+ "&viewparams=classname:"+ams.App._suViewParams;
 			let res;
 			$.ajax({
 				dataType: "json",
@@ -366,6 +369,10 @@ ams.Map = {
 			this._map.addControl(this._wmsLegendControl);
 		}
 
+		this.disable = function(){
+			this._map.removeControl(this._wmsLegendControl);
+		}
+
 		this.update = function(layerName, layerStyle) {
 			this._setStaticLegends();
 			this._setWMSControl(layerName, layerStyle);
@@ -397,7 +404,9 @@ ams.Map = {
 				this._wmsLegendControl.options.static.deter.url = deterurl;
 				this._wmsLegendControl.options.static.af.url=null;
 			}else{
+				// here we force a different style to get the legend without 3 entries
 				let afurl = baseurl + "&LAYER=" + ams.App._referenceLayerName
+				+ "&STYLE=active_fires_legend"
 				+ "&LEGEND_OPTIONS=forceLabels:on;";
 				this._wmsLegendControl.options.static.af.url = afurl;
 				this._wmsLegendControl.options.static.deter.url=null;
