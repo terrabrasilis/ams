@@ -76,23 +76,23 @@ class SpatialUnitProfile():
             "3m": "Agregado 90 dias",
             "1y": "Agregado 365 dias"}
         self._temporal_unit_sql = {
-7:'''select TO_CHAR(date, 'YYYY/WW') as period,classname,sum('''+default_column+''') as 
+7:'''select TO_CHAR(date, 'YYYY/WW') as period,classname,sum(a.'''+default_column+''') as 
 resultsum from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
 group by TO_CHAR(date, 'YYYY/WW'), classname
 order by 1 desc limit {2}''',
 15: '''select concat(TO_CHAR(date, 'YYYY'),'/',to_char(TO_CHAR(date, 'WW')::int/2+1,'FM00')) as period,
-classname,sum('''+default_column+''') as resultsum from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
+classname,sum(a.'''+default_column+''') as resultsum from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
 group by concat(TO_CHAR(date, 'YYYY'),'/',to_char(TO_CHAR(date, 'WW')::int/2+1,'FM00')), classname
 order by 1 desc limit {2}''',
-31: '''select TO_CHAR(date, 'YYYY/MM') as period,classname,sum('''+default_column+''') as 
+31: '''select TO_CHAR(date, 'YYYY/MM') as period,classname,sum(a.'''+default_column+''') as 
 resultsum from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
 group by TO_CHAR(date, 'YYYY/MM'), classname
 order by 1 desc limit {2}''',
-124: '''select TO_CHAR(date, 'YYYY/Q') as period,classname, sum('''+default_column+''') as 
+124: '''select TO_CHAR(date, 'YYYY/Q') as period,classname, sum(a.'''+default_column+''') as 
 resultsum from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
 group by TO_CHAR(date, 'YYYY/Q'),classname
 order by 1 desc limit {2}''',
-366: '''select TO_CHAR(date, 'YYYY') as period,classname,sum('''+default_column+''') as 
+366: '''select TO_CHAR(date, 'YYYY') as period,classname,sum(a.'''+default_column+''') as 
 resultsum from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
 group by TO_CHAR(date, 'YYYY'),classname
 order by 1 desc limit {2}'''}
@@ -150,7 +150,7 @@ order by 1 desc limit {2}'''}
         group_by_periods=f"""
         WITH calendar AS ({calendar}),
         bar_chart AS (
-            SELECT (calendar.fd || '/' || calendar.ld) as period, ROUND(sum({default_column})::numeric,{round_factor}) as resultsum
+            SELECT (calendar.fd || '/' || calendar.ld) as period, ROUND(sum(a.{default_column})::numeric,{round_factor}) as resultsum
             FROM calendar, "{self._spatial_unit}_land_use" a inner join "{self._spatial_unit}" b on a.suid = b.suid
             WHERE b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}'
             AND classname = '{self._classname}'
@@ -215,7 +215,7 @@ order by 1 desc limit {2}'''}
         df = self.resultset_as_dataframe(
             f"select a.name,coalesce(resultsum, 0) as resultsum from land_use a "
             f"left join "
-            f"(select a.land_use_id, sum({default_column}) as resultsum from \"{self._spatial_unit}_land_use\" a "
+            f"(select a.land_use_id, sum(a.{default_column}) as resultsum from \"{self._spatial_unit}_land_use\" a "
             f"inner join \"{self._spatial_unit}\" b on a.suid = b.suid "
             f"where b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name.replace('|',' ')}' "
             f"and {self.period_where_clause()} "
