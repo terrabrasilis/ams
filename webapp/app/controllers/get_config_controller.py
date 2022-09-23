@@ -31,9 +31,10 @@ class AppConfigController:
 		"""
 		sql = """SELECT string_agg( c1 || ',' || c2, ', ' )
 		FROM (
-			SELECT '{''name'':'''||dcg.name||'''' as c1, '''classes'':[' || string_agg(''''||dc.name||'''', ',') || ']}' as c2
+			SELECT '{''name'':'''||dcg.name||''', ''title'':'''||dcg.title||'''' as c1,
+			dcg.orderby, '''classes'':[' || string_agg(''''||dc.name||'''', ',') || ']}' as c2
 			FROM public.deter_class_group dcg, public.deter_class dc
-			WHERE dcg.id=dc.group_id GROUP BY 1
+			WHERE dcg.id=dc.group_id GROUP BY 1,2 ORDER BY dcg.orderby
 		) as tb1"""
 		cur = self._conn.cursor()
 		cur.execute(sql)

@@ -181,6 +181,8 @@ CREATE TABLE IF NOT EXISTS public.deter_class_group
 (
     id serial NOT NULL,
     name character varying NOT NULL,
+    title character varying NOT NULL,
+    orderby integer,
     CONSTRAINT deter_class_group_pkey PRIMARY KEY (id),
     CONSTRAINT deter_class_group_name_key UNIQUE (name)
 )
@@ -359,11 +361,11 @@ INSERT INTO public.spatial_units(id, dataname, as_attribute_name, center_lat, ce
 INSERT INTO public.spatial_units(id, dataname, as_attribute_name, center_lat, center_lng) VALUES (4, 'amz_states', 'NM_ESTADO', -6.384962796500002, -58.97111531179317);
 INSERT INTO public.spatial_units(id, dataname, as_attribute_name, center_lat, center_lng) VALUES (5, 'amz_municipalities', 'nm_municip', -6.384962796413522, -58.97111531172743);
 
-INSERT INTO public.deter_class_group(id, name) VALUES (1, 'DS');
-INSERT INTO public.deter_class_group(id, name) VALUES (2, 'DG');
-INSERT INTO public.deter_class_group(id, name) VALUES (3, 'CS');
-INSERT INTO public.deter_class_group(id, name) VALUES (4, 'MN');
-INSERT INTO public.deter_class_group(id, name) VALUES (5, 'AF');
+INSERT INTO public.deter_class_group(id, name) VALUES (1, 'DS', 'DETER Desmatamento', 0);
+INSERT INTO public.deter_class_group(id, name) VALUES (2, 'DG', 'DETER Degradação', 1);
+INSERT INTO public.deter_class_group(id, name) VALUES (3, 'CS', 'DETER Corte seletivo', 2);
+INSERT INTO public.deter_class_group(id, name) VALUES (4, 'MN', 'DETER Mineração', 3);
+INSERT INTO public.deter_class_group(id, name) VALUES (5, 'AF', 'Focos (Programa Queimadas)', 4);
 
 INSERT INTO public.deter_class(id, name, group_id) VALUES (1, 'DESMATAMENTO_CR', 1);
 INSERT INTO public.deter_class(id, name, group_id) VALUES (2, 'DESMATAMENTO_VEG', 1);

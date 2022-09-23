@@ -82,18 +82,12 @@ ams.Map = {
 	},
 
 	AppClassGroups: function(groups) {
-		this._groupNamesMap = {
-			"DS": "DETER Desmatamento",
-			"DG": "DETER Degrada&#231;&#227;o",
-			"CS": "DETER Corte-Seletivo",
-			"MN": "DETER Minera&#231;&#227;o",
-			"AF": "Focos \"Programa Queimadas\""
-		}
-
+		this._groupNamesMap = {};
 		this._setNames = function(groups) {
 			for(var i = 0; i < groups.length; i++) {
 				groups[i].acronym = groups[i].name;
-				groups[i].name = this._groupNamesMap[groups[i].name];
+				this._groupNamesMap[groups[i].name] = groups[i].title;
+				groups[i].name = groups[i].title;
 			}
 			this.groups = groups;
 		}
