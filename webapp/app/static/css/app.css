@@ -14,10 +14,13 @@ html, body {
 #spatial-unit-title {
   font-weight: bold;
 }
+/* This style forces the base layers to grey */
+/*
 .leaflet-tile-pane {
   -webkit-filter: grayscale(100%);
   filter: grayscale(100%);
 }
+*/
 .leaflet-container{
   font: 12px/1.5 'Roboto', "Helvetica Neue", Arial, Helvetica, sans-serif !important;
 }
