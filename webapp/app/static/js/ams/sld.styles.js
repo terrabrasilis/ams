@@ -90,22 +90,23 @@ ams.SLDStyles = {
 		this._formatValue = function(v, vMaxLength) {
 			v=(v=="-0"?"0":v);
 			let vs = v.toString();
-			let prefix = "";
+			let prefix = sufix = "";
 			if(vs.includes(".")) {
 				vs = vs.split(".")[0];
-			}	
+			}else{
+				sufix = (this._unit=='ha')?(""):("   ");
+			}
 			if(vs.includes("-")) {
 				prefix = " ";
 			}					
 			prefix += "  ".repeat(vMaxLength - vs.length);
-			return prefix + v;
+			return prefix + v + sufix;
 		}
 
 		this.createTitle = function(v1, v2, vMaxLength) {
 			return  '<Title>'
-					+ ' &gt; ' + this._formatValue(v1, vMaxLength)
-					+ ' &lt;= ' + this._formatValue(v2, vMaxLength)
-					+ (this._unit==''?'':' ('+this._unit+')')
+					+ ' de ' + this._formatValue(v1, vMaxLength)
+					+ ' até ' + this._formatValue(v2, vMaxLength)
 					+ ' </Title>';
 		}
 
