@@ -22,7 +22,7 @@ BRANCH=$(git rev-parse --abbrev-ref HEAD)
 if [[ ! "${BRANCH}" = "master" ]]; then
     TAG_VERSION="${VERSION}.${BRANCH}.rc"
 else
-    TAG_VERSION=${VERSION}.${BRANCH}
+    TAG_VERSION=${VERSION}
 fi
 
 echo 
