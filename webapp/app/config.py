@@ -1,6 +1,5 @@
 import os
 
-
 class Config:
 	# used for frontend App
 	GEOSERVER_URL = os.environ.get('GEOSERVER_URL') or 'http://localhost:8080/geoserver'
