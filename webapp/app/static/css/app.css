@@ -86,3 +86,10 @@ input.threshold{
 .configtext{
   font-size: 0.9rem;
 }
+.toast {
+  display: none;
+  position: absolute;
+  z-index: 9999999;
+  top: 30px;
+  right: calc(40%);
+}
