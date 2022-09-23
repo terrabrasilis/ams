@@ -1,34 +1,41 @@
-from ams.dataaccess import DataAccess
-from ams.usecases import GetConfig
+from psycopg2 import connect
 
-
-class GetConfigController:
-	"""GetConfigController"""
-	def __init__(self, da: DataAccess):
-		uc = GetConfig()
-		config = uc.execute(da)
-		self._spatial_units = config.spatial_units_info
-		self._deter_class_groups = config.deter_class_groups
-		self._most_recent_risk_indicators = config.most_recent_risk_indicators
+class AppConfigController:
+	"""AppConfigController"""
 	
-	@property
-	def spatial_units_info(self) -> list:
-		return [self._spatial_unit_info_to_dict(info) for info in self._spatial_units]
+	def __init__(self, db_url: str):
+		self._conn = connect(db_url)
 
-	def _spatial_unit_info_to_dict(self, suinfo):
-		return {
-			'dataname': suinfo.dataname,
-			'center_lat': suinfo.centroid.lat,
-			'center_lng': suinfo.centroid.lng,
-			'last_date': self._most_recent_risk_indicators[suinfo.dataname].date.isoformat()
-		}
+	def read_spatial_units(self):
+		"""
+		Gets the spatial units from database.
+		Prerequisites:
+			- The public.spatial_units table must exist in the database and have data.
+		See the README.md file for instructions.
+		"""
+		sql = """SELECT string_agg('{''dataname'':'''||su.dataname||
+		''',''center_lat'':'|| su.center_lat || 
+		',''center_lng'':'|| su.center_lng ||
+		',''last_date'':'''||pd.date||'''}', ',') 
+		FROM public.spatial_units su, deter.deter_publish_date pd"""
+		cur = self._conn.cursor()
+		cur.execute(sql)
+		results=cur.fetchall()
+		return "["+results[0][0]+"]"
 
-	@property
-	def deter_class_groups(self) -> list:
-		return [self._deter_class_groups_to_dict(group) for group in self._deter_class_groups]
-
-	def _deter_class_groups_to_dict(self, group):
-		return {
-			'name': group.name,
-			'classes': [clas for clas in group._classes],
-		}		
+	def read_class_groups(self):
+		"""
+		Gets the most recent date for each spatial unit data.
+		Prerequisites:
+			- The self._spatial_units data must to have readed before.
+		"""
+		sql = """SELECT string_agg( c1 || ',' || c2, ', ' )
+		FROM (
+			SELECT '{''name'':'''||dcg.name||'''' as c1, '''classes'':[' || string_agg(''''||dc.name||'''', ',') || ']}' as c2
+			FROM public.deter_class_group dcg, public.deter_class dc
+			WHERE dcg.id=dc.group_id GROUP BY 1
+		) as tb1"""
+		cur = self._conn.cursor()
+		cur.execute(sql)
+		results=cur.fetchall()
+		return "["+results[0][0]+"]"

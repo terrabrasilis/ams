@@ -1,2 +1,1 @@
-from .get_config_controller import GetConfigController
-#from .initializer_controller import InitializerController
+from .get_config_controller import AppConfigController

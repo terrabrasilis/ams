@@ -2,20 +2,24 @@ from flask import render_template, request
 import json
 
 from ams.spatial_unit_profile import SpatialUnitProfile
-from .controllers import GetConfigController
+from .controllers import AppConfigController
 from .config import Config
 from . import bp as app
-from . import db
 
 @app.route('/', methods=['GET'])
 def get_config():
-    ctrl = GetConfigController(db)
-    return render_template('index.html',
-                           geoserver_url=Config.GEOSERVER_URL,
-                           workspace=Config.GEOSERVER_WORKSPACE,
-                           spatial_units_info=ctrl.spatial_units_info,
-                           deter_class_groups=ctrl.deter_class_groups)
-
+    try:
+        ctrl = AppConfigController(Config.DATABASE_URL)
+        sui=ctrl.read_spatial_units()
+        cg=ctrl.read_class_groups()
+        return render_template('index.html',
+                            geoserver_url=Config.GEOSERVER_URL,
+                            workspace=Config.GEOSERVER_WORKSPACE,
+                            spatial_units_info=sui,
+                            deter_class_groups=cg)
+    except Exception as e:
+        # HTTP 500: Internal error 
+        return "Template configurations are missing: {0}".format(str(e)), 412
 
 @app.route('/callback/<endpoint>', methods=['GET'])
 def get_profile(endpoint):
