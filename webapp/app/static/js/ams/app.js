@@ -47,7 +47,8 @@ ams.App = {
 		this._currentClassify=ams.Config.defaultFilters.diffClassify;
 
 		var map = new L.Map("map", {
-		    zoomControl: false
+		    zoomControl: false,
+			minZoom: 4
 		});
 		this._map=map;
 
@@ -56,11 +57,31 @@ ams.App = {
 
 		map.setView([spatialUnits.default.center_lat, spatialUnits.default.center_lng], 5);
 
+		// crs: L.CRS.EPSG4326,
 		this._baseLayers["osm"] = new L.TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
 			maxZoom: 18,
-			crs: L.CRS.EPSG4326,
+			minZoom: 4
 		}).addTo(map);
+
+		// google maps
+		let options = {
+			attribution: '&copy; <a href="https://www.google.com/maps/">Google Maps</a>',
+			maxZoom: 18,
+			minZoom: 4,
+			subdomains: ['mt0','mt1','mt2','mt3']
+		};
+		let googlelayers=[
+			{"index":"gs","name":"Google Satellite","param":"s"},
+			{"index":"gh","name":"Google Hybrid","param":"s,h"},
+			{"index":"gst","name":"Google Streets","param":"m"},
+			{"index":"gte","name":"Google Terrain","param":"p"}
+		];
+		for(let i in googlelayers){
+			let host = "https://{s}.google.com/vt/lyrs="+googlelayers[i].param+"&x={x}&y={y}&z={z}";
+			options["name"]=googlelayers[i].name;
+			this._baseLayers[googlelayers[i].index] = new L.TileLayer(host, options);
+		}
 
 		this._baseLayers["blank"] = new L.TileLayer("");
 
@@ -430,6 +451,10 @@ ams.App = {
 		}
 		let bs={
 			"OpenStreetMap": ams.App._baseLayers["osm"],
+			"Google Satélite": ams.App._baseLayers["gs"],
+			"Google Híbrido": ams.App._baseLayers["gh"],
+			"Google Ruas": ams.App._baseLayers["gst"],
+			"Google Terreno": ams.App._baseLayers["gte"],
 			"Em branco": ams.App._baseLayers["blank"]
 		};
 		let ol={};
