@@ -187,11 +187,12 @@ ams.Map = {
 
 		this.getLastDate = function(layerName) {
 			let propertyName="last_date";
+			let classname=( (ams.App._suViewParams)?(ams.App._suViewParams):(ams.Config.defaultFilters.indicator) );
 			let wfsUrl = this.url 
 						+ "&typeName=" + layerName
 						+ "&propertyName=" + propertyName
 						+ "&outputFormat=json"
-						+ "&viewparams=classname:"+ams.App._suViewParams;
+						+ "&viewparams=classname:"+classname;
 			let res;
 			$.ajax({
 				dataType: "json",
