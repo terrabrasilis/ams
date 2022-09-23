@@ -15,7 +15,7 @@ class ClassifyByLandUse:
     def __init__(self, db_url: str, input_tif: str, alldata=False):
         self._datapath = path.join(path.dirname(__file__), '../../data')
         self._scriptspath = path.join(path.dirname(__file__), '../../scripts')
-        self._amazon_class_fname = input_tif
+        self._land_use_classes_fname = input_tif
         self._conn = connect(db_url)
         self._pixel_land_use_area = 29.875 * 29.875 * (10 ** -6)
         self._alldata = alldata
@@ -54,7 +54,7 @@ class ClassifyByLandUse:
             # here, we expect deter.tmp_data to only have DETER data coming from the current table
             cur.execute("DELETE FROM deter_land_structure WHERE gid like '%_curr';")
         
-        amazon_class = rasterio.open(f'{self._datapath}/{self._amazon_class_fname}')
+        amazon_class = rasterio.open(f'{self._datapath}/{self._land_use_classes_fname}')
         deter = gpd.GeoDataFrame.from_postgis(f'SELECT gid, geom FROM {self._deter_table}', self._conn)
         with alive_bar(len(deter)) as bar:
             for _, row in deter.iterrows():
@@ -91,7 +91,7 @@ class ClassifyByLandUse:
             fires_where = f""" WHERE view_date > (SELECT MAX(date) FROM "{list(self._spatial_units.keys())[0]}_land_use" WHERE classname='AF')"""
         
         # crossing fires and raster land use data
-        amazon_class = rasterio.open(f'{self._datapath}/{self._amazon_class_fname}')
+        amazon_class = rasterio.open(f'{self._datapath}/{self._land_use_classes_fname}')
         fires = gpd.GeoDataFrame.from_postgis(f'SELECT id as gid, geom FROM {self._fires_input_table} {fires_where}', self._conn)
         coord_list = [(x,y) for x,y in zip(fires['geom'].x , fires['geom'].y)]
         fires['value'] = [x for x in amazon_class.sample(coord_list)]
@@ -191,12 +191,9 @@ class ClassifyByLandUse:
         for spatial_unit in self._spatial_units.keys():
             print(f'Processing {spatial_unit}...')
             cur.execute(
-            f"""WITH su AS (
-                SELECT suid, ST_Area(geometry::geography)/1000000 AS ar
-                FROM public."{spatial_unit}"
-            )
-            UPDATE public."{spatial_unit}_land_use" SET percentage=area/su.ar*100
-            FROM su WHERE public."{spatial_unit}_land_use".suid=su.suid""")
+            f"""UPDATE public."{spatial_unit}_land_use"
+            SET percentage=public."{spatial_unit}_land_use".area/su.area*100
+            FROM public."{spatial_unit}" su WHERE public."{spatial_unit}_land_use".suid=su.suid""")
 
 
     def execute(self):
@@ -207,6 +204,7 @@ class ClassifyByLandUse:
             self.process_fires_land_structure()
             self.insert_deter_in_land_use_tables()
             self.insert_fires_in_land_use_tables()
+            print("Time control: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
             self.percentage_calculation_for_areas()
             print("Finished in: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
             self._conn.commit()

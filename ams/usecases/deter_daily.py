@@ -32,36 +32,6 @@ class DeterDaily:
         self.ignore_classes="'AF'" # AF=Active Fires by now.
         print('Processing the DETER alerts data...')
 
-    def read_spatial_units(self):
-        """
-        Gets the spatial units from database.
-        Prerequisites:
-         - The public.spatial_units table must exist in the database and have data.
-        See the README.md file for instructions.
-        """
-        self._spatial_units = {}
-        sql = "SELECT dataname, as_attribute_name FROM public.spatial_units"
-        cur = self._conn.cursor()
-        cur.execute(sql)
-        results=cur.fetchall()
-        self._spatial_units=dict(results)
-
-    def read_deter_classes(self):
-        """
-        Gets the alert classes from database.
-        Prerequisites:
-         - The public.deter_class and public.deter_class_group tables must exist in the database and have data.
-        See the README.md file for instructions.
-        """
-        self._deter_classes = {}
-        sql = f"""SELECT d.name as classname, dg.name as classgroup
-        FROM public.deter_class as d, public.deter_class_group as dg
-        WHERE d.group_id=dg.id AND dg.name NOT IN ({self.ignore_classes})"""
-        cur = self._conn.cursor()
-        cur.execute(sql)
-        results=cur.fetchall()
-        self._deter_classes=dict(results)
-
     def update_current_tables(self):
         """
         Used to truncate data from current DETER tables and reinsert it.
@@ -175,96 +145,24 @@ class DeterDaily:
         cur.execute(create)
         print('The deter.deter_publish_date table has been created.')
 
-    def statistics_processing(self):
+    def update_data(self):
         """
-        Processing of statistics for DETER alerts crossing with tables of spatial units
-        registered in the metadata model.
-        The metadata model is composed of three tables, "spatial_units", "deter_class" and
-        "deter_class_group" where spatial units and DETER classes are registered, so it is expected
-        that the information represents the names and current classes of the tables.
-        See the README.md file for instructions.
+        Read DETER data from official databases using some SQL views
+        that were created in the database earlier.
+        
+        See the README.md file in the "Database requirements" section for details on prerequisites
         """
-        # create spatial unit tables if not exists
-        # self.create_spatial_risk_tables()
         # update the current DETER data table
         self.update_current_tables()
         # recreate the publish date table
         self.create_publish_date_table()
         # create the DETER temporary data table
         self.create_tmp_table()
-        # update data into spatial risk tables
-        # self.update_spatial_risk_tables()
-
-
-    def update_spatial_risk_tables(self):
-        cur = self._conn.cursor()
-        for spatial_unit, id in self._spatial_units.items():
-            
-            # remove all stats from a spatial unit, but ignore some classes from the ignore list.
-            delete=f"""
-            DELETE FROM public."{spatial_unit}_risk_indicators"
-            WHERE classname NOT IN ({self.ignore_classes})
-            """
-            if(not self._alldata):
-                # remove statistics only for current DETER data
-                delete=f"""{delete} AND date>=(SELECT MIN(date) FROM deter.deter_auth)"""
-
-            cur.execute(delete)
-            print(f'The {spatial_unit} statistics has been deleted.')
-
-            # for each classname, processing the statistics
-            for classname, classgroup in self._deter_classes.items():
-                
-                insert=f"""
-                WITH results AS (
-                    SELECT dt.date as date, su.suid, SUM(dt.areamunkm) as area,
-                    SUM(dt.areamunkm*100/(ST_Area(su.geometry::geography)/1000000)) as percentage
-                    FROM deter.tmp_data dt, public."{spatial_unit}" su
-                    WHERE dt.classname='{classname}'
-                    AND (su.geometry && dt.geom) AND ST_Intersects(dt.geom, su.geometry) 
-                    GROUP BY 1,2
-                )
-                INSERT INTO public."{spatial_unit}_risk_indicators"(classname, date, suid, area, percentage)
-                SELECT '{classgroup}' as classname, a.date, a.suid, a.area, a.percentage
-                FROM results a
-                """
-                cur.execute(insert)
-                print(f'The {classname} statistic has been updated.')
-
-    def create_spatial_risk_tables(self):
-        """
-        Use this function to create "<spatial_unit>_risk_indicators" tables.
-        If these tables already exist they will not be created.
-        """
-        cur = self._conn.cursor()
-        for spatial_unit, id in self._spatial_units.items():
-            create=f"""
-            CREATE TABLE IF NOT EXISTS public."{spatial_unit}_risk_indicators"
-            (
-                id serial NOT NULL,
-                percentage double precision,
-                area double precision,
-                classname character varying(2),
-                date date,
-                suid integer NOT NULL,
-                counts integer,
-                CONSTRAINT "{spatial_unit}_risk_indicators_pkey" PRIMARY KEY (id),
-                CONSTRAINT "{spatial_unit}_risk_indicators_suid_fkey" FOREIGN KEY (suid)
-                    REFERENCES public."{spatial_unit}" (suid) MATCH SIMPLE
-                    ON UPDATE NO ACTION
-                    ON DELETE NO ACTION
-            )
-            TABLESPACE pg_default
-            """
-            cur.execute(create)
-            print(f'The {spatial_unit}_risk_indicators table has been created.')
 
     def execute(self):
         try:
             print("Starting at: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
-            self.read_spatial_units()
-            self.read_deter_classes()
-            self.statistics_processing()
+            self.update_data()
             print("Finished in: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
             self._conn.commit()
         except Exception as e:
