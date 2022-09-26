@@ -80,7 +80,7 @@ ams.SLDStyles = {
 				let colorhex = d3.color(color).formatHex();
 				fill = '<Fill><CssParameter name="fill">' + colorhex + '</CssParameter>';
 				if(value == 0) {
-					fill += '<CssParameter name="fill-opacity">0.1</CssParameter>';
+					fill += '<CssParameter name="fill-opacity">0.5</CssParameter>';
 				}
 				fill += '</Fill>';
 			}
