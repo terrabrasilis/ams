@@ -168,6 +168,7 @@ CREATE TABLE IF NOT EXISTS public.spatial_units
     as_attribute_name character varying NOT NULL,
     center_lat double precision NOT NULL,
     center_lng double precision NOT NULL,
+    description character varying NOT NULL,
     CONSTRAINT spatial_units_pkey PRIMARY KEY (id),
     CONSTRAINT spatial_units_dataname_key UNIQUE (dataname)
 )
@@ -355,11 +356,11 @@ COMMIT;
 -- -------------------------------------------------------------------------
 BEGIN;
 
-INSERT INTO public.spatial_units(id, dataname, as_attribute_name, center_lat, center_lng) VALUES (1, 'csAmz_25km', 'id', -5.510617783522636, -58.397927203480116);
-INSERT INTO public.spatial_units(id, dataname, as_attribute_name, center_lat, center_lng) VALUES (2, 'csAmz_150km', 'id', -5.491382969006503, -58.467185764253415);
-INSERT INTO public.spatial_units(id, dataname, as_attribute_name, center_lat, center_lng) VALUES (3, 'csAmz_300km', 'id', -5.491382969006503, -57.792239759933764);
-INSERT INTO public.spatial_units(id, dataname, as_attribute_name, center_lat, center_lng) VALUES (4, 'amz_states', 'NM_ESTADO', -6.384962796500002, -58.97111531179317);
-INSERT INTO public.spatial_units(id, dataname, as_attribute_name, center_lat, center_lng) VALUES (5, 'amz_municipalities', 'nm_municip', -6.384962796413522, -58.97111531172743);
+INSERT INTO public.spatial_units(id, dataname, as_attribute_name, center_lat, center_lng) VALUES (1, 'csAmz_25km', 'id', -5.510617783522636, -58.397927203480116, 'Célula 150x150 km²');
+INSERT INTO public.spatial_units(id, dataname, as_attribute_name, center_lat, center_lng) VALUES (2, 'csAmz_150km', 'id', -5.491382969006503, -58.467185764253415, 'Célula 25x25 km²');
+INSERT INTO public.spatial_units(id, dataname, as_attribute_name, center_lat, center_lng) VALUES (3, 'csAmz_300km', 'id', -5.491382969006503, -57.792239759933764, 'Célula 300x300 km²');
+INSERT INTO public.spatial_units(id, dataname, as_attribute_name, center_lat, center_lng) VALUES (4, 'amz_states', 'nome', -6.384962796500002, -58.97111531179317, 'Estado');
+INSERT INTO public.spatial_units(id, dataname, as_attribute_name, center_lat, center_lng) VALUES (5, 'amz_municipalities', 'nome', -6.384962796413522, -58.97111531172743, 'Município');
 
 INSERT INTO public.deter_class_group(id, name) VALUES (1, 'DS', 'DETER Desmatamento', 0);
 INSERT INTO public.deter_class_group(id, name) VALUES (2, 'DG', 'DETER Degradação', 1);

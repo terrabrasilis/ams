@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 from dataclasses import replace
+from tkinter.messagebox import NO
 from unicodedata import category
 from plotly.graph_objs import layout
-from psycopg2.extras import DictCursor
+from psycopg2 import connect
 import pandas as pd
 import plotly
 import plotly.express as px
 from datetime import datetime
 import json
 import re
-from ams.dataaccess import AlchemyDataAccess
 from dateutil.relativedelta import relativedelta
 
 class SpatialUnitProfile():
@@ -30,7 +30,7 @@ class SpatialUnitProfile():
 
     def __init__(self, config, params):
         self._config = config
-        self._db = AlchemyDataAccess()
+        self._conn = connect(self._config.DATABASE_URL)
         self._query_limit = 20
         self._classname = params['className']
 
@@ -51,19 +51,14 @@ class SpatialUnitProfile():
             self.area_unit="km²"
         else:
             self.area_unit=unit
-        
-        self._tableinfo = {
-            'csAmz_25km': {'description': 'C&#233;lula 25x25 km&#178',
-                            'key' : 'id'},
-            'csAmz_150km': {'description': 'C&#233;lula 150x150 km&#178',
-                            'key' : 'id'},
-            'csAmz_300km': {'description': 'C&#233;lula 300x300 km&#178',
-                            'key' : 'id'},
-            'amz_municipalities': {'description': 'Município',
-                            'key' : 'nm_municip'},
-            'amz_states': {'description': 'Estado',
-                            'key' : 'NM_ESTADO'}
-        }
+
+        sql="""
+        SELECT string_agg('"'||dataname||'":{"description":"'||description||'", "key":"'||as_attribute_name||'"}', ', ')
+        FROM public.spatial_units
+        """
+        suinfo = self.execute_sql(sql=sql)
+        self._tableinfo = json.loads("{"+suinfo+"}")
+
         self._classes = pd.DataFrame(
             {'code': pd.Series(['DS','DG', 'CS', 'MN', 'AF'], dtype='str'),
              'name': pd.Series(['Desmatamento','Degrada&#231;&#227;o',
@@ -175,32 +170,23 @@ order by 1 desc limit {2}'''}
                         f"and date <= '{self._start_date}'"
                 return f"select * from ({value.format(self._spatial_unit,where)}) a order by 1"
 
-    def execute_sql(self, sql, cursor_factory=None, return_headers=False):
-        conn = self._db.engine.connect()
+    def execute_sql(self, sql):
+        curr = None
         try:
-            if cursor_factory is None:
-                curr = conn.cursor()
-            else:
-                curr = conn.cursor(cursor_factory=cursor_factory)
-                conn.commit()
+            curr = self._conn.cursor()
             curr.execute(sql)
             rows = curr.fetchall()
-            return (rows, curr.description) if return_headers else rows
+            return rows[0][0]
         except Exception as e:
             raise e
-
-    def resultset_as_dict(self, sql):
-        return {row[0]: row[1] for row in self.execute_sql(sql, cursor_factory=DictCursor)}
+        finally:
+            if(not self._conn.closed): self._conn.close()
 
     def resultset_as_dataframe(self, sql):
         return pd.read_sql(sql, self._config.DATABASE_URL)
 
-    def resultset_as_list(self, sql):
-        return [row[0] for row in self.execute_sql(sql)]
-
     def __area_by_period(self):
-        df = self.resultset_as_dataframe(
-            self.__get_temporal_unit_sql())
+        df = self.resultset_as_dataframe(self.__get_temporal_unit_sql())
         df.columns = ['Período', 'Data de referência', self.default_col_name]
         return df
 
@@ -232,7 +218,7 @@ order by 1 desc limit {2}'''}
         indicador=self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
         last_date=self.format_date(self._start_date)
         spatial_unit=self._name
-        spation_description=self._tableinfo[self._spatial_unit]['description']
+        spatial_description=self._tableinfo[self._spatial_unit]['description']
         temporal_unit=self._temporal_units[self._temporal_unit]
 
         datasource="do DETER"
@@ -240,7 +226,7 @@ order by 1 desc limit {2}'''}
             datasource="de Queimadas"
 
         title=f"""Usando dados de <b>{indicador}</b> {datasource} até <b>{last_date}</b>,
-        com recorte na unidade espacial <b>{spatial_unit}</b> ({spation_description})
+        com recorte na unidade espacial <b>{spatial_unit}</b> ({spatial_description})
         e unidade temporal <b>{temporal_unit}</b>.
         """
 
