@@ -39,7 +39,12 @@ ams.Map = {
 	SpatialUnits: function(spatialUnits, suDefaultName) {
 		this.spatialUnits = spatialUnits;
 
-		this.default = this.spatialUnits.find((suitem)=>{return suitem.dataname==suDefaultName;});
+		/** Get Spatial Unit params by su layer name */
+		this.find = function(dataname){
+			return this.spatialUnits.find((suitem)=>{return suitem.dataname==dataname;});
+		}
+
+		this.default = this.find(suDefaultName);
 
 		this.length = function() {
 			return this.spatialUnits.length;
@@ -178,14 +183,7 @@ ams.Map = {
 								outputFormat, extension,
 								properties, propertyName){
 
-			let _viewToResolution = {
-				"csAmz_25km": "CELL_25km",
-				"csAmz_150km": "CELL_150km",
-				"amz_states": "ESTADO",
-				"amz_municipalities": "MUNIC",
-			};
 			let baseName = layerName.substring(layerName.indexOf(':') + 1).replace("_view", "");
-
 			let sdt=ams.PeriodHandler._startdate.toLocaleDateString().replaceAll('/','-');
 			let edt=ams.PeriodHandler._enddate.toLocaleDateString().replaceAll('/','-');
 			let pdt=ams.PeriodHandler._previousdate.toLocaleDateString().replaceAll('/','-');
@@ -196,22 +194,25 @@ ams.Map = {
 				diff = "_" + pdt; //viewParams.prevdate;
 				baseName = baseName.replace(_diff, "");
 			}
-			let resolution = _viewToResolution[baseName];
-			if (typeof resolution == 'undefined') {
-				resolution = baseName;
-			}
+			let suName = ams.App._spatialUnits.find(baseName);
+			suName = (suName)?(suName.description):(baseName);
+			suName=suName.replaceAll(" ", "_");
+			let dataName = ams.App._appClassGroups.getGroupName(viewParams.classname);
+			dataName = (dataName)?(dataName):(viewParams.classname);
+			dataName=dataName.replaceAll(" ", "_");
 
-			let filename = "AMS_"
-						+ resolution
-						+ "_"
-						+ viewParams.classname
-						+ "_"
-						+ sdt
-						+ "_"
-						+ edt
-						+ diff
-						+ "."
-						+ extension;
+			let filename = ams.Config.biome
+				+ "_"	
+				+ suName
+				+ "_"
+				+ dataName
+				+ "_"
+				+ sdt
+				+ "_"
+				+ edt
+				+ diff
+				+ "."
+				+ extension;
 
 			let wfsUrl = this.url 
 						+ "&typeName=" + layerName

@@ -20,9 +20,11 @@ ams.App = {
 	_diffOn: false,
 	_currentTemporalAggregate: null,
 	_currentClassify: null,
+	_spatialUnits: null,
 
 	run: function(geoserverUrl, spatialUnits, appClassGroups) {
 
+		this._spatialUnits=spatialUnits;
 		this._appClassGroups=appClassGroups;
 
 		this._wfs = new ams.Map.WFS(geoserverUrl);
