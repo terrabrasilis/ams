@@ -2,14 +2,18 @@ var ams = ams || {};
 
 ams.Auth = {
 	/**
-	 * Default GeoServer workspace for anonymous users.
+	 * Default GeoServer workspace for anonymous users loaded from server on app start.
 	 * The GeoServer workspace name for authenticated users is "ams_auth" by convention.
 	 */
-	gsWorkspace:'ams',
+	gsWorkspace:null,
 	/**
 	 * Default is no suffix. To authenticate the suffix is "_auth"
 	 */
 	gsAuthSuffix:'',
+	/**
+	 * Default is no suffix. To homologation the suffix is "h"
+	 */
+	gsHomologationSuffix:'',
 
 	/**
 	 * Evaluates user authentication status and sets appropriate suffix
@@ -22,6 +26,8 @@ ams.Auth = {
 	 */
 	evaluate: function() {
 		this.gsAuthSuffix=( (this.isAuthenticated())?("_auth"):("") );
+		// set the appropriate workspace name if it is homologation environment
+		this.gsHomologationSuffix=( (ams.Utils.isHomologationEnvironment())?('h'):('') );
 	},
 
   /**
@@ -37,14 +43,14 @@ ams.Auth = {
 
   /**
    * Workspace always use the suffix. For anonymous users, the suffix is empty.
-   * Looking for homologation URL or development env. If found forces the "amsh" (homologation workspace)
+   * Looking for homologation URL or development env. If found concat the "h" to current workspace (homologation workspace)
    * Must have a homologation workspace on the geoserver
    */
   getWorkspace: function() {
-	if(ams.Utils.isHomologationEnvironment()){
-		this.gsWorkspace='amsh';
+	if(!this.gsWorkspace){
+		this.gsWorkspace=ams.Config.defaultWorkspace;
 	}
-    return this.gsWorkspace+this.gsAuthSuffix;
+    return this.gsWorkspace+this.gsHomologationSuffix+this.gsAuthSuffix;
   },
 
   setWorkspace: function(workspace) {

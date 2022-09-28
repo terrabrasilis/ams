@@ -352,6 +352,7 @@
 	<!-- end footer and modals -->
 	<script type="text/javascript">
 		var startApp=()=>{
+			var appBiome = "{{appBiome}}";
 			var gsWorkspace = "{{workspace}}";
 			// register workspace name to work on front-end
 			ams.Auth.setWorkspace(gsWorkspace);
@@ -360,6 +361,7 @@
 			// set map div to available height
 			ams.Utils.setMapHeight();
 			var sus = JSON.parse("{{spatial_units_info|safe}}".replace(/'/g,"\""));
+			ams.Config = ams.BiomeConfig[appBiome];
 			var spatialUnits = new ams.Map.SpatialUnits(sus, ams.Config.defaultFilters.spatialUnit);
 			var appClassGroups = new ams.Map.AppClassGroups(JSON.parse("{{deter_class_groups|safe}}".replace(/'/g,"\"")));
 			var geoserverUrl = "{{geoserver_url}}";

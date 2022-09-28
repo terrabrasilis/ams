@@ -26,12 +26,7 @@ ams.App = {
 		this._appClassGroups=appClassGroups;
 
 		this._wfs = new ams.Map.WFS(geoserverUrl);
-		var ldLayerName = ams.Auth.getWorkspace() + ":last_date";
-
-		// set the appropriate workspace name if it is homologation environment
-		if(ams.Utils.isHomologationEnvironment()){
-			ams.Config.defaultLayers.activeFireAmz=ams.Config.defaultLayers.activeFireAmz.replace('ams','amsh');
-		}
+		var ldLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.lastDate;
 
 		var temporalUnits = new ams.Map.TemporalUnits();
 		this._dateControl = new ams.Date.DateController();
@@ -42,7 +37,7 @@ ams.App = {
 		this._dateControl.setPeriod(currStartdate, this._currentTemporalAggregate);
 		this._baseURL = geoserverUrl + "/wms";
 		this._propertyName = ( (ams.Config.defaultFilters.indicator=='AF')?(ams.Config.propertyName.af):(ams.Config.propertyName.deter) );
-		this._referenceLayerName = ( (ams.Config.defaultFilters.indicator=='AF')?(ams.Config.defaultLayers.activeFireAmz):(ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.deterAmz) );
+		this._referenceLayerName = ams.Auth.getWorkspace()+":"+( (ams.Config.defaultFilters.indicator=='AF')?(ams.Config.defaultLayers.activeFire):(ams.Config.defaultLayers.deter) );
 		this._hasClassFilter = ( (ams.Config.defaultFilters.indicator=='AF')?(false):(true) );
 		this._currentClassify=ams.Config.defaultFilters.diffClassify;
 
@@ -104,8 +99,8 @@ ams.App = {
 		this._priorViewParams = new ams.Map.ViewParams(ams.Config.defaultFilters.indicator, ams.App._dateControl, ams.App._propertyName, ams.Config.defaultFilters.priorityLimit);
 
 		// Adding reference layers
-		var tbDeterAlertsLayerName = ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.deterAmz;
-		var AFLayerName = ams.Config.defaultLayers.activeFireAmz;
+		var tbDeterAlertsLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.deter;
+		var AFLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.activeFire;
 		var tbDeterAlertsWmsOptions = {
 			"cql_filter": appClassGroups.getCqlFilter(this._suViewParams, true)
 		};
@@ -242,14 +237,14 @@ ams.App = {
 			if(e.group.name=='INDICADOR'){
 				if(e.acronym=='AF'){
 					// the reference layer should be active-fires
-					layerToAdd=ams.Config.defaultLayers.activeFireAmz;
-					layerToDel=ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.deterAmz;
+					layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.activeFire;
+					layerToDel=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.deter;
 					ams.App._propertyName=ams.Config.propertyName.af;
 					ams.App._hasClassFilter=false;
 				}else{
 					// the reference layer should be deter
-					layerToAdd=ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.deterAmz;
-					layerToDel=ams.Config.defaultLayers.activeFireAmz;
+					layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.deter;
+					layerToDel=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.activeFire;
 					ams.App._propertyName=ams.Config.propertyName.deter;		
 					ams.App._hasClassFilter=true;
 				}

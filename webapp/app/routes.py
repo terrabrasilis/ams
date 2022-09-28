@@ -15,6 +15,7 @@ def get_config():
         return render_template('index.html',
                             geoserver_url=Config.GEOSERVER_URL,
                             workspace=Config.GEOSERVER_WORKSPACE,
+                            appBiome=Config.BIOME,
                             spatial_units_info=sui,
                             deter_class_groups=cg)
     except Exception as e:
