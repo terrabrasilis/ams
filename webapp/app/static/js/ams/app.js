@@ -154,12 +154,14 @@ ams.App = {
 			"CLASSIFICAÇÃO DO MAPA": {defaultFilter:ams.Config.defaultFilters.diffClassify},
 		};
 
-		for(var i = 0; i < spatialUnits.length(); i++) {
+		let sulen = spatialUnits.length();
+		for(var i = 0; i < sulen; i++) {
 			let layerName = ams.Auth.getWorkspace() + ":" + spatialUnits.at(i).dataname;
-			controlGroups["UNIDADE ESPACIAL"][spatialUnits.at(i).name] = layerName;
+			controlGroups["UNIDADE ESPACIAL"][spatialUnits.at(i).description] = layerName;
 		}
 
-		for(var i = 0; i < appClassGroups.length(); i++) {
+		let cglen = appClassGroups.length();
+		for(var i = 0; i < cglen; i++) {
 			controlGroups["INDICADOR"][appClassGroups.at(i).name] = appClassGroups.at(i).acronym;
 		}
 

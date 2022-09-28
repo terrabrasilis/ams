@@ -14,6 +14,7 @@ class AppConfigController:
 		See the README.md file for instructions.
 		"""
 		sql = """SELECT string_agg('{''dataname'':'''||su.dataname||
+		''',''description'':'''||description||
 		''',''center_lat'':'|| su.center_lat || 
 		',''center_lng'':'|| su.center_lng ||
 		',''last_date'':'''||pd.date||'''}', ',') 

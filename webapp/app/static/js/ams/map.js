@@ -37,40 +37,9 @@ ams.Map = {
 	},
 
 	SpatialUnits: function(spatialUnits, suDefaultName) {
-		this._suNamesMap = {
-			"csAmz_25km": "C&#233;lulas 25x25 km&#178;",
-			"csAmz_150km": "C&#233;lulas 150x150 km&#178;",
-			"amz_states": "Estados",
-			"amz_municipalities": "Munic&#237;pios",
-		};
+		this.spatialUnits = spatialUnits;
 
-		this._suDataNamesMap = {};
-
-		this.getName = function(dataname) {
-			return this._suNamesMap[dataname];
-		}
-
-		this.getSpatialUnit = function getSpatialUnit(name) {
-			let nm=(name.split(':').length==2)?(name.split(':')[1]):(name);// to remove workspace name.
-			for(var i = 0; i < this.spatialUnits.length; i++) {
-				if(this.spatialUnits[i].dataname == nm) {
-					return this.spatialUnits[i];
-				}
-			}
-			return null;				
-		}	
-
-		this._setNames = function(sus) {
-			for(var i = 0; i < sus.length; i++) {
-				sus[i].name = this._suNamesMap[sus[i].dataname];
-				this._suDataNamesMap[sus[i].name] = sus[i].dataname;
-			}
-			this.spatialUnits = sus;
-		}
-		
-		this._setNames(spatialUnits);
-
-		this.default = this.getSpatialUnit(suDefaultName);
+		this.default = this.spatialUnits.find((suitem)=>{return suitem.dataname==suDefaultName;});
 
 		this.length = function() {
 			return this.spatialUnits.length;
@@ -101,7 +70,6 @@ ams.Map = {
 		this.at = function(pos) {
 			return this.groups[pos];
 		}	
-
 
 		this.getGroup = function(acronym) {
 			for(let i = 0; i < this.groups.length; i++) {
