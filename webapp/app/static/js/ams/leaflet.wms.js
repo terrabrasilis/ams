@@ -75,11 +75,11 @@ ams.LeafletWms = {
         },
 
         '_isDeterInfo': function () {
-            return this._overlay.wmsParams.layers.includes(ams.Config.defaultLayers.deterAmz);
+            return this._overlay.wmsParams.layers.includes(ams.Config.defaultLayers.deter);
         },
 
         '_isAFInfo': function () {
-            return this._overlay.wmsParams.layers.includes(ams.Config.defaultLayers.activeFireAmz);
+            return this._overlay.wmsParams.layers.includes(ams.Config.defaultLayers.activeFire);
         },
 
         '_updateResults': function(result, featureInfo) {
