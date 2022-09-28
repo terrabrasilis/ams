@@ -189,7 +189,7 @@ ams.Map = {
 			let pdt=ams.PeriodHandler._previousdate.toLocaleDateString().replaceAll('/','-');
 
 			let diff = '';
-			const _diff = "diff";
+			const _diff = "_diff";
 			if (baseName.indexOf(_diff) > 0) {
 				diff = "_" + pdt; //viewParams.prevdate;
 				baseName = baseName.replace(_diff, "");
@@ -207,9 +207,9 @@ ams.Map = {
 				+ "_"
 				+ dataName
 				+ "_"
-				+ sdt
-				+ "_"
 				+ edt
+				+ "_"
+				+ sdt
 				+ diff
 				+ "."
 				+ extension;
