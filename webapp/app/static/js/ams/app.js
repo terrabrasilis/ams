@@ -464,7 +464,7 @@ ams.App = {
 			}
 		}
 		if(ams.App._biomeLayer) {
-			ol["Amazônia"]=ams.App._biomeLayer;
+			ol[ams.Config.biome]=ams.App._biomeLayer;
 		}
 		ams.App._layerControl=L.control.layers(bs,ol).addTo(ams.App._map);
 	},
