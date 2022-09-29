@@ -33,8 +33,8 @@ ams.App = {
 		var temporalUnits = new ams.Map.TemporalUnits();
 		this._dateControl = new ams.Date.DateController();
 		let anonimousLastDate = this._wfs.getLastDate(ldLayerName);
-		anonimousLastDate = anonimousLastDate?anonimousLastDate:spatialUnits.default.last_date;
-		var currStartdate = (ams.Auth.isAuthenticated())?(spatialUnits.default.last_date):(anonimousLastDate);
+		anonimousLastDate = anonimousLastDate?anonimousLastDate:this._spatialUnits.getDefault().last_date;
+		var currStartdate = (ams.Auth.isAuthenticated())?(this._spatialUnits.getDefault().last_date):(anonimousLastDate);
 		this._currentTemporalAggregate = temporalUnits.getAggregates()[0].key;
 		this._dateControl.setPeriod(currStartdate, this._currentTemporalAggregate);
 		this._baseURL = geoserverUrl + "/wms";
@@ -52,7 +52,7 @@ ams.App = {
 		// improve control positions for Leaflet
 		ams.LeafletControlPosition.addNewPositions(map);
 
-		map.setView([spatialUnits.default.center_lat, spatialUnits.default.center_lng], 5);
+		map.setView([this._spatialUnits.getDefault().center_lat, this._spatialUnits.getDefault().center_lng], 5);
 
 		// crs: L.CRS.EPSG4326,
 		this._baseLayers["osm"] = new L.TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -130,8 +130,8 @@ ams.App = {
 		this._legendControl = new ams.Map.LegendController(map, this._baseURL);
 
 		// Default Spatial Unit layer
-		this._currentSULayerName = ams.Auth.getWorkspace() + ":" + spatialUnits.default.dataname;
-		ams.Config.defaultFilters.spatialUnit=this._currentSULayerName;// update the default for later use in filter change in control.
+		this._currentSULayerName = ams.Auth.getWorkspace() + ":" + this._spatialUnits.getDefault().dataname;
+		ams.Config.defaultFilters.spatialUnit=this._spatialUnits.getDefault().dataname;// update the default for later use in filter change in control.
 		this._addSpatialUnitLayer(this._getLayerPrefix(),this._propertyName);
 
 		// Fixed biome border layer
@@ -145,6 +145,9 @@ ams.App = {
 		// ---------------------------------------------------------------------------------
 		// this structure is used into leaflet.groupedlayercontrol.js to create controls for filters panel...
 		var controlGroups = {
+			"Biomas":{
+				defaultFilter:ams.Config.biome
+			},
 			"INDICADOR": {
 				defaultFilter:ams.Config.defaultFilters.indicator,
 				propertyName:this._propertyName
@@ -156,10 +159,15 @@ ams.App = {
 			"CLASSIFICAÇÃO DO MAPA": {defaultFilter:ams.Config.defaultFilters.diffClassify},
 		};
 
-		let sulen = spatialUnits.length();
+		for (let p in ams.BiomeConfig) {
+			if(ams.BiomeConfig.hasOwnProperty(p))
+				controlGroups["Biomas"][p] = p;
+		}
+
+		let sulen = this._spatialUnits.length();
 		for(var i = 0; i < sulen; i++) {
-			let layerName = ams.Auth.getWorkspace() + ":" + spatialUnits.at(i).dataname;
-			controlGroups["UNIDADE ESPACIAL"][spatialUnits.at(i).description] = layerName;
+			let layerName = ams.Auth.getWorkspace() + ":" + this._spatialUnits.at(i).dataname;
+			controlGroups["UNIDADE ESPACIAL"][this._spatialUnits.at(i).description] = layerName;
 		}
 
 		let cglen = appClassGroups.length();
@@ -237,8 +245,14 @@ ams.App = {
 
 		map.on('changectrl', function(e) {
 			let layerToAdd,layerToDel,needUpdateSuLayers=true;
-			// change reference layer (deter or fires)?
-			if(e.group.name=='INDICADOR'){
+			
+			if(e.group.name=='Biomas'){
+				if(e.acronym==ams.Config.biome){
+					return;
+				}
+				ams.Utils.biomeChanges(e.acronym);
+
+			}else if(e.group.name=='INDICADOR'){// change reference layer (deter or fires)?
 				if(e.acronym=='AF'){
 					// the reference layer should be active-fires
 					layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.activeFire;
@@ -638,6 +652,7 @@ ams.App = {
 	displayGraph: function( jsConfig ) {
 		async function getGraphics(  jsConfig ) {
 			jsConfig["unit"]=ams.Map.PopupControl._unit;
+			jsConfig["targetbiome"]=ams.Config.biome;
 			let jsConfigStr = JSON.stringify(jsConfig);
 			let response = await fetch("callback/spatial_unit_profile?sData=" + jsConfigStr);
 			$("#loading_data_info").css('display','none')

@@ -45,7 +45,7 @@ $(document).ready(function () {
     Authentication.init(Lang.language, ams.Utils.restartApp);
 
   /** Launch the app when loading the page for the first time */
-  startApp();
+  ams.Utils.startApp();
 
   /** config google analytics */
   window.dataLayer = window.dataLayer || [];

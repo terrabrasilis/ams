@@ -1,5 +1,6 @@
 var ams = ams || {};
 ams.BiomeConfig={};
+ams.defaultBiome="Amazônia";
 
 var defaultConfig = {
   terrabrasilisURL:"http://terrabrasilis.dpi.inpe.br",

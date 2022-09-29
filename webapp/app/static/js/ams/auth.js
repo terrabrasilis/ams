@@ -3,7 +3,7 @@ var ams = ams || {};
 ams.Auth = {
 	/**
 	 * Default GeoServer workspace for anonymous users loaded from server on app start.
-	 * The GeoServer workspace name for authenticated users is "ams_auth" by convention.
+	 * The GeoServer workspace name for authenticated users is concat with "_auth" by convention.
 	 */
 	gsWorkspace:null,
 	/**
@@ -53,7 +53,7 @@ ams.Auth = {
     return this.gsWorkspace+this.gsHomologationSuffix+this.gsAuthSuffix;
   },
 
-  setWorkspace: function(workspace) {
-    this.gsWorkspace=workspace;
+  resetWorkspace: function(){
+	this.gsWorkspace=null;
   }
 };

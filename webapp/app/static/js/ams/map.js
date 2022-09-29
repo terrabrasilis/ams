@@ -38,13 +38,19 @@ ams.Map = {
 
 	SpatialUnits: function(spatialUnits, suDefaultName) {
 		this.spatialUnits = spatialUnits;
+		this.defaultName = suDefaultName;
+		this.default = null;
+
+		this.getDefault = function(){
+			if(!this.default)
+				this.default = this.find(this.defaultName);
+			return this.default;
+		}
 
 		/** Get Spatial Unit params by su layer name */
 		this.find = function(dataname){
 			return this.spatialUnits.find((suitem)=>{return suitem.dataname==dataname;});
 		}
-
-		this.default = this.find(suDefaultName);
 
 		this.length = function() {
 			return this.spatialUnits.length;
@@ -154,7 +160,7 @@ ams.Map = {
 
 		this.getLastDate = function(layerName) {
 			let propertyName="last_date";
-			let classname=( (ams.App._suViewParams)?(ams.App._suViewParams):(ams.Config.defaultFilters.indicator) );
+			let classname=( (ams.App._suViewParams)?(ams.App._suViewParams.classname):(ams.Config.defaultFilters.indicator) );
 			let wfsUrl = this.url 
 						+ "&typeName=" + layerName
 						+ "&propertyName=" + propertyName
