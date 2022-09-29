@@ -25,8 +25,9 @@ ams.Utils = {
   startApp: function(generalConfig){
     
     if(typeof generalConfig=='undefined'){
-      // use the default biome (see config.js)
-      ams.Utils.biomeChanges(ams.defaultBiome);
+      // use the previous selection or default biome (see config.js)
+      let b=localStorage.getItem('previous.biome.setting.selection');
+      ams.Utils.biomeChanges( ((b!==null)?(b):(ams.defaultBiome)) );
     }else{
       // evaluate the user area_profile on start app
       ams.Auth.evaluate();

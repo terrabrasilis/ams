@@ -225,6 +225,8 @@ ams.App = {
 				if(e.acronym==ams.Config.biome){
 					return;
 				}
+				// write on local storage
+				localStorage.setItem('previous.biome.setting.selection', e.acronym);
 				ams.Utils.biomeChanges(e.acronym);
 
 			}else if(e.group.name=='INDICADOR'){// change reference layer (deter or fires)?
