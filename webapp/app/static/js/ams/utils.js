@@ -42,7 +42,7 @@ ams.Utils = {
         ams.App.run(geoserverUrl, spatialUnits, appClassGroups);
       } catch (error) {
         console.log(error);
-        // if any error occurs, clean the local storage
+        // if any error occurs, clear the local storage to try again
         ams.Utils.resetlocalStorage();
       }
     }
@@ -77,6 +77,7 @@ ams.Utils = {
           if (generalConfig.appBiome) {
             // write on local storage
             localStorage.setItem('biome.config.'+selectedBiome, JSON.stringify(generalConfig));
+            localStorage.setItem('config.created.at', (new Date()).toISOString().split('T')[0] );
             ams.Utils.startApp(generalConfig);
           } else {
             console.log("HTTP-Error: " + response.status + " on biome changes");
@@ -105,9 +106,22 @@ ams.Utils = {
       ams.Auth.resetWorkspace();
 
       // Used to load from local storage
-      if(localStorage.getItem('biome.config.'+selectedBiome)!==null){
-        let biomeConfiguration=JSON.parse(localStorage.getItem('biome.config.'+selectedBiome));
-        ams.Utils.startApp(biomeConfiguration);
+      if(localStorage.getItem('biome.config.'+selectedBiome)!==null
+          && localStorage.getItem('config.created.at')!==null){
+        
+        // the local storage expiration date 
+        let createdAt=new Date(localStorage.getItem('config.created.at')+'T03:00:00.000Z');
+        let nowDate=new Date((new Date()).toISOString().split('T')[0]+'T03:00:00.000Z');
+        if(createdAt<nowDate){
+          for (let p in ams.BiomeConfig) {
+            if(ams.BiomeConfig.hasOwnProperty(p))
+            localStorage.removeItem('biome.config.'+p);
+          }
+          getConfigByBiome(selectedBiome);
+        }else{
+          let biomeConfiguration=JSON.parse(localStorage.getItem('biome.config.'+selectedBiome));
+          ams.Utils.startApp(biomeConfiguration);
+        }
       }else{
         getConfigByBiome(selectedBiome);
       }
