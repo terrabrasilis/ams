@@ -13,12 +13,16 @@ class AppConfigController:
 			- The public.spatial_units table must exist in the database and have data.
 		See the README.md file for instructions.
 		"""
-		sql = """SELECT string_agg('{''dataname'':'''||su.dataname||
-		''',''description'':'''||description||
-		''',''center_lat'':'|| su.center_lat || 
-		',''center_lng'':'|| su.center_lng ||
-		',''last_date'':'''||pd.date||'''}', ',') 
-		FROM public.spatial_units su, deter.deter_publish_date pd"""
+		sql = """SELECT string_agg( c1, ',' )
+		FROM (
+			SELECT string_agg('{''dataname'':'''||su.dataname||
+			''',''description'':'''||su.description||
+			''',''center_lat'':'|| su.center_lat || 
+			',''center_lng'':'|| su.center_lng ||
+			',''last_date'':'''||pd.date||'''}', ',') as c1
+			FROM public.spatial_units su, deter.deter_publish_date pd
+			GROUP BY su.id ORDER BY su.id ASC
+		) as tb1"""
 		cur = self._conn.cursor()
 		cur.execute(sql)
 		results=cur.fetchall()
@@ -26,9 +30,9 @@ class AppConfigController:
 
 	def read_class_groups(self):
 		"""
-		Gets the most recent date for each spatial unit data.
-		Prerequisites:
-			- The self._spatial_units data must to have readed before.
+		Gets the class names grouped by class groups.
+		Including class titles and a required order to use on the frontend
+		to display filters by classes.
 		"""
 		sql = """SELECT string_agg( c1 || ',' || c2, ', ' )
 		FROM (
