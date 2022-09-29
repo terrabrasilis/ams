@@ -9,18 +9,32 @@ from . import bp as app
 @app.route('/', methods=['GET'])
 def get_config():
     try:
-        ctrl = AppConfigController(Config.DATABASE_URL)
-        sui=ctrl.read_spatial_units()
-        cg=ctrl.read_class_groups()
-        return render_template('index.html',
-                            geoserver_url=Config.GEOSERVER_URL,
-                            workspace=Config.GEOSERVER_WORKSPACE,
-                            appBiome=Config.BIOME,
-                            spatial_units_info=sui,
-                            deter_class_groups=cg)
+        return render_template('index.html')
     except Exception as e:
         # HTTP 500: Internal error 
         return "Template configurations are missing: {0}".format(str(e)), 412
+
+@app.route('/biome/<endpoint>', methods=['GET'])
+def get_biome_config(endpoint):
+    if endpoint != 'config':
+        return "Bad endpoint", 404
+    args = request.args
+    try:
+        appBiome = args["targetbiome"]
+        dburl = Config.DB_CERRADO_URL if (appBiome=='Cerrado') else Config.DB_AMAZON_URL
+        ctrl = AppConfigController(dburl)
+        sui=ctrl.read_spatial_units()
+        cg=ctrl.read_class_groups()
+        return json.dumps(
+            {
+                'geoserver_url': Config.GEOSERVER_URL,
+                'appBiome': appBiome,
+                'spatial_units_info':sui,
+                'deter_class_groups':cg
+            }
+        )
+    except Exception as e:
+        return "Something is wrong on the server. Please, send this error to our support service: terrabrasilis@inpe.br", 500
 
 @app.route('/callback/<endpoint>', methods=['GET'])
 def get_profile(endpoint):
@@ -38,6 +52,7 @@ def get_profile(endpoint):
         name=params['suName']
         # app unit measure
         unit=params['unit']
+        appBiome=params['targetbiome']
     except KeyError as ke:
         #exception KeyError
         #Raised when a mapping (dictionary) key is not found in the set of existing keys.

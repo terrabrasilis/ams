@@ -26,11 +26,14 @@ class SpatialUnitProfile():
         params['tempUnit'], The selected temporal unit code. Ex.: {'7d','15d','1m','3m','1y'}
         params['suName'], The selected Spatial Unit name. Ex.: 'C13L08'
         params['unit'], The current unit measure in the App. Ex.: {'km²','ha','focos'}
+        params['targetbiome'], The selected biome. Ex.: {'Cerrado', 'Amazônia'}
     """
 
     def __init__(self, config, params):
         self._config = config
-        self._conn = connect(self._config.DATABASE_URL)
+        self._appBiome = params['targetbiome']
+        self._dburl = self._config.DB_CERRADO_URL if (self._appBiome=='Cerrado') else self._config.DB_AMAZON_URL
+        self._conn = connect(self._dburl)
         self._query_limit = 20
         self._classname = params['className']
 
@@ -183,7 +186,7 @@ order by 1 desc limit {2}'''}
             if(not self._conn.closed): self._conn.close()
 
     def resultset_as_dataframe(self, sql):
-        return pd.read_sql(sql, self._config.DATABASE_URL)
+        return pd.read_sql(sql, self._dburl)
 
     def __area_by_period(self):
         df = self.resultset_as_dataframe(self.__get_temporal_unit_sql())
