@@ -145,7 +145,7 @@ ams.App = {
 		// ---------------------------------------------------------------------------------
 		// this structure is used into leaflet.groupedlayercontrol.js to create controls for filters panel...
 		var controlGroups = {
-			"Biomas":{
+			"BIOMA":{
 				defaultFilter:ams.Config.biome
 			},
 			"INDICADOR": {
@@ -161,7 +161,7 @@ ams.App = {
 
 		for (let p in ams.BiomeConfig) {
 			if(ams.BiomeConfig.hasOwnProperty(p))
-				controlGroups["Biomas"][p] = p;
+				controlGroups["BIOMA"][p] = p;
 		}
 
 		let sulen = this._spatialUnits.length();
@@ -217,36 +217,11 @@ ams.App = {
 		// Adding control layer over map
 		this._addControlLayer();
 
-		(function addPriorizationControl() {
-			$('<div class="leaflet-control-layers-group" id="prioritization-control-layers-group">'
-				+ '<label class="leaflet-control-layers-group-name">'
-				+ '<span class="leaflet-control-layers-group-name">Prioriza&#231;&#227;o </span>'
-				+ '<input type="number" id="prioritization-input" min="1" style="width:45px" title="Alterar o número de unidades espaciais consideradas na priorização de exibição do mapa." value=' 
-				+ ams.App._priorViewParams.limit + ' />'
-				+ '<button class="btn btn-primary-p" id="prioritization-button" style="margin-left: 10px;"> Ok </button>'
-				+ '</label></div>').insertAfter("#leaflet-control-layers-group-1");	
-		})();	
-
-		(function addFileDownloadControl() {
-			$('<div class="leaflet-control-layers-group" id="shapezip-control-layers-group">'
-				+ '<label class="leaflet-control-layers-group-label">'
-				+ '<span class="leaflet-control-layers-group-name">DOWNLOAD</span></label>'
-				+ '<label class="leaflet-control-layers-group-name">'
-				+ '<span style="white-space: pre-wrap;">'
-				+ 'Baixar arquivo da unidade\nespacial selecionada.</span></label>'
-				+ '<label class="leaflet-control-layers-group-name btn-download">'
-				+ '<button class="btn btn-primary-p btn-success" id="csv-download-button"> CSV </button>'
-				+ '&nbsp;&nbsp;'
-				+ '<button class="btn btn-primary-p btn-success" id="shapezip-download-button"> Shapefile </button>'
-				+ '</label>'
-				+ '</div>').insertAfter("#leaflet-control-layers-group-3");
-				//insertAfter("#datepicker-control-layers-group");
-		})();
-
+		// control handler of main panel
 		map.on('changectrl', function(e) {
 			let layerToAdd,layerToDel,needUpdateSuLayers=true;
 			
-			if(e.group.name=='Biomas'){
+			if(e.group.name=='BIOMA'){
 				if(e.acronym==ams.Config.biome){
 					return;
 				}

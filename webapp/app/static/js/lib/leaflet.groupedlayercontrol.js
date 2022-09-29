@@ -47,7 +47,7 @@ L.Control.GroupedLayers = L.Control.extend({
 
   _initLayout: function (map) {
     var className = 'leaflet-control-layers',
-      container = this._container = L.DomUtil.create('div', className);
+    container = this._container = L.DomUtil.create('div', className);
 
     // Makes this work on IE10 Touch devices by stopping it from firing a mouseout event when the touch is released
     container.setAttribute('aria-haspopup', true);
@@ -150,6 +150,9 @@ L.Control.GroupedLayers = L.Control.extend({
       baseLayersPresent = baseLayersPresent || !obj.overlay;
     }
 
+    let dctrl=this._getDownloadControlDOM();
+    this._overlaysList.appendChild(dctrl);
+
     this._separator.style.display = overlaysPresent && baseLayersPresent ? '' : 'none';
   },
 
@@ -213,6 +216,11 @@ L.Control.GroupedLayers = L.Control.extend({
         groupContainer.appendChild(groupLabel);
         container.appendChild(groupContainer);
 
+        if(obj.group.name=="INDICADOR"){
+          let pctrl=this._getPriorityControlDOM();
+          container.appendChild(pctrl);
+        }
+
         this._domGroups[obj.group.id] = groupContainer;
       }
 
@@ -220,10 +228,45 @@ L.Control.GroupedLayers = L.Control.extend({
     } else {
       container = this._baseLayersList;
     }
-
     container.appendChild(label);
 
     return label;
+  },
+
+   /**
+   * Make the priority control DOM fragment
+   */
+  _getPriorityControlDOM: function() {
+    let fctrl = document.createElement('div');
+    fctrl.innerHTML='<div class="leaflet-control-layers-group" id="prioritization-control-layers-group">'
+    + '<label class="leaflet-control-layers-group-name">'
+    + '<span class="leaflet-control-layers-group-name">Prioriza&#231;&#227;o </span>'
+    + '<input type="number" id="prioritization-input" min="1" style="width:45px" '
+    + 'title="Alterar o número de unidades espaciais consideradas na priorização de exibição do mapa." ' 
+    + 'value=' + ams.App._priorViewParams.limit + ' />'
+    + '<button class="btn btn-primary-p" id="prioritization-button" style="margin-left: 10px;"> Ok </button>'
+    + '</label></div>';
+    return fctrl.firstChild;
+  },
+
+   /**
+   * Make the download control DOM fragment
+   */
+  _getDownloadControlDOM: function() {
+    let fctrl = document.createElement('div');
+    fctrl.innerHTML='<div class="leaflet-control-layers-group" id="shapezip-control-layers-group">'
+    + '<label class="leaflet-control-layers-group-label">'
+    + '<span class="leaflet-control-layers-group-name">DOWNLOAD</span></label>'
+    + '<label class="leaflet-control-layers-group-name">'
+    + '<span style="white-space: pre-wrap;">'
+    + 'Baixar arquivo da unidade\nespacial selecionada.</span></label>'
+    + '<label class="leaflet-control-layers-group-name btn-download">'
+    + '<button class="btn btn-primary-p btn-success" id="csv-download-button"> CSV </button>'
+    + '&nbsp;&nbsp;'
+    + '<button class="btn btn-primary-p btn-success" id="shapezip-download-button"> Shapefile </button>'
+    + '</label>'
+    + '</div>';
+    return fctrl.firstChild;
   },
 
   _onInputClick: function (e) {
