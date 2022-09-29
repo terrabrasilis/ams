@@ -2,7 +2,7 @@
 <html>
 <head>
 	
-	<title>AMS - Amazon Situation Room</title>
+	<title>TerraBrasilis - Sala de Situação</title>
 
 	<meta charset="utf-8" />
 	<meta http-equiv='cache-control' content='no-cache'>
@@ -13,11 +13,11 @@
 	<meta http-equiv="Content-Language" content="pt-br, en">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<meta name="description" content="AMS is a Web Mapping GIS application, which integrates with REST and OGC web services that provide spatial data on deforestation of Brazil Amazon rainforest obtained by satellites.">
-	<meta name="keywords" content="INPE, DETER, AMS, desmatamento, deforestation">
+	<meta name="description" content="TerraBrasilis Situation Room is a Web Mapping GIS application, which integrates with REST and OGC web services that provide spatial data on deforestation of Brazil Amazon rainforest obtained by satellites.">
+	<meta name="keywords" content="INPE, DETER, Alertas, desmatamento, deforestation, Focos, Queimadas, Active Fire">
+	<meta name="author" content="André Carvalho - andre.carvalho@inpe.br">
 	<meta name="author" content="Rodrigo Avancini - avancinirodrigo@gmail.com">
 	<meta name="author" content="Mauro Assis - assismauro@hotmail.com">
-	<meta name="author" content="André Carvalho - andre.carvalho@inpe.br">
 	<meta name="author" content="Miguel Gastelumendi - miguel.gastelumendi@gmail.com">
 	
 	<link rel="shortcut icon" href="{{ url_for('static', filename='imgs/favicon.ico') }}" type="image/x-icon">
@@ -42,78 +42,6 @@
 	
 </head>
 <body>
-	<div class="wrapper">
-		<!-- Sidebar Holder -->
-		<nav id="sidebar" style="display: none;">
-
-			<a href="http://terrabrasilis.dpi.inpe.br">
-				<div class="sidebar-header">
-					<div class="desctxt">
-						<h5><span class="amarelo">Terra</span><span class="verde">Brasilis</span> </h5>
-						<div id="header-menu">AMS</div>
-					</div>
-				</div>
-			</a>
-
-			<ul class="list-unstyled components">
-
-				<li class="active">
-					<!-- manter active no primeiro -->
-					<a href="#graficos" data-toggle="collapse" aria-expanded="true">
-						<span id="nv-chart-day">Primeira sessão de itens de menu</span></a>
-				</li>
-				<li>
-					<a href="/app/dashboard/alerts/legal/amazon/daily/" id="toDailyChart-amz" title="Abrir o painel de avisos diários para a Amazônia Legal." aria-expanded="false">
-						<i class="material-icons">insert_chart</i><span id="nv-daily-amz">Item 1</span></a>
-				</li>
-				<li>
-					<a class="enable_menu" href="/app/dashboard/alerts/biomes/cerrado/daily/" id="toDailyChart-cer" title="Abrir o painel de avisos diários para o Bioma Cerrado." aria-expanded="false">
-						<i class="material-icons">insert_chart</i><span id="nv-daily-cer">Item 2</span></a>
-				</li>
-			</ul>
-
-			<ul class="list-unstyled components">
-
-				<li class="active">
-					<!-- manter active no primeiro -->
-					<a href="#graficos" data-toggle="collapse" aria-expanded="true">
-						<span id="nv-chart-agg">Segunda sessão de itens de menu</span></a>
-				</li>
-				
-				<li>
-					<a href="/app/dashboard/alerts/legal/amazon/aggregated/" id="toAggregatedChart-amz" title="Abrir o painel agregado mensal de avisos para a Amazônia Legal." aria-expanded="false">
-						<i class="material-icons">insert_chart</i><span id="nv-aggreg-amz">Item 1</span></a>
-				</li>
-				<li>
-					<a href="/app/dashboard/alerts/biomes/cerrado/aggregated/" id="toAggregatedChart-cer" title="Abrir o painel agregado mensal de avisos para o Bioma Cerrado." aria-expanded="false">
-						<i class="material-icons">insert_chart</i><span id="nv-aggreg-cer">Item 2</span></a>
-				</li>
-			</ul>
-
-			<ul class="list-unstyled components">
-
-				<li class="active">
-					<!-- manter active no primeiro -->
-					<a href="#ferramentas" data-toggle="collapse" aria-expanded="true">
-						<span id="tools">Terceira sessão de itens de menu</span></a>
-				</li>
-				<li>
-					<a href="#modal-container-download" id="downloadBtn" data-toggle="modal" title="Baixar a tabela de avisos de desmatamento.">
-						<i class="material-icons">cloud_download</i><span id="txt4">Item 1</span></a>
-				</li>
-
-				<li>
-					<a href="#print_information" id="prepare_print" title="Imprimir esta página utilizando o recurso do navegador."
-					 data-toggle="modal">
-
-						<i class="material-icons">print</i><span id="txt4s">Item 2</span></a>
-				</li>
-
-			</ul>
-			
-		</nav>
-	</div>
-
 	<!-- Menu superior -->
 	<div id="content">
 		<nav class="navbar navbar-expand-lg materialnav navbar-header">
@@ -121,7 +49,7 @@
 			<a class="navbar-brand" href="http://terrabrasilis.dpi.inpe.br/"><span class="amarelo">Terra</span><span class="verde">Brasilis</span></a>
 			<div class="collapse navbar-collapse justify-content-between">
 				<div class="navbar-nav">
-					<a class="nav-item nav-link" href="#" id="header-panel">| AMS - Sala de Situação da Amazônia</a>
+					<a class="nav-item nav-link" href="#" id="header-panel">| Sala de Situação</a>
 				</div>
 				<ul id="navigationBarUL" class="navbar-nav navbar-right analises">
 					<li class="nav-item dropdown">
@@ -130,12 +58,12 @@
 						</a>
 						<div aria-labelledby="navbarDropdownMenuLink" class="dropdown-menu submenu"> 
 							<a class="dropdown-item" target="_blank" href="http://terrabrasilis.dpi.inpe.br/download/ams/ams-novas-funcionalidades.pdf" title="Abrir documento com informações detalhadas sobre as novas ferramentas."><i class="material-icons iconmenu">new_releases</i><span id="info-doc">Texto informativo</span></a>
-							<a class="dropdown-item" href="#modal-container-video" data-toggle="modal"  title="Abrir vídeo demonstrativo do AMS"><i class="material-icons iconmenu">movie</i><span id="info-media">Vídeo demonstrativo</span></a>
+							<a class="dropdown-item" href="#modal-container-video" data-toggle="modal"  title="Abrir vídeo demonstrativo da Sala de Situação"><i class="material-icons iconmenu">movie</i><span id="info-media">Vídeo demonstrativo</span></a>
 						</div>
 					</li>
 
 					<li class="nav-item">
-						<a class="nav-link" href="#modal-container-menu-about" id="goto_menu-about" data-toggle="modal" title="Abrir sobre o AMS">
+						<a class="nav-link" href="#modal-container-menu-about" id="goto_menu-about" data-toggle="modal" title="Abrir sobre a Sala de Situação">
 							<span id="about-menu">Sobre</span>
   						</a>
 					</li>
@@ -232,7 +160,7 @@
 							</div>
 							<div class="modal-body">
 								<div class="alert alert-secondary">
-								A "Sala de Situação da Amazônia" (AMS) é uma ferramenta web que visa subsidiar ações de inteligência territorial através
+								A "Sala de Situação" é uma ferramenta web que visa subsidiar ações de inteligência territorial através
 								da visualização sinótica de indicadores de áreas críticas do desmatamento, integrando os alertas do sistema Detecção
 								do Desmatamento em Tempo Quase Real (DETER). Está ferramenta está integrada no portal TerraBrasilis.
 								</div>
@@ -244,11 +172,11 @@
 								Por exemplo, ações restritivas ou de incentivo a municípios críticos.
 								</div>
 								<div class="alert alert-secondary">
-								A ferramenta Terrabrasilis/AMS é derivada de uma colaboração científica entre pesquisadores do INPE e Universidade Federal de Minas Gerais (UFMG)
+								A ferramenta Terrabrasilis Sala de Situação é derivada de uma colaboração científica entre pesquisadores do INPE e Universidade Federal de Minas Gerais (UFMG)
 								com a Secretaria de Meio Ambiente e Sustentabilidade do Pará (SEMAS-PA) e acreditamos que seja útil para todos os demais atores.
 								</div>
 								<div class="alert alert-dark">
-									Os dados do AMS s&atilde;o p&uacute;blicos, abertos e gratuitos, sob a seguinte licen&ccedil;a:
+									Os dados da Sala de Situação s&atilde;o p&uacute;blicos, abertos e gratuitos, sob a seguinte licen&ccedil;a:
 									<a rel="license" target="_blank" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.pt_BR">
 										<img alt="Licen&ccedil;a Creative Commons" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" />
 									</a>
@@ -257,9 +185,9 @@
 									<br/>
 									A fonte deve ser referenciada no seguinte formato:<br/>
 									<samp>
-										Amazon Situation Room/TerraBrasilis.
+										Situation Room/TerraBrasilis.
 										<b>Instituto Nacional de Pesquisas Espaciais</b>, 2021.
-										Dispon&iacute;vel em &lt;http://terrabrasilis.dpi.inpe.br/ams/&gt;.
+										Dispon&iacute;vel em &lt;http://terrabrasilis.dpi.inpe.br/situation/room/&gt;.
 										Acesso em: 19 de jul. de 2021.
 									</samp>
 								</div>
