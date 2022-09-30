@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from dataclasses import replace
-from tkinter.messagebox import NO
 from unicodedata import category
 from plotly.graph_objs import layout
 from psycopg2 import connect
