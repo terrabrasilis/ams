@@ -556,12 +556,12 @@ ams.App = {
 		};
 		if(mm.suLayerMax == mm.suLayerMin) {
 			$('.toast').toast('show');
-			$('.toast-body').html("Não existem dados para o periodo selecionado.");
+			$('.toast-body').html("Não existem dados para o período selecionado.");
 			this._resetMap();
 			return false;
 		}else if(ams.App._diffOn && mm.suLayerMin>=0) {
 			$('.toast').toast('show');
-			$('.toast-body').html("Não há redução de valores para o periodo selecionado.");
+			$('.toast-body').html("Não há redução de valores para o período selecionado.");
 			this._resetMap();
 			return false;
 		}
