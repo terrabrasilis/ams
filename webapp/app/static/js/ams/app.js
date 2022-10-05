@@ -224,6 +224,9 @@ ams.App = {
 				if(e.acronym==ams.Config.biome){
 					return;
 				}
+				// reset some data to avoid getting wrong data
+				ams.App._suViewParams=null;
+				ams.App._priorViewParams=null;
 				// write on local storage
 				localStorage.setItem('previous.biome.setting.selection', e.acronym);
 				ams.Utils.biomeChanges(e.acronym);
@@ -247,6 +250,11 @@ ams.App = {
 					ams.App._priorViewParams.classname = e.acronym;
 					ams.App._suViewParams.updatePropertyName(ams.App._propertyName);
 					ams.App._priorViewParams.updatePropertyName(ams.App._propertyName);
+					// try update the last date for new classname
+					let lastDateDynamic = ams.App._wfs.getLastDate(ldLayerName);
+					lastDateDynamic = lastDateDynamic?lastDateDynamic:ams.App._spatialUnits.getDefault().last_date;
+					ams.App._dateControl.setPeriod(lastDateDynamic, ams.App._currentTemporalAggregate);
+					ams.PeriodHandler.changeDate(ams.App._dateControl.startdate);
 				}
 				// reference layer was changes, so propertyName changes too
 				if(ams.App._referenceLayerName!=layerToAdd){
