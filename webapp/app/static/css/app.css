@@ -93,3 +93,6 @@ input.threshold{
   top: 30px;
   right: calc(40%);
 }
+.alert{
+  font-size: 1rem;
+}

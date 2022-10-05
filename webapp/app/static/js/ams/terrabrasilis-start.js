@@ -28,7 +28,7 @@ $(document).ready(function () {
     $.getJSON('static/PROJECT_VERSION', function(data) {
         let version = data.version;
         versionDiv.append('<a href="https://github.com/terrabrasilis/ams/releases/tag/'+version+'" target="_blank" title="Veja este release no GitHub">'+version+'</a>');
-        if(window.location.pathname.includes("homologation")){
+        if(ams.Utils.isHomologationEnvironment()){
           $('#header-panel').append("<span style='font-size:18px;font-weight:600;color:#ffff00;'> (Versão de homologação)</span>");
         }
     });
@@ -42,7 +42,8 @@ $(document).ready(function () {
    * of the authentication chain.
    */
   if(typeof Authentication != 'undefined')
-    Authentication.init(Lang.language, ams.Utils.restartApp);
+    if(ams.Utils.isHomologationEnvironment()) Authentication.init(Lang.language, ams.Utils.restartApp, "http://terrabrasilis.dpi.inpe.br/oauth-api/");
+    else Authentication.init(Lang.language, ams.Utils.restartApp);
 
   /** Launch the app when loading the page for the first time */
   ams.Utils.startApp();

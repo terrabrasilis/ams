@@ -522,7 +522,7 @@ font-weight: unset;
 .alert-labeled-row{display: table-row;padding: 0px;}
 .alert-labelled-cell{padding: 5px;display: table-cell;vertical-align: middle;}
 .alert-label{ vertical-align: middle; background: #4eae8c; width: auto; padding: 5px 10px; height: 100%; font-size:1.1em; color: #fff;}
-.alerttitle{ color: #00796b; font-size: 18px; margin-left: 15px;}
+.alerttitle{ color: #00796b; font-size: 1.1rem; margin-left: 15px;}
 
 
 /* ---------------------------------------------------
