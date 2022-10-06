@@ -231,7 +231,8 @@ ams.Map = {
 										+ ";enddate:" + viewParams.enddate
 										+ ";prevdate:" + viewParams.prevdate
 										+ ";orderby:" + propertyName
-										+ ";limit:" + viewParams.limit;
+										+ ";limit:" + viewParams.limit
+										+ ((extension=='csv')?(""):(";jointype:LEFT"));
 
 			if (extension == 'csv') {
 				$.ajax({
