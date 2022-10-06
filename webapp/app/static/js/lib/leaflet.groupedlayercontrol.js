@@ -202,7 +202,8 @@ L.Control.GroupedLayers = L.Control.extend({
         groupContainer = document.createElement('div');
         groupContainer.className = 'leaflet-control-layers-group';
         groupContainer.id = 'leaflet-control-layers-group-' + obj.group.id;
-        if( obj.group.name=="UNIDADE TEMPORAL")
+        groupContainer.title = this._getTitleByGroup(obj.group.name);
+        if(obj.group.name=="UNIDADE TEMPORAL")
           groupContainer.style="display:none;";
 
         var groupLabel = document.createElement('label');
@@ -216,7 +217,7 @@ L.Control.GroupedLayers = L.Control.extend({
         groupContainer.appendChild(groupLabel);
         container.appendChild(groupContainer);
 
-        if(obj.group.name=="INDICADOR"){
+        if(obj.group.name=="UNIDADE ESPACIAL"){
           let pctrl=this._getPriorityControlDOM();
           container.appendChild(pctrl);
         }
@@ -233,16 +234,47 @@ L.Control.GroupedLayers = L.Control.extend({
     return label;
   },
 
+  _getTitleByGroup: function(grpName) {
+    let title='';
+    switch (grpName) {
+      case "BIOMA":
+        title='Alterna entre as bases de dados dos biomas disponíveis.';
+        break;
+      case "INDICADOR":
+        title='Aplica um filtro com base nas classes dos dados do DETER e focos do Programa Queimadas, sendo:\n';
+        for (let index = 0; index < ams.App._appClassGroups.groups.length; index++) {
+          const group = ams.App._appClassGroups.groups[index];
+          title+=' - '+group.name+': '+group.classes.join(', ')+';\n';
+        }
+        break;
+      case "UNIDADE ESPACIAL":
+        title='Alterna entre as unidades espaciais disponíveis.';
+        break;
+      case "CLASSIFICAÇÃO DO MAPA":
+        title='A opção "No Período" destaca as unidades espaciais por intervalos de valor, com destaque para os maiores valores absolutos.\n\n';
+        title+='A opção "Diferença Período Anterior" destaca as unidades espaciais por intervalos de valor, considerando a diferença de valor entre o período selecionado e o período anterior.\n';
+        title+=' - Destaque em tons de vermelho indicam aumento do valor no período corrente em relação ao período anterior.\n';
+        title+=' - Destaque em tons de azul indicam diminuição do valor no período corrente em relação ao período anterior.\n';
+        break;
+      default:
+        break;
+    }
+    return title;
+  },
+
    /**
    * Make the priority control DOM fragment
    */
   _getPriorityControlDOM: function() {
     let fctrl = document.createElement('div');
+    let title = 'title="Altera o número de unidades espaciais consideradas na priorização de exibição do mapa.\n';
+    title = title + 'Irá destacar, com borda vermelha, as unidades espaciais com maior valor agregado para o período." ';
+    
     fctrl.innerHTML='<div class="leaflet-control-layers-group" id="prioritization-control-layers-group">'
-    + '<label class="leaflet-control-layers-group-name">'
+    + '<label class="leaflet-control-layers-group-name" '+title+'>'
     + '<span class="leaflet-control-layers-group-name">Prioriza&#231;&#227;o </span>'
     + '<input type="number" id="prioritization-input" min="1" style="width:45px" '
-    + 'title="Alterar o número de unidades espaciais consideradas na priorização de exibição do mapa." ' 
+    + title
     + 'value=' + ams.App._priorViewParams.limit + ' />'
     + '<button class="btn btn-primary-p" id="prioritization-button" style="margin-left: 10px;"> Ok </button>'
     + '</label></div>';
@@ -254,12 +286,15 @@ L.Control.GroupedLayers = L.Control.extend({
    */
   _getDownloadControlDOM: function() {
     let fctrl = document.createElement('div');
+    let title = 'title="O arquivo inclui dados filtrados por: BIOMA, INDICADOR e PERÍODO.\n';
+    title = title + ' - CSV: inclui apenas as unidades espaciais priorizadas;\n';
+    title = title + ' - Shapefile: inclui todas as unidades espaciais;" ';
     fctrl.innerHTML='<div class="leaflet-control-layers-group" id="shapezip-control-layers-group">'
     + '<label class="leaflet-control-layers-group-label">'
     + '<span class="leaflet-control-layers-group-name">DOWNLOAD</span></label>'
-    + '<label class="leaflet-control-layers-group-name">'
+    + '<label class="leaflet-control-layers-group-name" '+title+'>'
     + '<span style="white-space: pre-wrap;">'
-    + 'Baixar arquivo da unidade\nespacial selecionada.</span></label>'
+    + 'Baixar arquivo da unidade<br>espacial selecionada.</span></label>'
     + '<label class="leaflet-control-layers-group-name btn-download">'
     + '<button class="btn btn-primary-p btn-success" id="csv-download-button"> CSV </button>'
     + '&nbsp;&nbsp;'
