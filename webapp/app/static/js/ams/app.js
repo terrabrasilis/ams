@@ -227,6 +227,7 @@ ams.App = {
 				// reset some data to avoid getting wrong data
 				ams.App._suViewParams=null;
 				ams.App._priorViewParams=null;
+				ams.App._diffOn = ( (ams.Config.defaultFilters.diffClassify=="onPeriod")?(false):(true) );
 				// write on local storage
 				localStorage.setItem('previous.biome.setting.selection', e.acronym);
 				ams.Utils.biomeChanges(e.acronym);
