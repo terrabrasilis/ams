@@ -220,6 +220,7 @@ ams.Map = {
 				+ "."
 				+ extension;
 
+			// operation type (optype) is used to get all spatial units on shapefile download. See SQL Views inside GeoServer.
 			let wfsUrl = this.url 
 						+ "&typeName=" + layerName
 						+ "&outputFormat=" + outputFormat
@@ -232,7 +233,7 @@ ams.Map = {
 										+ ";prevdate:" + viewParams.prevdate
 										+ ";orderby:" + propertyName
 										+ ";limit:" + viewParams.limit
-										+ ((extension=='csv')?(""):(";jointype:LEFT"));
+										+ ((extension=='csv')?(""):(";optype:DOWNLOAD"));
 
 			if (extension == 'csv') {
 				$.ajax({
