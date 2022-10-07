@@ -391,16 +391,15 @@ COMMIT;
 -- -------------------------------------------------------------------------
 -- This session is used for create functions used into GeoServer layers
 -- -------------------------------------------------------------------------
+-- FUNCTION: public.get_25km(character varying, date, date)
 
--- FUNCTION: public.get_25km_area(character varying, date, date)
+-- DROP FUNCTION IF EXISTS public.get_25km(character varying, date, date);
 
--- DROP FUNCTION IF EXISTS public.get_25km_area(character varying, date, date);
-
-CREATE OR REPLACE FUNCTION public.get_25km_area(
+CREATE OR REPLACE FUNCTION public.get_25km(
 	clsname character varying,
 	startdate date,
 	enddate date)
-    RETURNS TABLE(suid bigint, name text, geometry geometry, classname character varying, date date, percentage double precision, area double precision, counts bigint) 
+    RETURNS TABLE(suid integer, name character varying, geometry geometry, classname character varying, date date, percentage double precision, area double precision, counts bigint) 
     LANGUAGE 'plpgsql'
     COST 100
     VOLATILE PARALLEL UNSAFE
@@ -409,38 +408,34 @@ CREATE OR REPLACE FUNCTION public.get_25km_area(
 AS $BODY$
 begin
 	return query
-SELECT 
-	su.suid AS suid, su.id AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
-FROM 
-	public."csAmz_25km" su
-INNER JOIN (
-	SELECT 
-		rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total, SUM(rii.counts) AS counts
-	FROM 
-		public."csAmz_25km_land_use" rii
-	WHERE
-		rii.classname = clsname
-		AND
-		rii.date > enddate
-		AND
-		rii.date <= startdate
-	GROUP BY 
-	 	rii.suid, rii.classname
+SELECT su.suid AS suid, su.id AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
+FROM public."csAmz_25km" su
+LEFT JOIN (
+	SELECT rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total, SUM(rii.counts) AS counts
+	FROM public."csAmz_25km_land_use" rii
+	WHERE (rii.date <= (SELECT a.date FROM deter.deter_publish_date a) OR 'AF'=clsname)
+		AND rii.classname = clsname
+		AND	rii.date > enddate
+		AND	rii.date <= startdate
+	GROUP BY rii.suid, rii.classname
 ) AS ri
-ON 
-	su.suid = ri.suid;
+ON su.suid = ri.suid;
 end;
 $BODY$;
 
--- FUNCTION: public.get_150km_area(character varying, date, date)
+ALTER FUNCTION public.get_25km(character varying, date, date)
+    OWNER TO postgres;
 
--- DROP FUNCTION IF EXISTS public.get_150km_area(character varying, date, date);
 
-CREATE OR REPLACE FUNCTION public.get_150km_area(
+-- FUNCTION: public.get_25km_auth(character varying, date, date)
+
+-- DROP FUNCTION IF EXISTS public.get_25km_auth(character varying, date, date);
+
+CREATE OR REPLACE FUNCTION public.get_25km_auth(
 	clsname character varying,
 	startdate date,
 	enddate date)
-    RETURNS TABLE(suid bigint, name text, geometry geometry, classname character varying, date date, percentage double precision, area double precision, counts bigint) 
+    RETURNS TABLE(suid integer, name character varying, geometry geometry, classname character varying, date date, percentage double precision, area double precision, counts bigint) 
     LANGUAGE 'plpgsql'
     COST 100
     VOLATILE PARALLEL UNSAFE
@@ -449,38 +444,33 @@ CREATE OR REPLACE FUNCTION public.get_150km_area(
 AS $BODY$
 begin
 	return query
-SELECT 
-	su.suid AS suid, su.id AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
-FROM 
-	public."csAmz_150km" su
-INNER JOIN (
-	SELECT 
-		rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total, SUM(rii.counts) AS counts
-	FROM 
-		public."csAmz_150km_land_use" rii
-	WHERE
-		rii.classname = clsname
-		AND
-		rii.date > enddate
-		AND
-		rii.date <= startdate
-	GROUP BY 
-	 	rii.suid, rii.classname
+SELECT su.suid AS suid, su.id AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
+FROM public."csAmz_25km" su
+LEFT JOIN (
+	SELECT rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total, SUM(rii.counts) AS counts
+	FROM public."csAmz_25km_land_use" rii
+	WHERE rii.classname = clsname
+		AND	rii.date > enddate
+		AND	rii.date <= startdate
+	GROUP BY rii.suid, rii.classname
 ) AS ri
-ON 
-	su.suid = ri.suid;
+ON su.suid = ri.suid;
 end;
 $BODY$;
 
--- FUNCTION: public.get_300km_area(character varying, date, date)
+ALTER FUNCTION public.get_25km_auth(character varying, date, date)
+    OWNER TO postgres;
 
--- DROP FUNCTION IF EXISTS public.get_300km_area(character varying, date, date);
 
-CREATE OR REPLACE FUNCTION public.get_300km_area(
+-- FUNCTION: public.get_150km(character varying, date, date)
+
+-- DROP FUNCTION IF EXISTS public.get_150km(character varying, date, date);
+
+CREATE OR REPLACE FUNCTION public.get_150km(
 	clsname character varying,
 	startdate date,
 	enddate date)
-    RETURNS TABLE(suid bigint, name text, geometry geometry, classname character varying, date date, percentage double precision, area double precision, counts bigint) 
+    RETURNS TABLE(suid integer, name character varying, geometry geometry, classname character varying, date date, percentage double precision, area double precision, counts bigint) 
     LANGUAGE 'plpgsql'
     COST 100
     VOLATILE PARALLEL UNSAFE
@@ -489,38 +479,33 @@ CREATE OR REPLACE FUNCTION public.get_300km_area(
 AS $BODY$
 begin
 	return query
-SELECT 
-	su.suid AS suid, su.id AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
-FROM 
-	public."csAmz_300km" su
-INNER JOIN (
-	SELECT 
-		rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total, SUM(rii.counts) AS counts
-	FROM 
-		public."csAmz_300km_land_use" rii
-	WHERE
-		rii.classname = clsname
-		AND
-		rii.date > enddate
-		AND
-		rii.date <= startdate
-	GROUP BY 
-	 	rii.suid, rii.classname
+SELECT su.suid AS suid, su.id AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
+FROM public."csAmz_150km" su
+LEFT JOIN (
+	SELECT rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total, SUM(rii.counts) AS counts
+	FROM public."csAmz_150km_land_use" rii
+	WHERE (rii.date <= (SELECT a.date FROM deter.deter_publish_date a) OR 'AF'=clsname)
+		AND rii.classname = clsname
+		AND	rii.date > enddate
+		AND	rii.date <= startdate
+	GROUP BY rii.suid, rii.classname
 ) AS ri
-ON 
-	su.suid = ri.suid;
+ON su.suid = ri.suid;
 end;
 $BODY$;
 
--- FUNCTION: public.get_municipalities_area(character varying, date, date)
+ALTER FUNCTION public.get_150km(character varying, date, date)
+    OWNER TO postgres;
 
--- DROP FUNCTION IF EXISTS public.get_municipalities_area(character varying, date, date);
+-- FUNCTION: public.get_150km_auth(character varying, date, date)
 
-CREATE OR REPLACE FUNCTION public.get_municipalities_area(
+-- DROP FUNCTION IF EXISTS public.get_150km_auth(character varying, date, date);
+
+CREATE OR REPLACE FUNCTION public.get_150km_auth(
 	clsname character varying,
 	startdate date,
 	enddate date)
-    RETURNS TABLE(suid bigint, state text, name text, geometry geometry, classname character varying, date date, percentage double precision, area double precision, counts bigint) 
+    RETURNS TABLE(suid integer, name character varying, geometry geometry, classname character varying, date date, percentage double precision, area double precision, counts bigint) 
     LANGUAGE 'plpgsql'
     COST 100
     VOLATILE PARALLEL UNSAFE
@@ -529,38 +514,33 @@ CREATE OR REPLACE FUNCTION public.get_municipalities_area(
 AS $BODY$
 begin
 	return query
-SELECT
-	su.suid AS suid, su.uf AS state, su.nome AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
-FROM 
-	public."amz_municipalities" su
-INNER JOIN (
-	SELECT 
-		rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total , SUM(rii.counts) AS counts
-	FROM 
-		public."amz_municipalities_land_use" rii
-	WHERE
-		rii.classname = clsname
-		AND
-		rii.date > enddate
-		AND
-		rii.date <= startdate		
-	GROUP BY 
-	 	rii.suid, rii.classname
+SELECT su.suid AS suid, su.id AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
+FROM public."csAmz_150km" su
+LEFT JOIN (
+	SELECT rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total, SUM(rii.counts) AS counts
+	FROM public."csAmz_150km_land_use" rii
+	WHERE rii.classname = clsname
+		AND	rii.date > enddate
+		AND	rii.date <= startdate
+	GROUP BY rii.suid, rii.classname
 ) AS ri
-ON 
-	su.suid = ri.suid;
+ON su.suid = ri.suid;
 end;
 $BODY$;
 
--- FUNCTION: public.get_states_area(character varying, date, date)
+ALTER FUNCTION public.get_150km_auth(character varying, date, date)
+    OWNER TO postgres;
 
--- DROP FUNCTION IF EXISTS public.get_states_area(character varying, date, date);
 
-CREATE OR REPLACE FUNCTION public.get_states_area(
+-- FUNCTION: public.get_municipalities(character varying, date, date)
+
+-- DROP FUNCTION IF EXISTS public.get_municipalities(character varying, date, date);
+
+CREATE OR REPLACE FUNCTION public.get_municipalities(
 	clsname character varying,
 	startdate date,
 	enddate date)
-    RETURNS TABLE(suid bigint, name text, geometry geometry, classname character varying, date date, percentage double precision, area double precision, counts bigint) 
+    RETURNS TABLE(suid integer, name character varying, geometry geometry, classname character varying, date date, percentage double precision, area double precision, counts bigint) 
     LANGUAGE 'plpgsql'
     COST 100
     VOLATILE PARALLEL UNSAFE
@@ -569,25 +549,126 @@ CREATE OR REPLACE FUNCTION public.get_states_area(
 AS $BODY$
 begin
 	return query
-SELECT 
-	su.suid AS suid, su.nome AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
-FROM 
-	public."amz_states" su
+SELECT su.suid AS suid, su.nome AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
+FROM public."amz_municipalities" su
 INNER JOIN (
-	SELECT 
-		rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total, SUM(rii.counts) AS counts
-	FROM 
-		public."amz_states_land_use" rii
-	WHERE
-		rii.classname = clsname
-		AND
-		rii.date > enddate
-		AND
-		rii.date <= startdate		
-	GROUP BY 
-	 	rii.suid, rii.classname
+	SELECT rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total , SUM(rii.counts) AS counts
+	FROM public."amz_municipalities_land_use" rii
+	WHERE (rii.date <= (SELECT a.date FROM deter.deter_publish_date a) OR 'AF'=clsname)
+		AND rii.classname = clsname
+		AND	rii.date > enddate
+		AND	rii.date <= startdate		
+	GROUP BY rii.suid, rii.classname
 ) AS ri
-ON 
-	su.suid = ri.suid;
+ON su.suid = ri.suid;
 end;
 $BODY$;
+
+ALTER FUNCTION public.get_municipalities(character varying, date, date)
+    OWNER TO postgres;
+
+
+-- FUNCTION: public.get_municipalities_auth(character varying, date, date)
+
+-- DROP FUNCTION IF EXISTS public.get_municipalities_auth(character varying, date, date);
+
+CREATE OR REPLACE FUNCTION public.get_municipalities_auth(
+	clsname character varying,
+	startdate date,
+	enddate date)
+    RETURNS TABLE(suid integer, name character varying, geometry geometry, classname character varying, date date, percentage double precision, area double precision, counts bigint) 
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+begin
+	return query
+SELECT su.suid AS suid, su.nome AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
+FROM public."amz_municipalities" su
+INNER JOIN (
+	SELECT rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total , SUM(rii.counts) AS counts
+	FROM public."amz_municipalities_land_use" rii
+	WHERE rii.classname = clsname
+		AND	rii.date > enddate
+		AND	rii.date <= startdate		
+	GROUP BY rii.suid, rii.classname
+) AS ri
+ON su.suid = ri.suid;
+end;
+$BODY$;
+
+ALTER FUNCTION public.get_municipalities_auth(character varying, date, date)
+    OWNER TO postgres;
+
+
+-- FUNCTION: public.get_states(character varying, date, date)
+
+-- DROP FUNCTION IF EXISTS public.get_states(character varying, date, date);
+
+CREATE OR REPLACE FUNCTION public.get_states(
+	clsname character varying,
+	startdate date,
+	enddate date)
+    RETURNS TABLE(suid integer, name character varying, geometry geometry, classname character varying, date date, percentage double precision, area double precision, counts bigint) 
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+begin
+	return query
+SELECT su.suid AS suid, su.nome AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
+FROM public."amz_states" su
+INNER JOIN (
+	SELECT rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total, SUM(rii.counts) AS counts
+	FROM public."amz_states_land_use" rii
+	WHERE (rii.date <= (SELECT a.date FROM deter.deter_publish_date a) OR 'AF'=clsname)
+		AND rii.classname = clsname
+		AND	rii.date > enddate
+		AND	rii.date <= startdate		
+	GROUP BY rii.suid, rii.classname
+) AS ri
+ON su.suid = ri.suid;
+end;
+$BODY$;
+
+ALTER FUNCTION public.get_states(character varying, date, date)
+    OWNER TO postgres;
+
+
+-- FUNCTION: public.get_states_auth(character varying, date, date)
+
+-- DROP FUNCTION IF EXISTS public.get_states_auth(character varying, date, date);
+
+CREATE OR REPLACE FUNCTION public.get_states_auth(
+	clsname character varying,
+	startdate date,
+	enddate date)
+    RETURNS TABLE(suid integer, name character varying, geometry geometry, classname character varying, date date, percentage double precision, area double precision, counts bigint) 
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+begin
+	return query
+SELECT su.suid AS suid, su.nome AS name, su.geometry AS geometry, ri.classname AS classname, ri.date AS date, COALESCE(ri.perc, 0) AS percentage, COALESCE(ri.total, 0) AS area, COALESCE(ri.counts, 0) AS counts
+FROM public."amz_states" su
+INNER JOIN (
+	SELECT rii.suid, rii.classname, MAX(rii.date) AS date, SUM(rii.percentage) AS perc, SUM(rii.area) AS total, SUM(rii.counts) AS counts
+	FROM public."amz_states_land_use" rii
+	WHERE rii.classname = clsname
+		AND	rii.date > enddate
+		AND	rii.date <= startdate		
+	GROUP BY rii.suid, rii.classname
+) AS ri
+ON su.suid = ri.suid;
+end;
+$BODY$;
+
+ALTER FUNCTION public.get_states_auth(character varying, date, date)
+    OWNER TO postgres;
