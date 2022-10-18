@@ -132,7 +132,15 @@ class ClassifyByLandUse:
         land_structure = gpd.GeoDataFrame.from_postgis(f''' 
         SELECT a.id,a.land_use_id,a.num_pixels,d.name as classname,b.date,b.geom as geometry
         FROM deter_land_structure a 
-        INNER JOIN {self._deter_table} b 
+        INNER JOIN 
+        (SELECT tb.gid, tb.date, tb.geom, tb.classname
+        FROM (
+            SELECT gid, date, classname, geom
+            FROM deter.deter_auth
+            UNION
+            SELECT gid||'_h' as gid, date, classname, geom
+            FROM deter.deter_history
+        ) as tb) b 
         ON a.gid = b.gid
         INNER JOIN deter_class c 
         ON b.classname = c.name
