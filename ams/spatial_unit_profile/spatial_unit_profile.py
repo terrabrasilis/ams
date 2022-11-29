@@ -42,10 +42,16 @@ class SpatialUnitProfile():
             default_column="counts"
 
         self._spatial_unit = params['spatialUnit']
+        if(self._spatial_unit==self._appBiome):
+            self._spatial_unit = 'cer_states' if (self._appBiome=='Cerrado') else 'amz_states'
+
         self._start_date = params['startDate']
         self._temporal_unit = params['tempUnit']
         self._start_period_date = self.get_prev_date_temporal_unit(temporal_unit=self._temporal_unit)
         self._name=params['suName'].replace('|',' ')
+        if(self._name==self._appBiome):
+            self._name = '*'
+
         # app unit measure
         unit=params['unit']
         if(unit is None):
@@ -144,13 +150,13 @@ order by 1 desc limit {2}'''}
         date '{self._start_date}', interval '{interval_val} {period_unit}') as t(ld)
         ORDER BY 1 DESC LIMIT {self._query_limit}"""
 
+        where_group="" if(self._name=='*') else f"""b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}' AND"""
         group_by_periods=f"""
         WITH calendar AS ({calendar}),
         bar_chart AS (
             SELECT (calendar.fd || '/' || calendar.ld) as period, ROUND(sum(a.{default_column})::numeric,{round_factor}) as resultsum
             FROM calendar, "{self._spatial_unit}_land_use" a inner join "{self._spatial_unit}" b on a.suid = b.suid
-            WHERE b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}'
-            AND classname = '{self._classname}'
+            WHERE {where_group} classname = '{self._classname}'
             AND date >= calendar.fd
             AND date <= calendar.ld
             GROUP BY period
@@ -167,8 +173,9 @@ order by 1 desc limit {2}'''}
         delta = datetime.strptime(self._start_date, '%Y-%m-%d') - datetime.strptime(self._start_period_date, '%Y-%m-%d')
         for key, value in self._temporal_unit_sql.items():
             if delta.days <= key:
-                where = f"b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}' " \
-                        f"and classname = '{self._classname}' " \
+                where_if="" if(self._name=='*') else f"""b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}' AND"""
+                where = f"{where_if} " \
+                        f"classname = '{self._classname}' " \
                         f"and date <= '{self._start_date}'"
                 return f"select * from ({value.format(self._spatial_unit,where)}) a order by 1"
 
@@ -199,14 +206,15 @@ order by 1 desc limit {2}'''}
         if(self._classname=='AF'):
             default_column="counts"
             default_col_name="Unidades"
+        where_if="" if(self._name=='*') else f"""b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}' AND"""
 
         df = self.resultset_as_dataframe(
             f"select a.name,coalesce(resultsum, 0) as resultsum from land_use a "
             f"left join "
             f"(select a.land_use_id, sum(a.{default_column}) as resultsum from \"{self._spatial_unit}_land_use\" a "
             f"inner join \"{self._spatial_unit}\" b on a.suid = b.suid "
-            f"where b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name.replace('|',' ')}' "
-            f"and {self.period_where_clause()} "
+            f"where {where_if} "
+            f" {self.period_where_clause()} "
             f"and classname = '{self._classname}' "
             f"group by a.land_use_id) b on a.id = b.land_use_id ORDER BY a.priority ASC "
         )
@@ -219,8 +227,8 @@ order by 1 desc limit {2}'''}
         """
         indicador=self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
         last_date=self.format_date(self._start_date)
-        spatial_unit=self._name
-        spatial_description=self._tableinfo[self._spatial_unit]['description']
+        spatial_unit='para todo o bioma' if(self._name=='*') else f"""com recorte na unidade espacial <b>{self._name}</b>"""
+        spatial_description=self._appBiome if(self._name=='*') else self._tableinfo[self._spatial_unit]['description']
         temporal_unit=self._temporal_units[self._temporal_unit]
 
         datasource="do DETER"
@@ -228,7 +236,7 @@ order by 1 desc limit {2}'''}
             datasource="de Queimadas"
 
         title=f"""Usando dados de <b>{indicador}</b> {datasource} até <b>{last_date}</b>,
-        com recorte na unidade espacial <b>{spatial_unit}</b> ({spatial_description})
+        {spatial_unit} ({spatial_description})
         e unidade temporal <b>{temporal_unit}</b>.
         """
 
