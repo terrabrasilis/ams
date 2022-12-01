@@ -76,6 +76,7 @@ I use VSCode for development environment. The steps are:
    - create or edit launch.json and add configuration entry as below to provide an easy way to debug frontend application;
    - prepare the backend services to use behind the application, database and Geoserver as needed (see the dockerize backend for easy startup of this software tier);
    - run the new entry to debug the application;
+   - Minify* JS and CSS codes to improve page loading;
 
 configuration example to help with the debugging process.
 ```json
@@ -104,3 +105,5 @@ configuration example to help with the debugging process.
     ]
 }
 ```
+
+*Through the Minify plugin in VSCode.
