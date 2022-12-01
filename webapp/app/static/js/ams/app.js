@@ -322,7 +322,22 @@ ams.App = {
 		$("#prioritization-button").click(function() {
 			updatePriorization();	
 			return false;
-		});		
+		});
+		
+		let profileBiomeClick=function() {
+			let conf={};
+            conf["className"]=ams.App._suViewParams.classname;
+            conf["spatialUnit"]=ams.Config.biome;
+            conf["startDate"]=ams.App._dateControl.startdate;
+            conf["tempUnit"]=ams.App._currentTemporalAggregate;
+            conf["suName"]=ams.Config.biome;
+            ams.App.displayGraph(conf);
+
+			return false;
+		};
+
+		$("#profile-"+ams.BiomeConfig["Amazônia"].defaultWorkspace+"-button").click(profileBiomeClick);
+		$("#profile-"+ams.BiomeConfig["Cerrado"].defaultWorkspace+"-button").click(profileBiomeClick);
 
 		$(function() {
 			$("#prioritization-input").dblclick(false);
@@ -459,7 +474,7 @@ ams.App = {
 		for (let ll in ams.App._addedLayers) {
 			let lname=( (ll.includes('deter'))?("DETER"):( (ll.includes('fire'))?("Focos"):(false) ) );
 			if(ams.App._map.hasLayer(ams.App._addedLayers[ll])){
-				if(lname!=false) ol[lname]=ams.App._addedLayers[ll];
+				if(lname!==false) ol[lname]=ams.App._addedLayers[ll];
 			}
 		}
 		if(ams.App._biomeLayer) {

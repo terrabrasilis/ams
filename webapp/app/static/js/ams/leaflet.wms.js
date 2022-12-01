@@ -131,27 +131,13 @@ ams.LeafletWms = {
             return conf;
         },
 
-        '_getBiomeViewConfig': function () {
-            let conf={};
-            conf["className"]=ams.App._suViewParams.classname;
-            conf["spatialUnit"]=ams.Config.biome;
-            conf["startDate"]=ams.App._dateControl.startdate;
-            conf["tempUnit"]=ams.App._currentTemporalAggregate;
-            conf["suName"]=ams.Config.biome;
-            return conf;
-        },
-
         '_createGraphicButton': function (suName) {
             let viewConfig=this._getViewConfig(suName);
-            let biomeViewConfig=this._getBiomeViewConfig(suName);
             let sButton=
                   '<div style="width:100%;display:flex;justify-content:space-between;">'
                 + '<button class="btn btn-primary-p btn-success" onclick=ams.App.displayGraph('  // see app.js
                 + JSON.stringify(viewConfig)
                 + ')>Perfil</button>'
-                + '<button class="btn btn-primary-p btn-success" onclick=ams.App.displayGraph('  // see app.js
-                + JSON.stringify(biomeViewConfig)
-                + ')>Perfil Bioma</button>'
                 + '</div>';
             return sButton;
         },

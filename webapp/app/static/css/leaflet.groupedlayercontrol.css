@@ -33,3 +33,20 @@
 .leaflet-bottom .leaflet-control-scale {
   margin-bottom: 25px;
 }
+
+.leaflet-biome-control-item{
+  display: flex !important;
+  justify-content: space-between;
+  align-items: center;
+}
+.profile-bt-icon{
+  color: #f9bf6a;
+  font-size: 20px !important;
+  padding-right: 5px;
+}
+.profile-bt{
+  display: flex !important;
+  align-items: flex-start;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+}

@@ -170,6 +170,21 @@ L.Control.GroupedLayers = L.Control.extend({
     return radioFragment.firstChild;
   },
 
+  _createProfileBiomeButton: function(biome) {
+
+    let biomeId=ams.BiomeConfig[biome].defaultWorkspace;
+
+      let bt='<button title="Visualize o perfil para todo o bioma."'
+      +' class="btn btn-primary-p profile-bt"'
+      +' id="profile-'+biomeId+'-button">'
+      +'<i class="material-icons profile-bt-icon">leaderboard</i>Perfil</button>';
+
+      var btFragment = document.createElement('div');
+      btFragment.innerHTML = bt;
+
+      return btFragment;
+  },
+
   _addItem: function (obj) {
     // for initial state of checked control, use the ams.Config.defaultFilters defines...
 
@@ -177,7 +192,8 @@ L.Control.GroupedLayers = L.Control.extend({
       input,
       checked = obj.acronym.includes(obj.defaultFilter),
       container,
-      groupRadioName;
+      groupRadioName,
+      profileBt=null;
 
     groupRadioName = 'leaflet-exclusive-group-layer-' + obj.group.id;
     input = this._createRadioElement(groupRadioName, checked);
@@ -189,8 +205,22 @@ L.Control.GroupedLayers = L.Control.extend({
     var name = document.createElement('span');
     name.innerHTML = ' ' + obj.name;
 
-    label.appendChild(input);
-    label.appendChild(name);
+    if(obj.group.name=="BIOMA"){
+      let divbiome = document.createElement('div');
+      divbiome.appendChild(input);
+      divbiome.appendChild(name);
+      label.appendChild(divbiome);
+      label.className = 'leaflet-biome-control-item';
+
+      // adding prifile biome button
+      if(checked){
+        profileBt = this._createProfileBiomeButton(obj.name);
+        label.appendChild(profileBt);
+      }
+    }else{
+      label.appendChild(input);
+      label.appendChild(name);
+    }
 
     if (obj.overlay) {
       container = this._overlaysList;
