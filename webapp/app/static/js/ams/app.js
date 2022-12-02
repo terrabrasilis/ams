@@ -151,6 +151,10 @@ ams.App = {
 				defaultFilter:ams.Config.defaultFilters.indicator,
 				propertyName:this._propertyName
 			},
+			"USO DA TERRA":{
+				defaultFilter: ''
+
+			},
 			"UNIDADE ESPACIAL": {
 				defaultFilter: ams.Config.defaultFilters.spatialUnit
 			},
@@ -161,6 +165,13 @@ ams.App = {
 		for (let p in ams.BiomeConfig) {
 			if(ams.BiomeConfig.hasOwnProperty(p))
 				controlGroups["BIOMA"][p] = p;
+		}
+
+		for (let p in ams.Config.landUses) {
+			if(ams.Config.landUses.hasOwnProperty(p)&&ams.Config.landUses[p]){
+				controlGroups["USO DA TERRA"]["defaultFilter"]+=((controlGroups["USO DA TERRA"]["defaultFilter"]=='')?(''):(','))+ams.Config.landUses[p].id;
+				controlGroups["USO DA TERRA"][ams.Config.landUses[p].name] = ''+ams.Config.landUses[p].id;
+			}
 		}
 
 		let sulen = this._spatialUnits.length();
@@ -264,6 +275,8 @@ ams.App = {
 					// apply change filters on reference layer
 					ams.App._updateReferenceLayer();
 				}
+			}else if(e.group.name=='USO DA TERRA'){
+				needUpdateSuLayers=false;
 			}else if(e.group.name=='UNIDADE ESPACIAL'){
 				// spatial unit layer was changes
 				if(ams.App._currentSULayerName!=e.acronym){

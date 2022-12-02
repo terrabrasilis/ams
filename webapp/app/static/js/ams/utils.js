@@ -36,6 +36,7 @@ ams.Utils = {
       var sus = JSON.parse(generalConfig.spatial_units_info.replace(/'/g,"\""));
       ams.Config = ams.BiomeConfig[generalConfig.appBiome];
       ams.Config.biome=generalConfig.appBiome;
+      ams.Config.landUses=JSON.parse(generalConfig.land_uses.replace(/'/g,"\""));
       var spatialUnits = new ams.Map.SpatialUnits(sus, ams.Config.defaultFilters.spatialUnit);
       var appClassGroups = new ams.Map.AppClassGroups(JSON.parse(generalConfig.deter_class_groups.replace(/'/g,"\"")));
       var geoserverUrl = generalConfig.geoserver_url;

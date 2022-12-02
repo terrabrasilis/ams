@@ -157,17 +157,17 @@ L.Control.GroupedLayers = L.Control.extend({
   },
 
   // IE7 bugs out if you create a radio dynamically, so you have to do it this hacky way (see http://bit.ly/PqYLBe)
-  _createRadioElement: function (name, checked) {
-    var radioHtml = '<input type="radio" class="leaflet-control-layers-selector" name="' + name + '"';
+  _createInputElement: function (name, type, checked) {
+    var inputHtml = '<input type="'+type+'" class="leaflet-control-layers-selector" name="' + name + '"';
     if (checked) {
-      radioHtml += ' checked="checked"';
+      inputHtml += ' checked="checked"';
     }
-    radioHtml += '/>';
+    inputHtml += '/>';
 
-    var radioFragment = document.createElement('div');
-    radioFragment.innerHTML = radioHtml;
+    var inputFragment = document.createElement('div');
+    inputFragment.innerHTML = inputHtml;
 
-    return radioFragment.firstChild;
+    return inputFragment.firstChild;
   },
 
   _createProfileBiomeButton: function(biome) {
@@ -190,13 +190,14 @@ L.Control.GroupedLayers = L.Control.extend({
 
     var label = document.createElement('label'),
       input,
-      checked = obj.acronym.includes(obj.defaultFilter),
+      checked = (obj.group.name=="USO DA TERRA")?(obj.defaultFilter.includes(obj.acronym)):(obj.acronym.includes(obj.defaultFilter)),
       container,
       groupRadioName,
-      profileBt=null;
+      profileBt=null,
+      type=(obj.group.name=="USO DA TERRA")?('checkbox'):('radio');
 
     groupRadioName = 'leaflet-exclusive-group-layer-' + obj.group.id;
-    input = this._createRadioElement(groupRadioName, checked);
+    input = this._createInputElement(groupRadioName, type, checked);
 
     input.ctrlId = obj.ctrlId;
     input.groupID = obj.group.id;
@@ -212,7 +213,7 @@ L.Control.GroupedLayers = L.Control.extend({
       label.appendChild(divbiome);
       label.className = 'leaflet-biome-control-item';
 
-      // adding prifile biome button
+      // adding profile biome button
       if(checked){
         profileBt = this._createProfileBiomeButton(obj.name);
         label.appendChild(profileBt);
