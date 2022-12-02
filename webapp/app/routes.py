@@ -25,12 +25,14 @@ def get_biome_config(endpoint):
         ctrl = AppConfigController(dburl)
         sui=ctrl.read_spatial_units()
         cg=ctrl.read_class_groups()
+        ldu=ctrl.read_land_uses()
         return json.dumps(
             {
                 'geoserver_url': Config.GEOSERVER_URL,
                 'appBiome': appBiome,
                 'spatial_units_info':sui,
-                'deter_class_groups':cg
+                'deter_class_groups':cg,
+                'land_uses':ldu
             }
         )
     except Exception as e:
