@@ -1,5 +1,6 @@
 from flask import render_template, request
 import json
+import os;
 
 from ams.spatial_unit_profile import SpatialUnitProfile
 from .controllers import AppConfigController
@@ -9,7 +10,8 @@ from . import bp as app
 @app.route('/', methods=['GET'])
 def get_config():
     try:
-        return render_template('index.html')
+        isDevelopmentEnv=os.getenv("FLASK_ENV", "production")
+        return render_template('index_dev.html') if(isDevelopmentEnv=="development") else render_template('index.html')
     except Exception as e:
         # HTTP 500: Internal error 
         return "Template configurations are missing: {0}".format(str(e)), 412

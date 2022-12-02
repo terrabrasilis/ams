@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+<head>
+	
+	<title>TerraBrasilis - Sala de Situação</title>
+
+	<meta charset="utf-8" />
+	<meta http-equiv='cache-control' content='no-cache'>
+	<meta http-equiv='expires' content='0'>
+	<meta http-equiv='pragma' content='no-cache'>
+	<meta http-equiv="Access-Control-Allow-Origin" content="*">
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta http-equiv="Content-Language" content="pt-br, en">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="TerraBrasilis Situation Room is a Web Mapping GIS application, which integrates with REST and OGC web services that provide spatial data on deforestation of Brazil Amazon rainforest obtained by satellites.">
+	<meta name="keywords" content="INPE, DETER, Alertas, desmatamento, deforestation, Focos, Queimadas, Active Fire">
+	<meta name="author" content="André Carvalho - andre.carvalho@inpe.br">
+	<meta name="author" content="Rodrigo Avancini - avancinirodrigo@gmail.com">
+	<meta name="author" content="Mauro Assis - assismauro@hotmail.com">
+	<meta name="author" content="Miguel Gastelumendi - miguel.gastelumendi@gmail.com">
+	
+	<link rel="shortcut icon" href="{{ url_for('static', filename='imgs/favicon.ico') }}" type="image/x-icon">
+	<link rel="icon" href="{{ url_for('static', filename='imgs/favicon.ico') }}" type="image/x-icon">
+
+	<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/lib/leaflet/1.7.1/leaflet.css')}}"/>
+	<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/leaflet.wmslegend.css')}}"/>
+	<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/leaflet.groupedlayercontrol.css')}}"/>
+	<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/Leaflet.Coordinates-0.1.5.css')}}"/>
+	<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/leaflet.controls.css')}}"/>
+	<!-- Scrollbar Custom CSS -->
+	<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/lib/jquery/jquery-ui.css')}}"/>
+	<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/lib/jquery/plugin/jquery.mCustomScrollbar.min.css')}}"/>
+	<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/lib/bootstrap/bootstrap.min.css')}}"/>
+	<!-- TerraBrasilis/AMS styles -->
+	<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/terrabrasilis.css')}}"/>
+	<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/app.css')}}"/>
+	
+</head>
+<body>
+	<!-- Menu superior -->
+	<div id="content">
+		<nav class="navbar navbar-expand-lg materialnav navbar-header">
+
+			<a class="navbar-brand" href="http://terrabrasilis.dpi.inpe.br/"><span class="amarelo">Terra</span><span class="verde">Brasilis</span></a>
+			<div class="collapse navbar-collapse justify-content-between">
+				<div class="navbar-nav">
+					<a class="nav-item nav-link" href="#" id="header-panel">| Sala de Situação</a>
+				</div>
+				<ul id="navigationBarUL" class="navbar-nav navbar-right analises">
+					<li class="nav-item dropdown">
+						<a aria-expanded="true" aria-haspopup="true" class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="navbarDropdownMenuLink" role="button"> 
+							<i class="material-icons iconmobile">assignment </i><span id="analysis-sup">Novas ferramentas</span>
+						</a>
+						<div aria-labelledby="navbarDropdownMenuLink" class="dropdown-menu submenu"> 
+							<a class="dropdown-item" target="_blank" href="http://terrabrasilis.dpi.inpe.br/download/ams/ams-novas-funcionalidades.pdf" title="Abrir documento com informações detalhadas sobre as novas ferramentas."><i class="material-icons iconmenu">new_releases</i><span id="info-doc">Texto informativo</span></a>
+							<a class="dropdown-item" href="#modal-container-video" data-toggle="modal"  title="Abrir vídeo demonstrativo da Sala de Situação"><i class="material-icons iconmenu">movie</i><span id="info-media">Vídeo demonstrativo</span></a>
+						</div>
+					</li>
+
+					<li class="nav-item">
+						<a class="nav-link" href="#modal-container-menu-about" id="goto_menu-about" data-toggle="modal" title="Abrir sobre a Sala de Situação">
+							<span id="about-menu">Sobre</span>
+  						</a>
+					</li>
+
+					<li class="nav-item">
+						<a class="nav-link" href="#modal-container-menu-config" id="goto_menu-config" data-toggle="modal" title="Abrir as configurações do aplicativo">
+							<span id="config-menu">Configurações</span>
+  						</a>
+					</li>
+
+					<li class="nav-item active">
+						<a class="nav-link" target="_blank" href="http://www.inpe.br/ouvidoria/" title="Envie sugestões, perguntas, elogios ou reclamações.">
+							<span id="contactus-menu">Fale Conosco</span>
+						</a>
+					</li>
+				</ul>
+			</div>
+		</nav>
+	</div><!-- fim da barra superior -->
+
+	<!-- Toast tool -->
+	<div class="toast" data-delay="4000">
+		<div class="toast-header">
+			<span class="material-icons">warning_amber</span>
+			<strong class="mr-auto">Atenção</strong>
+			<button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+				<span aria-hidden="true">&times;</span>
+			</button>
+		</div>
+		<div class="toast-body">
+		  Não existem dados.
+		</div>
+	</div><!-- end toast tool -->
+
+	<!-- area util central onde deverao ser colocados os componentes da aplicação -->
+	<div class="container-fluid" id="panel_container">
+
+		<div class="loading-data" id="loading_data_info">
+			<img src="{{ url_for('static', filename='imgs/loading_map.gif') }}" alt="loading gif when waiting data" />
+		</div>
+
+		<div id="map"></div>
+
+	</div><!-- Fim da area util central -->
+
+	<!-- start footer and modals -->
+	<div class="container">
+		<div class="row box">
+			<div class="col-md-12">
+
+				<!-- modal window for Menu Config -->
+				<div class="modal fade" id="modal-container-menu-config" role="dialog" aria-labelledby="menu-config" aria-hidden="true">
+					<div class="modal-dialog">
+						<div class="modal-content modalinf">
+							<div class="modal-header fechar">
+								<h5 class="modal-title boxtitletable"><span class="alerttitle">Configurações do aplicativo</span></h5>
+								<button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="material-icons">clear</i></button>
+							</div>
+							<div class="modal-body">
+								<input type="checkbox" checked="checked" name="changeunit" id="changeunit"><span class="input-label"> Permitir alteração automática da unidade de medida de área.<b>*</b></span>
+								<div class="alert alert-light configtext" role="alert">
+								Quando este comportamento é útil?<br />
+									<small>
+										Quando os valores de área em uma unidade espacial, para o período selecionado, forem muito pequenos.
+										Valores pequenos, menores que 2 km², dificultam a apresentação dos dados e a análise, e muitas vezes tendem a zero quando são arredondados.
+										Geralmente os valores de área do DETER são calculados e apresentados em kilômetros quadrados (km²).
+									</small>
+								</div>
+
+								<input type="number" value="2" name="threshold" id="threshold" class="threshold"><span class="input-label"> Valor do limiar (km²).</span>
+								<div class="alert alert-light configtext" role="alert">
+									O que é e para que é usado?<br />
+									<small>
+										Valor mínimo de apresentação da unidade de medida de área em km².
+										A unidade de medida de área será alterada para hectare (ha) quando o valor encontrado for menor ou igual ao limiar.
+									</small>
+								</div>
+
+								<div class="alert alert-warning configtext" role="alert">
+									<b>*</b><small>Ao desabilitar o modo automático a unidade será forçada para km² na próxima interação, independente do valor encontrado.</small>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- modal window for Menu About -->
+				<div class="modal fade" id="modal-container-menu-about" role="dialog" aria-labelledby="menu-about" aria-hidden="true">
+					<div class="modal-dialog">
+						<div class="modal-content modalinf">
+							<div class="modal-header fechar">
+								<h5 class="modal-title boxtitletable"><span id="txt2a">Sobre</span></h5>
+								<button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="material-icons">clear</i></button>
+							</div>
+							<div class="modal-body">
+								<div class="alert alert-secondary">
+								A "Sala de Situação" é uma ferramenta web que visa subsidiar ações de inteligência territorial através
+								da visualização sinótica de indicadores de áreas críticas do desmatamento, integrando os alertas do sistema Detecção
+								do Desmatamento em Tempo Quase Real (DETER). Está ferramenta está integrada no portal TerraBrasilis.
+								</div>
+								<div class="alert alert-secondary">
+								O objetivo principal da ferramenta é apoiar o planejamento de ações de fiscalização pelas Secretarias de Meio Ambiente
+								dos Estados e IBAMA, além de auxiliar outros setores da sociedade a entender,
+								de forma sintética, os múltiplos processos em curso na Amazônia (desmatamento corte-raso, degradação, corte-seletivo, mineração)
+								e propor ações efetivas para controle desses processos na região.
+								Por exemplo, ações restritivas ou de incentivo a municípios críticos.
+								</div>
+								<div class="alert alert-secondary">
+								A ferramenta Terrabrasilis Sala de Situação é derivada de uma colaboração científica entre pesquisadores do INPE e Universidade Federal de Minas Gerais (UFMG)
+								com a Secretaria de Meio Ambiente e Sustentabilidade do Pará (SEMAS-PA) e acreditamos que seja útil para todos os demais atores.
+								</div>
+								<div class="alert alert-dark">
+									Os dados da Sala de Situação s&atilde;o p&uacute;blicos, abertos e gratuitos, sob a seguinte licen&ccedil;a:
+									<a rel="license" target="_blank" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.pt_BR">
+										<img alt="Licen&ccedil;a Creative Commons" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" />
+									</a>
+									<a rel="license" target="_blank" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.pt_BR">Creative
+										Commons Atribui&ccedil;&atilde;o-N&atilde;oComercial-CompartilhaIgual 4.0 Internacional</a>.
+									<br/>
+									A fonte deve ser referenciada no seguinte formato:<br/>
+									<samp>
+										Situation Room/TerraBrasilis.
+										<b>Instituto Nacional de Pesquisas Espaciais</b>, 2021.
+										Dispon&iacute;vel em &lt;http://terrabrasilis.dpi.inpe.br/ams/&gt;.
+										Acesso em: 19 de jul. de 2021.
+									</samp>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+
+				<!-- modal window with an introductory video of this panel -->
+				<div class="modal fade" id="modal-container-video">
+					<div class="modal-dialog">
+						<div class="modal-content modalinf">
+							<div class="modal-header fechar">
+								<h5 class="modal-title boxtitletable"> <span id="txt1c">Vídeo demonstrativo de uso do painel</span></h5>
+								<button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="material-icons">clear</i></button>
+							</div>
+							<!-- / modal-header -->
+							<div class="modal-body ">
+								<div class="alert alert-success" role="alert">
+									<span id="txt1d">Veja o vídeo demonstrativo da interação com as novas ferramentas do painel.</span>
+								</div>
+								<div class="embed-video">
+									<video style="width: 100%" controls>
+										<source src="http://terrabrasilis.dpi.inpe.br/download/ams/ams-demonstration-tools.mp4" type="video/mp4">
+										<!--track src="movies/subtitles/dashboard-in-action_pt_br.vtt" kind="subtitles" srclang="pt-BR" label="Portuguese" default>
+										<track src="movies/subtitles/dashboard-in-action_en.vtt" kind="subtitles" srclang="en" label="English">
+										<track src="movies/subtitles/dashboard-in-action_es.vtt" kind="subtitles" srclang="es" label="Spanish"-->
+										Seu navegador não suporta a tag de vídeo.
+									</video>
+								</div>
+							</div>
+
+							<!-- / modal-body -->
+							<div class="modal-footer">
+								<div class="checkbox pull-right">
+									<label>
+										<button type="button" class="btn btngreen" data-dismiss="modal">
+											<span id="txt1e">Fechar</span>
+										</button>
+									</label>
+								</div>
+								<!--/ checkbox -->
+							</div>
+							<!--/ modal-footer -->
+						</div>
+						<!-- / modal-content -->
+					</div>
+					<!--/ modal-dialog -->
+				</div>
+				<!-- / modal -->
+
+				<!--chart panel -->
+                <div class="modal fade" id="modal-container-general-info"  role="dialog" aria-labelledby="general-info" aria-hidden="true">
+					<div class="modal-dialog modal-lg" role="document">
+						<div class="modal-content modalinf">
+							<div class="modal-header fechar">
+								<h5 class="modal-title boxtitletable"><span id="txt3a"></span></h5>
+								<button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="material-icons">clear</i></button>
+							</div>
+							<div class="modal-body">
+								<div class="container-fluid">
+									<div class="row no-gutters" style="margin-bottom: 10px;">
+									 	<div class="col-md-12">
+											<span id="AreaPerYearTableClass" class="chart"></span>
+										</div>
+									</div>
+									<div class="row no-gutters">
+										<div class="col-md-12" style="vertical-align: center;">
+											<span id="AreaPerLandUse" class="chart" ></span>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+                </div>
+				<!-- End chart panel modal -->
+
+				<!--Footer-->
+				<footer class="footer">
+					<p><a href="http://terrabrasilis.dpi.inpe.br"> TerraBrasilis</a>&nbsp;<a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Licença Creative Commons" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/80x15.png" /></a></p>
+					<div class="version_style" id="version"></div>
+				</footer>
+				<!--/.Footer-->
+			</div>
+		</div>
+	</div>
+	
+	<!-- end footer and modals -->
+	<script type="text/javascript" src="{{url_for('static', filename='js/lib/leaflet/1.7.1/leaflet.min.js')}}"></script>
+	<script type="text/javascript" src="{{url_for('static', filename='js/lib/leaflet.wms.js')}}"></script>
+	<script type="text/javascript" src="{{url_for('static', filename='js/lib/jquery/jquery-3.6.0.min.js')}}"></script>
+	<script type="text/javascript" src="{{url_for('static', filename='js/lib/jquery/plugin/jquery-ui-1.12.1.min.js')}}"></script>
+	<script type="text/javascript" src="{{url_for('static', filename='js/lib/leaflet.wmslegend.js')}}"></script>
+	<script type="text/javascript" src="{{url_for('static', filename='js/lib/leaflet.groupedlayercontrol.js')}}"></script>
+	<script type="text/javascript" src="{{url_for('static', filename='js/lib/d3/d3.v6.min.js')}}"></script>
+	<script type="text/javascript" src="{{url_for('static', filename='js/ams/config.js')}}"></script>
+	<script type="text/javascript" src="{{url_for('static', filename='js/ams/utils.js')}}"></script>
+	<script type="text/javascript" src="{{url_for('static', filename='js/ams/auth.js')}}"></script>
+	<script type="text/javascript" src="{{url_for('static', filename='js/ams/map.js')}}"></script>
+	<script type="text/javascript" src="{{url_for('static', filename='js/ams/sld.styles.js')}}"></script>
+	<script type="text/javascript" src="{{url_for('static', filename='js/ams/date.js')}}"></script>
+	<script type="text/javascript" src="{{url_for('static', filename='js/ams/datepicker.js')}}"></script>
+	<script type="text/javascript" src="{{url_for('static', filename='js/ams/leaflet.wms.js')}}"></script>
+	<script type="text/javascript" src="{{url_for('static', filename='js/ams/app.js')}}"></script>
+	<script type="text/javascript" src="{{url_for('static', filename='js/ams/leaflet.period.control.js')}}"></script>
+	<script type="text/javascript" src="{{url_for('static', filename='js/ams/period.handler.js')}}"></script>
+	<script type="text/javascript" src="{{url_for('static', filename='js/lib/Leaflet.Coordinates-0.1.5.min.js')}}"></script>
+	<script type="text/javascript" src="{{url_for('static', filename='js/lib/Leaflet.controls.position.js')}}"></script>
+
+	<!-- Start the JS dependencies of Terrabrasilis template -->
+	<script type="text/javascript" src="{{url_for('static', filename='js/lib/bootstrap/bootstrap.bundle.min.js')}}"></script>
+	<script type="text/javascript" src="{{url_for('static', filename='js/lib/popper/1.14.3/popper.min.js')}}"></script>
+	<!-- jQuery Custom Scroller -->
+	<script type="text/javascript" src="{{url_for('static', filename='js/lib/jquery/plugin/jquery.mCustomScrollbar.concat.min.js')}}"></script>
+	<script type="text/javascript" src="http://terrabrasilis.dpi.inpe.br/oauth-api/getoauthjs"></script>
+	<!-- Global site tag (gtag.js) - Google Analytics -->
+	<script type="text/javascript" async src="https://www.googletagmanager.com/gtag/js?id=G-VF4139FH8F"></script>
+	<script type="text/javascript" src="{{url_for('static', filename='js/ams/terrabrasilis-start.js')}}"></script>
+	<!-- Plotly render library https://cdn.plot.ly/plotly-latest.js -->
+	<script src="{{ url_for('static', filename='js/lib/plotly/plotly-latest.min.js') }}"></script>
+</body>
+</html>
