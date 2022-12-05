@@ -281,6 +281,9 @@ L.Control.GroupedLayers = L.Control.extend({
       case "UNIDADE ESPACIAL":
         title='Alterna entre as unidades espaciais disponíveis.';
         break;
+      case "USO DA TERRA":
+        title='Aplica um filtro com base nas categorias de "USO DA TERRA" selecionadas.';
+        break;
       case "CLASSIFICAÇÃO DO MAPA":
         title='A opção "No Período" destaca as unidades espaciais por intervalos de valor, com destaque para os maiores valores absolutos.\n\n';
         title+='A opção "Diferença Período Anterior" destaca as unidades espaciais por intervalos de valor, considerando a diferença de valor entre o período selecionado e o período anterior.\n';
