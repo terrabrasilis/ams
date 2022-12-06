@@ -54,6 +54,7 @@ def get_profile(endpoint):
         start_date = params['startDate']
         temporal_unit = params['tempUnit']
         name=params['suName']
+        land_use=params['landUse']
         # app unit measure
         unit=params['unit']
         appBiome=params['targetbiome']
@@ -71,4 +72,5 @@ def get_profile(endpoint):
             'AreaPerYearTableClass': spatial_unit_profile.fig_area_by_period()}
         )
     except Exception as e:
+        print(e)
         return "Something is wrong on the server. Please, send this error to our support service: terrabrasilis@inpe.br", 500

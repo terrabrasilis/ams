@@ -24,6 +24,7 @@ class SpatialUnitProfile():
         params['startDate'], The reference start date.
         params['tempUnit'], The selected temporal unit code. Ex.: {'7d','15d','1m','3m','1y'}
         params['suName'], The selected Spatial Unit name. Ex.: 'C13L08'
+        params['landUse'], The list of selected land use ids
         params['unit'], The current unit measure in the App. Ex.: {'km²','ha','focos'}
         params['targetbiome'], The selected biome. Ex.: {'Cerrado', 'Amazônia'}
     """
@@ -51,6 +52,8 @@ class SpatialUnitProfile():
         self._name=params['suName'].replace('|',' ')
         if(self._name==self._appBiome):
             self._name = '*'
+
+        self.land_use=params['landUse']
 
         # app unit measure
         unit=params['unit']
@@ -159,6 +162,7 @@ order by 1 desc limit {2}'''}
             WHERE {where_group} classname = '{self._classname}'
             AND date >= calendar.fd
             AND date <= calendar.ld
+            AND a.land_use_id = ANY (array[{self.land_use}])
             GROUP BY period
             ORDER BY period DESC LIMIT {self._query_limit}
         )
@@ -216,7 +220,10 @@ order by 1 desc limit {2}'''}
             f"where {where_if} "
             f" {self.period_where_clause()} "
             f"and classname = '{self._classname}' "
-            f"group by a.land_use_id) b on a.id = b.land_use_id ORDER BY a.priority ASC "
+            f"and a.land_use_id = ANY (array[{self.land_use}]) "
+            f"group by a.land_use_id) b on a.id = b.land_use_id "
+            f"WHERE a.id = ANY (array[{self.land_use}]) "
+            f"ORDER BY a.priority ASC "
         )
         df.columns = ['Categoria Fundiária', default_col_name]
         return df
@@ -236,7 +243,7 @@ order by 1 desc limit {2}'''}
             datasource="de Queimadas"
 
         title=f"""Usando dados de <b>{indicador}</b> {datasource} até <b>{last_date}</b>,
-        {spatial_unit} ({spatial_description})
+        {spatial_unit} ({spatial_description}), para as categorias fundiárias selecionadas
         e unidade temporal <b>{temporal_unit}</b>.
         """
 
