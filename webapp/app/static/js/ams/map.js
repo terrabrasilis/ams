@@ -22,6 +22,7 @@ ams.Map = {
 					+ ";enddate:" + this.enddate
 					+ ";prevdate:" + this.prevdate
 					+ ";orderby:" + this.propertyName
+					+ ";landuse:" + ams.App._landUseList.join('\\,')
 					+ ";limit:" + this.limit;
 		};
 
@@ -131,6 +132,7 @@ ams.Map = {
 										+ ";prevdate:" + viewParams.prevdate
 										+ ";order:" + (isMin ? 'ASC' : 'DESC')
 										+ ";orderby:" + propertyName
+										+ ";landuse:" + ams.App._landUseList.join('%5C,')
 										+ ";limit:1";
 			let res;
 			$.ajax({
@@ -165,7 +167,8 @@ ams.Map = {
 						+ "&typeName=" + layerName
 						+ "&propertyName=" + propertyName
 						+ "&outputFormat=json"
-						+ "&viewparams=classname:"+classname;
+						+ "&viewparams=classname:"+classname
+						+ ";landuse:" + ams.App._landUseList.join('%5C,');
 			let res;
 			$.ajax({
 				dataType: "json",
@@ -232,6 +235,7 @@ ams.Map = {
 										+ ";enddate:" + viewParams.enddate
 										+ ";prevdate:" + viewParams.prevdate
 										+ ";orderby:" + propertyName
+										+ ";landuse:" + ams.App._landUseList.join('%5C,')
 										+ ";limit:" + viewParams.limit
 										+ ((extension=='csv')?(""):(";optype:DOWNLOAD"));
 

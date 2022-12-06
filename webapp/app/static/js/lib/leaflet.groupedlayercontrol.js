@@ -76,6 +76,7 @@ L.Control.GroupedLayers = L.Control.extend({
     this._baseLayersList = L.DomUtil.create('div', className + '-base', form);
     this._separator = L.DomUtil.create('div', className + '-separator', form);
     this._overlaysList = L.DomUtil.create('div', className + '-overlays', form);
+    this._landUseItens = L.DomUtil.create('div', 'landuse-itens');
 
     container.appendChild(form);
 
@@ -137,6 +138,7 @@ L.Control.GroupedLayers = L.Control.extend({
 
     this._baseLayersList.innerHTML = '';
     this._overlaysList.innerHTML = '';
+    this._landUseItens.innerHTML = '';
     this._domGroups.length = 0;
 
     var baseLayersPresent = false,
@@ -174,15 +176,29 @@ L.Control.GroupedLayers = L.Control.extend({
 
     let biomeId=ams.BiomeConfig[biome].defaultWorkspace;
 
-      let bt='<button title="Visualize o perfil para todo o bioma."'
-      +' class="btn btn-primary-p profile-bt"'
-      +' id="profile-'+biomeId+'-button">'
-      +'<i class="material-icons profile-bt-icon">leaderboard</i>Perfil</button>';
+    let bt='<button title="Visualize o perfil para todo o bioma."'
+    +' class="btn btn-primary-p profile-bt"'
+    +' id="profile-'+biomeId+'-button">'
+    +'<i class="material-icons profile-bt-icon">leaderboard</i>Perfil</button>';
 
-      var btFragment = document.createElement('div');
-      btFragment.innerHTML = bt;
+    var btFragment = document.createElement('div');
+    btFragment.innerHTML = bt;
 
-      return btFragment;
+    return btFragment;
+  },
+
+  _createLandUseButton: function() {
+
+    let bt='<button title=\'Aplica filtro com as categorias fundiárias selecionadas.\''
+    +' class="btn btn-primary-p landuse-bt"'
+    +' id="landuse-categories-button">'
+    +'<i class="material-icons profile-bt-icon">filter_alt</i>Aplicar</button>';
+
+    var btFragment = document.createElement('div');
+    btFragment.className = "landuse";
+    btFragment.innerHTML = bt;
+
+    return btFragment;
   },
 
   _addItem: function (obj) {
@@ -190,11 +206,11 @@ L.Control.GroupedLayers = L.Control.extend({
 
     var label = document.createElement('label'),
       input,
-      checked = (obj.group.name=="USO DA TERRA")?(obj.defaultFilter.includes(obj.acronym)):(obj.acronym.includes(obj.defaultFilter)),
+      checked = (obj.group.name=="CATEGORIA FUNDIÁRIA")?(obj.defaultFilter.includes(obj.acronym)):(obj.acronym.includes(obj.defaultFilter)),
       container,
       groupRadioName,
       profileBt=null,
-      type=(obj.group.name=="USO DA TERRA")?('checkbox'):('radio');
+      type=(obj.group.name=="CATEGORIA FUNDIÁRIA")?('checkbox'):('radio');
 
     groupRadioName = 'leaflet-exclusive-group-layer-' + obj.group.id;
     input = this._createInputElement(groupRadioName, type, checked);
@@ -236,21 +252,45 @@ L.Control.GroupedLayers = L.Control.extend({
         groupContainer.title = this._getTitleByGroup(obj.group.name);
         if(obj.group.name=="UNIDADE TEMPORAL")
           groupContainer.style="display:none;";
+        if(obj.group.name=="CATEGORIA FUNDIÁRIA")
+          groupContainer.className = 'leaflet-control-layers-group lclg-landuse';
 
         var groupLabel = document.createElement('label');
         groupLabel.className = 'leaflet-control-layers-group-label';
+        if(obj.group.name=="CATEGORIA FUNDIÁRIA")
+          groupLabel.style="border-top-right-radius: unset; background-color: #dae9c5;";
 
         var groupName = document.createElement('span');
         groupName.className = 'leaflet-control-layers-group-name';
+        if(obj.group.name=="CATEGORIA FUNDIÁRIA")
+          groupName.style = "color: #3e3e3e;";
         groupName.innerHTML = obj.group.name;
         groupLabel.appendChild(groupName);
-
         groupContainer.appendChild(groupLabel);
+
+        if(obj.group.name=="CATEGORIA FUNDIÁRIA"){
+          var groupIcon = document.createElement('i');
+          groupIcon.className = 'material-icons iconlanduse-updown';
+          groupIcon.innerText = 'arrow_drop_down';
+          groupContainer.appendChild(groupIcon);
+        }
+
         container.appendChild(groupContainer);
 
         if(obj.group.name=="UNIDADE ESPACIAL"){
           let pctrl=this._getPriorityControlDOM();
           container.appendChild(pctrl);
+        }
+
+        if(obj.group.name=="CATEGORIA FUNDIÁRIA"){
+          this._landUseItens.id = 'landuse-itens';
+          this._landUseItens.title = this._getTitleByGroup(obj.group.name+'_info');
+          let landUseBt = this._createLandUseButton();
+          this._landUseItens.appendChild(landUseBt);
+          let innerDiv = document.createElement('div');
+          this._landUseItens.appendChild(innerDiv);
+          container.appendChild(this._landUseItens);
+          this._landUseItens=innerDiv;
         }
 
         this._domGroups[obj.group.id] = groupContainer;
@@ -260,7 +300,8 @@ L.Control.GroupedLayers = L.Control.extend({
     } else {
       container = this._baseLayersList;
     }
-    container.appendChild(label);
+    if(obj.group.name=="CATEGORIA FUNDIÁRIA") this._landUseItens.appendChild(label);
+    else container.appendChild(label);
 
     return label;
   },
@@ -281,8 +322,18 @@ L.Control.GroupedLayers = L.Control.extend({
       case "UNIDADE ESPACIAL":
         title='Alterna entre as unidades espaciais disponíveis.';
         break;
-      case "USO DA TERRA":
-        title='Aplica um filtro com base nas categorias de "USO DA TERRA" selecionadas.';
+      case "CATEGORIA FUNDIÁRIA":
+        title='Permite selecionar categorias fundiárias para restringir a apresentação dos dados.';
+        break;
+      case "CATEGORIA FUNDIÁRIA_info":
+        title='Descrição das categorias fundiárias.\n\n'+
+        'TI: Terras Indígenas;\n'+
+        'UC: Unidades de Conservação;\n'+
+        'Assentamentos: Projetos de assentamentos de todos os tipos;\n'+
+        'APA: Área de Proteção Ambiental;\n'+
+        'CAR: Cadastro Ambiental Rural;\n'+
+        'FPND: Florestas Públicas Não Destinadas;\n'+
+        'Indefinida: Todas as demais áreas';
         break;
       case "CLASSIFICAÇÃO DO MAPA":
         title='A opção "No Período" destaca as unidades espaciais por intervalos de valor, com destaque para os maiores valores absolutos.\n\n';
@@ -340,6 +391,8 @@ L.Control.GroupedLayers = L.Control.extend({
 
   _onInputClick: function (e) {
     let obj = this._getControlById(e.target.ctrlId);
+    obj["inputtype"]=e.target.type;
+    obj["checked"]=e.target.checked;
     // dispache event to update layers using selected filters
     this._map.fire('changectrl', obj);
   },

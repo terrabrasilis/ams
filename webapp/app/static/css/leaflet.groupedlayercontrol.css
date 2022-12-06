@@ -9,6 +9,12 @@
   background-color: #f3f3f3;
   border-radius: 4px;
 }
+.lclg-landuse{
+  display: inline-flex;
+  width: 100%;
+  align-items: flex-start;
+  margin-bottom: unset;
+}
 
 .leaflet-control-layers-scrollbar {
   overflow-y: auto;
@@ -16,6 +22,7 @@
 }
 .leaflet-control-layers label {
   padding-left: 5px;
+  width: 100%;
 }
 .leaflet-control-layers-group-label{
   background-color: #00796b;
@@ -49,4 +56,27 @@
   align-items: flex-start;
   padding-left: 8px !important;
   padding-right: 8px !important;
+}
+.landuse{
+  margin-top: -6px;
+  display: flex;
+  justify-content: flex-end;
+}
+.landuse-bt{
+  display: flex !important;
+  align-items: flex-start;
+  margin-bottom: 7px;
+}
+.landuse-itens{
+  background-color: #f3f3f3;
+  display: none;
+  flex-direction: column-reverse;
+}
+.iconlanduse-updown{
+  background-color: #00796b;
+  border-bottom: solid 1px #03564d;
+  border-top-right-radius: inherit;
+  color: #f9bf6a;
+  height: 19px;
+  cursor: pointer;
 }

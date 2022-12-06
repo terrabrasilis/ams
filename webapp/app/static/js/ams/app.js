@@ -21,11 +21,14 @@ ams.App = {
 	_currentTemporalAggregate: null,
 	_currentClassify: null,
 	_spatialUnits: null,
+	_landUseList: [],
 
 	run: function(geoserverUrl, spatialUnits, appClassGroups) {
 
 		this._spatialUnits=spatialUnits;
 		this._appClassGroups=appClassGroups;
+		// start land use list with default itens to use in viewparams at start App
+		this._landUseList=ams.Config.landUses.map((lu)=>{return(lu.id);});
 
 		this._wfs = new ams.Map.WFS(geoserverUrl);
 		var ldLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.lastDate;
@@ -151,7 +154,7 @@ ams.App = {
 				defaultFilter:ams.Config.defaultFilters.indicator,
 				propertyName:this._propertyName
 			},
-			"USO DA TERRA":{
+			"CATEGORIA FUNDIÁRIA":{
 				defaultFilter: ''
 
 			},
@@ -169,8 +172,8 @@ ams.App = {
 
 		for (let p in ams.Config.landUses) {
 			if(ams.Config.landUses.hasOwnProperty(p)&&ams.Config.landUses[p]){
-				controlGroups["USO DA TERRA"]["defaultFilter"]+=((controlGroups["USO DA TERRA"]["defaultFilter"]=='')?(''):(','))+ams.Config.landUses[p].id;
-				controlGroups["USO DA TERRA"][ams.Config.landUses[p].name] = ''+ams.Config.landUses[p].id;
+				controlGroups["CATEGORIA FUNDIÁRIA"]["defaultFilter"]+=((controlGroups["CATEGORIA FUNDIÁRIA"]["defaultFilter"]=='')?(''):(','))+ams.Config.landUses[p].id;
+				controlGroups["CATEGORIA FUNDIÁRIA"][ams.Config.landUses[p].name] = ''+ams.Config.landUses[p].id;
 			}
 		}
 
@@ -275,7 +278,19 @@ ams.App = {
 					// apply change filters on reference layer
 					ams.App._updateReferenceLayer();
 				}
-			}else if(e.group.name=='USO DA TERRA'){
+			}else if(e.group.name=='CATEGORIA FUNDIÁRIA'){
+				let luid=+e.acronym;
+				if(e.inputtype=='checkbox'){
+					let index=ams.App._landUseList.findIndex((v)=>{
+						return v==luid;
+					});
+
+					if(e.checked && index<0)
+						ams.App._landUseList.push(luid);
+					if(!e.checked && index>=0)
+						ams.App._landUseList.splice(index,1);
+				}
+
 				needUpdateSuLayers=false;
 			}else if(e.group.name=='UNIDADE ESPACIAL'){
 				// spatial unit layer was changes
@@ -344,6 +359,7 @@ ams.App = {
             conf["startDate"]=ams.App._dateControl.startdate;
             conf["tempUnit"]=ams.App._currentTemporalAggregate;
             conf["suName"]=ams.Config.biome;
+			conf["landUse"]=ams.App._landUseList.join(',');
             ams.App.displayGraph(conf);
 
 			return false;
@@ -351,6 +367,27 @@ ams.App = {
 
 		$("#profile-"+ams.BiomeConfig["Amazônia"].defaultWorkspace+"-button").click(profileBiomeClick);
 		$("#profile-"+ams.BiomeConfig["Cerrado"].defaultWorkspace+"-button").click(profileBiomeClick);
+
+		let landUseFilterClick=function() {
+			ams.App._updateSpatialUnitLayer();
+			return false;
+		};
+
+		$("#landuse-categories-button").click(landUseFilterClick);
+
+		let landUseUpDownClick=function(elem) {
+			if(elem.target.innerText=='arrow_drop_down'){
+				elem.target.innerText = 'arrow_drop_up';
+				$("#landuse-itens")[0].style="display:flex;";
+			}else{
+				elem.target.innerText = 'arrow_drop_down';
+				$("#landuse-itens")[0].style="display:none;";
+			}
+			
+			return false;
+		};
+
+		$(".iconlanduse-updown").click(landUseUpDownClick);
 
 		$(function() {
 			$("#prioritization-input").dblclick(false);
