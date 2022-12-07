@@ -711,7 +711,8 @@ ams.App = {
 				if (response.ok) {
 					document.getElementById("txt3a").innerHTML = profileJson['FormTitle'];
 					Plotly.react('AreaPerYearTableClass', JSON.parse(profileJson['AreaPerYearTableClass']), {});
-					Plotly.react('AreaPerLandUse', JSON.parse(profileJson['AreaPerLandUse']), {});
+					if(ams.App._landUseList.length>1)
+						Plotly.react('AreaPerLandUse', JSON.parse(profileJson['AreaPerLandUse']), {});
 					$('#modal-container-general-info').modal();
 					// for adding tooltip on pie chart legend
 					let leg=$('g.legend');
