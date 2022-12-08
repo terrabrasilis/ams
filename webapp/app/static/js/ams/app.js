@@ -232,11 +232,26 @@ ams.App = {
 
 		// control handler of main panel
 		map.on('changectrl', function(e) {
+
+			if(ams.App._landUseList.length==0 &&
+				e.group.name!='CATEGORIA FUNDIÁRIA' && e.group.name!='BIOMA'){
+				$('.toast').toast('show');
+				$('.toast-body').html("O filtro deve incluir ao menos uma categoria fundiária. A solicitação não foi concluída.");
+				ams.App._resetMap();
+				return;// abort if no filters
+			}
+
 			let layerToAdd,layerToDel,needUpdateSuLayers=true;
 			
 			if(e.group.name=='BIOMA'){
 				if(e.acronym==ams.Config.biome){
 					return;
+				}
+				if(ams.App._landUseList.length!=ams.Config.landUses.length){
+					$('.toast').toast('show');
+					$('.toast-body').html("O filtro por categorias fundiárias foi restaurado ao padrão.");
+					// to avoid the toast msg at _updateSpatialUnitLayer
+					ams.App._landUseList=ams.Config.landUses.map((lu)=>{return(lu.id);});
 				}
 				// reset some data to avoid getting wrong data
 				ams.App._suViewParams=null;
@@ -284,11 +299,14 @@ ams.App = {
 					let index=ams.App._landUseList.findIndex((v)=>{
 						return v==luid;
 					});
-
-					if(e.checked && index<0)
+					if(e.checked && index<0){
 						ams.App._landUseList.push(luid);
-					if(!e.checked && index>=0)
+						ams.App._resetMap();
+					}
+					if(!e.checked && index>=0){
 						ams.App._landUseList.splice(index,1);
+						ams.App._resetMap();
+					}
 				}
 
 				needUpdateSuLayers=false;
@@ -360,8 +378,7 @@ ams.App = {
             conf["tempUnit"]=ams.App._currentTemporalAggregate;
             conf["suName"]=ams.Config.biome;
 			conf["landUse"]=ams.App._landUseList.join(',');
-            ams.App.displayGraph(conf);
-
+			ams.App.displayGraph(conf);
 			return false;
 		};
 
@@ -369,7 +386,12 @@ ams.App = {
 		$("#profile-"+ams.BiomeConfig["Cerrado"].defaultWorkspace+"-button").click(profileBiomeClick);
 
 		let landUseFilterClick=function() {
-			ams.App._updateSpatialUnitLayer();
+			if(ams.App._landUseList.length==0){
+				$('.toast').toast('show');
+				$('.toast-body').html("O filtro deve incluir ao menos uma categoria fundiária. A solicitação não foi concluída.");
+				ams.App._resetMap();
+			}else
+				ams.App._updateSpatialUnitLayer();
 			return false;
 		};
 
@@ -629,8 +651,11 @@ ams.App = {
 			suLayerMax:max
 		};
 		if(mm.suLayerMax == mm.suLayerMin) {
+			let landUse="";
+			if(ams.App._landUseList.length==0)
+				landUse="<br /><br /><b>Atenção</b>: Deve selecionar ao menos um item no filtro por categorias fundiárias.";
 			$('.toast').toast('show');
-			$('.toast-body').html("Não existem dados para o período selecionado.");
+			$('.toast-body').html("Não existem dados para o período selecionado."+landUse);
 			this._resetMap();
 			return false;
 		}else if(ams.App._diffOn && mm.suLayerMin>=0) {
@@ -704,46 +729,54 @@ ams.App = {
 			jsConfig["unit"]=ams.Map.PopupControl._unit;
 			jsConfig["targetbiome"]=ams.Config.biome;
 			let jsConfigStr = JSON.stringify(jsConfig);
-			let response = await fetch("callback/spatial_unit_profile?sData=" + jsConfigStr);
-			$("#loading_data_info").css('display','none')
-			if (response.ok) {
-				let profileJson = await response.json();
-				if (response.ok) {
-					document.getElementById("txt3a").innerHTML = profileJson['FormTitle'];
-					Plotly.react('AreaPerYearTableClass', JSON.parse(profileJson['AreaPerYearTableClass']), {});
-					if(ams.App._landUseList.length>1)
-						Plotly.react('AreaPerLandUse', JSON.parse(profileJson['AreaPerLandUse']), {});
-					$('#modal-container-general-info').modal();
-					// for adding tooltip on pie chart legend
-					let leg=$('g.legend');
-					leg.attr('data-html','true');
-					leg.attr('title', 'Descrição das categorias fundiárias.<br />'+
-					'-----------------------------------------------------------------------<br />'+
-					'TI: Terras Indígenas;<br />'+
-					'UC: Unidades de Conservação;<br />'+
-					'Assentamentos: Projetos de assentamentos de todos os tipos;<br />'+
-					'APA: Área de Proteção Ambiental;<br />'+
-					'CAR: Cadastro Ambiental Rural;<br />'+
-					'FPND: Florestas Públicas Não Destinadas;<br />'+
-					'Indefinida: Todas as demais áreas');
-					leg.mouseover(function(){
-						let l=$('g.legend');
-						l.tooltip('show');
-					});
-				} else {
-					console.log("HTTP-Error: " + response.status + " on spatial_unit_profile");
-					$('.toast').toast('show');
-					$('.toast-body').html("Encontrou um erro na solicitação ao servidor.");
+			let response = await fetch("callback/spatial_unit_profile?sData=" + jsConfigStr).catch(
+				()=>{
+					console.log("The backend service may be offline or your internet connection has been interrupted.");
 				}
-			} else {
-				console.log("HTTP-Error: " + response.status + " on spatial_unit_profile");
+			);
+			$("#loading_data_info").css('display','none')
+			if (response&&response.ok) {
+				let profileJson = await response.json();
+				document.getElementById("txt3a").innerHTML = profileJson['FormTitle'];
+				Plotly.react('AreaPerYearTableClass', JSON.parse(profileJson['AreaPerYearTableClass']), {});
+				Plotly.purge('AreaPerLandUse');
+				if(ams.App._landUseList.length>1)
+					Plotly.react('AreaPerLandUse', JSON.parse(profileJson['AreaPerLandUse']), {});
+				$('#modal-container-general-info').modal();
+				// for adding tooltip on pie chart legend
+				let leg=$('g.legend');
+				leg.attr('data-html','true');
+				leg.attr('title', 'Descrição das categorias fundiárias.<br />'+
+				'-----------------------------------------------------------------------<br />'+
+				'TI: Terras Indígenas;<br />'+
+				'UC: Unidades de Conservação;<br />'+
+				'Assentamentos: Projetos de assentamentos de todos os tipos;<br />'+
+				'APA: Área de Proteção Ambiental;<br />'+
+				'CAR: Cadastro Ambiental Rural;<br />'+
+				'FPND: Florestas Públicas Não Destinadas;<br />'+
+				'Indefinida: Todas as demais áreas');
+				leg.mouseover(function(){
+					let l=$('g.legend');
+					l.tooltip('show');
+				});
+			}else{
+				let emsg="";
+				if(response) emsg="HTTP-Error: " + response.status + " on spatial_unit_profile";
+				else emsg="O servidor está indisponível ou sua internet está desligada.";
+				
+				console.log(emsg);
 				$('.toast').toast('show');
-				$('.toast-body').html("Encontrou um erro na solicitação ao servidor.");
+				$('.toast-body').html("Encontrou um erro na solicitação ao servidor.<br />"+emsg);
 			}
 		}
 		if (jsConfig.className != 'null'){
-			$("#loading_data_info").css('display','block');
-			getGraphics(jsConfig);
+			if(ams.App._landUseList.length>0){
+				$("#loading_data_info").css('display','block');
+				getGraphics(jsConfig);
+			}else{
+				$('.toast').toast('show');
+				$('.toast-body').html("O filtro deve incluir ao menos uma categoria fundiária. A solicitação não foi concluída.");
+			}
 		}
 	}
 };

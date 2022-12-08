@@ -74,20 +74,20 @@ ams.Utils = {
 
       async function getConfigByBiome( selectedBiome ) {
         let response = await fetch("biome/config?targetbiome=" + selectedBiome);
-        if (response.ok) {
+        if (response&&response.ok) {
           let generalConfig = await response.json();
           if (generalConfig.appBiome) {
             // write on local storage
             localStorage.setItem('biome.config.'+selectedBiome, JSON.stringify(generalConfig));
             localStorage.setItem('config.created.at', (new Date()).toISOString().split('T')[0] );
             ams.Utils.startApp(generalConfig);
-          } else {
+          }else{
             console.log("HTTP-Error: " + response.status + " on biome changes");
             $('.toast').toast('show');
             $('.toast-body').html("Encontrou um erro na solicitação ao servidor.");
           }
-        } else {
-          console.log("HTTP-Error: " + response.status + " on biome changes");
+        }else{
+          if(response) console.log("HTTP-Error: " + response.status + " on biome changes");
           $('.toast').toast('show');
           $('.toast-body').html("Encontrou um erro na solicitação ao servidor.");
         }
@@ -117,7 +117,7 @@ ams.Utils = {
         if(createdAt<nowDate){
           for (let p in ams.BiomeConfig) {
             if(ams.BiomeConfig.hasOwnProperty(p))
-            localStorage.removeItem('biome.config.'+p);
+              localStorage.removeItem('biome.config.'+p);
           }
           getConfigByBiome(selectedBiome);
         }else{
