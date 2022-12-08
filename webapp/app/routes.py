@@ -66,11 +66,19 @@ def get_profile(endpoint):
     
     try:
         spatial_unit_profile = SpatialUnitProfile(Config, params)
-        return json.dumps(
-            {'FormTitle': spatial_unit_profile.form_title(),
-            'AreaPerLandUse': spatial_unit_profile.fig_area_per_land_use(),
-            'AreaPerYearTableClass': spatial_unit_profile.fig_area_by_period()}
-        )
+        onlyOneLandUse=(params['landUse']).find(',')
+        # to avoid unnecessary function call
+        if(onlyOneLandUse<0):
+            return json.dumps(
+                {'FormTitle': spatial_unit_profile.form_title(),
+                'AreaPerYearTableClass': spatial_unit_profile.fig_area_by_period()}
+            )
+        else:
+            return json.dumps(
+                {'FormTitle': spatial_unit_profile.form_title(),
+                'AreaPerLandUse': spatial_unit_profile.fig_area_per_land_use(),
+                'AreaPerYearTableClass': spatial_unit_profile.fig_area_by_period()}
+            )
     except Exception as e:
         print(e)
         return "Something is wrong on the server. Please, send this error to our support service: terrabrasilis@inpe.br", 500
