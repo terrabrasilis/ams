@@ -45,8 +45,13 @@ class DeterDaily:
         """
         print('Insert DETER data from raw database via SQL View ...')
         cur = self._conn.cursor()
+
+        tables={'deter','deter_auth'}
+        if(self._alldata):
+            tables={'deter','deter_auth','deter_history'}
+
         # update current data from local deter tables
-        for table in {'deter','deter_auth'}:
+        for table in tables:
             truncate=f"""TRUNCATE deter.{table};"""
             insert=f"""
             INSERT INTO deter.{table}(
