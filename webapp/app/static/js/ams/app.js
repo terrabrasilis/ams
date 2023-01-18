@@ -404,6 +404,23 @@ ams.App = {
 
 		$("#landuse-categories-button").click(landUseFilterClick);
 
+		let landUseSwapSelectionClick=function() {
+			let ckbs=$('#ckb-itens');
+			if(ckbs[0]){
+				let itens=ckbs[0].getElementsByTagName('input');
+				if(itens.length){
+					for (let i = 0; i < itens.length; i++) {
+						const iten = itens[i];
+						iten.checked=( (ams.App._landUseList.length)?(false):(true) );
+					}
+					ams.App._landUseList=( (ams.App._landUseList.length)?([]):(ams.Config.landUses.map((lu)=>{return(lu.id);})) );
+				}
+			}
+			return false;
+		};
+
+		$("#all-categories-button").click(landUseSwapSelectionClick);
+
 		let landUseUpDownClick=function(elem) {
 			if(elem.target.innerText=='arrow_drop_down'){
 				elem.target.innerText = 'arrow_drop_up';

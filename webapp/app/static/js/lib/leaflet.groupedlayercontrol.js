@@ -189,8 +189,12 @@ L.Control.GroupedLayers = L.Control.extend({
 
   _createLandUseButton: function() {
 
-    let bt='<button title=\'Aplica filtro com as categorias fundiárias selecionadas.\''
-    +' class="btn btn-primary-p landuse-bt"'
+    let bt='<button title=\'Desmarcar ou marcar todas as categorias.\''
+    +' class="btn btn-primary-p landuse-bt lu-all-bt"'
+    +' id="all-categories-button">'
+    +'<i class="material-icons profile-bt-icon">check_box</i>Todas</button>'
+    + '<button title=\'Aplica filtro com as categorias fundiárias selecionadas.\''
+    +' class="btn btn-primary-p landuse-bt lu-ft-bt"'
     +' id="landuse-categories-button">'
     +'<i class="material-icons profile-bt-icon">filter_alt</i>Aplicar</button>';
 
@@ -288,6 +292,7 @@ L.Control.GroupedLayers = L.Control.extend({
           let landUseBt = this._createLandUseButton();
           this._landUseItens.appendChild(landUseBt);
           let innerDiv = document.createElement('div');
+          innerDiv.id = "ckb-itens";
           this._landUseItens.appendChild(innerDiv);
           container.appendChild(this._landUseItens);
           this._landUseItens=innerDiv;

@@ -60,12 +60,20 @@
 .landuse{
   margin-top: -6px;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
 }
 .landuse-bt{
   display: flex !important;
   align-items: flex-start;
   margin-bottom: 7px;
+}
+.lu-all-bt{
+  padding-left: 0.25rem !important;
+  padding-right: 0.25rem !important;
+}
+.lu-ft-bt{
+  padding-left: 0.25rem !important;
+  padding-right: 0.25rem !important;
 }
 .landuse-itens{
   background-color: #f3f3f3;
