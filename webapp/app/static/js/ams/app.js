@@ -304,10 +304,12 @@ ams.App = {
 					if(e.checked && index<0){
 						ams.App._landUseList.push(luid);
 						ams.App._resetMap();
+						ams.App._removeLayer(ams.App._referenceLayerName);
 					}
 					if(!e.checked && index>=0){
 						ams.App._landUseList.splice(index,1);
 						ams.App._resetMap();
+						ams.App._removeLayer(ams.App._referenceLayerName);
 					}
 				}
 
@@ -460,13 +462,13 @@ ams.App = {
 	*/
 	_updateReferenceLayer: function() {
 		let l=this._getLayerByName(this._referenceLayerName);
-		if(l && this._map.hasLayer(l)) {
+		if(l) {
 			let cql=ams.App._appClassGroups.getCqlFilter(ams.App._suViewParams, this._hasClassFilter);
 			l._source.options["cql_filter"] = cql;
-			l._source._overlay.setParams({
-				"cql_filter": cql,
-				"viewparams": "landuse:" + ams.App._landUseList.join('\\,')
-			});	
+			let cqlobj = {"cql_filter": cql,"viewparams": "landuse:" + ams.App._landUseList.join('\\,')};
+			this._addWmsOptionsBase(cqlobj);
+			l._source._overlay.setParams(cqlobj);
+			if(!this._map.hasLayer(l)) l.addTo(this._map);
 			l.bringToBack();
 		}
 	},
@@ -574,7 +576,7 @@ ams.App = {
 		if(layer) {
 			let cql = this._appClassGroups.getCqlFilter(this._suViewParams, this._hasClassFilter);
 			layer._source.options["cql_filter"] = cql;
-			let cqlobj = {"cql_filter": cql};
+			let cqlobj = {"cql_filter": cql,"viewparams": "landuse:" + ams.App._landUseList.join('\\,')};
 			this._addWmsOptionsBase(cqlobj);
 			layer._source._overlay.setParams(cqlobj);
 			layer.addTo(this._map);
