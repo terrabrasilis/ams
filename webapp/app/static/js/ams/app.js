@@ -106,11 +106,13 @@ ams.App = {
 		var tbDeterAlertsLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.deter;
 		var AFLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.activeFire;
 		var tbDeterAlertsWmsOptions = {
-			"cql_filter": appClassGroups.getCqlFilter(this._suViewParams, true)
+			"cql_filter": appClassGroups.getCqlFilter(this._suViewParams, true),
+			"viewparams": "landuse:" + ams.App._landUseList.join('\\,')
 		};
 		ams.App._addWmsOptionsBase(tbDeterAlertsWmsOptions);
 		var AFWmsOptions = {
-			"cql_filter": appClassGroups.getCqlFilter(this._suViewParams, false)
+			"cql_filter": appClassGroups.getCqlFilter(this._suViewParams, false),
+			"viewparams": "landuse:" + ams.App._landUseList.join('\\,')
 		};
 		ams.App._addWmsOptionsBase(AFWmsOptions);
 		var tbDeterAlertsSource = new ams.LeafletWms.Source(this._baseURL, tbDeterAlertsWmsOptions, appClassGroups);
@@ -390,8 +392,11 @@ ams.App = {
 				$('.toast').toast('show');
 				$('.toast-body').html("O filtro deve incluir ao menos uma categoria fundiária. A solicitação não foi concluída.");
 				ams.App._resetMap();
-			}else
+			}else{
 				ams.App._updateSpatialUnitLayer();
+				// apply change filters on reference layer
+				ams.App._updateReferenceLayer();
+			}
 			return false;
 		};
 
@@ -459,7 +464,8 @@ ams.App = {
 			let cql=ams.App._appClassGroups.getCqlFilter(ams.App._suViewParams, this._hasClassFilter);
 			l._source.options["cql_filter"] = cql;
 			l._source._overlay.setParams({
-				"cql_filter": cql
+				"cql_filter": cql,
+				"viewparams": "landuse:" + ams.App._landUseList.join('\\,')
 			});	
 			l.bringToBack();
 		}
