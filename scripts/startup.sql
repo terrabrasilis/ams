@@ -213,17 +213,32 @@ TABLESPACE pg_default;
 
 CREATE SCHEMA IF NOT EXISTS deter AUTHORIZATION postgres;
 
+-- DROP SEQUENCE deter.deter_history_gid_seq;
+
+CREATE SEQUENCE deter.deter_history_gid_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 9223372036854775807
+    CACHE 1;
+
 -- Table: deter.deter_history (The existence of SQL View public.deter_history is mandatory before creating this table)
 
 -- DROP TABLE IF EXISTS deter.deter_history;
 
 CREATE TABLE IF NOT EXISTS deter.deter_history AS
-SELECT gid, origin_gid, classname, quadrant, orbitpoint, date, sensor, satellite, areatotalkm,
+SELECT nextval('deter.deter_history_gid_seq'::regclass) as gid, origin_gid, classname, quadrant, orbitpoint, date, sensor, satellite, areatotalkm,
 areamunkm, areauckm, mun, uf, uc, geom, month_year,
 NULL::integer as ncar_ids, NULL::text as car_imovel, NULL::integer as continuo, NULL::numeric as velocidade,
 NULL::integer as deltad, NULL::character varying(254) as est_fund, NULL::character varying(254) as dominio, 
 NULL::character varying(254) as tp_dominio
 FROM public.deter_history;
+
+ALTER TABLE deter.deter_history ADD CONSTRAINT deter_history_unique_gid UNIQUE (gid);
+
+CREATE INDEX IF NOT EXISTS index_deter_history_table_geom ON deter.deter_history USING gist(geom);
+CREATE INDEX IF NOT EXISTS deter_history_date_idx ON deter.deter_history USING btree (date ASC NULLS LAST);
+CREATE INDEX IF NOT EXISTS deter_history_classname_idx ON deter.deter_history USING btree (classname ASC NULLS LAST);
 
 -- Table: deter.deter
 
@@ -259,6 +274,10 @@ CREATE TABLE IF NOT EXISTS deter.deter
 )
 TABLESPACE pg_default;
 
+CREATE INDEX IF NOT EXISTS index_deter_table_geom ON deter.deter USING gist(geom);
+CREATE INDEX IF NOT EXISTS deter_date_idx ON deter.deter USING btree (date ASC NULLS LAST);
+CREATE INDEX IF NOT EXISTS deter_classname_idx ON deter.deter USING btree (classname ASC NULLS LAST);
+
 -- Table: deter.deter_auth
 
 -- DROP TABLE IF EXISTS deter.deter_auth;
@@ -292,6 +311,10 @@ CREATE TABLE IF NOT EXISTS deter.deter_auth
     CONSTRAINT deter_all_pkey PRIMARY KEY (gid)
 )
 TABLESPACE pg_default;
+
+CREATE INDEX IF NOT EXISTS index_deter_auth_table_geom ON deter.deter_auth USING gist(geom);
+CREATE INDEX IF NOT EXISTS deter_auth_date_idx ON deter.deter_auth USING btree (date ASC NULLS LAST);
+CREATE INDEX IF NOT EXISTS deter_auth_classname_idx ON deter.deter_auth USING btree (classname ASC NULLS LAST);
 
 -- -------------------------------------------------------------------------
 -- This session is used for the Active Fires model
@@ -328,8 +351,13 @@ TABLESPACE pg_default;
 
 CREATE INDEX IF NOT EXISTS idx_fires_active_fires_geom
     ON fires.active_fires USING gist
-    (geom)
-    TABLESPACE pg_default;
+    (geom);
+
+-- DROP INDEX IF EXISTS fires.active_fires_view_date_idx;
+
+CREATE INDEX IF NOT EXISTS active_fires_view_date_idx
+    ON fires.active_fires USING btree
+    (view_date ASC NULLS LAST);
 
 -- -------------------------------------------------------------------------
 -- This session is used for the Land Use model
