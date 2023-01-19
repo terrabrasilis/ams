@@ -128,6 +128,7 @@ ams.LeafletWms = {
             conf["startDate"]=ams.App._dateControl.startdate;
             conf["tempUnit"]=ams.App._currentTemporalAggregate;
             conf["suName"]=n;
+            conf["landUse"]=ams.App._landUseList.join(',');
             return conf;
         },
 

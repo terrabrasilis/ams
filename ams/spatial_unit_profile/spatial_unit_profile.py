@@ -24,6 +24,7 @@ class SpatialUnitProfile():
         params['startDate'], The reference start date.
         params['tempUnit'], The selected temporal unit code. Ex.: {'7d','15d','1m','3m','1y'}
         params['suName'], The selected Spatial Unit name. Ex.: 'C13L08'
+        params['landUse'], The list of selected land use ids
         params['unit'], The current unit measure in the App. Ex.: {'km²','ha','focos'}
         params['targetbiome'], The selected biome. Ex.: {'Cerrado', 'Amazônia'}
     """
@@ -35,11 +36,18 @@ class SpatialUnitProfile():
         self._conn = connect(self._dburl)
         self._query_limit = 20
         self._classname = params['className']
-
+            
         # default column to sum statistics
-        default_column="area"
+        self.default_column="area"
+        self.default_col_name="Área (km²)"
         if(self._classname=='AF'):
-            default_column="counts"
+            self.default_column="counts"
+            self.default_col_name="Unidades"
+
+        # standard area rounding
+        self.round_factor=2
+        if(self._classname=='AF'):
+            self.round_factor=0
 
         self._spatial_unit = params['spatialUnit']
         if(self._spatial_unit==self._appBiome):
@@ -51,6 +59,8 @@ class SpatialUnitProfile():
         self._name=params['suName'].replace('|',' ')
         if(self._name==self._appBiome):
             self._name = '*'
+
+        self.land_use=params['landUse']
 
         # app unit measure
         unit=params['unit']
@@ -79,26 +89,26 @@ class SpatialUnitProfile():
             "3m": "Agregado 90 dias",
             "1y": "Agregado 365 dias"}
         self._temporal_unit_sql = {
-7:'''select TO_CHAR(date, 'YYYY/WW') as period,classname,sum(a.'''+default_column+''') as 
-resultsum from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
-group by TO_CHAR(date, 'YYYY/WW'), classname
-order by 1 desc limit {2}''',
-15: '''select concat(TO_CHAR(date, 'YYYY'),'/',to_char(TO_CHAR(date, 'WW')::int/2+1,'FM00')) as period,
-classname,sum(a.'''+default_column+''') as resultsum from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
-group by concat(TO_CHAR(date, 'YYYY'),'/',to_char(TO_CHAR(date, 'WW')::int/2+1,'FM00')), classname
-order by 1 desc limit {2}''',
-31: '''select TO_CHAR(date, 'YYYY/MM') as period,classname,sum(a.'''+default_column+''') as 
-resultsum from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
-group by TO_CHAR(date, 'YYYY/MM'), classname
-order by 1 desc limit {2}''',
-124: '''select TO_CHAR(date, 'YYYY/Q') as period,classname, sum(a.'''+default_column+''') as 
-resultsum from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
-group by TO_CHAR(date, 'YYYY/Q'),classname
-order by 1 desc limit {2}''',
-366: '''select TO_CHAR(date, 'YYYY') as period,classname,sum(a.'''+default_column+''') as 
-resultsum from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
-group by TO_CHAR(date, 'YYYY'),classname
-order by 1 desc limit {2}'''}
+            7:'''select TO_CHAR(date, 'YYYY/WW') as period,classname,sum(a.'''+self.default_column+''') as 
+            resultsum from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
+            group by TO_CHAR(date, 'YYYY/WW'), classname
+            order by 1 desc limit {2}''',
+            15: '''select concat(TO_CHAR(date, 'YYYY'),'/',to_char(TO_CHAR(date, 'WW')::int/2+1,'FM00')) as period,
+            classname,sum(a.'''+self.default_column+''') as resultsum from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
+            group by concat(TO_CHAR(date, 'YYYY'),'/',to_char(TO_CHAR(date, 'WW')::int/2+1,'FM00')), classname
+            order by 1 desc limit {2}''',
+            31: '''select TO_CHAR(date, 'YYYY/MM') as period,classname,sum(a.'''+self.default_column+''') as 
+            resultsum from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
+            group by TO_CHAR(date, 'YYYY/MM'), classname
+            order by 1 desc limit {2}''',
+            124: '''select TO_CHAR(date, 'YYYY/Q') as period,classname, sum(a.'''+self.default_column+''') as 
+            resultsum from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
+            group by TO_CHAR(date, 'YYYY/Q'),classname
+            order by 1 desc limit {2}''',
+            366: '''select TO_CHAR(date, 'YYYY') as period,classname,sum(a.'''+self.default_column+''') as 
+            resultsum from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
+            group by TO_CHAR(date, 'YYYY'),classname
+            order by 1 desc limit {2}'''}
 
     def format_date(self, date: str)->str:
         return f'{date[8:10]}/{date[5:7]}/{date[0:4]}'
@@ -135,11 +145,9 @@ order by 1 desc limit {2}'''}
         elif self._temporal_unit == '1y': return 365,'day',self._query_limit*365
 
     def __get_temporal_unit_sql(self):
-        # default column to sum statistics
-        default_column="area"
+        # local round factor used into SQL to read data from database
         round_factor=4
         if(self._classname=='AF'):
-            default_column="counts"
             round_factor=0
         
         interval_val,period_unit,period_series=self.__get_period_settings()
@@ -154,11 +162,12 @@ order by 1 desc limit {2}'''}
         group_by_periods=f"""
         WITH calendar AS ({calendar}),
         bar_chart AS (
-            SELECT (calendar.fd || '/' || calendar.ld) as period, ROUND(sum(a.{default_column})::numeric,{round_factor}) as resultsum
+            SELECT (calendar.fd || '/' || calendar.ld) as period, ROUND(sum(a.{self.default_column})::numeric,{round_factor}) as resultsum
             FROM calendar, "{self._spatial_unit}_land_use" a inner join "{self._spatial_unit}" b on a.suid = b.suid
             WHERE {where_group} classname = '{self._classname}'
             AND date >= calendar.fd
             AND date <= calendar.ld
+            AND a.land_use_id = ANY (array[{self.land_use}])
             GROUP BY period
             ORDER BY period DESC LIMIT {self._query_limit}
         )
@@ -200,25 +209,22 @@ order by 1 desc limit {2}'''}
         return df
 
     def area_per_land_use(self):
-        # default column to sum statistics
-        default_column="area"
-        default_col_name="Área (km²)"
-        if(self._classname=='AF'):
-            default_column="counts"
-            default_col_name="Unidades"
         where_if="" if(self._name=='*') else f"""b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}' AND"""
 
         df = self.resultset_as_dataframe(
             f"select a.name,coalesce(resultsum, 0) as resultsum from land_use a "
             f"left join "
-            f"(select a.land_use_id, sum(a.{default_column}) as resultsum from \"{self._spatial_unit}_land_use\" a "
+            f"(select a.land_use_id, sum(a.{self.default_column}) as resultsum from \"{self._spatial_unit}_land_use\" a "
             f"inner join \"{self._spatial_unit}\" b on a.suid = b.suid "
             f"where {where_if} "
             f" {self.period_where_clause()} "
             f"and classname = '{self._classname}' "
-            f"group by a.land_use_id) b on a.id = b.land_use_id ORDER BY a.priority ASC "
+            f"and a.land_use_id = ANY (array[{self.land_use}]) "
+            f"group by a.land_use_id) b on a.id = b.land_use_id "
+            f"WHERE a.id = ANY (array[{self.land_use}]) "
+            f"ORDER BY a.priority ASC "
         )
-        df.columns = ['Categoria Fundiária', default_col_name]
+        df.columns = ['Categoria Fundiária', self.default_col_name]
         return df
 
     def form_title(self):
@@ -236,7 +242,7 @@ order by 1 desc limit {2}'''}
             datasource="de Queimadas"
 
         title=f"""Usando dados de <b>{indicador}</b> {datasource} até <b>{last_date}</b>,
-        {spatial_unit} ({spatial_description})
+        {spatial_unit} ({spatial_description}), para as categorias fundiárias selecionadas
         e unidade temporal <b>{temporal_unit}</b>.
         """
 
@@ -246,15 +252,6 @@ order by 1 desc limit {2}'''}
         """
         Pie chart structs to construct chart in frontend with plotly
         """
-        # standard area rounding
-        self.round_factor=2
-
-        # default column to sum statistics
-        self.default_col_name="Área (km²)"
-        if(self._classname=='AF'):
-            self.default_col_name="Unidades"
-            self.round_factor=0
-
         df = self.area_per_land_use()
         indicador=self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
         unid_temp=self._temporal_units[self._temporal_unit]
@@ -346,6 +343,7 @@ order by 1 desc limit {2}'''}
             if(self.area_unit=="ha"):
                 df[self.default_col_name]=df[self.default_col_name]*100
                 df["label"] = df["label"]*100
+                self.round_factor=1
             # apply rounding factor to normalize values
             df[self.default_col_name]=df[self.default_col_name].round(self.round_factor)
             # adjust values for label use only

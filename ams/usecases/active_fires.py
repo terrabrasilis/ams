@@ -62,44 +62,11 @@ class ActiveFires:
         """
         cur.execute(update)
 
-    def statistics_processing(self):
-        for spatial_unit, id in self._spatial_units.items():
-
-            onlynews=f""" AND af.view_date>(SELECT COALESCE(MAX(date),'2016-01-01'::date) FROM public."{spatial_unit}_risk_indicators")"""
-            cur = self._conn.cursor()
-            
-            if(self._alldata):
-                print(f'Delete data from {spatial_unit} where classname=AF')
-                delete=f"""
-                DELETE FROM public."{spatial_unit}_risk_indicators"
-                WHERE classname='AF'
-                """
-                cur.execute(delete)
-                onlynews=""
-
-            
-            insert=f"""
-            WITH results AS (
-                SELECT af.view_date as date, su.suid, COUNT(af.id) as counts
-                FROM {self._fires_input_table} af, public."{spatial_unit}" su
-                WHERE (su.geometry && af.geom) AND ST_Intersects(af.geom, su.geometry)
-                {onlynews}
-                GROUP BY 1,2
-            )
-            INSERT INTO public."{spatial_unit}_risk_indicators"(classname, date, suid, counts)
-            SELECT 'AF' as classname, a.date, a.suid, a.counts
-            FROM results a
-            """
-            
-            print(f'Insert data into {spatial_unit} for AF classname')
-            cur.execute(insert)
-
     def execute(self):
         try:
             print("Starting at: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
             self.read_spatial_units()
             self.update_focuses_table()
-            # self.statistics_processing()
             print("Finished in: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
             self._conn.commit()
         except Exception as e:

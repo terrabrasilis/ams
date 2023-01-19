@@ -49,7 +49,7 @@ class ClassifyByLandUse:
                 num_pixels int4 NULL,
                 CONSTRAINT deter_poly_classes_pk PRIMARY KEY (id)
             );
-            CREATE INDEX IF NOT EXISTS deter_land_structure_gid_idx ON deter_land_structure USING btree (gid);''')
+            CREATE INDEX IF NOT EXISTS deter_land_structure_gid_idx ON deter_land_structure USING hash (gid);''')
         else:
             # here, we expect deter.tmp_data to only have DETER data coming from the current table
             cur.execute("DELETE FROM deter_land_structure WHERE gid like '%_curr';")
@@ -86,7 +86,7 @@ class ClassifyByLandUse:
                 num_pixels int4 NULL,
                 CONSTRAINT fires_land_structure_pk PRIMARY KEY (id)
             );
-            CREATE INDEX IF NOT EXISTS fires_land_structure_gid_idx ON public.fires_land_structure USING btree (gid);''')
+            CREATE INDEX IF NOT EXISTS fires_land_structure_gid_idx ON public.fires_land_structure USING hash (gid);''')
         else:
             fires_where = f""" WHERE view_date > (SELECT MAX(date) FROM "{list(self._spatial_units.keys())[0]}_land_use" WHERE classname='AF')"""
         

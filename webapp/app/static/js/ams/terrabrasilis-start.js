@@ -24,14 +24,15 @@ $(document).ready(function () {
   /** display app version on footer bar */
   let versionDiv = $('#version');
   if(versionDiv.length>0){
-    // TODO: enable this code if a file with tag version is present
-    $.getJSON('static/PROJECT_VERSION', function(data) {
-        let version = data.version;
-        versionDiv.append('<a href="https://github.com/terrabrasilis/ams/releases/tag/'+version+'" target="_blank" title="Veja este release no GitHub">'+version+'</a>');
-        if(ams.Utils.isHomologationEnvironment()){
-          $('#header-panel').append("<span style='font-size:18px;font-weight:600;color:#ffff00;'> (Versão de homologação)</span>");
-        }
-    });
+    if(localStorage.getItem('ams.appVersion')!==null && appVersion!=localStorage.getItem('ams.appVersion')){
+      // if app version changes, clear the local storage to force reload configs
+      ams.Utils.resetlocalStorage();
+    }
+    localStorage.setItem('ams.appVersion', appVersion );
+    versionDiv.append('<a href="https://github.com/terrabrasilis/ams/releases/tag/'+appVersion+'" target="_blank" title="Veja este release no GitHub">'+appVersion+'</a>');
+    if(ams.Utils.isHomologationEnvironment()){
+      $('#header-panel').append("<span style='font-size:18px;font-weight:600;color:#ffff00;'> (Versão de homologação)</span>");
+    }
   }
 
   /** Translation component mock, used to start the authentication component */

@@ -21,11 +21,14 @@ ams.App = {
 	_currentTemporalAggregate: null,
 	_currentClassify: null,
 	_spatialUnits: null,
+	_landUseList: [],
 
 	run: function(geoserverUrl, spatialUnits, appClassGroups) {
 
 		this._spatialUnits=spatialUnits;
 		this._appClassGroups=appClassGroups;
+		// start land use list with default itens to use in viewparams at start App
+		this._landUseList=ams.Config.landUses.map((lu)=>{return(lu.id);});
 
 		this._wfs = new ams.Map.WFS(geoserverUrl);
 		var ldLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.lastDate;
@@ -103,11 +106,13 @@ ams.App = {
 		var tbDeterAlertsLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.deter;
 		var AFLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.activeFire;
 		var tbDeterAlertsWmsOptions = {
-			"cql_filter": appClassGroups.getCqlFilter(this._suViewParams, true)
+			"cql_filter": appClassGroups.getCqlFilter(this._suViewParams, true),
+			"viewparams": "landuse:" + ams.App._landUseList.join('\\,')
 		};
 		ams.App._addWmsOptionsBase(tbDeterAlertsWmsOptions);
 		var AFWmsOptions = {
-			"cql_filter": appClassGroups.getCqlFilter(this._suViewParams, false)
+			"cql_filter": appClassGroups.getCqlFilter(this._suViewParams, false),
+			"viewparams": "landuse:" + ams.App._landUseList.join('\\,')
 		};
 		ams.App._addWmsOptionsBase(AFWmsOptions);
 		var tbDeterAlertsSource = new ams.LeafletWms.Source(this._baseURL, tbDeterAlertsWmsOptions, appClassGroups);
@@ -151,6 +156,10 @@ ams.App = {
 				defaultFilter:ams.Config.defaultFilters.indicator,
 				propertyName:this._propertyName
 			},
+			"CATEGORIA FUNDIÁRIA":{
+				defaultFilter: ''
+
+			},
 			"UNIDADE ESPACIAL": {
 				defaultFilter: ams.Config.defaultFilters.spatialUnit
 			},
@@ -161,6 +170,13 @@ ams.App = {
 		for (let p in ams.BiomeConfig) {
 			if(ams.BiomeConfig.hasOwnProperty(p))
 				controlGroups["BIOMA"][p] = p;
+		}
+
+		for (let p in ams.Config.landUses) {
+			if(ams.Config.landUses.hasOwnProperty(p)&&ams.Config.landUses[p]){
+				controlGroups["CATEGORIA FUNDIÁRIA"]["defaultFilter"]+=((controlGroups["CATEGORIA FUNDIÁRIA"]["defaultFilter"]=='')?(''):(','))+ams.Config.landUses[p].id;
+				controlGroups["CATEGORIA FUNDIÁRIA"][ams.Config.landUses[p].name] = ''+ams.Config.landUses[p].id;
+			}
 		}
 
 		let sulen = this._spatialUnits.length();
@@ -218,18 +234,31 @@ ams.App = {
 
 		// control handler of main panel
 		map.on('changectrl', function(e) {
+
+			if(ams.App._landUseList.length==0 &&
+				e.group.name!='CATEGORIA FUNDIÁRIA' && e.group.name!='BIOMA'){
+				ams.App._resetMap("O filtro deve incluir ao menos uma categoria fundiária. A solicitação não foi concluída.");
+				return;// abort if no filters
+			}
+
 			let layerToAdd,layerToDel,needUpdateSuLayers=true;
 			
 			if(e.group.name=='BIOMA'){
 				if(e.acronym==ams.Config.biome){
 					return;
 				}
+				if(ams.App._landUseList.length!=ams.Config.landUses.length){
+					$('.toast').toast('show');
+					$('.toast-body').html("O filtro por categorias fundiárias foi restaurado ao padrão.");
+					// to avoid the toast msg at _updateSpatialUnitLayer
+					ams.App._landUseList=ams.Config.landUses.map((lu)=>{return(lu.id);});
+				}
 				// reset some data to avoid getting wrong data
 				ams.App._suViewParams=null;
 				ams.App._priorViewParams=null;
 				ams.App._diffOn = ( (ams.Config.defaultFilters.diffClassify=="onPeriod")?(false):(true) );
 				// write on local storage
-				localStorage.setItem('previous.biome.setting.selection', e.acronym);
+				localStorage.setItem('ams.previous.biome.setting.selection', e.acronym);
 				ams.Utils.biomeChanges(e.acronym);
 
 			}else if(e.group.name=='INDICADOR'){// change reference layer (deter or fires)?
@@ -264,6 +293,23 @@ ams.App = {
 					// apply change filters on reference layer
 					ams.App._updateReferenceLayer();
 				}
+			}else if(e.group.name=='CATEGORIA FUNDIÁRIA'){
+				let luid=+e.acronym;
+				if(e.inputtype=='checkbox'){
+					let index=ams.App._landUseList.findIndex((v)=>{
+						return v==luid;
+					});
+					if(e.checked && index<0){
+						ams.App._landUseList.push(luid);
+						ams.App._resetMap();
+					}
+					if(!e.checked && index>=0){
+						ams.App._landUseList.splice(index,1);
+						ams.App._resetMap();
+					}
+				}
+
+				needUpdateSuLayers=false;
 			}else if(e.group.name=='UNIDADE ESPACIAL'){
 				// spatial unit layer was changes
 				if(ams.App._currentSULayerName!=e.acronym){
@@ -331,13 +377,58 @@ ams.App = {
             conf["startDate"]=ams.App._dateControl.startdate;
             conf["tempUnit"]=ams.App._currentTemporalAggregate;
             conf["suName"]=ams.Config.biome;
-            ams.App.displayGraph(conf);
-
+			conf["landUse"]=ams.App._landUseList.join(',');
+			ams.App.displayGraph(conf);
 			return false;
 		};
 
 		$("#profile-"+ams.BiomeConfig["Amazônia"].defaultWorkspace+"-button").click(profileBiomeClick);
 		$("#profile-"+ams.BiomeConfig["Cerrado"].defaultWorkspace+"-button").click(profileBiomeClick);
+
+		let landUseFilterClick=function() {
+			if(ams.App._landUseList.length==0){
+				ams.App._resetMap("O filtro deve incluir ao menos uma categoria fundiária. A solicitação não foi concluída.");
+			}else{
+				ams.App._updateSpatialUnitLayer();
+				// apply change filters on reference layer
+				ams.App._updateReferenceLayer();
+			}
+			return false;
+		};
+
+		$("#landuse-categories-button").click(landUseFilterClick);
+
+		let landUseSwapSelectionClick=function() {
+			let ckbs=$('#ckb-itens');
+			if(ckbs[0]){
+				let itens=ckbs[0].getElementsByTagName('input');
+				if(itens.length){
+					for (let i = 0; i < itens.length; i++) {
+						const iten = itens[i];
+						iten.checked=( (ams.App._landUseList.length)?(false):(true) );
+					}
+					ams.App._landUseList=( (ams.App._landUseList.length)?([]):(ams.Config.landUses.map((lu)=>{return(lu.id);})) );
+				}
+			}
+			ams.App._resetMap();
+			return false;
+		};
+
+		$("#all-categories-button").click(landUseSwapSelectionClick);
+
+		let landUseUpDownClick=function(elem) {
+			if(elem.target.innerText=='arrow_drop_down'){
+				elem.target.innerText = 'arrow_drop_up';
+				$("#landuse-itens")[0].style="display:flex;";
+			}else{
+				elem.target.innerText = 'arrow_drop_down';
+				$("#landuse-itens")[0].style="display:none;";
+			}
+			
+			return false;
+		};
+
+		$(".iconlanduse-updown").click(landUseUpDownClick);
 
 		$(function() {
 			$("#prioritization-input").dblclick(false);
@@ -356,22 +447,22 @@ ams.App = {
 		$("#threshold").on("change", ()=>{
 			let v=+$("#threshold").val();
 			ams.Config.general.area.threshold=v;
-			localStorage.setItem('ams.Config.general.area.threshold', v);
+			localStorage.setItem('ams.config.general.area.threshold', v);
 		});
 
 		$("#changeunit").on("change", ()=>{
 			let v=$("#changeunit")[0].checked;
 			if(v) ams.Config.general.area.changeunit="auto";
 			else ams.Config.general.area.changeunit="no";
-			localStorage.setItem('ams.Config.general.area.changeunit', ams.Config.general.area.changeunit);
+			localStorage.setItem('ams.config.general.area.changeunit', ams.Config.general.area.changeunit);
 		});
 
 		$(function() {
-			if(localStorage.getItem('ams.Config.general.area.changeunit')!==null){
-				ams.Config.general.area.changeunit=localStorage.getItem('ams.Config.general.area.changeunit');
+			if(localStorage.getItem('ams.config.general.area.changeunit')!==null){
+				ams.Config.general.area.changeunit=localStorage.getItem('ams.config.general.area.changeunit');
 			}
-			if(localStorage.getItem('ams.Config.general.area.threshold')!==null){
-				ams.Config.general.area.threshold=localStorage.getItem('ams.Config.general.area.threshold');
+			if(localStorage.getItem('ams.config.general.area.threshold')!==null){
+				ams.Config.general.area.threshold=localStorage.getItem('ams.config.general.area.threshold');
 			}
 			$("#threshold").val(ams.Config.general.area.threshold);
 			$("#changeunit")[0].checked=ams.Config.general.area.changeunit=="auto";
@@ -383,12 +474,13 @@ ams.App = {
 	*/
 	_updateReferenceLayer: function() {
 		let l=this._getLayerByName(this._referenceLayerName);
-		if(l && this._map.hasLayer(l)) {
+		if(l) {
 			let cql=ams.App._appClassGroups.getCqlFilter(ams.App._suViewParams, this._hasClassFilter);
 			l._source.options["cql_filter"] = cql;
-			l._source._overlay.setParams({
-				"cql_filter": cql
-			});	
+			let cqlobj = {"cql_filter": cql,"viewparams": "landuse:" + ams.App._landUseList.join('\\,')};
+			this._addWmsOptionsBase(cqlobj);
+			l._source._overlay.setParams(cqlobj);
+			if(!this._map.hasLayer(l)) l.addTo(this._map);
 			l.bringToBack();
 		}
 	},
@@ -496,7 +588,7 @@ ams.App = {
 		if(layer) {
 			let cql = this._appClassGroups.getCqlFilter(this._suViewParams, this._hasClassFilter);
 			layer._source.options["cql_filter"] = cql;
-			let cqlobj = {"cql_filter": cql};
+			let cqlobj = {"cql_filter": cql,"viewparams": "landuse:" + ams.App._landUseList.join('\\,')};
 			this._addWmsOptionsBase(cqlobj);
 			layer._source._overlay.setParams(cqlobj);
 			layer.addTo(this._map);
@@ -579,14 +671,13 @@ ams.App = {
 			suLayerMax:max
 		};
 		if(mm.suLayerMax == mm.suLayerMin) {
-			$('.toast').toast('show');
-			$('.toast-body').html("Não existem dados para o período selecionado.");
-			this._resetMap();
+			let landUse="";
+			if(ams.App._landUseList.length==0)
+				landUse="<br /><br /><b>Atenção</b>: Deve selecionar ao menos um item no filtro por categorias fundiárias.";
+			this._resetMap("Não existem dados para o período selecionado."+landUse);
 			return false;
 		}else if(ams.App._diffOn && mm.suLayerMin>=0) {
-			$('.toast').toast('show');
-			$('.toast-body').html("Não há redução de valores para o período selecionado.");
-			this._resetMap();
+			this._resetMap("Não há redução de valores para o período selecionado.");
 			return false;
 		}
 		let l=ams.App._getLayerByName(ams.App._getLayerPrefix());
@@ -596,13 +687,19 @@ ams.App = {
 		return mm;
 	},
 
-	_resetMap: function() {
+	_resetMap: function(toast_msg) {
+		if(typeof toast_msg!=='undefined'){
+			$('.toast').toast('show');
+			$('.toast-body').html(toast_msg);
+		}
 		let oLayerName=ams.App._getLayerPrefix();
 		// remove the main spatial unit layer, and
 		this._removeLayer(oLayerName);
 		// each spatial unit layer has an priority layer to display the highlight border, should be remove too
 		this._removeLayer(oLayerName+'_prior');
 		ams.App._legendControl.disable();
+		// remove reference layer
+		ams.App._removeLayer(ams.App._referenceLayerName);
 	},
 
 	/**
@@ -654,45 +751,53 @@ ams.App = {
 			jsConfig["unit"]=ams.Map.PopupControl._unit;
 			jsConfig["targetbiome"]=ams.Config.biome;
 			let jsConfigStr = JSON.stringify(jsConfig);
-			let response = await fetch("callback/spatial_unit_profile?sData=" + jsConfigStr);
-			$("#loading_data_info").css('display','none')
-			if (response.ok) {
-				let profileJson = await response.json();
-				if (response.ok) {
-					document.getElementById("txt3a").innerHTML = profileJson['FormTitle'];
-					Plotly.react('AreaPerYearTableClass', JSON.parse(profileJson['AreaPerYearTableClass']), {});
-					Plotly.react('AreaPerLandUse', JSON.parse(profileJson['AreaPerLandUse']), {});
-					$('#modal-container-general-info').modal();
-					// for adding tooltip on pie chart legend
-					let leg=$('g.legend');
-					leg.attr('data-html','true');
-					leg.attr('title', 'Descrição das categorias fundiárias.<br />'+
-					'-----------------------------------------------------------------------<br />'+
-					'TI: Terras Indígenas;<br />'+
-					'UC: Unidades de Conservação;<br />'+
-					'Assentamentos: Projetos de assentamentos de todos os tipos;<br />'+
-					'APA: Área de Proteção Ambiental;<br />'+
-					'CAR: Cadastro Ambiental Rural;<br />'+
-					'FPND: Florestas Públicas Não Destinadas;<br />'+
-					'Indefinida: Todas as demais áreas');
-					leg.mouseover(function(){
-						let l=$('g.legend');
-						l.tooltip('show');
-					});
-				} else {
-					console.log("HTTP-Error: " + response.status + " on spatial_unit_profile");
-					$('.toast').toast('show');
-					$('.toast-body').html("Encontrou um erro na solicitação ao servidor.");
+			let response = await fetch("callback/spatial_unit_profile?sData=" + jsConfigStr).catch(
+				()=>{
+					console.log("The backend service may be offline or your internet connection has been interrupted.");
 				}
-			} else {
-				console.log("HTTP-Error: " + response.status + " on spatial_unit_profile");
+			);
+			$("#loading_data_info").css('display','none')
+			if (response&&response.ok) {
+				let profileJson = await response.json();
+				document.getElementById("txt3a").innerHTML = profileJson['FormTitle'];
+				Plotly.react('AreaPerYearTableClass', JSON.parse(profileJson['AreaPerYearTableClass']), {});
+				Plotly.purge('AreaPerLandUse');
+				if(ams.App._landUseList.length>1)
+					Plotly.react('AreaPerLandUse', JSON.parse(profileJson['AreaPerLandUse']), {});
+				$('#modal-container-general-info').modal();
+				// for adding tooltip on pie chart legend
+				let leg=$('g.legend');
+				leg.attr('data-html','true');
+				leg.attr('title', 'Descrição das categorias fundiárias.<br />'+
+				'-----------------------------------------------------------------------<br />'+
+				'TI: Terras Indígenas;<br />'+
+				'UC: Unidades de Conservação;<br />'+
+				'Assentamentos: Projetos de assentamentos de todos os tipos;<br />'+
+				'APA: Área de Proteção Ambiental;<br />'+
+				'CAR: Cadastro Ambiental Rural;<br />'+
+				'FPND: Florestas Públicas Não Destinadas;<br />'+
+				'Indefinida: Todas as demais áreas');
+				leg.mouseover(function(){
+					let l=$('g.legend');
+					l.tooltip('show');
+				});
+			}else{
+				let emsg="";
+				if(response) emsg="HTTP-Error: " + response.status + " on spatial_unit_profile";
+				else emsg="O servidor está indisponível ou sua internet está desligada.";
+				
+				console.log(emsg);
 				$('.toast').toast('show');
-				$('.toast-body').html("Encontrou um erro na solicitação ao servidor.");
+				$('.toast-body').html("Encontrou um erro na solicitação ao servidor.<br />"+emsg);
 			}
 		}
 		if (jsConfig.className != 'null'){
-			$("#loading_data_info").css('display','block');
-			getGraphics(jsConfig);
+			if(ams.App._landUseList.length>0){
+				$("#loading_data_info").css('display','block');
+				getGraphics(jsConfig);
+			}else{
+				ams.App._resetMap("O filtro deve incluir ao menos uma categoria fundiária. A solicitação não foi concluída.");
+			}
 		}
 	}
 };
