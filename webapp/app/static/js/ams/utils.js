@@ -24,12 +24,6 @@ ams.Utils = {
 
   startApp: function(generalConfig){
 
-    let appVersion=localStorage.getItem('ams.appVersion');
-    if(appVersion!=ams.appVersion){
-      // if app version changes, clear the local storage to force reload
-      ams.Utils.resetlocalStorage();
-    }
-    
     if(typeof generalConfig=='undefined'){
       // use the previous selection or default biome (see config.js)
       let b=localStorage.getItem('ams.previous.biome.setting.selection');
@@ -115,14 +109,12 @@ ams.Utils = {
 
       // Used to load from local storage
       if(localStorage.getItem('ams.biome.config.'+selectedBiome)!==null
-          && localStorage.getItem('ams.config.created.at')!==null
-          && localStorage.getItem('ams.appVersion')!==null){
+          && localStorage.getItem('ams.config.created.at')!==null){
         
         // the local storage expiration date 
         let createdAt=new Date(localStorage.getItem('ams.config.created.at')+'T03:00:00.000Z');
         let nowDate=new Date((new Date()).toISOString().split('T')[0]+'T03:00:00.000Z');
-        let appVersion=localStorage.getItem('ams.appVersion');
-        if(createdAt<nowDate || appVersion!=ams.appVersion){
+        if(createdAt<nowDate){
           for (let p in ams.BiomeConfig) {
             if(ams.BiomeConfig.hasOwnProperty(p))
               localStorage.removeItem('ams.biome.config.'+p);

@@ -237,9 +237,7 @@ ams.App = {
 
 			if(ams.App._landUseList.length==0 &&
 				e.group.name!='CATEGORIA FUNDIÁRIA' && e.group.name!='BIOMA'){
-				$('.toast').toast('show');
-				$('.toast-body').html("O filtro deve incluir ao menos uma categoria fundiária. A solicitação não foi concluída.");
-				ams.App._resetMap();
+				ams.App._resetMap("O filtro deve incluir ao menos uma categoria fundiária. A solicitação não foi concluída.");
 				return;// abort if no filters
 			}
 
@@ -304,12 +302,10 @@ ams.App = {
 					if(e.checked && index<0){
 						ams.App._landUseList.push(luid);
 						ams.App._resetMap();
-						ams.App._removeLayer(ams.App._referenceLayerName);
 					}
 					if(!e.checked && index>=0){
 						ams.App._landUseList.splice(index,1);
 						ams.App._resetMap();
-						ams.App._removeLayer(ams.App._referenceLayerName);
 					}
 				}
 
@@ -391,9 +387,7 @@ ams.App = {
 
 		let landUseFilterClick=function() {
 			if(ams.App._landUseList.length==0){
-				$('.toast').toast('show');
-				$('.toast-body').html("O filtro deve incluir ao menos uma categoria fundiária. A solicitação não foi concluída.");
-				ams.App._resetMap();
+				ams.App._resetMap("O filtro deve incluir ao menos uma categoria fundiária. A solicitação não foi concluída.");
 			}else{
 				ams.App._updateSpatialUnitLayer();
 				// apply change filters on reference layer
@@ -416,6 +410,7 @@ ams.App = {
 					ams.App._landUseList=( (ams.App._landUseList.length)?([]):(ams.Config.landUses.map((lu)=>{return(lu.id);})) );
 				}
 			}
+			ams.App._resetMap();
 			return false;
 		};
 
@@ -679,14 +674,10 @@ ams.App = {
 			let landUse="";
 			if(ams.App._landUseList.length==0)
 				landUse="<br /><br /><b>Atenção</b>: Deve selecionar ao menos um item no filtro por categorias fundiárias.";
-			$('.toast').toast('show');
-			$('.toast-body').html("Não existem dados para o período selecionado."+landUse);
-			this._resetMap();
+			this._resetMap("Não existem dados para o período selecionado."+landUse);
 			return false;
 		}else if(ams.App._diffOn && mm.suLayerMin>=0) {
-			$('.toast').toast('show');
-			$('.toast-body').html("Não há redução de valores para o período selecionado.");
-			this._resetMap();
+			this._resetMap("Não há redução de valores para o período selecionado.");
 			return false;
 		}
 		let l=ams.App._getLayerByName(ams.App._getLayerPrefix());
@@ -696,13 +687,19 @@ ams.App = {
 		return mm;
 	},
 
-	_resetMap: function() {
+	_resetMap: function(toast_msg) {
+		if(typeof toast_msg!=='undefined'){
+			$('.toast').toast('show');
+			$('.toast-body').html(toast_msg);
+		}
 		let oLayerName=ams.App._getLayerPrefix();
 		// remove the main spatial unit layer, and
 		this._removeLayer(oLayerName);
 		// each spatial unit layer has an priority layer to display the highlight border, should be remove too
 		this._removeLayer(oLayerName+'_prior');
 		ams.App._legendControl.disable();
+		// remove reference layer
+		ams.App._removeLayer(ams.App._referenceLayerName);
 	},
 
 	/**
@@ -799,8 +796,7 @@ ams.App = {
 				$("#loading_data_info").css('display','block');
 				getGraphics(jsConfig);
 			}else{
-				$('.toast').toast('show');
-				$('.toast-body').html("O filtro deve incluir ao menos uma categoria fundiária. A solicitação não foi concluída.");
+				ams.App._resetMap("O filtro deve incluir ao menos uma categoria fundiária. A solicitação não foi concluída.");
 			}
 		}
 	}
