@@ -28,8 +28,8 @@ $(document).ready(function () {
     // TODO: enable this code if a file with tag version is present
     $.getJSON('static/PROJECT_VERSION', function(data) {
         appVersion = data.version;
-        ams.Config.appVersion=appVersion;
-        localStorage.setItem('ams.config.appversion', appVersion );
+        ams.appVersion=appVersion;
+        localStorage.setItem('ams.appVersion', appVersion );
         versionDiv.append('<a href="https://github.com/terrabrasilis/ams/releases/tag/'+appVersion+'" target="_blank" title="Veja este release no GitHub">'+appVersion+'</a>');
         if(ams.Utils.isHomologationEnvironment()){
           $('#header-panel').append("<span style='font-size:18px;font-weight:600;color:#ffff00;'> (Versão de homologação)</span>");
