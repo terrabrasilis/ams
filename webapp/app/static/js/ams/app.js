@@ -260,7 +260,7 @@ ams.App = {
 				ams.App._priorViewParams=null;
 				ams.App._diffOn = ( (ams.Config.defaultFilters.diffClassify=="onPeriod")?(false):(true) );
 				// write on local storage
-				localStorage.setItem('previous.biome.setting.selection', e.acronym);
+				localStorage.setItem('ams.previous.biome.setting.selection', e.acronym);
 				ams.Utils.biomeChanges(e.acronym);
 
 			}else if(e.group.name=='INDICADOR'){// change reference layer (deter or fires)?
@@ -452,22 +452,22 @@ ams.App = {
 		$("#threshold").on("change", ()=>{
 			let v=+$("#threshold").val();
 			ams.Config.general.area.threshold=v;
-			localStorage.setItem('ams.Config.general.area.threshold', v);
+			localStorage.setItem('ams.config.general.area.threshold', v);
 		});
 
 		$("#changeunit").on("change", ()=>{
 			let v=$("#changeunit")[0].checked;
 			if(v) ams.Config.general.area.changeunit="auto";
 			else ams.Config.general.area.changeunit="no";
-			localStorage.setItem('ams.Config.general.area.changeunit', ams.Config.general.area.changeunit);
+			localStorage.setItem('ams.config.general.area.changeunit', ams.Config.general.area.changeunit);
 		});
 
 		$(function() {
-			if(localStorage.getItem('ams.Config.general.area.changeunit')!==null){
-				ams.Config.general.area.changeunit=localStorage.getItem('ams.Config.general.area.changeunit');
+			if(localStorage.getItem('ams.config.general.area.changeunit')!==null){
+				ams.Config.general.area.changeunit=localStorage.getItem('ams.config.general.area.changeunit');
 			}
-			if(localStorage.getItem('ams.Config.general.area.threshold')!==null){
-				ams.Config.general.area.threshold=localStorage.getItem('ams.Config.general.area.threshold');
+			if(localStorage.getItem('ams.config.general.area.threshold')!==null){
+				ams.Config.general.area.threshold=localStorage.getItem('ams.config.general.area.threshold');
 			}
 			$("#threshold").val(ams.Config.general.area.threshold);
 			$("#changeunit")[0].checked=ams.Config.general.area.changeunit=="auto";

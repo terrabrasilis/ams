@@ -23,10 +23,16 @@ ams.Utils = {
   },
 
   startApp: function(generalConfig){
+
+    let appVersion=localStorage.getItem('ams.config.appversion');
+    if(appVersion!=ams.Config.appVersion){
+      // if app version changes, clear the local storage to force reload
+      ams.Utils.resetlocalStorage();
+    }
     
     if(typeof generalConfig=='undefined'){
       // use the previous selection or default biome (see config.js)
-      let b=localStorage.getItem('previous.biome.setting.selection');
+      let b=localStorage.getItem('ams.previous.biome.setting.selection');
       ams.Utils.biomeChanges( ((b!==null)?(b):(ams.defaultBiome)) );
     }else{
       // evaluate the user area_profile on start app
@@ -78,8 +84,8 @@ ams.Utils = {
           let generalConfig = await response.json();
           if (generalConfig.appBiome) {
             // write on local storage
-            localStorage.setItem('biome.config.'+selectedBiome, JSON.stringify(generalConfig));
-            localStorage.setItem('config.created.at', (new Date()).toISOString().split('T')[0] );
+            localStorage.setItem('ams.biome.config.'+selectedBiome, JSON.stringify(generalConfig));
+            localStorage.setItem('ams.config.created.at', (new Date()).toISOString().split('T')[0] );
             ams.Utils.startApp(generalConfig);
           }else{
             console.log("HTTP-Error: " + response.status + " on biome changes");
@@ -108,20 +114,22 @@ ams.Utils = {
       ams.Auth.resetWorkspace();
 
       // Used to load from local storage
-      if(localStorage.getItem('biome.config.'+selectedBiome)!==null
-          && localStorage.getItem('config.created.at')!==null){
+      if(localStorage.getItem('ams.biome.config.'+selectedBiome)!==null
+          && localStorage.getItem('ams.config.created.at')!==null
+          && localStorage.getItem('ams.config.appversion')!==null){
         
         // the local storage expiration date 
-        let createdAt=new Date(localStorage.getItem('config.created.at')+'T03:00:00.000Z');
+        let createdAt=new Date(localStorage.getItem('ams.config.created.at')+'T03:00:00.000Z');
         let nowDate=new Date((new Date()).toISOString().split('T')[0]+'T03:00:00.000Z');
-        if(createdAt<nowDate){
+        let appVersion=localStorage.getItem('ams.config.appversion');
+        if(createdAt<nowDate || appVersion!=ams.Config.appVersion){
           for (let p in ams.BiomeConfig) {
             if(ams.BiomeConfig.hasOwnProperty(p))
-              localStorage.removeItem('biome.config.'+p);
+              localStorage.removeItem('ams.biome.config.'+p);
           }
           getConfigByBiome(selectedBiome);
         }else{
-          let biomeConfiguration=JSON.parse(localStorage.getItem('biome.config.'+selectedBiome));
+          let biomeConfiguration=JSON.parse(localStorage.getItem('ams.biome.config.'+selectedBiome));
           ams.Utils.startApp(biomeConfiguration);
         }
       }else{

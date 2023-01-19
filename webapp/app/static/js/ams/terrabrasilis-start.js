@@ -23,11 +23,14 @@ $(document).ready(function () {
   
   /** display app version on footer bar */
   let versionDiv = $('#version');
+  let appVersion = '1.0.0';
   if(versionDiv.length>0){
     // TODO: enable this code if a file with tag version is present
     $.getJSON('static/PROJECT_VERSION', function(data) {
-        let version = data.version;
-        versionDiv.append('<a href="https://github.com/terrabrasilis/ams/releases/tag/'+version+'" target="_blank" title="Veja este release no GitHub">'+version+'</a>');
+        appVersion = data.version;
+        ams.Config.appVersion=appVersion;
+        localStorage.setItem('ams.config.appversion', appVersion );
+        versionDiv.append('<a href="https://github.com/terrabrasilis/ams/releases/tag/'+appVersion+'" target="_blank" title="Veja este release no GitHub">'+appVersion+'</a>');
         if(ams.Utils.isHomologationEnvironment()){
           $('#header-panel').append("<span style='font-size:18px;font-weight:600;color:#ffff00;'> (Versão de homologação)</span>");
         }
