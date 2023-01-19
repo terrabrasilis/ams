@@ -20,9 +20,17 @@ def get_config():
 def get_biome_config(endpoint):
     if endpoint != 'config':
         return "Bad endpoint", 404
-    args = request.args
+    
     try:
+        args = request.args
         appBiome = args["targetbiome"]
+    except KeyError as ke:
+        #exception KeyError
+        #Raised when a mapping (dictionary) key is not found in the set of existing keys.
+        # HTTP 412: Precondition Failed
+        return "Input parameters are missing: {0}".format(str(ke)), 412
+
+    try:
         dburl = Config.DB_CERRADO_URL if (appBiome=='Cerrado') else Config.DB_AMAZON_URL
         ctrl = AppConfigController(dburl)
         sui=ctrl.read_spatial_units()
@@ -66,7 +74,7 @@ def get_profile(endpoint):
     
     try:
         spatial_unit_profile = SpatialUnitProfile(Config, params)
-        onlyOneLandUse=(params['landUse']).find(',')
+        onlyOneLandUse=(land_use).find(',')
         # to avoid unnecessary function call
         if(onlyOneLandUse<0):
             return json.dumps(
