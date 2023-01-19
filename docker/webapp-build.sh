@@ -43,4 +43,7 @@ if [[ ! "$1" = "silent" ]]; then
         echo "Nice, sending the image!"
         docker push "terrabrasilis/ams-webapp:${TAG_VERSION}"
     fi
+else
+    echo "Sending the image to Docker HUB..."
+    docker push "terrabrasilis/ams-webapp:${TAG_VERSION}"
 fi
