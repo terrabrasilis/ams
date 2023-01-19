@@ -56,7 +56,7 @@ COPY webapp/ $INSTALL_PATH/webapp/
 ARG APP_BUILD_VERSION="1.0.0"
 RUN echo "export PYTHONPATH=\"${INSTALL_PATH}\"" >> "${INSTALL_PATH}/webapp/.env" \
     && echo "export TZ=America/Sao_Paulo" >> "${INSTALL_PATH}/webapp/.env" \
-    && echo "var appVersion='${APP_BUILD_VERSION';" > "${INSTALL_PATH}/webapp/app/static/js/ams/app.version.js"
+    && echo "var appVersion='${APP_BUILD_VERSION}';" > "${INSTALL_PATH}/webapp/app/static/js/ams/app.version.js"
 
 # Script to run on start server
 ADD docker/webapp/docker-entrypoint.sh $INSTALL_PATH/bin/docker-entrypoint.sh
