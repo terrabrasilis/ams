@@ -205,6 +205,20 @@ L.Control.GroupedLayers = L.Control.extend({
     return btFragment;
   },
 
+  _createRatioWeightButton: function() {
+
+    let bt='<button title=\'Peso das unidades espaciais priorizadas sobre o total.\''
+    +' class="btn btn-primary-p landuse-bt lu-all-bt"'
+    +' id="ratio-weight-button">'
+    +'<i class="material-icons profile-bt-icon">check_box</i>Criticidade</button>';
+
+    var btFragment = document.createElement('div');
+    btFragment.className = "ratioweight";
+    btFragment.innerHTML = bt;
+
+    return btFragment;
+  },
+
   _addItem: function (obj) {
     // for initial state of checked control, use the ams.Config.defaultFilters defines...
 
@@ -284,6 +298,8 @@ L.Control.GroupedLayers = L.Control.extend({
         if(obj.group.name=="UNIDADE ESPACIAL"){
           let pctrl=this._getPriorityControlDOM();
           container.appendChild(pctrl);
+          let btfrag=this._createRatioWeightButton();
+          container.appendChild(btfrag);
         }
 
         if(obj.group.name=="CATEGORIA FUNDIÁRIA"){

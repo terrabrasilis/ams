@@ -385,6 +385,20 @@ ams.App = {
 		$("#profile-"+ams.BiomeConfig["Amazônia"].defaultWorkspace+"-button").click(profileBiomeClick);
 		$("#profile-"+ams.BiomeConfig["Cerrado"].defaultWorkspace+"-button").click(profileBiomeClick);
 
+		let ratioWeightClick=function() {
+			let conf={};
+            conf["className"]=ams.App._suViewParams.classname;
+            conf["spatialUnit"]=ams.App._currentSULayerName.split(":")[1];
+            conf["startDate"]=ams.App._dateControl.startdate;
+            conf["tempUnit"]=ams.App._currentTemporalAggregate;
+            conf["suName"]=ams.Config.biome;
+			conf["landUse"]=ams.App._landUseList.join(',');
+			ams.App.displayRatioWeightGraph(conf);
+			return false;
+		};
+
+		$("#ratio-weight-button").click(ratioWeightClick);
+
 		let landUseFilterClick=function() {
 			if(ams.App._landUseList.length==0){
 				ams.App._resetMap("O filtro deve incluir ao menos uma categoria fundiária. A solicitação não foi concluída.");
@@ -760,7 +774,7 @@ ams.App = {
 			if (response&&response.ok) {
 				let profileJson = await response.json();
 				document.getElementById("txt3a").innerHTML = profileJson['FormTitle'];
-				Plotly.react('AreaPerYearTableClass', JSON.parse(profileJson['AreaPerYearTableClass']), {});
+				Plotly.react('mainBarChart', JSON.parse(profileJson['mainBarChart']), {});
 				Plotly.purge('AreaPerLandUse');
 				if(ams.App._landUseList.length>1)
 					Plotly.react('AreaPerLandUse', JSON.parse(profileJson['AreaPerLandUse']), {});
@@ -784,6 +798,42 @@ ams.App = {
 			}else{
 				let emsg="";
 				if(response) emsg="HTTP-Error: " + response.status + " on spatial_unit_profile";
+				else emsg="O servidor está indisponível ou sua internet está desligada.";
+				
+				console.log(emsg);
+				$('.toast').toast('show');
+				$('.toast-body').html("Encontrou um erro na solicitação ao servidor.<br />"+emsg);
+			}
+		}
+		if (jsConfig.className != 'null'){
+			if(ams.App._landUseList.length>0){
+				$("#loading_data_info").css('display','block');
+				getGraphics(jsConfig);
+			}else{
+				ams.App._resetMap("O filtro deve incluir ao menos uma categoria fundiária. A solicitação não foi concluída.");
+			}
+		}
+	},
+
+	displayRatioWeightGraph: function( jsConfig ) {
+		async function getGraphics(  jsConfig ) {
+			jsConfig["unit"]=ams.Map.PopupControl._unit;
+			jsConfig["targetbiome"]=ams.Config.biome;
+			let jsConfigStr = JSON.stringify(jsConfig);
+			let response = await fetch("api/spatial/unit/ratio_weight?sData=" + jsConfigStr).catch(
+				()=>{
+					console.log("The backend service may be offline or your internet connection has been interrupted.");
+				}
+			);
+			$("#loading_data_info").css('display','none')
+			if (response&&response.ok) {
+				let profileJson = await response.json();
+				document.getElementById("txt3a").innerHTML = profileJson['FormTitle'];
+				Plotly.react('mainBarChart', JSON.parse(profileJson['mainBarChart']), {});
+				$('#modal-container-general-info').modal();
+			}else{
+				let emsg="";
+				if(response) emsg="HTTP-Error: " + response.status + " on ratio_weight";
 				else emsg="O servidor está indisponível ou sua internet está desligada.";
 				
 				console.log(emsg);
