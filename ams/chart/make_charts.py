@@ -2,6 +2,8 @@
 from dataclasses import replace
 from unicodedata import category
 from plotly.graph_objs import layout
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from psycopg2 import connect
 import pandas as pd
 import plotly
@@ -11,7 +13,7 @@ import json
 import re
 from dateutil.relativedelta import relativedelta
 
-class SpatialUnitProfile():
+class MakeCharts():
     """
     Data extraction to generate the profile graph panel for a spatial unit.
 
@@ -74,7 +76,7 @@ class SpatialUnitProfile():
         SELECT string_agg('"'||dataname||'":{"description":"'||description||'", "key":"'||as_attribute_name||'"}', ', ')
         FROM public.spatial_units
         """
-        suinfo = self.execute_sql(sql=sql)
+        suinfo = self._execute_sql(sql=sql)
         self._tableinfo = json.loads("{"+suinfo+"}")
 
         self._classes = pd.DataFrame(
@@ -134,23 +136,23 @@ class SpatialUnitProfile():
         elif temporal_unit == '3m': return (start_date_date + relativedelta(days = -90)).strftime('%Y-%m-%d')
         elif temporal_unit == '1y': return (start_date_date + relativedelta(days = -365)).strftime('%Y-%m-%d')
 
-    def period_where_clause(self):
+    def _period_where_clause(self):
         return f" date > '{self._start_period_date}' and date <= '{self._start_date}'"
 
-    def __get_period_settings(self):
+    def _get_period_settings(self):
         if self._temporal_unit == '7d': return 7,'day',self._query_limit*7
         elif self._temporal_unit == '15d': return 15,'day',self._query_limit*15
         elif self._temporal_unit == '1m': return 30,'day',self._query_limit*30
         elif self._temporal_unit == '3m': return 90,'day',self._query_limit*90
         elif self._temporal_unit == '1y': return 365,'day',self._query_limit*365
 
-    def __get_temporal_unit_sql(self):
+    def _get_temporal_unit_sql(self):
         # local round factor used into SQL to read data from database
         round_factor=4
         if(self._classname=='AF'):
             round_factor=0
         
-        interval_val,period_unit,period_series=self.__get_period_settings()
+        interval_val,period_unit,period_series=self._get_period_settings()
         calendar=f"""
         SELECT ((ld::date - interval '{interval_val} {period_unit}') + interval '1 day')::date as fd,
         ld::date as ld
@@ -178,17 +180,7 @@ class SpatialUnitProfile():
 
         return group_by_periods
 
-    def get_temporal_unit_sql(self):
-        delta = datetime.strptime(self._start_date, '%Y-%m-%d') - datetime.strptime(self._start_period_date, '%Y-%m-%d')
-        for key, value in self._temporal_unit_sql.items():
-            if delta.days <= key:
-                where_if="" if(self._name=='*') else f"""b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}' AND"""
-                where = f"{where_if} " \
-                        f"classname = '{self._classname}' " \
-                        f"and date <= '{self._start_date}'"
-                return f"select * from ({value.format(self._spatial_unit,where)}) a order by 1"
-
-    def execute_sql(self, sql):
+    def _execute_sql(self, sql):
         curr = None
         try:
             curr = self._conn.cursor()
@@ -200,24 +192,24 @@ class SpatialUnitProfile():
         finally:
             if(not self._conn.closed): self._conn.close()
 
-    def resultset_as_dataframe(self, sql):
+    def _resultset_as_dataframe(self, sql):
         return pd.read_sql(sql, self._dburl)
 
-    def __area_by_period(self):
-        df = self.resultset_as_dataframe(self.__get_temporal_unit_sql())
+    def _area_by_period(self):
+        df = self._resultset_as_dataframe(self._get_temporal_unit_sql())
         df.columns = ['Período', 'Data de referência', self.default_col_name]
         return df
 
-    def area_per_land_use(self):
+    def _area_per_land_use(self):
         where_if="" if(self._name=='*') else f"""b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}' AND"""
 
-        df = self.resultset_as_dataframe(
+        df = self._resultset_as_dataframe(
             f"select a.name,coalesce(resultsum, 0) as resultsum from land_use a "
             f"left join "
             f"(select a.land_use_id, sum(a.{self.default_column}) as resultsum from \"{self._spatial_unit}_land_use\" a "
             f"inner join \"{self._spatial_unit}\" b on a.suid = b.suid "
             f"where {where_if} "
-            f" {self.period_where_clause()} "
+            f" {self._period_where_clause()} "
             f"and classname = '{self._classname}' "
             f"and a.land_use_id = ANY (array[{self.land_use}]) "
             f"group by a.land_use_id) b on a.id = b.land_use_id "
@@ -227,9 +219,32 @@ class SpatialUnitProfile():
         df.columns = ['Categoria Fundiária', self.default_col_name]
         return df
 
-    def form_title(self):
+    def _area_per_spatial_units(self):
         """
-        gets the main title for profile form
+        get spatial units and relative areas for each, sorted by major values
+        used at ratio weight chart
+        """
+
+        df = self._resultset_as_dataframe(
+            f"select suid, coalesce(resultsum, 0) as resultsum "
+            f"from "
+            f"( "
+            f"	select a.suid, sum(a.{self.default_column}) as resultsum "
+            f"	from \"{self._spatial_unit}_land_use\" a "
+            f"	inner join \"{self._spatial_unit}\" b on a.suid = b.suid "
+            f"	where {self._period_where_clause()} "
+            f"	and classname = '{self._classname}' "
+            f"	and a.land_use_id = ANY (array[{self.land_use}]) "
+            f"	group by a.suid "
+            f") tb1 "
+            f"ORDER BY 2 DESC "
+        )
+        df.columns = ['Unidade Espacial', self.default_col_name]
+        return df
+
+    def get_title4profile(self):
+        """
+        gets the main title for profile charts
         """
         indicador=self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
         last_date=self.format_date(self._start_date)
@@ -248,11 +263,19 @@ class SpatialUnitProfile():
 
         return title
 
+    def get_title4ratio(self):
+        """
+        gets the main title for ratio weight chart
+        """
+        title=""
+
+        return title
+
     def fig_area_per_land_use(self):
         """
         Pie chart structs to construct chart in frontend with plotly
         """
-        df = self.area_per_land_use()
+        df = self._area_per_land_use()
         indicador=self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
         unid_temp=self._temporal_units[self._temporal_unit]
         total_area = df[self.default_col_name].sum()
@@ -316,7 +339,7 @@ class SpatialUnitProfile():
                     prev=self.get_previous_date(ref_date=df['Data de referência'][i])
             return index
 
-        df = self.__area_by_period()
+        df = self._area_by_period()
         # set bar colors
         color_discrete_sequence = ['#609cd4'] * len(df)
         # highlight the bars
@@ -392,4 +415,67 @@ class SpatialUnitProfile():
             ticks='outside'
         )
         graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+        return graphJSON
+
+
+
+    # WARNING
+    def fig_area_by_ratio_weight(self):
+        """
+        https://plotly.com/python/multiple-axes/
+        
+        Note: At this time, Plotly Express does not support multiple Y axes on a single figure.
+        To make such a figure, use the make_subplots() function in conjunction with graph objects as documented below.
+        
+        """
+
+        # get spatial units and relative areas for each sorted by major values
+        df = self._area_per_spatial_units()
+
+        indicador=self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
+        unid_temp=self._temporal_units[self._temporal_unit]
+        chart_title=f"""Evolução temporal de <b>{indicador}</b> para o período <b>{unid_temp}</b>."""
+
+        aBarChart = px.bar(df, x='Unidade Espacial', y=self.default_col_name, title=chart_title)
+
+        aBarChart.update_layout(
+            paper_bgcolor='#f3f9f8',
+            plot_bgcolor='#f3f9f8',
+            height=350,
+            width=700,
+            xaxis=layout.XAxis(
+                linecolor='#000',
+                tickcolor='#C0C0C0',
+                ticks='outside',
+                type='category',
+                tickangle=45,
+                title_text="Lista de todas as unidades espaciais"),
+            showlegend=False,
+            hovermode="x unified",
+            margin=dict(
+                l=0,
+                r=0,
+                b=0,
+                t=60,
+                pad=0
+            ),
+            modebar=dict(
+                remove="zoomout"
+            )
+        )
+        aBarChart.update_yaxes(
+            rangemode= "tozero",
+            linecolor='#000',
+            tickcolor='#C0C0C0',
+            ticks='outside'
+        )
+
+        aLineChart = go.Scatter(x=df['Unidade Espacial'], y=df[self.default_col_name], mode = 'lines')
+
+        # Create figure with secondary y-axis
+        fig = make_subplots(specs=[[{"secondary_y": True}]])
+        #fig.add_traces(aBarChart)
+        fig.add_traces(aLineChart,secondary_y=True)
+
+        graphJSON = json.dumps(aBarChart, cls=plotly.utils.PlotlyJSONEncoder)
         return graphJSON
