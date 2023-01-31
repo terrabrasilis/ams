@@ -479,3 +479,35 @@ class MakeCharts():
 
         graphJSON = json.dumps(aBarChart, cls=plotly.utils.PlotlyJSONEncoder)
         return graphJSON
+
+
+    def get_csv_to_composite_chart(self):
+        """
+        -- get mun percents
+        WITH for_each_su AS (
+            select b.nome || ':' || b.cod_ibge as name, coalesce(sum(a.area),0) as resultsum
+                from amz_municipalities_land_use a 
+                inner join amz_municipalities b on a.suid = b.suid 
+                where classname = 'DS'
+                group by 1 
+        ), for_all as (
+            select SUM(resultsum) as total from for_each_su
+        ), results as (
+            select tb1.name, ROUND((tb1.resultsum*100/tb2.total)::numeric, 4) as perc
+            from for_each_su tb1, for_all tb2
+        )
+        select * FROM results
+
+
+        -- get mun areas
+        select name, ROUND( coalesce(resultsum, 0)::numeric, 2) as resultsum 
+            from 
+            (
+                select b.nome || ':' || b.cod_ibge as name, sum(a.area) as resultsum
+                from amz_municipalities_land_use a 
+                inner join amz_municipalities b on a.suid = b.suid 
+                where classname = 'DS'
+                group by 1 
+            ) tb1 
+        ORDER BY 2 DESC
+        """
