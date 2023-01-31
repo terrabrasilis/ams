@@ -133,7 +133,7 @@ class ClassifyByLandUse:
         SELECT a.id, a.land_use_id, a.num_pixels, d.name as classname, b.date, b.geom as geometry
         FROM deter_land_structure a 
         INNER JOIN 
-        (SELECT tb.gid, tb.date, ST_PointOnSurface(tb.geom), tb.classname
+        (SELECT tb.gid, tb.date, ST_PointOnSurface(tb.geom) as geom, tb.classname
         FROM (
             SELECT gid, date, classname, geom
             FROM deter.deter_auth
