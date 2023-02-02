@@ -107,7 +107,7 @@ class DeterDaily:
         if(self._alldata):
             union="""
             UNION
-            SELECT gid||'_h' as gid, classname, date, areamunkm, geom
+            SELECT gid, classname, date, areamunkm, geom
             FROM deter.deter_history
             """
         create=f"""

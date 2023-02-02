@@ -138,7 +138,7 @@ class ClassifyByLandUse:
             SELECT gid, date, classname, geom
             FROM deter.deter_auth
             UNION
-            SELECT gid||'_h' as gid, date, classname, geom
+            SELECT gid, date, classname, geom
             FROM deter.deter_history
         ) as tb) b 
         ON a.gid = b.gid
