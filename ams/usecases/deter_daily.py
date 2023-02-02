@@ -66,7 +66,8 @@ class DeterDaily:
             0::integer as continuo, 0::numeric as velocidade,
             0::integer as deltad, ''::character varying(254) as est_fund,
             ''::character varying(254) as dominio, ''::character varying(254) as tp_dominio
-            FROM public.{table} as deter;
+            FROM public.{table} as deter, deter.biome_border as biome
+            WHERE ST_Within(deter.geom, biome.geom);
             """
             update=f"""
             UPDATE deter.{table}
