@@ -96,3 +96,13 @@ input.threshold{
 .alert{
   font-size: 1rem;
 }
+.dim-logos{
+  width: auto;
+  height: 30px;
+  background-color: #ffffff;
+  border-radius: 2px;
+}
+.partners{
+  display: flex;
+  visibility: hidden;
+}

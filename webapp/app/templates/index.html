@@ -168,8 +168,12 @@
 								Por exemplo, ações restritivas ou de incentivo a municípios críticos.
 								</div>
 								<div class="alert alert-secondary">
-								A ferramenta Terrabrasilis Sala de Situação é derivada de uma colaboração científica entre pesquisadores do INPE e Universidade Federal de Minas Gerais (UFMG)
-								com a Secretaria de Meio Ambiente e Sustentabilidade do Pará (SEMAS-PA) e acreditamos que seja útil para todos os demais atores.
+									A ferramenta Terrabrasilis Sala de Situação é derivada de colaboração entre pesquisadores do INPE e Universidade Federal de Minas Gerais (UFMG),
+									Secretaria de Meio Ambiente e Sustentabilidade do Pará (SEMAS-PA) e Centro Nacional de Monitoramento e Informações Ambientais do IBAMA (CENIMA/IBAMA).
+								</div>
+								<div class="alert alert-warning">
+									Os valores agregados, apresentados neste painel, podem sofrer pequenas variações quando
+									comparados aos demais painéis do TerraBrasilis devido às diferenças metodológicas no processamento dos dados.
 								</div>
 								<div class="alert alert-dark">
 									Os dados da Sala de Situação s&atilde;o p&uacute;blicos, abertos e gratuitos, sob a seguinte licen&ccedil;a:
@@ -265,6 +269,13 @@
 
 				<!--Footer-->
 				<footer class="footer">
+					<div class="partners">
+						<a class="nav-item nav-link" href="https://www.gov.br/inpe/pt-br"><img class="dim-logos" src="{{ url_for('static', filename='imgs/inpe.png') }}"></a>
+						<a class="nav-item nav-link" href="http://www.ibama.gov.br/component/tags/tag/mma"><img class="dim-logos" src="{{ url_for('static', filename='imgs/ibama-mma.png') }}"></a>
+						<a class="nav-item nav-link" href="https://www.semas.pa.gov.br/"><img class="dim-logos" src="{{ url_for('static', filename='imgs/semas-pa-color.png') }}"></a>
+						<a class="nav-item nav-link" href="https://ufmg.br/"><img class="dim-logos" src="{{ url_for('static', filename='imgs/ufmg.jpg') }}"></a>
+					</div>
+					<!-- <a href="#" title="Parcerias institucionais"><i class="material-icons iconmenu">movie</i><span id="info-media">Parceiros</span></a> -->
 					<p><a href="http://terrabrasilis.dpi.inpe.br"> TerraBrasilis</a>&nbsp;<a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Licença Creative Commons" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/80x15.png" /></a></p>
 					<div class="version_style" id="version"></div>
 				</footer>
