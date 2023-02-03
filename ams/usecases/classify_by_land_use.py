@@ -130,15 +130,15 @@ class ClassifyByLandUse:
         print('Insert DETER data in land use tables for each spatial units.')
         cur = self._conn.cursor()
         land_structure = gpd.GeoDataFrame.from_postgis(f''' 
-        SELECT a.id,a.land_use_id,a.num_pixels,d.name as classname,b.date,b.geom as geometry
+        SELECT a.id, a.land_use_id, a.num_pixels, d.name as classname, b.date, b.geom as geometry
         FROM deter_land_structure a 
         INNER JOIN 
-        (SELECT tb.gid, tb.date, tb.geom, tb.classname
+        (SELECT tb.gid, tb.date, ST_PointOnSurface(tb.geom) as geom, tb.classname
         FROM (
             SELECT gid, date, classname, geom
             FROM deter.deter_auth
             UNION
-            SELECT gid||'_h' as gid, date, classname, geom
+            SELECT gid, date, classname, geom
             FROM deter.deter_history
         ) as tb) b 
         ON a.gid = b.gid

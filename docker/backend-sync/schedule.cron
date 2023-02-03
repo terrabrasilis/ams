@@ -1,2 +1,2 @@
 # m h  dom mon dow   command
-00 07 * * * DT=$(date '+%Y-%m-%d') && /usr/local/cron_exec.sh >> /usr/local/data/cron_exec_${DT}.log 2>&1
+30 05 * * * DT=$(date '+%Y-%m-%d') && /usr/local/cron_exec.sh >> /usr/local/data/cron_exec_${DT}.log 2>&1
