@@ -47,12 +47,6 @@
 				<div class="navbar-nav">
 					<a class="nav-item nav-link" href="#" id="header-panel">| Sala de Situação</a>
 				</div>
-				<div class="navbar-nav">
-					<a class="nav-item nav-link" href="https://www.gov.br/inpe/pt-br"><img class="dim-logos" src="{{ url_for('static', filename='imgs/inpe-mcti-gov.png') }}"></a>
-					<a class="nav-item nav-link" href="http://www.ibama.gov.br/component/tags/tag/mma"><img class="dim-logos" src="{{ url_for('static', filename='imgs/ibama-mma.png') }}"></a>
-					<a class="nav-item nav-link" href="https://www.semas.pa.gov.br/"><img class="dim-logos" src="{{ url_for('static', filename='imgs/semas-pa-color.png') }}"></a>
-					<a class="nav-item nav-link" href="https://ufmg.br/"><img class="dim-logos" src="{{ url_for('static', filename='imgs/ufmg.jpg') }}"></a>
-				</div>
 				<ul id="navigationBarUL" class="navbar-nav navbar-right analises">
 					<li class="nav-item dropdown">
 						<a aria-expanded="true" aria-haspopup="true" class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="navbarDropdownMenuLink" role="button"> 
@@ -275,6 +269,13 @@
 
 				<!--Footer-->
 				<footer class="footer">
+					<div class="partners">
+						<a class="nav-item nav-link" href="https://www.gov.br/inpe/pt-br"><img class="dim-logos" src="{{ url_for('static', filename='imgs/inpe.png') }}"></a>
+						<a class="nav-item nav-link" href="http://www.ibama.gov.br/component/tags/tag/mma"><img class="dim-logos" src="{{ url_for('static', filename='imgs/ibama-mma.png') }}"></a>
+						<a class="nav-item nav-link" href="https://www.semas.pa.gov.br/"><img class="dim-logos" src="{{ url_for('static', filename='imgs/semas-pa-color.png') }}"></a>
+						<a class="nav-item nav-link" href="https://ufmg.br/"><img class="dim-logos" src="{{ url_for('static', filename='imgs/ufmg.jpg') }}"></a>
+					</div>
+					<!-- <a href="#" title="Parcerias institucionais"><i class="material-icons iconmenu">movie</i><span id="info-media">Parceiros</span></a> -->
 					<p><a href="http://terrabrasilis.dpi.inpe.br"> TerraBrasilis</a>&nbsp;<a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Licença Creative Commons" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/80x15.png" /></a></p>
 					<div class="version_style" id="version"></div>
 				</footer>
