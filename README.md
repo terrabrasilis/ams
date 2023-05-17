@@ -64,7 +64,7 @@ COMMENT ON DATABASE "AMS" IS 'The new AMS database';
 
 ### Dockerize backend
 
-still missing...
+See the [README.md](./docker/README.md)
 
 ## Frontend
 
@@ -81,6 +81,9 @@ I use VSCode for development environment. The steps are:
 configuration example to help with the debugging process.
 ```json
 {
+    // Use o IntelliSense para saber mais sobre os atributos possíveis.
+    // Focalizar para exibir as descrições dos atributos existentes.
+    // Para obter mais informações, acesse: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
@@ -90,9 +93,9 @@ configuration example to help with the debugging process.
             "module": "flask",
             "env": {
                 "GEOSERVER_URL": "http://localhost/geoserver",
-                "DATABASE_URL": "postgresql://postgres:postgres@192.168.15.49:5444/AMS",
-                "DETER_DATABASE_URL": "postgresql://postgres:postgres@192.168.15.49:5444/DETERB",
-                "FLASK_APP": "webapp/wsgi.py",
+                "DB_CERRADO_URL": "postgresql://postgres:postgres@150.163.17.103:5444/CES",
+                "DB_AMAZON_URL": "postgresql://postgres:postgres@150.163.17.103:5444/AMS2",
+                "FLASK_APP": "webapp/main.py",
                 "FLASK_ENV": "development",
                 "PYTHONPATH": "."
             },
