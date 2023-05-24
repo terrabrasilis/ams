@@ -307,13 +307,13 @@ class SpatialUnitProfile():
 
         def getIndexes(df):
             refDate=df.tail(1).values[0][1]
-            prev=refDate.strftime('%Y-%m')
+            prev=(refDate + relativedelta(days = -365))
 
             index=[]*len(df['Data de referência'])
             for i in range(len(df['Data de referência'])-1,-1,-1):
-                if prev == (df['Data de referência'][i]).strftime('%Y-%m'):
+                if prev >= (df['Data de referência'][i]):
                     index.append(i)
-                    prev=self.get_previous_date(ref_date=df['Data de referência'][i])
+                    prev=(refDate + relativedelta(days = -365))
             return index
 
         df = self.__area_by_period()
