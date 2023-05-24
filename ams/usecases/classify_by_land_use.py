@@ -53,6 +53,8 @@ class ClassifyByLandUse:
         else:
             # here, we expect deter.tmp_data to only have DETER data coming from the current table
             cur.execute("DELETE FROM deter_land_structure WHERE gid like '%_curr';")
+            # update sequence value from the mas of table id
+            cur.execute("SELECT setval('public.deter_land_structure_id_seq', (SELECT MAX(id) FROM public.deter_land_structure)::integer, true);")
         
         amazon_class = rasterio.open(f'{self._datapath}/{self._land_use_classes_fname}')
         deter = gpd.GeoDataFrame.from_postgis(f'SELECT gid, geom FROM {self._deter_table}', self._conn)
