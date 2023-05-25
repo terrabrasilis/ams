@@ -22,4 +22,14 @@ class Config:
 	if os.path.exists(DATABASE_URL):
 		DATABASE_URL = open(DATABASE_URL, 'r').read()
 	
+	# used for ETL of IBAMA risk
+	FTP_HOST = os.environ.get('FTP_HOST') or "ftp.com.br"
+	FTP_PORT = os.environ.get('FTP_PORT') or "21"
+	FTP_PATH = os.environ.get('FTP_PATH') or "/"
+	FTP_USER = os.environ.get('FTP_USER') or "user"
+	FTP_PASS = os.environ.get('FTP_PASS') or "secret_password"
+	# local where write the file copied from ftp
+	RISK_OUTPUT_PATH = os.environ.get('RISK_OUTPUT_PATH') or "/"
+	RISK_INPUT_FILE = os.environ.get('RISK_INPUT_FILE') or "Risk_areas_AMZL.tif"
+	
 	
