@@ -360,6 +360,77 @@ CREATE INDEX IF NOT EXISTS active_fires_view_date_idx
     (view_date ASC NULLS LAST);
 
 -- -------------------------------------------------------------------------
+-- This session is used for the Risk IBAMA model
+-- -------------------------------------------------------------------------
+
+-- SCHEMA: risk
+
+-- DROP SCHEMA IF EXISTS risk ;
+
+CREATE SCHEMA IF NOT EXISTS risk AUTHORIZATION postgres;
+
+-- Table: risk.etl_log_ibama
+
+-- DROP TABLE IF EXISTS risk.etl_log_ibama;
+
+CREATE TABLE IF NOT EXISTS risk.etl_log_ibama
+(
+    id serial NOT NULL,
+    file_name character varying,
+    process_status integer,
+    process_message character varying,
+    last_file_date date NOT NULL,
+    created_at date NOT NULL DEFAULT now()::date,
+    CONSTRAINT etl_log_ibama_id_pk PRIMARY KEY (id)
+)
+TABLESPACE pg_default;
+
+-- Table: risk.risk_ibama_date
+
+-- DROP TABLE IF EXISTS risk.risk_ibama_date;
+
+CREATE TABLE IF NOT EXISTS risk.risk_ibama_date
+(
+    id serial NOT NULL,
+    expiration_date date,
+    created_at date NOT NULL DEFAULT now()::date,
+    CONSTRAINT risk_ibama_date_id_pk PRIMARY KEY (id)
+)
+TABLESPACE pg_default;
+
+-- Table: risk.weekly_ibama_1km
+
+-- DROP TABLE IF EXISTS risk.weekly_ibama_1km;
+
+CREATE TABLE IF NOT EXISTS risk.weekly_ibama_1km
+(
+    id serial NOT NULL,
+    date_id integer,
+    risk double precision,
+    geom geometry(Point,4674),
+    CONSTRAINT weekly_ibama_1km_id_pk PRIMARY KEY (id),
+    CONSTRAINT weekly_ibama_1km_date_id_fk FOREIGN KEY (date_id)
+        REFERENCES risk.risk_ibama_date (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+TABLESPACE pg_default;
+
+-- Index: risk_weekly_ibama_1km_geom_idx
+
+-- DROP INDEX IF EXISTS risk.risk_weekly_ibama_1km_geom_idx;
+
+CREATE INDEX IF NOT EXISTS risk_weekly_ibama_1km_geom_idx
+    ON risk.weekly_ibama_1km USING gist
+    (geom);
+
+-- DROP INDEX IF EXISTS risk.risk_weekly_ibama_1km_date_idx;
+
+CREATE INDEX IF NOT EXISTS risk_weekly_ibama_1km_date_idx
+    ON risk.weekly_ibama_1km USING btree
+    (date_id ASC NULLS LAST);
+
+-- -------------------------------------------------------------------------
 -- This session is used for the Land Use model
 -- -------------------------------------------------------------------------
 
