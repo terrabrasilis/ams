@@ -6,3 +6,4 @@ from .initializer import Initializer
 from .classify_by_land_use import ClassifyByLandUse
 from .active_fires import ActiveFires
 from .deter_daily import DeterDaily
+from .ibama_risk import IBAMARisk
