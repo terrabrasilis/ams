@@ -380,7 +380,7 @@ CREATE TABLE IF NOT EXISTS risk.etl_log_ibama
     process_status integer,
     process_message character varying,
     last_file_date date NOT NULL,
-    created_at date NOT NULL DEFAULT now()::date,
+    created_at timestamp with time zone NOT NULL DEFAULT now(),
     CONSTRAINT etl_log_ibama_id_pk PRIMARY KEY (id)
 )
 TABLESPACE pg_default;
@@ -398,36 +398,53 @@ CREATE TABLE IF NOT EXISTS risk.risk_ibama_date
 )
 TABLESPACE pg_default;
 
--- Table: risk.weekly_ibama_1km
+-- Table: risk.matrix_ibama_1km
 
--- DROP TABLE IF EXISTS risk.weekly_ibama_1km;
+-- DROP TABLE IF EXISTS risk.matrix_ibama_1km;
 
-CREATE TABLE IF NOT EXISTS risk.weekly_ibama_1km
+CREATE TABLE IF NOT EXISTS risk.matrix_ibama_1km
+(
+    id serial NOT NULL,
+    geom geometry(Point,4674),
+    CONSTRAINT matrix_ibama_1km_id_pk PRIMARY KEY (id)
+)
+TABLESPACE pg_default;
+
+-- Index: risk_matrix_ibama_1km_geom_idx
+
+-- DROP INDEX IF EXISTS risk.risk_matrix_ibama_1km_geom_idx;
+
+CREATE INDEX IF NOT EXISTS risk_matrix_ibama_1km_geom_idx
+    ON risk.matrix_ibama_1km USING gist
+    (geom);
+
+
+-- Table: risk.weekly_data
+
+-- DROP TABLE IF EXISTS risk.weekly_data;
+
+CREATE TABLE IF NOT EXISTS risk.weekly_data
 (
     id serial NOT NULL,
     date_id integer,
+    geom_id integer,
     risk double precision,
-    geom geometry(Point,4674),
-    CONSTRAINT weekly_ibama_1km_id_pk PRIMARY KEY (id),
-    CONSTRAINT weekly_ibama_1km_date_id_fk FOREIGN KEY (date_id)
+    CONSTRAINT weekly_data_id_pk PRIMARY KEY (id),
+    CONSTRAINT weekly_data_date_id_fk FOREIGN KEY (date_id)
         REFERENCES risk.risk_ibama_date (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
+    CONSTRAINT weekly_data_geom_id_fk FOREIGN KEY (geom_id)
+        REFERENCES risk.matrix_ibama_1km (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
 )
 TABLESPACE pg_default;
 
--- Index: risk_weekly_ibama_1km_geom_idx
+-- DROP INDEX IF EXISTS risk.risk_weekly_data_date_idx;
 
--- DROP INDEX IF EXISTS risk.risk_weekly_ibama_1km_geom_idx;
-
-CREATE INDEX IF NOT EXISTS risk_weekly_ibama_1km_geom_idx
-    ON risk.weekly_ibama_1km USING gist
-    (geom);
-
--- DROP INDEX IF EXISTS risk.risk_weekly_ibama_1km_date_idx;
-
-CREATE INDEX IF NOT EXISTS risk_weekly_ibama_1km_date_idx
-    ON risk.weekly_ibama_1km USING btree
+CREATE INDEX IF NOT EXISTS risk_weekly_data_date_idx
+    ON risk.weekly_data USING btree
     (date_id ASC NULLS LAST);
 
 -- -------------------------------------------------------------------------
