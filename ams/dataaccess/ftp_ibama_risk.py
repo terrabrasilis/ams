@@ -1,6 +1,7 @@
 from os import path
-from psycopg2 import connect
+from psycopg2 import OperationalError, connect
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 import aioftp
 import asyncio
 
@@ -40,19 +41,40 @@ class FtpIBAMARisk:
         
         """
 
+        # FTP connection parameters
         self._host = host
         self._port = port if port else 21
         self._ftp_path = ftp_path
         self._user = user
         self._pass = password
-
-        self._conn = connect(db_url)
+        # database string connection
+        self._db_url = db_url
+        self._conn = None
 
         self._input_file_name = risk_file_name if risk_file_name else 'Risk_areas_AMZL.tif'
         self._output_path = output_path if output_path and path.exists(output_path) else path.join(path.dirname(__file__), '../../data')
         self._output_file_name = f"""weekly_ibama_1km_{datetime.now().strftime("%d_%m_%Y")}.tif"""
-        self._risk_input_table = 'risk.weekly_ibama_1km'
+        self._risk_expiration_table = 'risk.risk_ibama_date'
         self._log_table = 'risk.etl_log_ibama'
+
+    def set_expiration_days(self, ndays:int=7):
+        """
+        Configure the number of days to define the risk forecast due date.
+        Default is seven (7)
+        """
+        # number of days to set the risk forecast due date
+        self._ndays_of_expiration = ndays
+
+    def __get_db_cursor(self):
+        """
+        Gets the database cursor to run queries.
+        
+        Make a connection if you are not connected or if the connection is broken.
+        """
+        if self._conn is None or self._conn.closed>0:
+            self._conn = connect(self._db_url)
+
+        return self._conn.cursor()
 
     async def __get_file(self):
         """
@@ -79,7 +101,7 @@ class FtpIBAMARisk:
                 file_mdate=remote_file_metadata['modify']
                 remote_file_date=datetime(year=int(file_mdate[0:4]), month=int(file_mdate[4:6]), day=int(file_mdate[6:8])).date()
                 last_download_date=self.__get_last_download_date()
-                if remote_file_date > last_download_date:
+                if last_download_date is None or remote_file_date > last_download_date:
                     file_destination=f"""{self._output_path}/{self._output_file_name}"""
                     file_destination=path.abspath(file_destination)
                     await client.download(file_source, file_destination, write_into=True)
@@ -87,26 +109,36 @@ class FtpIBAMARisk:
                         log_msg="Success on download file."
                         status=1
                     else:
-                        log_msg="The file is downloaded but is invalid file."
+                        log_msg="The file is downloaded but is invalid."
                         file_destination=""
                 else:
                     log_msg="There is no new file."
                     file_destination=""
 
+        except OperationalError as e:
+            log_msg=f"Error on database connection. exception_msg: {e.__str__()}"
+            raise e
+        
         except Exception as e:
             log_msg=f"Error on download file from FTP. exception_msg: {e.__str__()}"
             raise e
         
         finally:
+            # close the ftp connection
             client.close()
             self.__write_log2db(log_msg, status, remote_file_date, file_destination)
+            self.__write_expiration_date(status, remote_file_date)
+
+            # clase the database connection if exists
+            if self._conn:
+                self._conn.close()
 
 
     def __get_last_download_date(self):
-
+        dt=None
         sql=f"SELECT last_file_date FROM {self._log_table} WHERE process_status = 1 ORDER BY last_file_date DESC LIMIT 1;"
         try:
-            cur = self._conn.cursor()
+            cur = self.__get_db_cursor()
             cur.execute(sql)
             results=cur.fetchall()
         except Exception as e:
@@ -114,9 +146,7 @@ class FtpIBAMARisk:
             print(e.__str__())
             raise e
         
-        if len(results)==0:
-            dt=datetime(year=2023,month=1,day=1).date()
-        else:
+        if len(results)>0:
             dt=results[0][0]
 
         return dt
@@ -125,10 +155,12 @@ class FtpIBAMARisk:
     def __write_log2db(self, msg:str, status:int, remote_file_date:datetime, output_file_name:str):
 
         dt=remote_file_date.strftime("%Y-%m-%d")
-        sql=f"""INSERT INTO {self._log_table} (file_name, process_status, process_message, last_file_date)
-                VALUES('{output_file_name}', {status}, '{msg}', '{dt}')"""
+        sql=f"""
+        INSERT INTO {self._log_table} (file_name, process_status, process_message, last_file_date)
+        VALUES('{output_file_name}', {status}, '{msg}', '{dt}');
+        """
         try:
-            cur = self._conn.cursor()
+            cur = self.__get_db_cursor()
             cur.execute(sql)
             self._conn.commit()
         except Exception as e:
@@ -137,10 +169,25 @@ class FtpIBAMARisk:
             print(e.__str__())
             raise e
 
+    def __write_expiration_date(self, status:int, remote_file_date:datetime):
+
+        if status==1:
+            dt=(remote_file_date + relativedelta(days = self._ndays_of_expiration)).strftime("%Y-%m-%d")
+            sql=f"""INSERT INTO {self._risk_expiration_table} (expiration_date) VALUES('{dt}')"""
+            try:
+                cur = self.__get_db_cursor()
+                cur.execute(sql)
+                self._conn.commit()
+            except Exception as e:
+                self._conn.rollback()
+                print('Error on write log into database')
+                print(e.__str__())
+                raise e
+
     def execute(self):
         asyncio.run(self.__get_file())
 
 # local test
-# db='postgresql://postgres:postgres@150.163.17.103:5444/AMS2'
+# db='postgresql://postgres:postgres@192.168.15.49:5444/AMS3'
 # ftp = FtpIBAMARisk(db, host="ftp.gov.br", ftp_path="/somedir", user="user", password="pass")
 # ftp.execute()
