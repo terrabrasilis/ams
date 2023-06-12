@@ -26,5 +26,6 @@ if Config.BIOME=='Amazônia':
     riskupdate = IBAMARisk(Config.DATABASE_URL, ftp=ftp)
     riskupdate.execute()
 
-class_deter_polys = ClassifyByLandUse(Config.DATABASE_URL, Config.INPUT_GEOTIFF_FUNDIARY_STRUCTURE, alldata)
-class_deter_polys.execute()
+# land Use classifier
+luc = ClassifyByLandUse(Config.DATABASE_URL, Config.INPUT_GEOTIFF_FUNDIARY_STRUCTURE, alldata)
+luc.execute()
