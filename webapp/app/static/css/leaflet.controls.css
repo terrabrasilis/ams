@@ -15,7 +15,7 @@
 .leaflet-center.leaflet-middle {
   transform: translate(-50%, -50%);
 }
-.leaflet-period-control-form{
+.leaflet-period-control-form {
   background-color: #f8f9facf;
   padding: 4px 0px 4px 6px;
   color: #00796b;
@@ -27,7 +27,7 @@
   justify-content: space-between;
   box-shadow: 0 1px 7px rgba(0, 0, 0, 0.65);
 }
-.leaflet-period-control-info{
+.leaflet-period-control-info {
   font-weight: bold;
   font-size: large;
   padding-bottom: unset;
@@ -36,13 +36,14 @@
   border-bottom: 1px solid #94a97f;
   box-shadow: 0 1px 7px rgba(0, 0, 0, 0.65);
 }
-.period-control{
+
+.period-control {
   font-weight: bold;
   margin-bottom: 0.1rem;
   margin-right: 0.2rem;
   font-size: large;
 }
-.icon-period-control{
+.icon-period-control {
   font-weight: bold !important;
   margin-right: 0.2rem;
   font-size: 28px !important;
@@ -53,11 +54,11 @@
   margin-top: 4px;
   cursor: pointer;
 }
-#datepicker-end{
+#datepicker-end {
   background-color: #dbdbdb;
   color: gray;
 }
-#numdays{
+#numdays {
   border: none;
   background-color: rgb(0, 121, 107);
   color: aliceblue;
@@ -72,4 +73,8 @@
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+}
+
+.periodo-control-oculto {
+  display: none;
 }

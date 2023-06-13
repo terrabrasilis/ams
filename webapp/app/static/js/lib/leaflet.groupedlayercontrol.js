@@ -238,7 +238,45 @@ L.Control.GroupedLayers = L.Control.extend({
         profileBt = this._createProfileBiomeButton(obj.name);
         label.appendChild(profileBt);
       }
-    }else{
+    }
+    else if (obj.group.name == "INDICADOR") {
+      label.appendChild(input);
+      label.appendChild(name);
+    
+      L.DomEvent.on(input, 'click', function() {
+        // Verifica se o radio button "RISCO IBAMA" está selecionado
+        if (obj.name === "RISCO IBAMA") {
+          if (input.checked) {
+            // Oculta o controle temporal
+            var controlContainer = document.querySelector('.leaflet-period-control');
+            controlContainer.style.display = 'none';
+    
+            // Exibe o slider
+            var sliderContainer = document.querySelector('.slider-container');
+            sliderContainer.style.display = 'block';
+          } else {
+            // Exibe o controle temporal
+            var controlContainer = document.querySelector('.leaflet-period-control');
+            controlContainer.style.display = 'block';
+    
+            // Oculta o slider
+            var sliderContainer = document.querySelector('.slider-container');
+            sliderContainer.style.display = 'none';
+          }
+        } else {
+          // Exibe o controle temporal quando qualquer outro radio button for selecionado
+          var controlContainer = document.querySelector('.leaflet-period-control');
+          controlContainer.style.display = 'block';
+    
+          // Oculta o slider quando qualquer outro radio button for selecionado
+          var sliderContainer = document.querySelector('.slider-container');
+          sliderContainer.style.display = 'none';
+        }
+      }, this);
+    }
+        
+    
+    else{
       label.appendChild(input);
       label.appendChild(name);
     }
@@ -321,6 +359,7 @@ L.Control.GroupedLayers = L.Control.extend({
         title='Aplica um filtro com base nas classes dos dados do DETER e focos do Programa Queimadas, sendo:\n';
         for (let index = 0; index < ams.App._appClassGroups.groups.length; index++) {
           const group = ams.App._appClassGroups.groups[index];
+          console.log(group);
           title+=' - '+group.name+': '+group.classes.join(', ')+';\n';
         }
         break;

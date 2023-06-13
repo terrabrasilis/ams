@@ -28,6 +28,7 @@
 	<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/leaflet.groupedlayercontrol.min.css')}}"/>
 	<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/Leaflet.Coordinates-0.1.5.min.css')}}"/>
 	<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/leaflet.controls.min.css')}}"/>
+	<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/slider.min.css')}}"/>
 	<!-- Scrollbar Custom CSS -->
 	<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/lib/jquery/jquery-ui.min.css')}}"/>
 	<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/lib/jquery/plugin/jquery.mCustomScrollbar.min.css')}}"/>
@@ -96,7 +97,7 @@
 
 	<!-- area util central onde deverao ser colocados os componentes da aplicação -->
 	<div class="container-fluid" id="panel_container">
-
+		{% include 'slider.html' %}
 		<div class="loading-data" id="loading_data_info">
 			<img src="{{ url_for('static', filename='imgs/loading_map.gif') }}" alt="loading gif when waiting data" />
 		</div>
@@ -303,6 +304,7 @@
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/leaflet.wms.min.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/app.min.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/leaflet.period.control.min.js')}}"></script>
+	<script type="text/javascript" src="{{url_for('static', filename='js/ams/slider.min.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/period.handler.min.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/lib/Leaflet.Coordinates-0.1.5.min.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/lib/Leaflet.controls.position.min.js')}}"></script>
