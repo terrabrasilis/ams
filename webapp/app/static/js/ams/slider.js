@@ -6,7 +6,6 @@ slider.addEventListener("input", function() {
   var position = Math.round(this.value);
   this.value = position;
   output.innerHTML = values[position];
-  console.log("Valor: " + output.innerHTML);
   updateSliderValue(position);
 });
 
