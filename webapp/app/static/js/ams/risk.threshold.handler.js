@@ -5,11 +5,12 @@ ams.RiskThresholdHandler = {
     _control: null,
 
     init: function(map){
-        if(this._control) return;
-        
-        this._control = L.control.RiskThresholdHandler({
-            range:this._sliderRange
-        }).addTo(map);
+        if(!this._control) {
+            this._control = L.control.RiskThresholdHandler({
+                range:this._sliderRange
+            });
+        }
+        this._control.addTo(map);
         // restart to initial range value
         this._control._highlightSelectedLabel(this._sliderRange[0]);
     },

@@ -7,13 +7,14 @@ ams.PeriodHandler = {
     _control: null,
 
     init: function(map){
-        if(this._control) return;
+        this._updatePeriodInfo();// gets start date from App configuration and injects here
+        if(!this._control) {
+            this._control = L.control.PeriodHandler({
+                startDate:this._startdate
+            });
+        }
         
-        this._updatePeriodInfo();
-
-        this._control = L.control.PeriodHandler({
-            startDate:this._startdate
-        }).addTo(map);
+        this._control.addTo(map);
         this._control._setDatepicker();
     },
 
