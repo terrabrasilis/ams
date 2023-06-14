@@ -259,7 +259,12 @@ ams.App = {
 				ams.App._diffOn = ( (ams.Config.defaultFilters.diffClassify=="onPeriod")?(false):(true) );
 				// write on local storage
 				localStorage.setItem('ams.previous.biome.setting.selection', e.acronym);
-				ams.Utils.biomeChanges(e.acronym);
+				needUpdateSuLayers=false;// disable the call at the end because the call is inside the Promise callback below
+				ams.Utils.biomeChanges(e.acronym).then(
+					()=>{
+						ams.App._updateSpatialUnitLayer();
+					}
+				);
 
 			}else if(e.group.name=='INDICADOR'){// change reference layer (deter or fires)?
 				if(e.acronym=='AF'){
