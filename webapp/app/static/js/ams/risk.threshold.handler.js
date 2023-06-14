@@ -23,6 +23,7 @@ ams.RiskThresholdHandler = {
     },
 
     onChange: function(){
+        // used to keep updated infos on UI
         this._control._onInputChange();
     }
 };
