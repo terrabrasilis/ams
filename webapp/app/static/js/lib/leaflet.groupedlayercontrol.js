@@ -340,7 +340,6 @@ L.Control.GroupedLayers = L.Control.extend({
         title='Aplica um filtro com base nas classes dos dados do DETER e focos do Programa Queimadas, sendo:\n';
         for (let index = 0; index < ams.App._appClassGroups.groups.length; index++) {
           const group = ams.App._appClassGroups.groups[index];
-          console.log(group);
           title+=' - '+group.name+': '+group.classes.join(', ')+';\n';
         }
         break;
