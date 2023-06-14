@@ -7,12 +7,21 @@ ams.PeriodHandler = {
     _control: null,
 
     init: function(map){
+        if(this._control) return;
+        
         this._updatePeriodInfo();
 
         this._control = L.control.PeriodHandler({
             startDate:this._startdate
         }).addTo(map);
         this._control._setDatepicker();
+    },
+
+    remove: function(map) {
+        if(this._control){
+            map.removeControl(this._control);
+            this._control=null;
+        }
     },
 
     /**

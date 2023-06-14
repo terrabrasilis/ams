@@ -244,39 +244,20 @@ L.Control.GroupedLayers = L.Control.extend({
       label.appendChild(name);
     
       L.DomEvent.on(input, 'click', function() {
-        // Verifica se o radio button "RISCO IBAMA" está selecionado
-        if (obj.name === "RISCO IBAMA") {
-          if (input.checked) {
-            // Oculta o controle temporal
-            var controlContainer = document.querySelector('.leaflet-period-control');
-            controlContainer.style.display = 'none';
-    
-            // Exibe o slider
-            var sliderContainer = document.querySelector('.slider-container');
-            sliderContainer.style.display = 'block';
-          } else {
-            // Exibe o controle temporal
-            var controlContainer = document.querySelector('.leaflet-period-control');
-            controlContainer.style.display = 'block';
-    
-            // Oculta o slider
-            var sliderContainer = document.querySelector('.slider-container');
-            sliderContainer.style.display = 'none';
-          }
+        // Risk radio button is selected?
+        if (obj.name.toLowerCase().includes('risco') && input.checked) {
+          // Remove period control
+		      ams.PeriodHandler.remove(this._map);
+          // Adding risk control 
+		      ams.RiskThresholdHandler.init(this._map);
         } else {
-          // Exibe o controle temporal quando qualquer outro radio button for selecionado
-          var controlContainer = document.querySelector('.leaflet-period-control');
-          controlContainer.style.display = 'block';
-    
-          // Oculta o slider quando qualquer outro radio button for selecionado
-          var sliderContainer = document.querySelector('.slider-container');
-          sliderContainer.style.display = 'none';
+          // Adding period control over map
+		      ams.PeriodHandler.init(this._map);
+          // Remove risk control 
+		      ams.RiskThresholdHandler.remove(this._map);
         }
       }, this);
-    }
-        
-    
-    else{
+    }else{
       label.appendChild(input);
       label.appendChild(name);
     }
