@@ -1,13 +1,14 @@
 var ams = ams || {};
 
 ams.RiskThresholdHandler = {
-    _sliderRange: [0, 0.35, 0.85, 1],
+    _sliderRange: [],
     _control: null,
 
     init: function(map){
+        this._sliderRange=ams.Config.risk.range;
         if(!this._control) {
             this._control = L.control.RiskThresholdHandler({
-                range:this._sliderRange
+                range: this._sliderRange
             });
         }
         this._control.addTo(map);

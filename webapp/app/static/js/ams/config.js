@@ -10,7 +10,11 @@ var defaultConfig = {
   floatDecimals: 2,// change this number to change the number of decimals to float numbers
   propertyName: {
     deter:"area",// can be "area", if reference layer is DETER
-    af:"counts" // or "counts", if reference layer is AF - Active Fire (Focos de Queimadas)
+    af:"counts", // or "counts", if reference layer is AF - Active Fire (Focos de Queimadas)
+    rk:"counts" // and "counts" to risk too, because risk is trated as points as Active Fire
+  },
+  risk:{
+    range:[0, 0.35, 0.85, 1]
   },
   general:{
     area:{
@@ -26,6 +30,7 @@ ams.BiomeConfig["Amazônia"] = {
     biomeBorder:"prodes-amazon-nb:amazon_biome_border",// Layer name of Amazon biome border from TerraBrasilis service ( The workspace is fixed)
     deter:"deter-ams", // The layer name of DETER alerts from TerraBrasilis service. The workspace is dinamic and based on authentication state
     activeFire:"active-fire", // The layer name of Focos de Queimadas from TerraBrasilis service. The workspace is dinamic and based on authentication state
+    ibamaRisk:"weekly_ibama_1km", // The layer name of weekly risk with the default prediction data of risk of deforestation from IBAMA.
     lastDate: "last_date" // The layer name to get the last update date of available data. The workspace is dinamic and based on authentication state
   },
   defaultFilters: {
@@ -34,6 +39,9 @@ ams.BiomeConfig["Amazônia"] = {
     temporalUnit: '7d',
     diffClassify: 'onPeriod',// can be 'onPeriod' or 'periodDiff'
     priorityLimit: 10
+  },
+  defaultRiskFilter:{
+    threshold: 0.35 // used to process counts, including points where the value is greater than this threshold
   }
 };
 
