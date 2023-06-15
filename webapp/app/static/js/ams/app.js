@@ -105,6 +105,7 @@ ams.App = {
 		// Adding reference layers
 		var tbDeterAlertsLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.deter;
 		var AFLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.activeFire;
+		var RKLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.ibamaRisk;
 		var tbDeterAlertsWmsOptions = {
 			"cql_filter": appClassGroups.getCqlFilter(this._suViewParams, true),
 			"viewparams": "landuse:" + ams.App._landUseList.join('\\,')
@@ -115,20 +116,34 @@ ams.App = {
 			"viewparams": "landuse:" + ams.App._landUseList.join('\\,')
 		};
 		ams.App._addWmsOptionsBase(AFWmsOptions);
+		var RKWmsOptions = {};
+		// Disable options because the base risk layer is a raster type and do not use the parameters
+		// var RKWmsOptions = {
+		// 	"cql_filter": appClassGroups.getCqlFilter(this._suViewParams, false),
+		// 	"viewparams": "landuse:" + ams.App._landUseList.join('\\,')
+		// };
+		ams.App._addWmsOptionsBase(RKWmsOptions);
+
 		var tbDeterAlertsSource = new ams.LeafletWms.Source(this._baseURL, tbDeterAlertsWmsOptions, appClassGroups);
 		var AFSource = new ams.LeafletWms.Source(this._baseURL, AFWmsOptions, appClassGroups);
+		var RKSource = new ams.LeafletWms.Source(this._baseURL, RKWmsOptions, appClassGroups);
 		var tbDeterAlertsLayer = tbDeterAlertsSource.getLayer(tbDeterAlertsLayerName);
 		let AFLayer = AFSource.getLayer(AFLayerName);
+		let RKLayer = RKSource.getLayer(RKLayerName);
 		if(this._referenceLayerName==tbDeterAlertsLayerName) {
 			tbDeterAlertsLayer.addTo(map);
 			tbDeterAlertsLayer.bringToBack();
-		}else{
+		}else if(this._referenceLayerName==AFLayerName){
 			AFLayer.addTo(map);
 			AFLayer.bringToBack();
+		}else{
+			RKLayer.addTo(map);
+			RKLayer.bringToBack();
 		}
 		// Store layers to handler after controls change
 		this._addedLayers[tbDeterAlertsLayerName]=tbDeterAlertsLayer;
 		this._addedLayers[AFLayerName]=AFLayer;
+		this._addedLayers[RKLayerName]=RKLayer;
 
 		// Start the legend control
 		this._legendControl = new ams.Map.LegendController(map, this._baseURL);
@@ -241,7 +256,7 @@ ams.App = {
 				return;// abort if no filters
 			}
 
-			let layerToAdd,layerToDel,needUpdateSuLayers=true;
+			let layerToAdd,needUpdateSuLayers=true;
 			
 			if(e.group.name=='BIOMA'){
 				if(e.acronym==ams.Config.biome){
@@ -266,17 +281,20 @@ ams.App = {
 					}
 				);
 
-			}else if(e.group.name=='INDICADOR'){// change reference layer (deter or fires)?
-				if(e.acronym=='AF'){
+			}else if(e.group.name=='INDICADOR'){// change reference layer (deter, fires or risk)?
+				if(e.acronym=='RK'){
+					// the reference layer should be weekly_ibama_1km
+					layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.ibamaRisk;
+					ams.App._propertyName=ams.Config.propertyName.rk;
+					ams.App._hasClassFilter=false;
+				}else if(e.acronym=='AF'){
 					// the reference layer should be active-fires
 					layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.activeFire;
-					layerToDel=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.deter;
 					ams.App._propertyName=ams.Config.propertyName.af;
 					ams.App._hasClassFilter=false;
 				}else{
 					// the reference layer should be deter
 					layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.deter;
-					layerToDel=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.activeFire;
 					ams.App._propertyName=ams.Config.propertyName.deter;		
 					ams.App._hasClassFilter=true;
 				}
@@ -288,12 +306,14 @@ ams.App = {
 					// try update the last date for new classname
 					let lastDateDynamic = ams.App._wfs.getLastDate(ldLayerName);
 					lastDateDynamic = lastDateDynamic?lastDateDynamic:ams.App._spatialUnits.getDefault().last_date;
-					ams.App._dateControl.setPeriod(lastDateDynamic, ams.App._currentTemporalAggregate);
-					ams.PeriodHandler.changeDate(ams.App._dateControl.startdate);
+					if(e.acronym!=='RK'){// period control is disabled if current data is risk
+						ams.App._dateControl.setPeriod(lastDateDynamic, ams.App._currentTemporalAggregate);
+						ams.PeriodHandler.changeDate(ams.App._dateControl.startdate);
+					}
 				}
 				// reference layer was changes, so propertyName changes too
 				if(ams.App._referenceLayerName!=layerToAdd){
-					ams.App._exchangeReferenceLayer(layerToDel, layerToAdd);
+					ams.App._exchangeReferenceLayer(ams.App._referenceLayerName, layerToAdd);
 				}else if(ams.App._hasClassFilter){
 					// apply change filters on reference layer
 					ams.App._updateReferenceLayer();
@@ -569,7 +589,7 @@ ams.App = {
 		};
 		let ol={};
 		for (let ll in ams.App._addedLayers) {
-			let lname=( (ll.includes('deter'))?("DETER"):( (ll.includes('fire'))?("Focos"):(false) ) );
+			let lname=( (ll.includes('deter'))?("DETER"):( (ll.includes('fire'))?("Focos"):( (ll.includes('ibama'))?("Risco (IBAMA)"):(false) ) ) );
 			if(ams.App._map.hasLayer(ams.App._addedLayers[ll])){
 				if(lname!==false) ol[lname]=ams.App._addedLayers[ll];
 			}
