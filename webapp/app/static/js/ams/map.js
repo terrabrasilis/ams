@@ -149,7 +149,7 @@ ams.Map = {
 					( (ams.Auth.isAuthenticated())?(Authentication.getToken()):("") )
 				},
 				success: function(data) {
-					res = (data.totalFeatures>0)?(data["features"][0]["properties"][propertyName]):(false);
+					res = (data.totalFeatures>0)?(data["features"][0]["properties"][propertyName]):(false);					  
 				},
 				error: function() {
 					res = false;
@@ -165,33 +165,52 @@ ams.Map = {
 			return this.getMinOrMax(layerName, propertyName, viewParams, true);
 		}
 
-		this.getLastDate = function(layerName) {
-			let propertyName="last_date";
-			let classname=( (ams.App._suViewParams)?(ams.App._suViewParams.classname):(ams.Config.defaultFilters.indicator) );
-			let wfsUrl = this.url 
-						+ "&typeName=" + layerName
-						+ "&propertyName=" + propertyName
-						+ "&outputFormat=json"
-						+ "&viewparams=classname:"+classname
-						+ ";landuse:" + ams.App._landUseList.join('%5C,');
+		this.getLastDate = function (layerName) {
+			let propertyName = "last_date";
+			let classname = (ams.App._suViewParams) ? (ams.App._suViewParams.classname) : (ams.Config.defaultFilters.indicator);
+			let wfsUrl = this.url +
+			"&typeName=" + layerName +
+			"&propertyName=" + propertyName +
+			"&outputFormat=json" +
+			"&viewparams=classname:" + classname +
+			";landuse:" + ams.App._landUseList.join('%5C,');
 			let res;
 			$.ajax({
-				dataType: "json",
-				url: wfsUrl,
-				async: false,
-				headers: {
-					'Authorization': 'Bearer '+
-					( (ams.Auth.isAuthenticated())?(Authentication.getToken()):("") )
-				},
-				success: function(data) {
-					res = data["features"][0]["properties"][propertyName];
-				},
-				error: function() {
-					res = false;
+			dataType: "json",
+			url: wfsUrl,
+			async: false,
+			headers: {
+				'Authorization': 'Bearer ' +
+				((ams.Auth.isAuthenticated()) ? (Authentication.getToken()) : (""))
+			},
+			success: function (data) {
+				res = data["features"][0]["properties"][propertyName];	
+				res = '2023-05-12'			
+				last_date = res;
+				
+				if (res === null) {
+				lastDateStatus = "Não há dados disponíveis";
+				} else {
+				let currentDate = new Date();
+				let lastDate = new Date(res);
+				let timeDifference = currentDate.getTime() - lastDate.getTime();
+				let daysDifference = Math.floor(timeDifference / (1000 * 3600 * 24));
+				
+				if (daysDifference > 7) {
+					lastDateStatus = "Data desatualizada:";
+				} else {
+					lastDateStatus = "Data atualizada:";
 				}
-			});		
-			return res;	
-		}
+				}
+			},
+			error: function () {
+				res = false;
+			}
+			});
+			return res;
+		};
+	  
+	  
 
 		this.getFile = function(layerName, viewParams, 
 								outputFormat, extension,

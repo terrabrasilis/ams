@@ -195,3 +195,17 @@
   font-size: 12px;
   left: 0px;
 }
+
+.status-label {
+  position: absolute;
+  bottom: 50px;
+  font-size: 12px;
+  z-index: 1000;
+}
+
+.status-date-label {
+  position: absolute;
+  bottom: 35px;
+  font-size: 12px;
+  z-index: 1000;
+}
