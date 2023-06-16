@@ -384,13 +384,21 @@ ams.Map = {
 				+ "&CQL_FILTER=" + cql;
 				this._wmsLegendControl.options.static.deter.url = deterurl;
 				this._wmsLegendControl.options.static.af.url=null;
-			}else{
+				this._wmsLegendControl.options.static.risk.url=null;
+			}else if(ams.App._referenceLayerName.includes(ams.Config.defaultLayers.activeFire)){
 				// here we force a different style to get the legend without 3 entries
 				let afurl = baseurl + "&LAYER=" + ams.App._referenceLayerName
 				+ "&STYLE=active_fires_legend"
 				+ "&LEGEND_OPTIONS=forceLabels:on;";
 				this._wmsLegendControl.options.static.af.url = afurl;
 				this._wmsLegendControl.options.static.deter.url=null;
+				this._wmsLegendControl.options.static.risk.url=null;
+			}else{
+				// Legend to risk raster layer from raw data
+				this._wmsLegendControl.options.static.af.url=null;
+				this._wmsLegendControl.options.static.deter.url=null;
+				let riskurl = baseurl + "&LAYER=" + ams.App._referenceLayerName;
+				this._wmsLegendControl.options.static.risk.url=riskurl;
 			}
 		}
 	}
