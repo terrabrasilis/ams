@@ -12,11 +12,12 @@ from datetime import datetime
 class ClassifyByLandUse:
     """ClassifyByLandUse"""
 
-    def __init__(self, db_url: str, input_tif: str, alldata=False):
+    def __init__(self, biome:str, db_url: str, input_tif: str, alldata=False):
         self._datapath = path.join(path.dirname(__file__), '../../data')
         self._scriptspath = path.join(path.dirname(__file__), '../../scripts')
         self._land_use_classes_fname = input_tif
         self._conn = connect(db_url)
+        self._biome = biome
         self._pixel_land_use_area = 29.875 * 29.875 * (10 ** -6)
         self._alldata = alldata
         self._deter_table = 'deter.tmp_data'
@@ -38,11 +39,19 @@ class ClassifyByLandUse:
         results=cur.fetchall()
         self._spatial_units=dict(results)
 
+    def reset_land_use_tables(self):
+        """
+        Using DROP and CREATE table to clean old processed data
+        """
+        for spatial_unit in self._spatial_units.keys():
+            print(f'Reset {spatial_unit}_land_use table')
+            self._recreate_spatial_table(spatial_unit)
+
     def process_deter_land_structure(self):
         print('Creating and filling deter_land_structure.')
         cur = self._conn.cursor()
         if self._alldata:
-            cur.execute('''
+            cur.execute("""
             DROP TABLE IF EXISTS deter_land_structure;
             CREATE TABLE IF NOT EXISTS deter_land_structure (
                 id serial NOT NULL,
@@ -51,7 +60,7 @@ class ClassifyByLandUse:
                 num_pixels int4 NULL,
                 CONSTRAINT deter_poly_classes_pk PRIMARY KEY (id)
             );
-            CREATE INDEX IF NOT EXISTS deter_land_structure_gid_idx ON deter_land_structure USING hash (gid);''')
+            CREATE INDEX IF NOT EXISTS deter_land_structure_gid_idx ON deter_land_structure USING hash (gid);""")
         else:
             # here, we expect deter.tmp_data to only have DETER data coming from the current table
             cur.execute("DELETE FROM deter_land_structure WHERE gid like '%_curr';")
@@ -81,7 +90,7 @@ class ClassifyByLandUse:
         cur = self._conn.cursor()
 
         if self._alldata:
-            cur.execute(f'''
+            cur.execute(f"""
             DROP TABLE IF EXISTS public.fires_land_structure;
             CREATE TABLE IF NOT EXISTS fires_land_structure (
                 id serial NOT NULL,
@@ -90,7 +99,7 @@ class ClassifyByLandUse:
                 num_pixels int4 NULL,
                 CONSTRAINT fires_land_structure_pk PRIMARY KEY (id)
             );
-            CREATE INDEX IF NOT EXISTS fires_land_structure_gid_idx ON public.fires_land_structure USING hash (gid);''')
+            CREATE INDEX IF NOT EXISTS fires_land_structure_gid_idx ON public.fires_land_structure USING hash (gid);""")
         else:
             fires_where = f""" WHERE view_date > (SELECT MAX(date) FROM "{list(self._spatial_units.keys())[0]}_land_use" WHERE classname='AF')"""
         
@@ -112,7 +121,7 @@ class ClassifyByLandUse:
         
         cur = self._conn.cursor()
 
-        cur.execute(f'''
+        cur.execute(f"""
         DROP TABLE IF EXISTS public.risk_land_structure;
         CREATE TABLE IF NOT EXISTS risk_land_structure (
             id serial NOT NULL,
@@ -121,7 +130,7 @@ class ClassifyByLandUse:
             num_pixels int4 NULL,
             CONSTRAINT risk_land_structure_pk PRIMARY KEY (id)
         );
-        CREATE INDEX IF NOT EXISTS risk_land_structure_gid_idx ON public.risk_land_structure USING hash (gid);''')
+        CREATE INDEX IF NOT EXISTS risk_land_structure_gid_idx ON public.risk_land_structure USING hash (gid);""")
         
         # crossing risk and raster land use data
         landuse_raster = rasterio.open(f'{self._datapath}/{self._land_use_classes_fname}')
@@ -142,28 +151,34 @@ class ClassifyByLandUse:
         Even if "alldata" is true, we recreate the final land_use table.
         *The control is made in intermediary table called "deter_land_structure"
         """
+        risk_col=""
+        if self._biome=='Amazônia':
+            risk_col="risk double precision,"
         cur = self._conn.cursor()
-        cur.execute(f'''DROP TABLE IF EXISTS "{spatial_unit}_land_use"; 
-        CREATE TABLE IF NOT EXISTS "{spatial_unit}_land_use" (
-            id serial NOT NULL,
-            suid int NOT NULL,
-            land_use_id int NOT NULL,
-            classname varchar(2) NOT NULL,
-            "date" date NOT NULL,
-            area double precision,
-            percentage double precision,
-            counts integer,
-            CONSTRAINT "{spatial_unit}_land_use_pkey" PRIMARY KEY (id)
-        );
-        CREATE INDEX IF NOT EXISTS "{spatial_unit}_land_use_classname_idx" ON "{spatial_unit}_land_use"
-        USING btree (classname ASC NULLS LAST);
-        CREATE INDEX IF NOT EXISTS "{spatial_unit}_land_use_date_idx" ON "{spatial_unit}_land_use"
-        USING btree (date DESC NULLS LAST);''')
+        cur.execute(
+            f"""DROP TABLE IF EXISTS "{spatial_unit}_land_use"; 
+            CREATE TABLE IF NOT EXISTS "{spatial_unit}_land_use" (
+                id serial NOT NULL,
+                suid int NOT NULL,
+                land_use_id int NOT NULL,
+                classname varchar(2) NOT NULL,
+                "date" date NOT NULL,
+                area double precision,
+                percentage double precision,
+                counts integer,
+                {risk_col}
+                CONSTRAINT "{spatial_unit}_land_use_pkey" PRIMARY KEY (id)
+            );
+            CREATE INDEX IF NOT EXISTS "{spatial_unit}_land_use_classname_idx" ON "{spatial_unit}_land_use"
+            USING btree (classname ASC NULLS LAST);
+            CREATE INDEX IF NOT EXISTS "{spatial_unit}_land_use_date_idx" ON "{spatial_unit}_land_use"
+            USING btree (date DESC NULLS LAST);"""
+        )
 
     def insert_deter_in_land_use_tables(self):
         print('Insert DETER data in land use tables for each spatial units.')
         cur = self._conn.cursor()
-        land_structure = gpd.GeoDataFrame.from_postgis(f''' 
+        land_structure = gpd.GeoDataFrame.from_postgis(f""" 
         SELECT a.id, a.land_use_id, a.num_pixels, d.name as classname, b.date, b.geom as geometry
         FROM deter_land_structure a 
         INNER JOIN 
@@ -179,10 +194,8 @@ class ClassifyByLandUse:
         INNER JOIN deter_class c 
         ON b.classname = c.name
         INNER JOIN deter_class_group d
-        ON c.group_id = d.id ''', self._conn, geom_col='geometry')
+        ON c.group_id = d.id """, self._conn, geom_col='geometry')
         for spatial_unit in self._spatial_units.keys():
-            print(f'Processing {spatial_unit}...')
-            self._recreate_spatial_table(spatial_unit)
             spatial_units = gpd.GeoDataFrame.from_postgis(
                 f'SELECT suid, geometry FROM "{spatial_unit}"',
                 self._conn, geom_col='geometry')
@@ -203,11 +216,11 @@ class ClassifyByLandUse:
     def insert_fires_in_land_use_tables(self):
         print('Insert active fires in land use tables for each spatial units.')
         cur = self._conn.cursor()
-        land_structure = gpd.GeoDataFrame.from_postgis(f''' 
+        land_structure = gpd.GeoDataFrame.from_postgis(f""" 
         SELECT a.id,a.land_use_id,a.num_pixels,'AF' as classname,b.view_date as date,b.geom as geometry
         FROM fires_land_structure a 
         INNER JOIN {self._fires_input_table} b 
-        ON a.gid = b.id''', self._conn, geom_col='geometry')
+        ON a.gid = b.id""", self._conn, geom_col='geometry')
         for spatial_unit in self._spatial_units.keys():
             print(f'Processing {spatial_unit}...')
             spatial_units = gpd.GeoDataFrame.from_postgis(
@@ -230,11 +243,11 @@ class ClassifyByLandUse:
     def insert_risk_in_land_use_tables(self):
         print('Insert ibama risk in land use tables for each spatial units.')
         cur = self._conn.cursor()
-        land_structure = gpd.GeoDataFrame.from_postgis(f''' 
+        land_structure = gpd.GeoDataFrame.from_postgis(f""" 
         SELECT a.id, a.land_use_id, a.num_pixels, 'RK' as classname, b.risk, b.view_date as date, b.geom as geometry
         FROM risk_land_structure a 
         INNER JOIN {self._risk_input_table} b 
-        ON a.gid = b.id''', self._conn, geom_col='geometry')
+        ON a.gid = b.id""", self._conn, geom_col='geometry')
         for spatial_unit in self._spatial_units.keys():
             print(f'Processing {spatial_unit}...')
             spatial_units = gpd.GeoDataFrame.from_postgis(
@@ -269,12 +282,14 @@ class ClassifyByLandUse:
         try:
             print("Starting at: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
             self.read_spatial_units()
+            self.reset_land_use_tables()
             self.process_deter_land_structure()
             self.process_fires_land_structure()
-            self.process_risk_land_structure()
             self.insert_deter_in_land_use_tables()
             self.insert_fires_in_land_use_tables()
-            self.insert_risk_in_land_use_tables()
+            if self._biome=='Amazônia':
+                self.process_risk_land_structure()
+                self.insert_risk_in_land_use_tables()
             print("Time control: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
             self.percentage_calculation_for_areas()
             print("Finished in: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))

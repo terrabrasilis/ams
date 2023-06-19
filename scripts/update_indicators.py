@@ -27,5 +27,5 @@ if Config.BIOME=='Amazônia':
     riskupdate.execute()
 
 # land Use classifier
-luc = ClassifyByLandUse(Config.DATABASE_URL, Config.INPUT_GEOTIFF_FUNDIARY_STRUCTURE, alldata)
+luc = ClassifyByLandUse(Config.BIOME, Config.DATABASE_URL, Config.INPUT_GEOTIFF_FUNDIARY_STRUCTURE, alldata)
 luc.execute()
