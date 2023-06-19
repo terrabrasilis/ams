@@ -21,6 +21,8 @@ class ClassifyByLandUse:
         self._alldata = alldata
         self._deter_table = 'deter.tmp_data'
         self._fires_input_table = 'fires.active_fires'
+        self._risk_geom_table = 'risk.matrix_ibama_1km'
+        self._risk_input_table = 'public.last_risk_data'
 
     def read_spatial_units(self):
         """
@@ -56,12 +58,12 @@ class ClassifyByLandUse:
             # update sequence value from the mas of table id
             cur.execute("SELECT setval('public.deter_land_structure_id_seq', (SELECT MAX(id) FROM public.deter_land_structure)::integer, true);")
         
-        amazon_class = rasterio.open(f'{self._datapath}/{self._land_use_classes_fname}')
+        landuse_raster = rasterio.open(f'{self._datapath}/{self._land_use_classes_fname}')
         deter = gpd.GeoDataFrame.from_postgis(f'SELECT gid, geom FROM {self._deter_table}', self._conn)
         with alive_bar(len(deter)) as bar:
             for _, row in deter.iterrows():
                 geoms = [mapping(row.geom)]
-                out_image, out_transform = mask(amazon_class, geoms, crop=True)
+                out_image, out_transform = mask(landuse_raster, geoms, crop=True)
                 unique, counts = np.unique(out_image[0], return_counts=True)
                 unique_counts = np.asarray((unique, counts)).T
                 counts = pd.DataFrame(unique_counts)
@@ -93,10 +95,10 @@ class ClassifyByLandUse:
             fires_where = f""" WHERE view_date > (SELECT MAX(date) FROM "{list(self._spatial_units.keys())[0]}_land_use" WHERE classname='AF')"""
         
         # crossing fires and raster land use data
-        amazon_class = rasterio.open(f'{self._datapath}/{self._land_use_classes_fname}')
+        landuse_raster = rasterio.open(f'{self._datapath}/{self._land_use_classes_fname}')
         fires = gpd.GeoDataFrame.from_postgis(f'SELECT id as gid, geom FROM {self._fires_input_table} {fires_where}', self._conn)
         coord_list = [(x,y) for x,y in zip(fires['geom'].x , fires['geom'].y)]
-        fires['value'] = [x for x in amazon_class.sample(coord_list)]
+        fires['value'] = [x for x in landuse_raster.sample(coord_list)]
         with alive_bar(len(fires)) as bar:
             for _, point in fires.iterrows():
                 if point['value'][0] > 0:
@@ -104,6 +106,36 @@ class ClassifyByLandUse:
                         f"INSERT INTO fires_land_structure (gid, land_use_id, num_pixels) "
                         f"VALUES('{point.gid}', {point['value'][0]}, 1)")
                 bar()
+
+    def process_risk_land_structure(self):
+        print('Creating and filling risk_land_structure.')
+        
+        cur = self._conn.cursor()
+
+        cur.execute(f'''
+        DROP TABLE IF EXISTS public.risk_land_structure;
+        CREATE TABLE IF NOT EXISTS risk_land_structure (
+            id serial NOT NULL,
+            gid integer NOT NULL,
+            land_use_id int4 NULL,
+            num_pixels int4 NULL,
+            CONSTRAINT risk_land_structure_pk PRIMARY KEY (id)
+        );
+        CREATE INDEX IF NOT EXISTS risk_land_structure_gid_idx ON public.risk_land_structure USING hash (gid);''')
+        
+        # crossing risk and raster land use data
+        landuse_raster = rasterio.open(f'{self._datapath}/{self._land_use_classes_fname}')
+        risk = gpd.GeoDataFrame.from_postgis(f'SELECT id as gid, geom FROM {self._risk_geom_table} ', self._conn)
+        coord_list = [(x,y) for x,y in zip(risk['geom'].x , risk['geom'].y)]
+        risk['value'] = [x for x in landuse_raster.sample(coord_list)]
+        with alive_bar(len(risk)) as bar:
+            for _, point in risk.iterrows():
+                if point['value'][0] > 0:
+                    cur.execute(
+                        f"INSERT INTO risk_land_structure (gid, land_use_id, num_pixels) "
+                        f"VALUES('{point.gid}', {point['value'][0]}, 1)")
+                bar()
+
 
     def _recreate_spatial_table(self, spatial_unit):
         """
@@ -195,6 +227,33 @@ class ClassifyByLandUse:
                     '{key[3].year}-{key[3].month}-{key[3].day}',{value});""")
                     bar()
 
+    def insert_risk_in_land_use_tables(self):
+        print('Insert ibama risk in land use tables for each spatial units.')
+        cur = self._conn.cursor()
+        land_structure = gpd.GeoDataFrame.from_postgis(f''' 
+        SELECT a.id, a.land_use_id, a.num_pixels, 'RK' as classname, b.risk, b.view_date as date, b.geom as geometry
+        FROM risk_land_structure a 
+        INNER JOIN {self._risk_input_table} b 
+        ON a.gid = b.id''', self._conn, geom_col='geometry')
+        for spatial_unit in self._spatial_units.keys():
+            print(f'Processing {spatial_unit}...')
+            spatial_units = gpd.GeoDataFrame.from_postgis(
+                f'SELECT suid, geometry FROM "{spatial_unit}"',
+                self._conn, geom_col='geometry')
+            print('Joining...')
+            join = gpd.sjoin(land_structure, spatial_units, how='inner', op='intersects')
+            print('Grouping...')
+            group = join[['suid', 'land_use_id', 'classname', 'date', 'risk', 'num_pixels']].groupby(
+                ['suid', 'land_use_id', 'classname','date', 'risk'])['num_pixels'].sum()
+
+            with alive_bar(len(group)) as bar:
+                for key, value in group.iteritems():
+                    cur.execute(
+                    f"""INSERT INTO "{spatial_unit}_land_use" (suid, land_use_id, classname, "date", risk, counts) 
+                    VALUES({key[0]}, {key[1]}, '{key[2]}', TIMESTAMP 
+                    '{key[3].year}-{key[3].month}-{key[3].day}', {key[4]},{value});""")
+                    bar()
+
     def percentage_calculation_for_areas(self):
         print('Using Spatial Units areas and DETER areas to calculate percentage.')
         cur = self._conn.cursor()
@@ -203,8 +262,8 @@ class ClassifyByLandUse:
             cur.execute(
             f"""UPDATE public."{spatial_unit}_land_use"
             SET percentage=public."{spatial_unit}_land_use".area/su.area*100
-            FROM public."{spatial_unit}" su WHERE public."{spatial_unit}_land_use".suid=su.suid""")
-
+            FROM public."{spatial_unit}" su WHERE public."{spatial_unit}_land_use".suid=su.suid
+            AND public."{spatial_unit}_land_use".classname NOT IN ('AF','RK') """)
 
     def execute(self):
         try:
@@ -212,8 +271,10 @@ class ClassifyByLandUse:
             self.read_spatial_units()
             self.process_deter_land_structure()
             self.process_fires_land_structure()
+            self.process_risk_land_structure()
             self.insert_deter_in_land_use_tables()
             self.insert_fires_in_land_use_tables()
+            self.insert_risk_in_land_use_tables()
             print("Time control: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
             self.percentage_calculation_for_areas()
             print("Finished in: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))

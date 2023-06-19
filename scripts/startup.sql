@@ -153,6 +153,24 @@ CREATE OR REPLACE VIEW public.raw_active_fires
    FROM dblink('hostaddr=<IP or hostname> port=5432 dbname=<DB_NAME> user=postgres password=postgres'::text, 'SELECT id, data as view_date, satelite, estado, municipio, diasemchuva, precipitacao, riscofogo, bioma, geom FROM public.focos_aqua_referencia'::text) remote_data(id integer, view_date date, satelite character varying(254), estado character varying(254), municipio character varying(254), diasemchuva integer, precipitacao double precision, riscofogo double precision, bioma character varying(254), geom geometry(Point,4674));
 
 
+-- View: public.last_risk_data
+
+-- DROP VIEW public.last_risk_data;
+
+CREATE OR REPLACE VIEW public.last_risk_data
+ AS
+ SELECT geo.id,
+    geo.geom,
+    wd.risk,
+    (dt.expiration_date - '7 days'::interval)::date AS view_date
+   FROM risk.weekly_data wd,
+    risk.matrix_ibama_1km geo,
+    risk.risk_ibama_date dt
+  WHERE wd.date_id = (( SELECT risk_ibama_date.id
+           FROM risk.risk_ibama_date
+          ORDER BY risk_ibama_date.expiration_date DESC
+         LIMIT 1)) AND wd.geom_id = geo.id AND dt.id = wd.date_id;
+
 -- -------------------------------------------------------------------------
 -- This session is used for create tables of AMS model
 -- -------------------------------------------------------------------------
