@@ -501,6 +501,7 @@ INSERT INTO public.deter_class_group(id, name) VALUES (2, 'DG', 'DETER Degradaç
 INSERT INTO public.deter_class_group(id, name) VALUES (3, 'CS', 'DETER Corte seletivo', 2);
 INSERT INTO public.deter_class_group(id, name) VALUES (4, 'MN', 'DETER Mineração', 3);
 INSERT INTO public.deter_class_group(id, name) VALUES (5, 'AF', 'Focos (Programa Queimadas)', 4);
+INSERT INTO public.deter_class_group(id, name) VALUES (6, 'RK', 'Risco de desmatamento (IBAMA)', 5);
 
 INSERT INTO public.deter_class(id, name, group_id) VALUES (1, 'DESMATAMENTO_CR', 1);
 INSERT INTO public.deter_class(id, name, group_id) VALUES (2, 'DESMATAMENTO_VEG', 1);
@@ -510,6 +511,7 @@ INSERT INTO public.deter_class(id, name, group_id) VALUES (5, 'CS_DESORDENADO', 
 INSERT INTO public.deter_class(id, name, group_id) VALUES (6, 'CS_GEOMETRICO', 3);
 INSERT INTO public.deter_class(id, name, group_id) VALUES (7, 'MINERACAO', 4);
 INSERT INTO public.deter_class(id, name, group_id) VALUES (8, 'FOCOS', 5);
+INSERT INTO public.deter_class(id, name, group_id) VALUES (9, 'RISCO_IBAMA', 6);
 
 -- Attention: id values are mapped to "land use" pixel values from the Geotiff file.
 INSERT INTO land_use values(1,'APA',3);
