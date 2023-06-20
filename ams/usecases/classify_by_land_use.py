@@ -152,7 +152,7 @@ class ClassifyByLandUse:
         *The control is made in intermediary table called "deter_land_structure"
         """
         risk_col=""
-        if self._biome=='Amazônia':
+        if self._biome=="Amazônia":
             risk_col="risk double precision,"
         cur = self._conn.cursor()
         cur.execute(
@@ -287,7 +287,7 @@ class ClassifyByLandUse:
             self.process_fires_land_structure()
             self.insert_deter_in_land_use_tables()
             self.insert_fires_in_land_use_tables()
-            if self._biome=='Amazônia':
+            if self._biome=="Amazônia":
                 self.process_risk_land_structure()
                 self.insert_risk_in_land_use_tables()
             print("Time control: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))

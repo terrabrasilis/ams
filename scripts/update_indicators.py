@@ -21,7 +21,7 @@ firesupdate = ActiveFires(Config.DATABASE_URL, Config.BIOME, alldata)
 firesupdate.execute()
 
 # only for Amazonia
-if Config.BIOME=='Amazônia':
+if Config.BIOME=="Amazônia":
     ftp = FtpIBAMARisk(Config.DATABASE_URL, host=Config.FTP_HOST, ftp_path=Config.FTP_PATH, user=Config.FTP_USER, password=Config.FTP_PASS, port=Config.FTP_PORT, output_path=Config.RISK_OUTPUT_PATH, risk_file_name=Config.RISK_INPUT_FILE)
     riskupdate = IBAMARisk(Config.DATABASE_URL, ftp=ftp)
     riskupdate.execute()
