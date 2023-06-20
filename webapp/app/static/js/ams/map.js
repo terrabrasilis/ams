@@ -184,8 +184,7 @@ ams.Map = {
 				((ams.Auth.isAuthenticated()) ? (Authentication.getToken()) : (""))
 			},
 			success: function (data) {
-				res = data["features"][0]["properties"][propertyName];	
-				res = '2023-05-12'			
+				res = data["features"][0]["properties"][propertyName];			
 				last_date = res;
 				
 				if (res === null) {
