@@ -87,6 +87,7 @@ class FtpIBAMARisk:
         """
         client = aioftp.Client()
         log_msg=""
+        remote_file_date=None
         file_destination=""
         status=0
         try:
@@ -154,7 +155,7 @@ class FtpIBAMARisk:
 
     def __write_log2db(self, msg:str, status:int, remote_file_date:datetime, output_file_name:str):
 
-        dt=remote_file_date.strftime("%Y-%m-%d")
+        dt=remote_file_date.strftime("%Y-%m-%d") if remote_file_date is not None else ""
         sql=f"""
         INSERT INTO {self._log_table} (file_name, process_status, process_message, last_file_date)
         VALUES('{output_file_name}', {status}, '{msg}', '{dt}');
