@@ -206,7 +206,7 @@ class ClassifyByLandUse:
                 ['suid', 'land_use_id', 'classname','date'])['num_pixels'].sum()
 
             with alive_bar(len(group)) as bar:
-                for key, value in group.iteritems():
+                for key, value in group.items():
                     cur.execute(
                     f"""INSERT INTO "{spatial_unit}_land_use" (suid, land_use_id, classname, "date", area) 
                     VALUES({key[0]}, {key[1]}, '{key[2]}', TIMESTAMP 
@@ -233,7 +233,7 @@ class ClassifyByLandUse:
                 ['suid', 'land_use_id', 'classname','date'])['num_pixels'].sum()
 
             with alive_bar(len(group)) as bar:
-                for key, value in group.iteritems():
+                for key, value in group.items():
                     cur.execute(
                     f"""INSERT INTO "{spatial_unit}_land_use" (suid, land_use_id, classname, "date", counts) 
                     VALUES({key[0]}, {key[1]}, '{key[2]}', TIMESTAMP 
@@ -260,7 +260,7 @@ class ClassifyByLandUse:
                 ['suid', 'land_use_id', 'classname','date', 'risk'])['num_pixels'].sum()
 
             with alive_bar(len(group)) as bar:
-                for key, value in group.iteritems():
+                for key, value in group.items():
                     cur.execute(
                     f"""INSERT INTO "{spatial_unit}_land_use" (suid, land_use_id, classname, "date", risk, counts) 
                     VALUES({key[0]}, {key[1]}, '{key[2]}', TIMESTAMP 
