@@ -153,7 +153,7 @@ class ClassifyByLandUse:
         """
         risk_col=""
         if self._biome=="Amazônia":
-            risk_col="risk double precision,"
+            risk_col="risk double precision NOT NULL DEFAULT 0.0,"
         cur = self._conn.cursor()
         cur.execute(
             f"""DROP TABLE IF EXISTS "{spatial_unit}_land_use"; 
