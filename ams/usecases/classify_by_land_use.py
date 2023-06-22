@@ -152,8 +152,11 @@ class ClassifyByLandUse:
         *The control is made in intermediary table called "deter_land_structure"
         """
         risk_col=""
+        risk_index=""
         if self._biome=="Amazônia":
             risk_col="risk double precision NOT NULL DEFAULT 0.0,"
+            risk_index=f"""CREATE INDEX IF NOT EXISTS "{spatial_unit}_land_use_risk_idx" ON "{spatial_unit}_land_use"
+            USING btree (risk ASC NULLS LAST);"""
         cur = self._conn.cursor()
         cur.execute(
             f"""DROP TABLE IF EXISTS "{spatial_unit}_land_use"; 
@@ -172,7 +175,9 @@ class ClassifyByLandUse:
             CREATE INDEX IF NOT EXISTS "{spatial_unit}_land_use_classname_idx" ON "{spatial_unit}_land_use"
             USING btree (classname ASC NULLS LAST);
             CREATE INDEX IF NOT EXISTS "{spatial_unit}_land_use_date_idx" ON "{spatial_unit}_land_use"
-            USING btree (date DESC NULLS LAST);"""
+            USING btree (date DESC NULLS LAST);
+            {risk_index}
+            """
         )
 
     def insert_deter_in_land_use_tables(self):
