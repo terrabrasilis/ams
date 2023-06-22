@@ -2,7 +2,7 @@ from flask import Flask, Blueprint
 from flask_cors import CORS
 from .config import Config
 
-bp = Blueprint('', __name__)
+bp = Blueprint('ams', __name__)
 
 def create_app(config=Config):
 	app = Flask(__name__)
