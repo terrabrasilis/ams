@@ -14,6 +14,7 @@ ams.App = {
 	_dateControl: null,
 	_baseURL: null,
 	_propertyName: null,
+	_riskThreshold: 0.0,
 	_referenceLayerName: null,
 	_currentSULayerName: null,
 	_hasClassFilter: false,// if reference layer is DETER, so, has class filter.
@@ -286,6 +287,7 @@ ams.App = {
 					// the reference layer should be weekly_ibama_1km
 					layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.ibamaRisk;
 					ams.App._propertyName=ams.Config.propertyName.rk;
+					ams.App._riskThreshold=ams.Config.defaultRiskFilter.threshold;
 					ams.App._hasClassFilter=false;
 				}else if(e.acronym=='AF'){
 					// the reference layer should be active-fires
@@ -295,7 +297,7 @@ ams.App = {
 				}else{
 					// the reference layer should be deter
 					layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.deter;
-					ams.App._propertyName=ams.Config.propertyName.deter;		
+					ams.App._propertyName=ams.Config.propertyName.deter;
 					ams.App._hasClassFilter=true;
 				}
 				// reference layer was changes, so propertyName changes too
@@ -311,14 +313,14 @@ ams.App = {
 					ams.App._priorViewParams.classname = e.acronym;
 					ams.App._suViewParams.updatePropertyName(ams.App._propertyName);
 					ams.App._priorViewParams.updatePropertyName(ams.App._propertyName);
+					ams.App._suViewParams.updateRiskThreshold(ams.App._riskThreshold);
+					ams.App._priorViewParams.updateRiskThreshold(ams.App._riskThreshold);
 					// try update the last date for new classname
 					let lastDateDynamic = ams.App._wfs.getLastDate(ldLayerName);
 					lastDateDynamic = lastDateDynamic?lastDateDynamic:ams.App._spatialUnits.getDefault().last_date;
 					ams.RiskThresholdHandler.getLastRiskDate(lastDateDynamic)
-					if(e.acronym!=='RK'){// period control is disabled if current data is risk
-						ams.App._dateControl.setPeriod(lastDateDynamic, ams.App._currentTemporalAggregate);
-						ams.PeriodHandler.changeDate(ams.App._dateControl.startdate);
-					}
+					ams.App._dateControl.setPeriod(lastDateDynamic, ams.App._currentTemporalAggregate);
+					ams.PeriodHandler.changeDate(ams.App._dateControl.startdate);
 				}
 			}else if(e.group.name=='CATEGORIA FUNDIÁRIA'){
 				let luid=+e.acronym;

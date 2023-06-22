@@ -90,6 +90,7 @@ L.Control.RiskThresholdHandler = L.Control.extend({
   _onInputChange: function () {
     let position = +this._container.getElementsByTagName('input')[0].value;
     this._highlightSelectedLabel(position);
+    return this.options.range[position];
   },
 
   _highlightSelectedLabel: function (value) {

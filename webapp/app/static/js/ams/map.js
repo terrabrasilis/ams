@@ -9,13 +9,14 @@ ams.Map = {
 		_unit:'km²',
 		_infoBody:[]
 	},
-	ViewParams: function(classname, dateControll, propertyName, limit) {
+	ViewParams: function(classname, dateControll, propertyName, limit, risk_threshold) {
 		this.classname = classname;
 		this.startdate = dateControll.startdate;
 		this.enddate = dateControll.enddate;
 		this.prevdate = dateControll.prevdate;
 		this.propertyName = propertyName;
 		this.limit = limit;
+		this.risk_threshold = ( (typeof risk_threshold=='undefined')?(0.0):(risk_threshold) );
 		this.toWmsFormat = function() {
 			return "classname:" + this.classname
 					+ ";startdate:" + this.startdate
@@ -23,7 +24,8 @@ ams.Map = {
 					+ ";prevdate:" + this.prevdate
 					+ ";orderby:" + this.propertyName
 					+ ";landuse:" + ams.App._landUseList.join('\\,')
-					+ ";limit:" + this.limit;
+					+ ";limit:" + this.limit
+					+ ";risk:" + this.risk_threshold;
 		};
 
 		this.updateDates = function(dateControll) {
@@ -34,6 +36,10 @@ ams.Map = {
 
 		this.updatePropertyName = function(propertyName) {
 			this.propertyName = propertyName;
+		};
+		// if risk, use the threshold value else use the 0.0
+		this.updateRiskThreshold = function(risk_threshold) {
+			this.risk_threshold = (this.classname=='RK')?(risk_threshold):(0.0);
 		};
 	},
 
@@ -127,7 +133,7 @@ ams.Map = {
 	WFS: function(baseUrl) {
 		this.url = baseUrl + "/ows?SERVICE=WFS&REQUEST=GetFeature";
 		this.getMinOrMax = function(layerName, propertyName, viewParams, isMin) {
-			let wfsUrl = this.url 
+			let wfsUrl = this.url
 						+ "&typeName=" + layerName
 						+ "&propertyName=" + propertyName
 						+ "&outputFormat=json"
@@ -138,6 +144,7 @@ ams.Map = {
 										+ ";order:" + (isMin ? 'ASC' : 'DESC')
 										+ ";orderby:" + propertyName
 										+ ";landuse:" + ams.App._landUseList.join('%5C,')
+										+ ";risk:" + viewParams.risk_threshold
 										+ ";limit:1";
 			let res;
 			$.ajax({
@@ -243,6 +250,7 @@ ams.Map = {
 										+ ";prevdate:" + viewParams.prevdate
 										+ ";orderby:" + propertyName
 										+ ";landuse:" + ams.App._landUseList.join('%5C,')
+										+ ";risk:" + viewParams.risk_threshold
 										+ ";limit:" + viewParams.limit
 										+ ((extension=='csv')?(""):(";optype:DOWNLOAD"));
 
