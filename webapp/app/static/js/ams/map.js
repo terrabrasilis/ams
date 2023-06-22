@@ -184,23 +184,7 @@ ams.Map = {
 				((ams.Auth.isAuthenticated()) ? (Authentication.getToken()) : (""))
 			},
 			success: function (data) {
-				res = data["features"][0]["properties"][propertyName];			
-				last_date = res;
-				
-				if (res === null) {
-				lastDateStatus = "Não há dados disponíveis";
-				} else {
-				let currentDate = new Date();
-				let lastDate = new Date(res);
-				let timeDifference = currentDate.getTime() - lastDate.getTime();
-				let daysDifference = Math.floor(timeDifference / (1000 * 3600 * 24));
-				
-				if (daysDifference > 7) {
-					lastDateStatus = "Data desatualizada:";
-				} else {
-					lastDateStatus = "Data atualizada:";
-				}
-				}
+				res = data["features"][0]["properties"][propertyName];
 			},
 			error: function () {
 				res = false;

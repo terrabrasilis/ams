@@ -36,7 +36,7 @@ ams.App = {
 		var temporalUnits = new ams.Map.TemporalUnits();
 		this._dateControl = new ams.Date.DateController();
 		let lastDateDynamic = this._wfs.getLastDate(ldLayerName);
-		lastDateDynamic = lastDateDynamic?lastDateDynamic:this._spatialUnits.getDefault().last_date;
+		lastDateDynamic = lastDateDynamic?lastDateDynamic:this._spatialUnits.getDefault().last_date;		
 		this._currentTemporalAggregate = temporalUnits.getAggregates()[0].key;
 		this._dateControl.setPeriod(lastDateDynamic, this._currentTemporalAggregate);
 		this._baseURL = geoserverUrl + "/wms";
@@ -314,6 +314,7 @@ ams.App = {
 					// try update the last date for new classname
 					let lastDateDynamic = ams.App._wfs.getLastDate(ldLayerName);
 					lastDateDynamic = lastDateDynamic?lastDateDynamic:ams.App._spatialUnits.getDefault().last_date;
+					ams.RiskThresholdHandler.getLastRiskDate(lastDateDynamic)
 					if(e.acronym!=='RK'){// period control is disabled if current data is risk
 						ams.App._dateControl.setPeriod(lastDateDynamic, ams.App._currentTemporalAggregate);
 						ams.PeriodHandler.changeDate(ams.App._dateControl.startdate);
