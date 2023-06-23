@@ -337,7 +337,7 @@ L.Control.GroupedLayers = L.Control.extend({
         title='Alterna entre as bases de dados dos biomas disponíveis.';
         break;
       case "INDICADOR":
-        title='Aplica um filtro com base nas classes dos dados do DETER e focos do Programa Queimadas, sendo:\n';
+        title='Aplica um filtro com base nas classes dos dados do DETER, focos do Programa Queimadas e Risco sendo:\n';
         for (let index = 0; index < ams.App._appClassGroups.groups.length; index++) {
           const group = ams.App._appClassGroups.groups[index];
           title+=' - '+group.name+': '+group.classes.join(', ')+';\n';
