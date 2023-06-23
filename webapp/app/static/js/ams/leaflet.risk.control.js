@@ -56,9 +56,7 @@ L.Control.RiskThresholdHandler = L.Control.extend({
     '<span class="tick-label">Moderado</span>' +
     '<span class="tick-label">Muito alto</span>' +
     '</div>' +  
-    '<div class="risk-status-label">'+ this.setLastDateStatus()+'</div>'+
-    '</div>'+
-    '<div class="risk-date-label">'+this.options.date+'</div>'+
+    '<div class="risk-status-label">' + this.setLastDateStatus() + (this.options.date ? this.options.date : '') + '</div>'+
     '</div>';
 
     form.appendChild(slidercontent);
@@ -117,9 +115,9 @@ L.Control.RiskThresholdHandler = L.Control.extend({
       let daysDifference = Math.floor(timeDifference / (1000 * 3600 * 24));
       
       if (daysDifference > 7) {
-        lastDateStatus = "Data desatualizada:";
+        lastDateStatus = "Data desatualizada: ";
       } else {
-        lastDateStatus = "Data atualizada:";
+        lastDateStatus = "Data atualizada: ";
       }
     }
     
