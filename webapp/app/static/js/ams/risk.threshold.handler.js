@@ -6,8 +6,7 @@ ams.RiskThresholdHandler = {
     _date: null,
 
     init: function(map){
-        this._sliderRange=ams.Config.risk.range;
-        this._date = ams.RiskThresholdHandler.getLastRiskDate(dateLabel);
+        this._sliderRange=ams.Config.risk.range;           
         if(!this._control) {
             this._control = L.control.RiskThresholdHandler({
                 range: this._sliderRange,
@@ -16,8 +15,7 @@ ams.RiskThresholdHandler = {
         }
         this._control.addTo(map);
         // restart to initial range value
-        this._control._highlightSelectedLabel(this._sliderRange[0]);
-        this._control._updateStatusAndDateLabel(this._date)
+        this._control._highlightSelectedLabel(this._sliderRange[0]);        
     },
 
     remove: function(map) {
@@ -27,9 +25,8 @@ ams.RiskThresholdHandler = {
         }
     },
 
-    getLastRiskDate: function(lastRiskDate){           
-        dateLabel = lastRiskDate;
-        return dateLabel;
+    setLastRiskDate: function(lastRiskDate){ 
+        this._date = lastRiskDate;  
     },
 
     onChange: function(){

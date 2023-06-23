@@ -318,7 +318,7 @@ ams.App = {
 					// try update the last date for new classname
 					let lastDateDynamic = ams.App._wfs.getLastDate(ldLayerName);
 					lastDateDynamic = lastDateDynamic?lastDateDynamic:ams.App._spatialUnits.getDefault().last_date;
-					ams.RiskThresholdHandler.getLastRiskDate(lastDateDynamic)
+					ams.RiskThresholdHandler.setLastRiskDate(lastDateDynamic);
 					ams.App._dateControl.setPeriod(lastDateDynamic, ams.App._currentTemporalAggregate);
 					ams.PeriodHandler.changeDate(ams.App._dateControl.startdate);
 				}

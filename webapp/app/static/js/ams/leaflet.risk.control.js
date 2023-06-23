@@ -56,9 +56,9 @@ L.Control.RiskThresholdHandler = L.Control.extend({
     '<span class="tick-label">Moderado</span>' +
     '<span class="tick-label">Muito alto</span>' +
     '</div>' +  
-    '<div class="risk-status-label"></div>'+
+    '<div class="risk-status-label">'+ this.setLastDateStatus()+'</div>'+
     '</div>'+
-    '<div class="risk-date-label"></div>'+
+    '<div class="risk-date-label">'+this.options.date+'</div>'+
     '</div>';
 
     form.appendChild(slidercontent);
@@ -104,25 +104,15 @@ L.Control.RiskThresholdHandler = L.Control.extend({
     selectedLabel.style.fontWeight = 'bold';
     selectedLabel.style.fontSize = '13px';
   },     
-
-  _updateStatusAndDateLabel: function (dateLabel) {    
-    let riskDateLabels = this._container.querySelector('.risk-date-label');  
-    riskDateLabels.innerHTML = dateLabel;
   
-    // Calling the getLastDateStatus function with the new value of res
-    let lastDateStatus = this.getLastDateStatus(dateLabel);
-    let riskStatusLabel = this._container.querySelector('.risk-status-label');  
-    riskStatusLabel.innerHTML = lastDateStatus;
-  },    
-  
-   getLastDateStatus: function (res) {
+   setLastDateStatus: function () {
     let lastDateStatus;
     
-    if (res === null) {
+    if (this.options.date === null) {
       lastDateStatus = "Não há dados disponíveis";
     } else {
       let currentDate = new Date();
-      let lastDate = new Date(res);
+      let lastDate = new Date(this.options.date);
       let timeDifference = currentDate.getTime() - lastDate.getTime();
       let daysDifference = Math.floor(timeDifference / (1000 * 3600 * 24));
       
