@@ -14,7 +14,7 @@ var defaultConfig = {
     rk:"counts" // and "counts" to risk too, because risk is trated as points as Active Fire
   },
   risk:{
-    range:[0, 0.35, 0.85, 1]
+    range:[0, 0.25, 0.5, 0.75, 1]
   },
   general:{
     area:{
@@ -41,7 +41,7 @@ ams.BiomeConfig["Amazônia"] = {
     priorityLimit: 10
   },
   defaultRiskFilter:{
-    threshold: 0.35 // used to process counts, including points where the value is greater than this threshold
+    threshold: 0.25 // used to process counts, including points where the value is greater than this threshold
   }
 };
 

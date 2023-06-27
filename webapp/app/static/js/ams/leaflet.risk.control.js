@@ -35,7 +35,7 @@ L.Control.RiskThresholdHandler = L.Control.extend({
     'min="0" ' +
     'max="' + ((this.options.range.length) ? (this.options.range.length - 1) : (0)) + '" ' +
     'step="1" ' +
-    'value="' + ((this.options.range.length) ? (this.options.range[0]) : (0)) + '" ' +
+    'value="' + Math.round((ams.App._riskThreshold - this.options.range[0]) / (this.options.range[this.options.range.length - 1] - this.options.range[0]) * (this.options.range.length - 1)) + '"'+
     'data-tick-step="1" ' +
     'data-tick-id="weightTicks" ' +
     'data-value-id="weightValue" ' +
@@ -49,11 +49,13 @@ L.Control.RiskThresholdHandler = L.Control.extend({
     '<div class="tick"></div>' +
     '<div class="tick"></div>' +
     '<div class="tick"></div>' +
+    '<div class="tick"></div>' +
     '</div>' +
     '<div class="tick-labels">' +
     '<span class="tick-label">Muito baixo</span>' +
     '<span class="tick-label">Baixo</span>' +
     '<span class="tick-label">Moderado</span>' +
+    '<span class="tick-label">Alto</span>' +
     '<span class="tick-label">Muito alto</span>' +
     '</div>' +  
     '<div class="risk-status-label">' + this.setLastDateStatus() + (this.options.date ? this.options.date : '') + '</div>'+
@@ -86,7 +88,7 @@ L.Control.RiskThresholdHandler = L.Control.extend({
   },
 
   _onInputChange: function () {
-    let position = +this._container.getElementsByTagName('input')[0].value;
+    let position = +this._container.getElementsByTagName('input')[0].value;    
     this._highlightSelectedLabel(position);
     return this.options.range[position];
   },
@@ -98,7 +100,8 @@ L.Control.RiskThresholdHandler = L.Control.extend({
       label.style.fontSize = '11px';
     });
 
-    let selectedLabel = this._container.querySelector('.tick-label:nth-child(' + (value + 1) + ')');
+    let position = +this._container.getElementsByTagName('input')[0].value;
+    let selectedLabel = this._container.querySelector('.tick-label:nth-child(' + (position+1) + ')');
     selectedLabel.style.fontWeight = 'bold';
     selectedLabel.style.fontSize = '13px';
   },     
