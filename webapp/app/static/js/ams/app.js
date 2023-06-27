@@ -174,13 +174,16 @@ ams.App = {
 			},
 			"CATEGORIA FUNDIÁRIA":{
 				defaultFilter: ''
-
 			},
 			"UNIDADE ESPACIAL": {
 				defaultFilter: ams.Config.defaultFilters.spatialUnit
 			},
-			"UNIDADE TEMPORAL": {defaultFilter:ams.Config.defaultFilters.temporalUnit},
-			"CLASSIFICAÇÃO DO MAPA": {defaultFilter:ams.Config.defaultFilters.diffClassify},
+			"UNIDADE TEMPORAL": {
+				defaultFilter:ams.Config.defaultFilters.temporalUnit
+			},
+			"CLASSIFICAÇÃO DO MAPA": {
+				defaultFilter:ams.Config.defaultFilters.diffClassify
+			},
 		};
 
 		for (let p in ams.BiomeConfig) {
@@ -289,6 +292,8 @@ ams.App = {
 					ams.App._propertyName=ams.Config.propertyName.rk;
 					ams.App._riskThreshold=ams.Config.defaultRiskFilter.threshold;
 					ams.App._hasClassFilter=false;
+					ams.App._diffOn = false;
+					ams.App._currentClassify = "onPeriod";
 				}else if(e.acronym=='AF'){
 					// the reference layer should be active-fires
 					layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.activeFire;
