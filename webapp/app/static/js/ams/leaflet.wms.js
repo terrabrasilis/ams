@@ -31,24 +31,26 @@ ams.LeafletWms = {
                     name="Queimadas";
                     type="af";// used to controls
                     htmlInfo=this._formatAFPopup(featureInfo);
-                }else{
+                }else if (this._isRKInfo()) {}
+                else{
                     name="Unidade Espacial";
                     type="su";// used to controls
                     htmlInfo=this._formatSpatialUnitPopup(featureInfo);
                 }
 
-                ams.Map.PopupControl._infoBody.push({type:type,name:name,htmlInfo:htmlInfo});
-                let htmlPopup=this._accordionFormat();
+                if (type != "" && name != "" && htmlInfo != ""){
+                    ams.Map.PopupControl._infoBody.push({type:type,name:name,htmlInfo:htmlInfo});      
+                    let htmlPopup=this._accordionFormat();
 
-                if(ams.Map.PopupControl._popupReference && ams.Map.PopupControl._popupReference._popup){
-                    ams.Map.PopupControl._popupReference._popup.setContent(htmlPopup);
-                }else{
-                    ams.Map.PopupControl._popupReference=this._map.openPopup(htmlPopup, latlng);
-                    ams.Map.PopupControl._popupReference.on('popupclose', ()=>{
-                        ams.Map.PopupControl._infoBody=[];
-                    });
-                }
-            }
+                    if(ams.Map.PopupControl._popupReference && ams.Map.PopupControl._popupReference._popup){
+                        ams.Map.PopupControl._popupReference._popup.setContent(htmlPopup);
+                    }else{
+                        ams.Map.PopupControl._popupReference=this._map.openPopup(htmlPopup, latlng);
+                        ams.Map.PopupControl._popupReference.on('popupclose', ()=>{
+                            ams.Map.PopupControl._infoBody=[];
+                        });
+                    }
+            }   }
         },
 
         '_accordionFormat': function(){
@@ -80,8 +82,10 @@ ams.LeafletWms = {
 
         '_isAFInfo': function () {
             return this._overlay.wmsParams.layers.includes(ams.Config.defaultLayers.activeFire);
-        },
-
+        },  
+        '_isRKInfo': function () {
+            return this._overlay.wmsParams.layers.includes(ams.Config.defaultLayers.ibamaRisk);
+        },  
         '_updateResults': function(result, featureInfo) {
             let fProperties=featureInfo.features[0].properties;
             for (let i in fProperties) {
@@ -143,14 +147,22 @@ ams.LeafletWms = {
             return sButton;
         },
         '_createSpatialUnitInfoTable': function (result) {
-            let focus=deter="";
+            let risk=focus=deter="";
             if(result["classname"]=="AF"){
                 focus=""
                 + "<tr>"
                 + "<td>Focos (unidades)   </td>"
                 + "<td>" + result["counts"] + "</td>"
                 + "</tr>";
-            }else{
+            }
+            else if(result["classname"]=="RK"){
+                risk=""
+                + "<tr>"
+                + "<td>Riscos (unidades)   </td>"
+                + "<td>" + result["counts"] + "</td>"
+                + "</tr>";    
+            }
+            else {
                 deter=""
                 + "<tr>"
                 + "<td>&#193;rea ("+result["area_unit"]+")</td>"
@@ -174,6 +186,7 @@ ams.LeafletWms = {
                 + "<td>Classe   </td>"
                 + "<td>" + this._formatClassName(result["classname"]) + "</td>"
                 + "</tr>"
+                + risk
                 + focus
                 + deter
             +"</table>";
