@@ -44,6 +44,10 @@ class SpatialUnitProfile():
             self.default_column="counts"
             self.default_col_name="Unidades"
 
+        if(self._classname=='RK'):
+                self.default_column="counts"
+                self.default_col_name="Unidades"        
+
         # standard area rounding
         self.round_factor=2
         if(self._classname=='AF'):
@@ -78,9 +82,9 @@ class SpatialUnitProfile():
         self._tableinfo = json.loads("{"+suinfo+"}")
 
         self._classes = pd.DataFrame(
-            {'code': pd.Series(['DS','DG', 'CS', 'MN', 'AF'], dtype='str'),
+            {'code': pd.Series(['DS','DG', 'CS', 'MN', 'AF', 'RK'], dtype='str'),
              'name': pd.Series(['Desmatamento','Degrada&#231;&#227;o',
-                      'Corte-Seletivo','Minera&#231;&#227;o', 'Focos'], dtype='str'),
+                      'Corte-Seletivo','Minera&#231;&#227;o', 'Focos', 'Índice'], dtype='str'),
              'color': pd.Series(['#0d0887', '#46039f', '#7201a8', '#9c179e'], dtype='str')})
         self._temporal_units = {
             "7d": "Agregado 7 dias",
@@ -241,6 +245,9 @@ class SpatialUnitProfile():
         if(self._classname=='AF'):
             datasource="de Queimadas"
 
+        if(self._classname=='RK'):
+            datasource="de Risco"
+
         title=f"""Usando dados de <b>{indicador}</b> {datasource} até <b>{last_date}</b>,
         {spatial_unit} ({spatial_description}), para as categorias fundiárias selecionadas
         e unidade temporal <b>{temporal_unit}</b>.
@@ -270,7 +277,8 @@ class SpatialUnitProfile():
         abstract_data=f"Área total: {total_area.round(self.round_factor)} {self.area_unit}"
         if(self._classname=='AF'):
             abstract_data=f"Total de focos: {total_area.round(self.round_factor)} "
-
+        elif(self._classname=='RK'):
+            abstract_data=f"Total de pontos de risco: {total_area.round(self.round_factor)}"
         chart_title=f"""Porcentagem de <b>{indicador}</b> por categoria fundiária<br>"""
         chart_title=f"""{chart_title}no último período do <b>{unid_temp}. {abstract_data}</b>"""
 

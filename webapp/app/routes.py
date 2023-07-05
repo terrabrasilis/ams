@@ -74,12 +74,17 @@ def get_profile(endpoint):
     
     try:
         spatial_unit_profile = SpatialUnitProfile(Config, params)
-        onlyOneLandUse=(land_use).find(',')
+        onlyOneLandUse = (land_use).find(',')
         # to avoid unnecessary function call
-        if(onlyOneLandUse<0):
+        if(onlyOneLandUse < 0 and spatial_unit_profile._classname != 'RK'):
             return json.dumps(
                 {'FormTitle': spatial_unit_profile.form_title(),
                 'AreaPerYearTableClass': spatial_unit_profile.fig_area_by_period()}
+            )                     
+        elif(spatial_unit_profile._classname == 'RK'):
+            return json.dumps(
+                {'FormTitle': spatial_unit_profile.form_title(),
+                'AreaPerLandUse': spatial_unit_profile.fig_area_per_land_use()}
             )
         else:
             return json.dumps(

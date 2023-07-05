@@ -800,7 +800,9 @@ ams.App = {
 			if (response&&response.ok) {
 				let profileJson = await response.json();
 				document.getElementById("txt3a").innerHTML = profileJson['FormTitle'];
-				Plotly.react('AreaPerYearTableClass', JSON.parse(profileJson['AreaPerYearTableClass']), {});
+				if (profileJson['AreaPerYearTableClass']) {
+					Plotly.react('AreaPerYearTableClass', JSON.parse(profileJson['AreaPerYearTableClass']), {});
+				}
 				Plotly.purge('AreaPerLandUse');
 				if(ams.App._landUseList.length>1)
 					Plotly.react('AreaPerLandUse', JSON.parse(profileJson['AreaPerLandUse']), {});
