@@ -275,12 +275,17 @@ class SpatialUnitProfile():
 
         # default column to sum statistics
         abstract_data=f"Área total: {total_area.round(self.round_factor)} {self.area_unit}"
+        chart_title = ""
         if(self._classname=='AF'):
             abstract_data=f"Total de focos: {total_area.round(self.round_factor)} "
+            chart_title=f"""Porcentagem de <b>{indicador}</b> por categoria fundiária<br>"""
+            chart_title=f"""{chart_title}no último período do <b>{unid_temp}. {abstract_data}</b>"""
         elif(self._classname=='RK'):
             abstract_data=f"Total de pontos de risco: {total_area.round(self.round_factor)}"
-        chart_title=f"""Porcentagem de <b>{indicador}</b> por categoria fundiária<br>"""
-        chart_title=f"""{chart_title}no último período do <b>{unid_temp}. {abstract_data}</b>"""
+            chart_title=f"""Distribuição do risco por categoria fundiária."""
+        else:
+            chart_title=f"""Porcentagem de <b>{indicador}</b> por categoria fundiária<br>"""
+            chart_title=f"""{chart_title}no último período do <b>{unid_temp}. {abstract_data}</b>"""
 
         fig = px.pie(df, values=self.default_col_name, names='Categoria Fundiária', template='plotly',
                      color_discrete_sequence=px.colors.sequential.RdBu,
