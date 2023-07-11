@@ -2,19 +2,24 @@ var ams = ams || {};
 
 ams.SLDStyles = {
 	AreaStyle: function(layerName, propertyName, minValue, maxValue,
-							isPriorization, priorColorHex) {
+								isPriorization, priorColorHex) {
 
-		let unit="focos";
-		if(propertyName=="area"){
-			unit="km²";// default if auto is disabled
-			if(ams.Config.general.area.changeunit=="auto"){
-				let diff=( (minValue>=0)?(maxValue-minValue):(maxValue + (minValue*-1)) );
-				if(diff<=ams.Config.general.area.threshold){
-					unit="ha";
-					minValue=minValue*100;
-					maxValue=maxValue*100;
+		let unit = "focos";
+		if (propertyName == "area") {
+		unit = "km²"; // default if auto is disabled
+			if (ams.Config.general.area.changeunit == "auto") {
+				let diff =
+				minValue >= 0 ? maxValue - minValue : maxValue + minValue * -1;
+				if (diff <= ams.Config.general.area.threshold) {
+				unit = "ha";
+				minValue = minValue * 100;
+				maxValue = maxValue * 100;
 				}
 			}
+		}
+
+		if (ams.App._suViewParams.classname == "RK") {
+			unit = "risco";
 		}
 
 		this.stroke = "";
@@ -30,14 +35,31 @@ ams.SLDStyles = {
 		this._numberOfTicksP = 0;
 
 		// if unit for area changes, raise notice and set globally
-		if(ams.Map.PopupControl._unit!=unit){
-			let txt1=(unit=='focos')?(""):(" de área");
-			let txt2=(unit=='ha')?("hectare (ha)"):( (unit=='focos')?("número de focos"):("quilômetro quadrado (km²)") );
-			$('.toast').toast('show');
-			$('.toast-body').html("Atenção, a unidade de medida"+txt1+" foi alterada para "+txt2+".");
-			// used to control the unit on the popup map
-			ams.Map.PopupControl._unit=unit;
-		}
+		if (ams.Map.PopupControl._unit !== unit) {
+			let text = "";
+			switch (unit) {
+				case "focos":
+					text = "número de focos";
+					break;
+				case "ha":
+					text = "hectare (ha)";
+					break;
+				case "km²":
+					text = "area (km²)";
+					break;
+				case "risco":
+					text = "número de risco";
+					break;
+			}
+
+			if (text !== "") {
+				$(".toast").toast("show");
+				$(".toast-body").html(
+				`Atenção, a unidade de medida foi alterada para ${text}.`
+				);
+				ams.Map.PopupControl._unit = unit;
+			}
+		}		  
 
 		this.setStroke = function(isPriorization) {
 			if(isPriorization) {
