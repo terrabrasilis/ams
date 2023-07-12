@@ -242,16 +242,20 @@ class SpatialUnitProfile():
         temporal_unit=self._temporal_units[self._temporal_unit]
 
         datasource="do DETER"
-        if(self._classname=='AF'):
-            datasource="de Queimadas"
+        if(self._classname=='AF'):            
+            title=f"""Usando dados de <b>{indicador}</b> de Queimadas até <b>{last_date}</b>,
+            {spatial_unit} ({spatial_description}), para as categorias fundiárias selecionadas
+            e unidade temporal <b>{temporal_unit}</b>.
+            """
 
-        if(self._classname=='RK'):
-            datasource="de Risco"
-
-        title=f"""Usando dados de <b>{indicador}</b> {datasource} até <b>{last_date}</b>,
-        {spatial_unit} ({spatial_description}), para as categorias fundiárias selecionadas
-        e unidade temporal <b>{temporal_unit}</b>.
-        """
+        elif(self._classname=='RK'):
+            title=f"""Usando dados de Risco de desmatamento (IBAMA), para todo o bioma (Amazônia),
+                    para as categorias fundiárias selecionadas e validade até {last_date}."""
+        else:
+            title=f"""Usando dados de <b>{indicador}</b> {datasource} até <b>{last_date}</b>,
+            {spatial_unit} ({spatial_description}), para as categorias fundiárias selecionadas
+            e unidade temporal <b>{temporal_unit}</b>.
+            """
 
         return title
 
