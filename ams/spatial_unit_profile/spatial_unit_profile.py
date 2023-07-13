@@ -10,6 +10,7 @@ from datetime import datetime
 import json
 import re
 from dateutil.relativedelta import relativedelta
+import psycopg2
 
 class SpatialUnitProfile():
     """
@@ -231,6 +232,19 @@ class SpatialUnitProfile():
         df.columns = ['Categoria Fundiária', self.default_col_name]
         return df
 
+    def risk_expiration_date(self):        
+        conn = psycopg2.connect(self._dburl)
+        cur = conn.cursor()        
+        sql = """SELECT expiration_date FROM risk.risk_ibama_date ORDER BY id DESC LIMIT 1"""        
+        cur.execute(sql)
+        result = cur.fetchall()
+        
+        cur.close()
+        conn.close()
+
+        expiration_date = result[0][0] if result else None
+        return expiration_date
+
     def form_title(self):
         """
         gets the main title for profile form
@@ -242,15 +256,16 @@ class SpatialUnitProfile():
         temporal_unit=self._temporal_units[self._temporal_unit]
 
         datasource="do DETER"
-        if(self._classname=='AF'):            
+        if(self._classname=='AF'):
             title=f"""Usando dados de <b>{indicador}</b> de Queimadas até <b>{last_date}</b>,
             {spatial_unit} ({spatial_description}), para as categorias fundiárias selecionadas
             e unidade temporal <b>{temporal_unit}</b>.
             """
 
-        elif(self._classname=='RK'):
-            title=f"""Usando dados de Risco de desmatamento (IBAMA), para todo o bioma (Amazônia),
-                    para as categorias fundiárias selecionadas e validade até {last_date}."""
+        elif self._classname == 'RK':
+            expiration_date = self.risk_expiration_date()
+            title = f"""Usando dados de Risco de desmatamento (IBAMA), para todo o bioma (Amazônia),
+            para as categorias fundiárias selecionadas e validade até <b>{expiration_date}</b>."""
         else:
             title=f"""Usando dados de <b>{indicador}</b> {datasource} até <b>{last_date}</b>,
             {spatial_unit} ({spatial_description}), para as categorias fundiárias selecionadas
