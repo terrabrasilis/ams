@@ -21,37 +21,35 @@ class FtpIBAMARisk:
 
     """
 
-    def __init__(self, db_url:str, host:str, ftp_path:str, user:str, password:str, port:int=None, output_path:str=None, risk_file_name:str=None):
+    def __init__(self, db_url:str, ftp_host:str, ftp_path:str, ftp_user:str, ftp_password:str, ftp_port:int=None, output_path:str=None):
         """
         Settings for FTP connection and file download.
 
         Mandatory parameters:
         -------------------------------------------------
         :param str db_url: The connection string to write log into database log table (See model at scripts/startup.sql)
-        :param str host: The host name or IP of FTP service
+        :param str ftp_host: The host name or IP of FTP service
         :param str ftp_path: The path for directory where the file is
-        :param str user: The username to login
-        :param str password: The password to login
+        :param str ftp_user: The username to login
+        :param str ftp_password: The password to login
 
         Optional parameters:
         -------------------------------------------------
-        :param int port: The port number for connection
+        :param int ftp_port: The port number for connection
         :param str output_path: The output directory to write the downloaded file
-        :param str risk_file_name: The name of file on server
         
         """
 
         # FTP connection parameters
-        self._host = host
-        self._port = port if port else 21
+        self._host = ftp_host
+        self._port = ftp_port if ftp_port else 21
         self._ftp_path = ftp_path
-        self._user = user
-        self._pass = password
+        self._user = ftp_user
+        self._pass = ftp_password
         # database string connection
         self._db_url = db_url
         self._conn = None
 
-        self._input_file_name = risk_file_name if risk_file_name else 'Risk_areas_AMZL.tif'
         self._output_path = output_path if output_path and path.exists(output_path) else path.join(path.dirname(__file__), '../../data')
         self._output_file_name = f"""weekly_ibama_1km_{datetime.now().strftime("%d_%m_%Y")}.tif"""
         self._risk_expiration_table = 'risk.risk_ibama_date'
@@ -94,27 +92,33 @@ class FtpIBAMARisk:
             await client.connect(self._host, int(self._port))
             await client.login(self._user, self._pass)
 
-            file_source=self._ftp_path + '/' + self._input_file_name
+            file_source=""
+            latest_file_date=None
 
-            if await client.exists(file_source):
-                remote_file_metadata=await client.stat(file_source)
-                remote_file_size=int(remote_file_metadata['size'])
-                file_mdate=remote_file_metadata['modify']
+            # list files and sort by modified date
+            for file_path, file_info in (await client.list(path=self._ftp_path, recursive=False)):
+                remote_file_size=int(file_info['size'])
+                file_mdate=file_info['modify']
                 remote_file_date=datetime(year=int(file_mdate[0:4]), month=int(file_mdate[4:6]), day=int(file_mdate[6:8])).date()
-                last_download_date=self.__get_last_download_date()
-                if last_download_date is None or remote_file_date > last_download_date:
-                    file_destination=f"""{self._output_path}/{self._output_file_name}"""
-                    file_destination=path.abspath(file_destination)
-                    await client.download(file_source, file_destination, write_into=True)
-                    if path.isfile(file_destination) and path.getsize(file_destination) == remote_file_size:
-                        log_msg="Success on download file."
-                        status=1
-                    else:
-                        log_msg="The file is downloaded but is invalid."
-                        file_destination=""
+                # get the latest file using metadata information
+                if latest_file_date is None or latest_file_date < remote_file_date:
+                    latest_file_date=remote_file_date
+                    file_source=file_path
+
+            last_download_date=self.__get_last_download_date()
+            if last_download_date is None or latest_file_date > last_download_date:
+                file_destination=f"""{self._output_path}/{self._output_file_name}"""
+                file_destination=path.abspath(file_destination)
+                await client.download(file_source, file_destination, write_into=True)
+                if path.isfile(file_destination) and path.getsize(file_destination) == remote_file_size:
+                    log_msg="Success on download file."
+                    status=1
                 else:
-                    log_msg="There is no new file."
+                    log_msg="The file is downloaded but is invalid."
                     file_destination=""
+            else:
+                log_msg="There is no new file."
+                file_destination=""
 
         except OperationalError as e:
             log_msg=f"Error on database connection. exception_msg: {e.__str__()}"
@@ -188,7 +192,11 @@ class FtpIBAMARisk:
     def execute(self):
         asyncio.run(self.__get_file())
 
-# local test
-# db='postgresql://postgres:postgres@192.168.15.49:5444/AMS3'
-# ftp = FtpIBAMARisk(db, host="ftp.gov.br", ftp_path="/somedir", user="user", password="pass")
-# ftp.execute()
+# local test (see environment vars into launch startup definition)
+import os
+ftp = FtpIBAMARisk(db_url=os.environ.get('DB_AMAZON_URL'),
+                   ftp_host=os.environ.get('FTP_HOST'),
+                   ftp_path=os.environ.get('FTP_PATH'),
+                   ftp_user=os.environ.get('FTP_USER'),
+                   ftp_password=os.environ.get('FTP_PASS'))
+ftp.execute()

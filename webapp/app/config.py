@@ -39,7 +39,5 @@ class Config:
 	if os.path.exists(FTP_PASS):
 		FTP_PASS = open(FTP_PASS, 'r').read()
 	# local where write the file copied from ftp
-	RISK_OUTPUT_PATH = os.environ.get('RISK_OUTPUT_PATH') or "/"
-	RISK_INPUT_FILE = os.environ.get('RISK_INPUT_FILE') or "Risk_areas_AMZL.tif"
-	
+	RISK_OUTPUT_PATH = os.environ.get('RISK_OUTPUT_PATH') or "/"	
 	
