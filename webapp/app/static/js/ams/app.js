@@ -799,7 +799,18 @@ ams.App = {
 			$("#loading_data_info").css('display','none')
 			if (response&&response.ok) {
 				let profileJson = await response.json();
-				document.getElementById("txt3a").innerHTML = profileJson['FormTitle'];
+				const expirationDate = new Date(profileJson['FormTitle']);
+
+				// Obtém a data formatada de acordo com o locale do navegador do cliente
+				const formattedExpirationDate = expirationDate.toLocaleDateString();
+
+				// Atualiza apenas a parte da string que contém a data formatada
+				const updatedTitle = profileJson['FormTitle'].replace(
+					`{expiration_date}`, `<b>${formattedExpirationDate}</b>`
+				);
+
+				// Atualiza o elemento no DOM com o título atualizado
+				document.getElementById("txt3a").innerHTML = updatedTitle;
 				if (profileJson['AreaPerYearTableClass']) {
 					Plotly.react('AreaPerYearTableClass', JSON.parse(profileJson['AreaPerYearTableClass']), {});
 				}

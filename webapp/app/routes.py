@@ -74,24 +74,30 @@ def get_profile(endpoint):
     
     try:
         spatial_unit_profile = SpatialUnitProfile(Config, params)
-        onlyOneLandUse = (land_use).find(',')
+        #onlyOneLandUse = (land_use).find(',')
+        count = land_use.split(',')
+        onlyOneLandUse = len(count) if count[0] != '' else -1
+
         # to avoid unnecessary function call
-        if(onlyOneLandUse < 0 and spatial_unit_profile._classname != 'RK'):
-            return json.dumps(
-                {'FormTitle': spatial_unit_profile.form_title(),
-                'AreaPerYearTableClass': spatial_unit_profile.fig_area_by_period()}
-            )                     
-        elif(spatial_unit_profile._classname == 'RK'):
+        if(spatial_unit_profile._classname != 'RK'):
+            if (onlyOneLandUse <= 1):
+                return json.dumps(
+                    {'FormTitle': spatial_unit_profile.form_title(),
+                    'AreaPerYearTableClass': spatial_unit_profile.fig_area_by_period()}
+            )
+            else:
+                return json.dumps(
+                    {'FormTitle': spatial_unit_profile.form_title(),
+                    'AreaPerLandUse': spatial_unit_profile.fig_area_per_land_use(),
+                    'AreaPerYearTableClass': spatial_unit_profile.fig_area_by_period()}
+                )          
+        elif(onlyOneLandUse >= 2 and spatial_unit_profile._classname == 'RK'):
             return json.dumps(
                 {'FormTitle': spatial_unit_profile.form_title(),
                 'AreaPerLandUse': spatial_unit_profile.fig_area_per_land_use()}
             )
         else:
-            return json.dumps(
-                {'FormTitle': spatial_unit_profile.form_title(),
-                'AreaPerLandUse': spatial_unit_profile.fig_area_per_land_use(),
-                'AreaPerYearTableClass': spatial_unit_profile.fig_area_by_period()}
-            )
+            return 
     except Exception as e:
         print(e)
         return "Something is wrong on the server. Please, send this error to our support service: terrabrasilis@inpe.br", 500

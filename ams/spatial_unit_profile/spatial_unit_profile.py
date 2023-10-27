@@ -235,7 +235,10 @@ class SpatialUnitProfile():
     def risk_expiration_date(self):        
         conn = psycopg2.connect(self._dburl)
         cur = conn.cursor()        
-        sql = """SELECT expiration_date FROM risk.risk_ibama_date ORDER BY id DESC LIMIT 1"""        
+        sql = """SELECT TO_CHAR(expiration_date, 'YYYY-MM-DD') AS formatted_expiration_date
+                 FROM risk.risk_ibama_date
+                 ORDER BY id DESC
+                 LIMIT 1;"""        
         cur.execute(sql)
         result = cur.fetchall()
         
@@ -263,7 +266,7 @@ class SpatialUnitProfile():
             """
 
         elif self._classname == 'RK':
-            expiration_date = self.risk_expiration_date()
+            expiration_date = self.risk_expiration_date()            
             title = f"""Usando dados de Risco de desmatamento (IBAMA), para todo o bioma (Amazônia),
             para as categorias fundiárias selecionadas e validade até <b>{expiration_date}</b>."""
         else:
