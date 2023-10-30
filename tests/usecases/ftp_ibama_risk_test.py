@@ -3,6 +3,8 @@
 # Read data file from INPE FTP service
 # local test (see environment vars into launch startup definition)
 import os
+from ams.dataaccess.ftp_ibama_risk import FtpIBAMARisk
+
 ftp = FtpIBAMARisk(db_url=os.environ.get('DB_AMAZON_URL'),
                    ftp_host=os.environ.get('FTP_HOST'),
                    ftp_path=os.environ.get('FTP_PATH'),
