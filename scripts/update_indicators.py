@@ -3,7 +3,7 @@ sys.path.insert(0,'../ams')
 import warnings
 warnings.filterwarnings("ignore")
 
-from webapp.app.config import Config
+from ams.config import Config
 from ams.usecases import ActiveFires
 from ams.usecases import DeterDaily
 from ams.dataaccess.ftp_ibama_risk import FtpIBAMARisk
