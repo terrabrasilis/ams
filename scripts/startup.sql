@@ -439,7 +439,7 @@ CREATE INDEX IF NOT EXISTS risk_matrix_ibama_1km_geom_idx
 
 -- Table: risk.weekly_data
 
--- DROP TABLE IF EXISTS risk.weekly_data;
+-- DROP TABLE IF EXISTS risk.weekly_data CASCADE;
 
 CREATE TABLE IF NOT EXISTS risk.weekly_data
 (
@@ -451,11 +451,11 @@ CREATE TABLE IF NOT EXISTS risk.weekly_data
     CONSTRAINT weekly_data_date_id_fk FOREIGN KEY (date_id)
         REFERENCES risk.risk_ibama_date (id) MATCH SIMPLE
         ON UPDATE NO ACTION
-        ON DELETE NO ACTION,
+        ON DELETE CASCADE,
     CONSTRAINT weekly_data_geom_id_fk FOREIGN KEY (geom_id)
         REFERENCES risk.matrix_ibama_1km (id) MATCH SIMPLE
         ON UPDATE NO ACTION
-        ON DELETE NO ACTION
+        ON DELETE CASCADE
 )
 TABLESPACE pg_default;
 

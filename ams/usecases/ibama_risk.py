@@ -122,36 +122,35 @@ class IBAMARisk:
                 self.__drop_tmp_table()
                 # store results
                 engine = create_engine(self._db_url)
-                df.to_postgis(con=engine, name=self._risk_temp_table,schema=self._db_schema, if_exists='replace', index=False)
+                df.to_postgis(con=engine, name=self._risk_temp_table, schema=self._db_schema, if_exists='replace', index=False)
                 # create geometry index using SRID
                 self.__create_index_on_tmp_table()
-                # load the points into the matrix table if it doesn't have data yet
-                self.__populate_matrix_if_empty()
+                # reload the points into the matrix table
+                self.__populate_point_matrix()
                 # copy new data to final table using Point intersects
                 self.__copy_to_weekly_table(file_date)
 
-    def __populate_matrix_if_empty(self):
+    def __populate_point_matrix(self):
         """
-        Check if the points matrix is empty and if so, load the points from the temp table.
-        Only the first time.
+        Populate the points matrix crossing the points from the temp table and the biome border.
 
         Prerequisites:
          - Existence of Biome Border 'deter.biome_border' as schema.table on database.
         """
-        sql=f"SELECT COUNT(*) FROM {self._db_schema}.{self._geom_table};"
+        delete=f"DELETE FROM {self._db_schema}.{self._geom_table};"
+        resetseq=f"SELECT setval('{self._db_schema}.{self._geom_table}_id_seq', 1, true);"
+        insert=f"""
+            INSERT INTO {self._db_schema}.{self._geom_table}(geom)
+            SELECT ST_Transform(rkt.geometry,4674)
+            FROM {self._db_schema}.{self._risk_temp_table} rkt, deter.biome_border bb
+            WHERE ST_Intersects(ST_Transform(rkt.geometry,4674),bb.geom);
+            """
         try:
             cur = self.__get_db_cursor()
-            cur.execute(sql)
-            results=cur.fetchall()
-            if len(results)>0 and results[0][0]==0:
-                insert=f"""
-                INSERT INTO {self._db_schema}.{self._geom_table}(geom)
-                SELECT ST_Transform(rkt.geometry,4674)
-                FROM {self._db_schema}.{self._risk_temp_table} rkt, deter.biome_border bb
-                WHERE ST_Intersects(ST_Transform(rkt.geometry,4674),bb.geom);
-                """
-                cur.execute(insert)
-                self._conn.commit()
+            cur.execute(delete)
+            cur.execute(resetseq)
+            cur.execute(insert)
+            self._conn.commit()
         except Exception as e:
             self._conn.rollback()
             print('Error on load Points to the matrix table')
@@ -272,8 +271,3 @@ class IBAMARisk:
         finally:
             if self._conn:
                 self._conn.close()
-
-# local test
-# db='postgresql://postgres:postgres@192.168.15.49:5444/AMS3'
-# ibr = IBAMARisk(db)
-# ibr.execute()
