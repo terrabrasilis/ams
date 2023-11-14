@@ -10,7 +10,7 @@ from ams.dataaccess.ftp_ibama_risk import FtpIBAMARisk
 from ams.usecases import IBAMARisk
 from ams.usecases.classify_by_land_use import ClassifyByLandUse
 
-# Update all data including deter history? (see at: ~/ams/webapp/app/config.py)
+# Update all data including deter history? (see at: ~/ams/ams/config.py)
 alldata=Config.ALL_DATA
 # For a new database or if deter_history changes at source, use True at least once.
 

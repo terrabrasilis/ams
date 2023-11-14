@@ -23,6 +23,7 @@ class ClassifyByLandUse:
         self._deter_table = 'deter.tmp_data'
         self._fires_input_table = 'fires.active_fires'
         self._risk_geom_table = 'risk.matrix_ibama_1km'
+        # The public.last_risk_data is an SQLView in public schema to join some tables from risk schema
         self._risk_input_table = 'public.last_risk_data'
 
     def read_spatial_units(self):
