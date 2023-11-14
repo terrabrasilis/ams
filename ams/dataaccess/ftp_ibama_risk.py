@@ -1,4 +1,5 @@
 from os import path
+import shutil
 from psycopg2 import OperationalError, connect
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -52,6 +53,7 @@ class FtpIBAMARisk:
 
         self._output_path = output_path if output_path and path.exists(output_path) else path.join(path.dirname(__file__), '../../data')
         self._output_file_name = f"""weekly_ibama_1km_{datetime.now().strftime("%d_%m_%Y")}.tif"""
+        self._geoserver_file_name = f"""weekly_ibama_1km.tif"""
         self._risk_expiration_table = 'risk.risk_ibama_date'
         self._log_table = 'risk.etl_log_ibama'
 
@@ -113,6 +115,10 @@ class FtpIBAMARisk:
                 if path.isfile(file_destination) and path.getsize(file_destination) == remote_file_size:
                     log_msg="Success on download file."
                     status=1
+                    # copy file to geoserver datadir location
+                    to_geoserver=f"""{self._output_path}/geoserver/{self._geoserver_file_name}"""
+                    shutil.copy(src=file_destination,dst=to_geoserver)
+                    shutil.chown(path=to_geoserver,user=1099,group=1099)
                 else:
                     log_msg="The file is downloaded but is invalid."
                     file_destination=""
@@ -134,7 +140,7 @@ class FtpIBAMARisk:
             self.__write_log2db(log_msg, status, remote_file_date, file_destination)
             self.__write_expiration_date(status, remote_file_date)
 
-            # clase the database connection if exists
+            # close the database connection if exists
             if self._conn:
                 self._conn.close()
 
