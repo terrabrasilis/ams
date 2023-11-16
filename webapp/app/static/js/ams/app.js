@@ -326,6 +326,7 @@ ams.App = {
 					ams.RiskThresholdHandler.setLastRiskDate(lastDateDynamic);
 					ams.App._dateControl.setPeriod(lastDateDynamic, ams.App._currentTemporalAggregate);
 					ams.PeriodHandler.changeDate(ams.App._dateControl.startdate);
+					needUpdateSuLayers=false;// no need because the changeDate Internally invokes layer update.
 				}
 			}else if(e.group.name=='CATEGORIA FUNDIÁRIA'){
 				let luid=+e.acronym;
@@ -369,8 +370,8 @@ ams.App = {
 				}
 			}else if(temporalUnits.isAggregate(e.name)) {// time aggregate selects: weekly, monthly, yearly...
 				ams.App._currentTemporalAggregate = e.acronym;
-				ams.PeriodHandler.changeDate(ams.App._dateControl.startdate);// Internally invokes layer update.
-				needUpdateSuLayers=false;
+				ams.PeriodHandler.changeDate(ams.App._dateControl.startdate);
+				needUpdateSuLayers=false;// no need because the changeDate Internally invokes layer update.
 			}
 
 			if(needUpdateSuLayers) ams.App._updateSpatialUnitLayer();
