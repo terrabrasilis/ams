@@ -20,6 +20,10 @@ Optional:
  - https://docs.docker.com/compose/install/
 
 
+Some specific stuffs are required in production environment.
+ - The location to store the log files and the fundiary structure raster file;
+ - The geoserver shared location to copy the risk file after each new processed risk data;
+
 ## Building the webapp image and sync image
 
 The preconditions is:
@@ -59,6 +63,8 @@ The preconditions is:
 
 Using the docker-compose command and the **docker/docker-compose.yaml** file to activate the webapp and the backend sync task services.
 
+Before run, change the <x.y.z> into **docker/docker-compose.yaml** to the desired version.
+
 To up the stack in detached mode:
 ```sh
 cd docker/
@@ -92,6 +98,7 @@ docker run --env SCRIPT_NAME="/ams" \
 docker run --env INPUT_GEOTIFF_FUNDIARY_STRUCTURE="estrutura_fundiaria_cst_lzw_4326.tif" \
 --env-file docker/webapp-secrets.env \
 -v "/some/local/dir/data:/usr/local/data" \
+-v "/some/geoserver/datadir:/usr/local/data/geoserver" \
 -d --rm --name ams-sync terrabrasilis/ams-sync:v<x.y.z>
 ```
 
