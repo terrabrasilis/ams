@@ -130,6 +130,10 @@ class FtpIBAMARisk:
             log_msg=f"Error on database connection. exception_msg: {e.__str__()}"
             raise e
         
+        except FileNotFoundError as e:
+            log_msg=f"Error on copy risk file to geoserver location. exception_msg: {e.__str__()}"
+            raise e
+        
         except Exception as e:
             log_msg=f"Error on download file from FTP. exception_msg: {e.__str__()}"
             raise e
