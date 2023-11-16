@@ -34,14 +34,14 @@ ams.BiomeConfig["Amazônia"] = {
     lastDate: "last_date" // The layer name to get the last update date of available data. The workspace is dinamic and based on authentication state
   },
   defaultFilters: {
-    indicator: 'DS',// can be group's name of DETER classnames, 'DS', 'DG', 'CS' and 'MN', or 'AF' to Queimadas
+    indicator: 'DS',// can be group's name of DETER classnames, 'DS', 'DG', 'CS' and 'MN', or 'AF' to Queimadas or 'RK' to risk
     spatialUnit: 'csAmz_150km',
     temporalUnit: '7d',
     diffClassify: 'onPeriod',// can be 'onPeriod' or 'periodDiff'
     priorityLimit: 10
   },
   defaultRiskFilter:{
-    threshold: 0.25 // used to process counts, including points where the value is greater than this threshold
+    threshold: 0.75 // used to process counts, including points where the value is greater than this threshold
   }
 };
 
