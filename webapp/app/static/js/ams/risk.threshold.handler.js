@@ -33,6 +33,7 @@ ams.RiskThresholdHandler = {
         // to keep updated infos on UI and return the selected value
         ams.App._riskThreshold=this._control._onInputChange();
         ams.App._suViewParams.updateRiskThreshold(ams.App._riskThreshold);
+        ams.App._priorViewParams.updateRiskThreshold(ams.App._riskThreshold);
         ams.App._updateSpatialUnitLayer();
     }
 };
