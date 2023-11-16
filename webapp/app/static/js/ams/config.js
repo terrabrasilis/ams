@@ -27,7 +27,7 @@ var defaultConfig = {
 ams.BiomeConfig["Amazônia"] = {
   defaultWorkspace: 'ams',
   defaultLayers:{
-    biomeBorder:"prodes-amazon-nb:biome_border",// Layer name of Amazon biome border from TerraBrasilis service ( The workspace is fixed)
+    biomeBorder:"prodes-amazon-nb:amazon_biome_border",// Layer name of Amazon biome border from TerraBrasilis service ( The workspace is fixed)
     deter:"deter-ams", // The layer name of DETER alerts from TerraBrasilis service. The workspace is dinamic and based on authentication state
     activeFire:"active-fire", // The layer name of Focos de Queimadas from TerraBrasilis service. The workspace is dinamic and based on authentication state
     ibamaRisk:"weekly_ibama_1km", // The layer name of weekly risk with the default prediction data of risk of deforestation from IBAMA.
