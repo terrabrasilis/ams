@@ -252,129 +252,146 @@ ams.App = {
 		this._addControlLayer();
 
 		// control handler of main panel
-		map.on('changectrl', function(e) {
-
-			if(ams.App._landUseList.length==0 &&
-				e.group.name!='CATEGORIA FUNDIÁRIA' && e.group.name!='BIOMA'){
-				ams.App._resetMap("O filtro deve incluir ao menos uma categoria fundiária. A solicitação não foi concluída.");
-				return;// abort if no filters
-			}
-
-			let layerToAdd,needUpdateSuLayers=true;
+		map.on('changectrl', function(evn) {
 			
-			if(e.group.name=='BIOMA'){
-				if(e.acronym==ams.Config.biome){
-					return;
+			$("#loading_data_info").css('display','block');
+
+			let changeCtrlFun=function(e){
+
+				if(ams.App._landUseList.length==0 &&
+					e.group.name!='CATEGORIA FUNDIÁRIA' && e.group.name!='BIOMA'){
+					ams.App._resetMap("O filtro deve incluir ao menos uma categoria fundiária. A solicitação não foi concluída.");
+					return;// abort if no filters
 				}
-				if(ams.App._landUseList.length!=ams.Config.landUses.length){
-					$('.toast').toast('show');
-					$('.toast-body').html("O filtro por categorias fundiárias foi restaurado ao padrão.");
-					// to avoid the toast msg at _updateSpatialUnitLayer
-					ams.App._landUseList=ams.Config.landUses.map((lu)=>{return(lu.id);});
-				}
-				// reset some data to avoid getting wrong data
-				ams.App._suViewParams=null;
-				ams.App._priorViewParams=null;
-				ams.App._diffOn = ( (ams.Config.defaultFilters.diffClassify=="onPeriod")?(false):(true) );
-				// write on local storage
-				localStorage.setItem('ams.previous.biome.setting.selection', e.acronym);
-				needUpdateSuLayers=false;// disable the call at the end because the call is inside the Promise callback below
-				ams.Utils.biomeChanges(e.acronym).then(
-					()=>{
-						ams.App._updateSpatialUnitLayer();
+
+				let layerToAdd,needUpdateSuLayers=true;
+				
+				if(e.group.name=='BIOMA'){
+					if(e.acronym==ams.Config.biome){
+						return;
 					}
-				);
+					if(ams.App._landUseList.length!=ams.Config.landUses.length){
+						$('.toast').toast('show');
+						$('.toast-body').html("O filtro por categorias fundiárias foi restaurado ao padrão.");
+						// to avoid the toast msg at _updateSpatialUnitLayer
+						ams.App._landUseList=ams.Config.landUses.map((lu)=>{return(lu.id);});
+					}
+					// reset some data to avoid getting wrong data
+					ams.App._suViewParams=null;
+					ams.App._priorViewParams=null;
+					ams.App._diffOn = ( (ams.Config.defaultFilters.diffClassify=="onPeriod")?(false):(true) );
+					// write on local storage
+					localStorage.setItem('ams.previous.biome.setting.selection', e.acronym);
+					needUpdateSuLayers=false;// disable the call at the end because the call is inside the Promise callback below
+					ams.Utils.biomeChanges(e.acronym).then(
+						()=>{
+							ams.App._updateSpatialUnitLayer();
+						}
+					);
 
-			}else if(e.group.name=='INDICADOR'){// change reference layer (deter, fires or risk)?
-				if(e.acronym=='RK'){
-					// the reference layer should be weekly_ibama_1km
-					layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.ibamaRisk;
-					ams.App._propertyName=ams.Config.propertyName.rk;
-					ams.App._riskThreshold=ams.Config.defaultRiskFilter.threshold;
-					ams.App._hasClassFilter=false;
-					ams.App._diffOn = false;
-					ams.App._currentClassify = "onPeriod";
-				}else if(e.acronym=='AF'){
-					// the reference layer should be active-fires
-					layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.activeFire;
-					ams.App._propertyName=ams.Config.propertyName.af;
-					ams.App._hasClassFilter=false;
-				}else{
-					// the reference layer should be deter
-					layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.deter;
-					ams.App._propertyName=ams.Config.propertyName.deter;
-					ams.App._hasClassFilter=true;
-				}
-				// reference layer was changes, so propertyName changes too
-				if(ams.App._referenceLayerName!=layerToAdd){
-					ams.App._exchangeReferenceLayer(ams.App._referenceLayerName, layerToAdd);
-				}else if(ams.App._hasClassFilter){
-					// apply change filters on reference layer
-					ams.App._updateReferenceLayer();
-				}
+				}else if(e.group.name=='INDICADOR'){// change reference layer (deter, fires or risk)?
+					if(e.acronym=='RK'){
+						// the reference layer should be weekly_ibama_1km
+						layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.ibamaRisk;
+						ams.App._propertyName=ams.Config.propertyName.rk;
+						ams.App._riskThreshold=ams.Config.defaultRiskFilter.threshold;
+						ams.App._hasClassFilter=false;
+						ams.App._diffOn = false;
+						ams.App._currentClassify = "onPeriod";
+					}else if(e.acronym=='AF'){
+						// the reference layer should be active-fires
+						layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.activeFire;
+						ams.App._propertyName=ams.Config.propertyName.af;
+						ams.App._hasClassFilter=false;
+					}else{
+						// the reference layer should be deter
+						layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.deter;
+						ams.App._propertyName=ams.Config.propertyName.deter;
+						ams.App._hasClassFilter=true;
+					}
+					// reference layer was changes, so propertyName changes too
+					if(ams.App._referenceLayerName!=layerToAdd){
+						ams.App._exchangeReferenceLayer(ams.App._referenceLayerName, layerToAdd);
+					}else if(ams.App._hasClassFilter){
+						// apply change filters on reference layer
+						ams.App._updateReferenceLayer();
+					}
 
-				if(ams.App._suViewParams.classname != e.acronym){
-					ams.App._suViewParams.classname = e.acronym;
-					ams.App._priorViewParams.classname = e.acronym;
-					ams.App._suViewParams.updatePropertyName(ams.App._propertyName);
-					ams.App._priorViewParams.updatePropertyName(ams.App._propertyName);
-					ams.App._suViewParams.updateRiskThreshold(ams.App._riskThreshold);
-					ams.App._priorViewParams.updateRiskThreshold(ams.App._riskThreshold);
-					// try update the last date for new classname
-					let lastDateDynamic = ams.App._wfs.getLastDate(ldLayerName);
-					lastDateDynamic = lastDateDynamic?lastDateDynamic:ams.App._spatialUnits.getDefault().last_date;
-					ams.RiskThresholdHandler.setLastRiskDate(lastDateDynamic);
-					ams.App._dateControl.setPeriod(lastDateDynamic, ams.App._currentTemporalAggregate);
+					if(ams.App._suViewParams.classname != e.acronym){
+						ams.App._suViewParams.classname = e.acronym;
+						ams.App._priorViewParams.classname = e.acronym;
+						ams.App._suViewParams.updatePropertyName(ams.App._propertyName);
+						ams.App._priorViewParams.updatePropertyName(ams.App._propertyName);
+						ams.App._suViewParams.updateRiskThreshold(ams.App._riskThreshold);
+						ams.App._priorViewParams.updateRiskThreshold(ams.App._riskThreshold);
+						// try update the last date for new classname
+						let lastDateDynamic = ams.App._wfs.getLastDate(ldLayerName);
+						lastDateDynamic = lastDateDynamic?lastDateDynamic:ams.App._spatialUnits.getDefault().last_date;
+						ams.RiskThresholdHandler.setLastRiskDate(lastDateDynamic);
+						ams.App._dateControl.setPeriod(lastDateDynamic, ams.App._currentTemporalAggregate);
+						ams.PeriodHandler.changeDate(ams.App._dateControl.startdate);
+						needUpdateSuLayers=false;// no need because the changeDate Internally invokes layer update.
+					}
+				}else if(e.group.name=='CATEGORIA FUNDIÁRIA'){
+					let luid=+e.acronym;
+					if(e.inputtype=='checkbox'){
+						let index=ams.App._landUseList.findIndex((v)=>{
+							return v==luid;
+						});
+						if(e.checked && index<0){
+							ams.App._landUseList.push(luid);
+							ams.App._resetMap();
+						}
+						if(!e.checked && index>=0){
+							ams.App._landUseList.splice(index,1);
+							ams.App._resetMap();
+						}
+					}
+
+					needUpdateSuLayers=false;
+				}else if(e.group.name=='UNIDADE ESPACIAL'){
+					// spatial unit layer was changes
+					if(ams.App._currentSULayerName!=e.acronym){
+						// old layer to remove
+						let oLayerName=ams.App._getLayerPrefix();
+						// set the new name
+						ams.App._currentSULayerName=e.acronym;
+						//  new layer to insert
+						let nLayerName=ams.App._getLayerPrefix();
+						ams.App._exchangeSpatialUnitLayer(oLayerName,nLayerName);
+						needUpdateSuLayers=false;// no need to update because SU layers were swapped by previous command
+					}
+				}else if(e.group.name=='CLASSIFICAÇÃO DO MAPA'){
+					ams.App._diffOn = ( (e.acronym=="onPeriod")?(false):(true) );
+					// diff classify was changes
+					if(ams.App._currentClassify!=e.acronym){
+						// remove and insert the same layer, but on reinsert the correct prefix is used to apply the right classification
+						let oLayerName=ams.App._getLayerPrefix();
+						ams.App._currentClassify=e.acronym;// change for new classify method to get the new layer prefix
+						let nLayerName=ams.App._getLayerPrefix();
+						ams.App._exchangeSpatialUnitLayer(oLayerName,nLayerName);
+						needUpdateSuLayers=false;// no need to update because SU layers were swapped by previous command
+					}
+				}else if(temporalUnits.isAggregate(e.name)) {// time aggregate selects: weekly, monthly, yearly...
+					ams.App._currentTemporalAggregate = e.acronym;
 					ams.PeriodHandler.changeDate(ams.App._dateControl.startdate);
 					needUpdateSuLayers=false;// no need because the changeDate Internally invokes layer update.
 				}
-			}else if(e.group.name=='CATEGORIA FUNDIÁRIA'){
-				let luid=+e.acronym;
-				if(e.inputtype=='checkbox'){
-					let index=ams.App._landUseList.findIndex((v)=>{
-						return v==luid;
-					});
-					if(e.checked && index<0){
-						ams.App._landUseList.push(luid);
-						ams.App._resetMap();
-					}
-					if(!e.checked && index>=0){
-						ams.App._landUseList.splice(index,1);
-						ams.App._resetMap();
-					}
-				}
 
-				needUpdateSuLayers=false;
-			}else if(e.group.name=='UNIDADE ESPACIAL'){
-				// spatial unit layer was changes
-				if(ams.App._currentSULayerName!=e.acronym){
-					// old layer to remove
-					let oLayerName=ams.App._getLayerPrefix();
-					// set the new name
-					ams.App._currentSULayerName=e.acronym;
-					//  new layer to insert
-					let nLayerName=ams.App._getLayerPrefix();
-					ams.App._exchangeSpatialUnitLayer(oLayerName,nLayerName);
-					needUpdateSuLayers=false;// no need to update because SU layers were swapped by previous command
-				}
-			}else if(e.group.name=='CLASSIFICAÇÃO DO MAPA'){
-				ams.App._diffOn = ( (e.acronym=="onPeriod")?(false):(true) );
-				// diff classify was changes
-				if(ams.App._currentClassify!=e.acronym){
-					// remove and insert the same layer, but on reinsert the correct prefix is used to apply the right classification
-					let oLayerName=ams.App._getLayerPrefix();
-					ams.App._currentClassify=e.acronym;// change for new classify method to get the new layer prefix
-					let nLayerName=ams.App._getLayerPrefix();
-					ams.App._exchangeSpatialUnitLayer(oLayerName,nLayerName);
-					needUpdateSuLayers=false;// no need to update because SU layers were swapped by previous command
-				}
-			}else if(temporalUnits.isAggregate(e.name)) {// time aggregate selects: weekly, monthly, yearly...
-				ams.App._currentTemporalAggregate = e.acronym;
-				ams.PeriodHandler.changeDate(ams.App._dateControl.startdate);
-				needUpdateSuLayers=false;// no need because the changeDate Internally invokes layer update.
-			}
+				if(needUpdateSuLayers) ams.App._updateSpatialUnitLayer();
 
-			if(needUpdateSuLayers) ams.App._updateSpatialUnitLayer();
+				window.setTimeout(
+					()=>{
+						$("#loading_data_info").css('display','none');
+					},500
+				);
+			};
+
+			window.setTimeout(
+				()=>{
+					changeCtrlFun(evn);
+				},100
+			);
 		});
 
 		map.whenReady(()=>{
@@ -797,7 +814,7 @@ ams.App = {
 					console.log("The backend service may be offline or your internet connection has been interrupted.");
 				}
 			);
-			$("#loading_data_info").css('display','none')
+			$("#loading_data_info").css('display','none');
 			if (response&&response.ok) {
 				let profileJson = await response.json();
 				const expirationDate = new Date(profileJson['FormTitle']);
