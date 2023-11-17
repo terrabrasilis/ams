@@ -7,6 +7,8 @@ ams.Map = {
 	PopupControl: {
 		_popupReference:null,
 		_unit:'km²',
+		_text:'área (km²)',
+		_prefix:'Valor do indicador: ',
 		_infoBody:[]
 	},
 	ViewParams: function(classname, dateControll, propertyName, limit, risk_threshold) {

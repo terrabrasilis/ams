@@ -36,28 +36,34 @@ ams.SLDStyles = {
 
 		// if unit for area changes, raise notice and set globally
 		if (ams.Map.PopupControl._unit !== unit) {
-			let text = "";
+			let text = "", prefix = "";
 			switch (unit) {
 				case "focos":
 					text = "número de focos";
+					prefix = "Contagem: ";
 					break;
 				case "ha":
-					text = "hectare (ha)";
+					text = "área (ha)";
+					prefix = "Valor do indicador: ";
 					break;
 				case "km²":
-					text = "area (km²)";
+					text = "área (km²)";
+					prefix = "Valor do indicador: ";
 					break;
 				case "risco":
-					text = "número de risco";
+					text = "pontos de risco";
+					prefix = "Contagem: ";
 					break;
 			}
 
 			if (text !== "") {
 				$(".toast").toast("show");
 				$(".toast-body").html(
-				`Atenção, a unidade de medida foi alterada para ${text}.`
+				`Atenção, a unidade de medida foi alterada. ${prefix} ${text}.`
 				);
 				ams.Map.PopupControl._unit = unit;
+				ams.Map.PopupControl._text = text;
+				ams.Map.PopupControl._prefix = prefix;
 			}
 		}		  
 

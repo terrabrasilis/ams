@@ -14,8 +14,8 @@ ams.RiskThresholdHandler = {
             });
         }
         this._control.addTo(map);
-        // restart to initial range value
-        this._control._highlightSelectedLabel(this._sliderRange[0]);        
+        let idx=ams.Config.risk.range.findIndex((e)=>{if(e==ams.Config.defaultRiskFilter.threshold) return true;});
+        this._control._highlightSelectedLabel(idx);
     },
 
     remove: function(map) {

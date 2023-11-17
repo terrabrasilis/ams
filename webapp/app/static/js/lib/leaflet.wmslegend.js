@@ -52,7 +52,7 @@ L.Control.WMSLegend = L.Control.extend({
         }
         // dinamic spatial unit legend
         let limg = L.DomUtil.create('span', 'wms-label-legend', container);
-        limg.innerText='Unidade espacial ('+ams.Map.PopupControl._unit+')';
+        limg.innerText=ams.Map.PopupControl._prefix+ams.Map.PopupControl._text;
         this.img = L.DomUtil.create('img', legendClassName, container);
         this.img.src = this.options.uri;
         this.img.alt = 'Spatial Unit Legend';

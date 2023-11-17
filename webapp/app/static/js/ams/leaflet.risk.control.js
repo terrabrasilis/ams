@@ -23,7 +23,8 @@ L.Control.RiskThresholdHandler = L.Control.extend({
     let form = L.DomUtil.create('div', this._base_classname + '-form');
 
     let label = L.DomUtil.create('div', this._base_classname + '-label');
-    label.innerHTML = 'Risco Ibama';
+    label.innerHTML = 'Número de pontos de risco maiores que: <span id="selectedvalue">'+ams.Config.defaultRiskFilter.threshold+'</span>'+
+    '<div class="risk-status-label">' + this.setLastDateStatus() + (this.options.date ? this.options.date : '') + '</div>';
     form.appendChild(label);
 
     let slidercontent = L.DomUtil.create('div', this._base_classname + '-content');
@@ -57,8 +58,7 @@ L.Control.RiskThresholdHandler = L.Control.extend({
     '<span class="tick-label">Moderado</span>' +
     '<span class="tick-label">Alto</span>' +
     '<span class="tick-label">Muito alto</span>' +
-    '</div>' +  
-    '<div class="risk-status-label">' + this.setLastDateStatus() + (this.options.date ? this.options.date : '') + '</div>'+
+    '</div>' +
     '</div>';
 
     form.appendChild(slidercontent);
@@ -93,17 +93,18 @@ L.Control.RiskThresholdHandler = L.Control.extend({
     return this.options.range[position];
   },
 
-  _highlightSelectedLabel: function (value) {
+  _highlightSelectedLabel: function (position) {
     let labels = this._container.querySelectorAll('.tick-label');
     labels.forEach(function (label) {
       label.style.fontWeight = 'normal';
       label.style.fontSize = '11px';
     });
 
-    let position = +this._container.getElementsByTagName('input')[0].value;
     let selectedLabel = this._container.querySelector('.tick-label:nth-child(' + (position+1) + ')');
     selectedLabel.style.fontWeight = 'bold';
     selectedLabel.style.fontSize = '13px';
+
+    this._container.getRootNode().getElementById('selectedvalue').innerText=this.options.range[position];
   },     
   
    setLastDateStatus: function () {
@@ -112,16 +113,17 @@ L.Control.RiskThresholdHandler = L.Control.extend({
     if (this.options.date === null) {
       lastDateStatus = "Não há dados disponíveis";
     } else {
-      let currentDate = new Date();
-      let lastDate = new Date(this.options.date);
-      let timeDifference = currentDate.getTime() - lastDate.getTime();
-      let daysDifference = Math.floor(timeDifference / (1000 * 3600 * 24));
+      lastDateStatus = "Validade: ";
+      // let currentDate = new Date();
+      // let lastDate = new Date(this.options.date);
+      // let timeDifference = currentDate.getTime() - lastDate.getTime();
+      // let daysDifference = Math.floor(timeDifference / (1000 * 3600 * 24));
       
-      if (daysDifference > 7) {
-        lastDateStatus = "Data desatualizada: ";
-      } else {
-        lastDateStatus = "Data atualizada: ";
-      }
+      // if (daysDifference > 7) {
+      //   lastDateStatus = "Data desatualizada: ";
+      // } else {
+      //   lastDateStatus = "Data atualizada: ";
+      // }
     }
     
     return lastDateStatus;
@@ -136,6 +138,7 @@ L.Control.RiskThresholdHandler = L.Control.extend({
 
   onRemove: function (map) {
     delete this._container;
+    this._container=null;
   }
 });
 
