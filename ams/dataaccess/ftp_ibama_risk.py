@@ -53,6 +53,7 @@ class FtpIBAMARisk:
         self._conn = None
 
         self._output_path = output_path if output_path and path.exists(output_path) else path.join(path.dirname(__file__), '../../data')
+        self._geoserver_output_path = geoserver_output_path if geoserver_output_path and path.exists(geoserver_output_path) else path.join(path.dirname(__file__), '../../data')
         self._output_file_name = f"""weekly_ibama_1km_{datetime.now().strftime("%d_%m_%Y")}.tif"""
         self._geoserver_file_name = f"""weekly_ibama_1km.tif"""
         self._risk_expiration_table = 'risk.risk_ibama_date'
@@ -117,7 +118,7 @@ class FtpIBAMARisk:
                     log_msg="Success on download file."
                     status=1
                     # copy file to geoserver datadir location
-                    to_geoserver=f"""{self._output_path}/geoserver/{self._geoserver_file_name}"""
+                    to_geoserver=f"""{self._geoserver_output_path}/{self._geoserver_file_name}"""
                     shutil.copy(src=file_destination,dst=to_geoserver)
                     shutil.chown(path=to_geoserver,user=1099,group=1099)
                 else:
