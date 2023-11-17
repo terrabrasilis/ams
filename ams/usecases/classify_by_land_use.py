@@ -235,7 +235,6 @@ class ClassifyByLandUse:
         INNER JOIN deter_class_group d
         ON c.group_id = d.id """, self._conn, geom_col='geometry')
         for spatial_unit in self._spatial_units.keys():
-            spatial_unit=f"{self._prefix}_{spatial_unit}"
             spatial_units = gpd.GeoDataFrame.from_postgis(
                 f'SELECT suid, geometry FROM "{spatial_unit}"',
                 self._conn, geom_col='geometry')
@@ -245,10 +244,11 @@ class ClassifyByLandUse:
             group = join[['suid', 'land_use_id', 'classname', 'date', 'num_pixels']].groupby(
                 ['suid', 'land_use_id', 'classname','date'])['num_pixels'].sum()
 
+            tmpspatial_unit=f"{self._prefix}_{spatial_unit}"
             with alive_bar(len(group)) as bar:
                 for key, value in group.items():
                     cur.execute(
-                    f"""INSERT INTO "{spatial_unit}_land_use" (suid, land_use_id, classname, "date", area) 
+                    f"""INSERT INTO "{tmpspatial_unit}_land_use" (suid, land_use_id, classname, "date", area) 
                     VALUES({key[0]}, {key[1]}, '{key[2]}', TIMESTAMP 
                     '{key[3].year}-{key[3].month}-{key[3].day}',{value * self._pixel_land_use_area});""")
                     bar()
@@ -262,7 +262,6 @@ class ClassifyByLandUse:
         INNER JOIN {self._fires_input_table} b 
         ON a.gid = b.id""", self._conn, geom_col='geometry')
         for spatial_unit in self._spatial_units.keys():
-            spatial_unit=f"{self._prefix}_{spatial_unit}"
             print(f'Processing {spatial_unit}...')
             spatial_units = gpd.GeoDataFrame.from_postgis(
                 f'SELECT suid, geometry FROM "{spatial_unit}"',
@@ -272,11 +271,12 @@ class ClassifyByLandUse:
             print('Grouping...')
             group = join[['suid', 'land_use_id', 'classname', 'date', 'num_pixels']].groupby(
                 ['suid', 'land_use_id', 'classname','date'])['num_pixels'].sum()
-
+            
+            tmpspatial_unit=f"{self._prefix}_{spatial_unit}"
             with alive_bar(len(group)) as bar:
                 for key, value in group.items():
                     cur.execute(
-                    f"""INSERT INTO "{spatial_unit}_land_use" (suid, land_use_id, classname, "date", counts) 
+                    f"""INSERT INTO "{tmpspatial_unit}_land_use" (suid, land_use_id, classname, "date", counts) 
                     VALUES({key[0]}, {key[1]}, '{key[2]}', TIMESTAMP 
                     '{key[3].year}-{key[3].month}-{key[3].day}',{value});""")
                     bar()
@@ -290,7 +290,6 @@ class ClassifyByLandUse:
         INNER JOIN {self._risk_input_table} b 
         ON a.gid = b.id""", self._conn, geom_col='geometry')
         for spatial_unit in self._spatial_units.keys():
-            spatial_unit=f"{self._prefix}_{spatial_unit}"
             print(f'Processing {spatial_unit}...')
             spatial_units = gpd.GeoDataFrame.from_postgis(
                 f'SELECT suid, geometry FROM "{spatial_unit}"',
@@ -301,10 +300,11 @@ class ClassifyByLandUse:
             group = join[['suid', 'land_use_id', 'classname', 'date', 'risk', 'num_pixels']].groupby(
                 ['suid', 'land_use_id', 'classname','date', 'risk'])['num_pixels'].sum()
 
+            tmpspatial_unit=f"{self._prefix}_{spatial_unit}"
             with alive_bar(len(group)) as bar:
                 for key, value in group.items():
                     cur.execute(
-                    f"""INSERT INTO "{spatial_unit}_land_use" (suid, land_use_id, classname, "date", risk, counts) 
+                    f"""INSERT INTO "{tmpspatial_unit}_land_use" (suid, land_use_id, classname, "date", risk, counts) 
                     VALUES({key[0]}, {key[1]}, '{key[2]}', TIMESTAMP 
                     '{key[3].year}-{key[3].month}-{key[3].day}', {key[4]},{value});""")
                     bar()
@@ -313,23 +313,24 @@ class ClassifyByLandUse:
         print('Using Spatial Units areas and DETER areas to calculate percentage.')
         cur = self._conn.cursor()
         for spatial_unit in self._spatial_units.keys():
-            spatial_unit=f"{self._prefix}_{spatial_unit}"
+            tmpspatial_unit=f"{self._prefix}_{spatial_unit}"
             print(f'Processing {spatial_unit}...')
             cur.execute(
-            f"""UPDATE public."{spatial_unit}_land_use"
-            SET percentage=public."{spatial_unit}_land_use".area/su.area*100
-            FROM public."{spatial_unit}" su WHERE public."{spatial_unit}_land_use".suid=su.suid
-            AND public."{spatial_unit}_land_use".classname NOT IN ('AF','RK') """)
+            f"""UPDATE public."{tmpspatial_unit}_land_use"
+            SET percentage=public."{tmpspatial_unit}_land_use".area/su.area*100
+            FROM public."{spatial_unit}" su WHERE public."{tmpspatial_unit}_land_use".suid=su.suid
+            AND public."{tmpspatial_unit}_land_use".classname NOT IN ('AF','RK') """)
     
     def copy_data_to_final_tables(self):
         print('Copy the new processed data to the final tables.')
         cur = self._conn.cursor()
         for spatial_unit in self._spatial_units.keys():
+            tmpspatial_unit=f"{self._prefix}_{spatial_unit}"
             print(f'Processing {spatial_unit}...')
             cur.execute(
             f"""INSERT INTO "{spatial_unit}_land_use" (suid, land_use_id, classname, "date", area, percentage, counts, risk)
             SELECT suid, land_use_id, classname, date, area, percentage, counts, risk FROM
-            "{self._prefix}_{spatial_unit}_land_use"
+            "{tmpspatial_unit}_land_use"
             """)
 
 
