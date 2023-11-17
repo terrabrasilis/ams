@@ -150,8 +150,7 @@ class ClassifyByLandUse:
             land_use_id int4 NULL,
             num_pixels int4 NULL,
             CONSTRAINT risk_land_structure_pk PRIMARY KEY (id)
-        );
-        CREATE INDEX IF NOT EXISTS risk_land_structure_gid_idx ON public.risk_land_structure USING hash (gid);""")
+        );""")
         
         # crossing risk and raster land use data
         landuse_raster = rasterio.open(f'{self._datapath}/{self._land_use_classes_fname}')
@@ -165,6 +164,9 @@ class ClassifyByLandUse:
                         f"INSERT INTO risk_land_structure (gid, land_use_id, num_pixels) "
                         f"VALUES('{point.gid}', {point['value'][0]}, 1)")
                 bar()
+        # recreate index
+        cur.execute(f"""
+        CREATE INDEX IF NOT EXISTS risk_land_structure_gid_idx ON public.risk_land_structure USING hash (gid);""")
 
 
     def _recreate_spatial_table(self, spatial_unit):
