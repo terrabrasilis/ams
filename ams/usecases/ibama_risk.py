@@ -137,7 +137,7 @@ class IBAMARisk:
         Prerequisites:
          - Existence of Biome Border 'deter.biome_border' as schema.table on database.
         """
-        truncate=f"TRUNCATE {self._db_schema}.{self._geom_table} RESTART IDENTITY;"
+        truncate=f"TRUNCATE {self._db_schema}.{self._geom_table} RESTART IDENTITY CASCADE;"
         removeindex=f"DROP INDEX {self._db_schema}.{self._db_schema}_{self._geom_table}_geom_idx;"
         insert=f"""
             INSERT INTO {self._db_schema}.{self._geom_table}(geom)
