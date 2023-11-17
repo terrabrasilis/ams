@@ -137,19 +137,25 @@ class IBAMARisk:
         Prerequisites:
          - Existence of Biome Border 'deter.biome_border' as schema.table on database.
         """
-        delete=f"DELETE FROM {self._db_schema}.{self._geom_table};"
-        resetseq=f"SELECT setval('{self._db_schema}.{self._geom_table}_id_seq', 1, true);"
+        truncate=f"TRUNCATE {self._db_schema}.{self._geom_table} RESTART IDENTITY;"
+        removeindex=f"DROP INDEX {self._db_schema}.{self._db_schema}_{self._geom_table}_geom_idx;"
         insert=f"""
             INSERT INTO {self._db_schema}.{self._geom_table}(geom)
             SELECT ST_Transform(rkt.geometry,4674)
             FROM {self._db_schema}.{self._risk_temp_table} rkt, deter.biome_border bb
             WHERE ST_Intersects(ST_Transform(rkt.geometry,4674),bb.geom);
             """
+        restoreindex=f"""
+            CREATE INDEX {self._db_schema}_{self._geom_table}_geom_idx
+                ON {self._db_schema}.{self._geom_table} USING gist (geom)
+                TABLESPACE pg_default;
+        """
         try:
             cur = self.__get_db_cursor()
-            cur.execute(delete)
-            cur.execute(resetseq)
+            cur.execute(truncate)
+            cur.execute(removeindex)
             cur.execute(insert)
+            cur.execute(restoreindex)
             self._conn.commit()
         except Exception as e:
             self._conn.rollback()
@@ -206,6 +212,7 @@ class IBAMARisk:
         """
         has_new, rsktime_id = self.__has_new_risk(file_date=file_date)
         if has_new and rsktime_id is not None:
+            dropindex=f"DROP INDEX {self._db_schema}.{self._db_schema}_{self._risk_input_table}_date_idx;"
             insert=f"""
             INSERT INTO {self._db_schema}.{self._risk_input_table} (date_id,geom_id,risk)
             SELECT {rsktime_id}, geom.id, rkt.data
@@ -213,9 +220,16 @@ class IBAMARisk:
             WHERE ST_Equals(ST_Transform(rkt.geometry,4674), geom.geom)
             AND rkt.data > 0.0;
             """
+            restoreindex=f"""
+            CREATE INDEX {self._db_schema}_{self._risk_input_table}_date_idx
+                ON {self._db_schema}.{self._risk_input_table} USING btree (date_id ASC NULLS LAST)
+                TABLESPACE pg_default;
+            """
             try:
                 cur = self.__get_db_cursor()
+                cur.execute(dropindex) 
                 cur.execute(insert)
+                cur.execute(restoreindex)
                 self._conn.commit()
             except Exception as e:
                 self._conn.rollback()
