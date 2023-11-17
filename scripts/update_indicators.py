@@ -24,7 +24,7 @@ firesupdate.execute()
 if Config.BIOME=="Amazônia":
     ftp = FtpIBAMARisk(db_url=Config.DATABASE_URL, ftp_host=Config.FTP_HOST, ftp_path=Config.FTP_PATH,
                        ftp_user=Config.FTP_USER, ftp_password=Config.FTP_PASS, ftp_port=Config.FTP_PORT,
-                       output_path=Config.RISK_OUTPUT_PATH)
+                       output_path=Config.RISK_OUTPUT_PATH, geoserver_output_path=Config.GEOSERVER_OUTPUT_PATH)
     riskupdate = IBAMARisk(db_url=Config.DATABASE_URL, ftp=ftp)
     riskupdate.execute()
 

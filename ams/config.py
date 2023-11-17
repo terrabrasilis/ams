@@ -27,5 +27,7 @@ class Config:
 	if os.path.exists(FTP_PASS):
 		FTP_PASS = open(FTP_PASS, 'r').read()
 	# local where write the file copied from ftp
-	RISK_OUTPUT_PATH = os.environ.get('RISK_OUTPUT_PATH') or "/"	
+	RISK_OUTPUT_PATH = os.environ.get('RISK_OUTPUT_PATH') or "/usr/local/data"
+	# local to store the last risk file. Shared whith GeoServer as store to resource of layer risk
+	GEOSERVER_OUTPUT_PATH = os.environ.get('GEOSERVER_OUTPUT_PATH') or "/usr/local/geoserver"
 	

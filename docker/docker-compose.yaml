@@ -20,12 +20,13 @@ services:
     restart: always
     volumes:
       - "/some/local/dir/data:/usr/local/data"
-      - "/some/geoserver/datadir:/usr/local/data/geoserver"
+      - "/some/geoserver/datadir:/usr/local/geoserver"
     environment:
       - "BIOME=Amazônia"
       - "INPUT_GEOTIFF_FUNDIARY_STRUCTURE=estrutura_fundiaria_cst_2023.tif"
       - "ALL_DATA=True"
       - "RISK_OUTPUT_PATH=/usr/local/data"
+      - "GEOSERVER_OUTPUT_PATH=/usr/local/geoserver"
     env_file:
       - amz-backend-secrets.env
 

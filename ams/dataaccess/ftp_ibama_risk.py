@@ -22,7 +22,7 @@ class FtpIBAMARisk:
 
     """
 
-    def __init__(self, db_url:str, ftp_host:str, ftp_path:str, ftp_user:str, ftp_password:str, ftp_port:int=None, output_path:str=None):
+    def __init__(self, db_url:str, ftp_host:str, ftp_path:str, ftp_user:str, ftp_password:str, ftp_port:int=None, output_path:str=None, geoserver_output_path:str=None):
         """
         Settings for FTP connection and file download.
 
@@ -38,6 +38,7 @@ class FtpIBAMARisk:
         -------------------------------------------------
         :param int ftp_port: The port number for connection
         :param str output_path: The output directory to write the downloaded file
+        :param srt geoserver_output_path: The output directory to copy the last risk file
         
         """
 
