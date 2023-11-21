@@ -197,7 +197,7 @@ class ClassifyByLandUse:
 
     def _recreate_spatial_table_index(self, spatial_unit):
         """
-        Create index on tables after drop and create. Used after populate tables.
+        Create index on tables because we use drop and create to reset old results. Used after populate tables.
         """
         risk_index=""
         if self._biome=="Amazônia":
@@ -205,7 +205,7 @@ class ClassifyByLandUse:
             USING btree (risk ASC NULLS LAST);"""
         cur = self._conn.cursor()
         cur.execute(
-            f"""DROP TABLE IF EXISTS "{spatial_unit}_land_use";
+            f"""
             CREATE INDEX IF NOT EXISTS "{spatial_unit}_land_use_classname_idx" ON "{spatial_unit}_land_use"
             USING btree (classname ASC NULLS LAST);
             CREATE INDEX IF NOT EXISTS "{spatial_unit}_land_use_date_idx" ON "{spatial_unit}_land_use"
