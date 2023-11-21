@@ -69,24 +69,18 @@ class ClassifyByLandUse:
             self._recreate_spatial_table_index(spatial_unit)
 
     def process_deter_land_structure(self):
-        print('Creating and filling deter_land_structure.')
+        print(f"Creating and filling {self._prefix}_deter_land_structure.")
         cur = self._conn.cursor()
-        if self._alldata:
-            cur.execute("""
-            DROP TABLE IF EXISTS deter_land_structure;
-            CREATE TABLE IF NOT EXISTS deter_land_structure (
-                id serial NOT NULL,
-                gid varchar NULL,
-                land_use_id int4 NULL,
-                num_pixels int4 NULL,
-                CONSTRAINT deter_poly_classes_pk PRIMARY KEY (id)
-            );
-            CREATE INDEX IF NOT EXISTS deter_land_structure_gid_idx ON deter_land_structure USING hash (gid);""")
-        else:
-            # here, we expect deter.tmp_data to only have DETER data coming from the current table
-            cur.execute("DELETE FROM deter_land_structure WHERE gid like '%_curr';")
-            # update sequence value from the mas of table id
-            cur.execute("SELECT setval('public.deter_land_structure_id_seq', (SELECT MAX(id) FROM public.deter_land_structure)::integer, true);")
+        cur.execute(f"""
+        DROP TABLE IF EXISTS {self._prefix}_deter_land_structure;
+        CREATE TABLE IF NOT EXISTS {self._prefix}_deter_land_structure (
+            id serial NOT NULL,
+            gid varchar NULL,
+            land_use_id int4 NULL,
+            num_pixels int4 NULL,
+            CONSTRAINT {self._prefix}_deter_land_structure_id_pk PRIMARY KEY (id)
+        );
+        """)
         
         landuse_raster = rasterio.open(f'{self._datapath}/{self._land_use_classes_fname}')
         deter = gpd.GeoDataFrame.from_postgis(f'SELECT gid, geom FROM {self._deter_table}', self._conn)
@@ -100,27 +94,56 @@ class ClassifyByLandUse:
                 for _, count in counts.iterrows():
                     if count[0] > 0:
                         cur.execute(
-                            f"INSERT INTO deter_land_structure (gid, land_use_id, num_pixels) "
+                            f"INSERT INTO {self._prefix}_deter_land_structure (gid, land_use_id, num_pixels) "
                             f"VALUES('{row.gid}', {count[0]}, {count[1]})")
                 bar()
+        
+        cur.execute(f"""CREATE INDEX IF NOT EXISTS {self._prefix}_deter_land_structure_gid_idx
+                    ON {self._prefix}_deter_land_structure USING hash (gid);""")
+
+    def copy_deter_land_structure(self):
+        print(f'Copy data from {self._prefix}_deter_land_structure to deter_land_structure.')
+        cur = self._conn.cursor()
+        if self._alldata:
+            cur.execute("""
+            DROP TABLE IF EXISTS deter_land_structure;
+            CREATE TABLE IF NOT EXISTS deter_land_structure (
+                id serial NOT NULL,
+                gid varchar NULL,
+                land_use_id int4 NULL,
+                num_pixels int4 NULL,
+                CONSTRAINT deter_poly_classes_pk PRIMARY KEY (id)
+            );
+            """)
+        else:
+            # here, we expect deter.tmp_data to only have DETER data coming from the current table
+            cur.execute("DELETE FROM deter_land_structure WHERE gid like '%_curr';")
+            # update sequence value from the mas of table id
+            cur.execute("SELECT setval('public.deter_land_structure_id_seq', (SELECT MAX(id) FROM public.deter_land_structure)::integer, true);")
+        
+        # copy data from temporary table
+        cur.execute(f"INSERT INTO deter_land_structure (gid, land_use_id, num_pixels) "
+                    f"SELECT gid, land_use_id, num_pixels FROM {self._prefix}_deter_land_structure")
+        # if table is dropped, recreate index
+        cur.execute("CREATE INDEX IF NOT EXISTS deter_land_structure_gid_idx ON deter_land_structure USING hash (gid);")
 
     def process_fires_land_structure(self):
-        print('Creating and filling fires_land_structure.')
+        print(f'Creating and filling {self._prefix}_fires_land_structure.')
         
         fires_where = ""
         cur = self._conn.cursor()
 
         if self._alldata:
             cur.execute(f"""
-            DROP TABLE IF EXISTS public.fires_land_structure;
-            CREATE TABLE IF NOT EXISTS fires_land_structure (
+            DROP TABLE IF EXISTS public.{self._prefix}_fires_land_structure;
+            CREATE TABLE IF NOT EXISTS {self._prefix}_fires_land_structure (
                 id serial NOT NULL,
                 gid integer NOT NULL,
                 land_use_id int4 NULL,
                 num_pixels int4 NULL,
-                CONSTRAINT fires_land_structure_pk PRIMARY KEY (id)
+                CONSTRAINT {self._prefix}_fires_land_structure_pk PRIMARY KEY (id)
             );
-            CREATE INDEX IF NOT EXISTS fires_land_structure_gid_idx ON public.fires_land_structure USING hash (gid);""")
+            """)
         else:
             fires_where = f""" WHERE view_date > (SELECT MAX(date) FROM "{list(self._spatial_units.keys())[0]}_land_use" WHERE classname='AF')"""
         
@@ -133,12 +156,70 @@ class ClassifyByLandUse:
             for _, point in fires.iterrows():
                 if point['value'][0] > 0:
                     cur.execute(
-                        f"INSERT INTO fires_land_structure (gid, land_use_id, num_pixels) "
+                        f"INSERT INTO {self._prefix}_fires_land_structure (gid, land_use_id, num_pixels) "
                         f"VALUES('{point.gid}', {point['value'][0]}, 1)")
                 bar()
+        
+        cur.execute(f"""CREATE INDEX IF NOT EXISTS {self._prefix}_fires_land_structure_gid_idx
+                    ON public.{self._prefix}_fires_land_structure USING hash (gid);""")
+
+
+    def copy_fires_land_structure(self):
+        print(f'Copy data from {self._prefix}_fires_land_structure to fires_land_structure.')
+        
+        cur = self._conn.cursor()
+
+        if self._alldata:
+            cur.execute(f"""
+            DROP TABLE IF EXISTS public.fires_land_structure;
+            CREATE TABLE IF NOT EXISTS fires_land_structure (
+                id serial NOT NULL,
+                gid integer NOT NULL,
+                land_use_id int4 NULL,
+                num_pixels int4 NULL,
+                CONSTRAINT fires_land_structure_pk PRIMARY KEY (id)
+            );
+            """)
+        
+        # copy data from temporary table
+        cur.execute(f"INSERT INTO fires_land_structure (gid, land_use_id, num_pixels) "
+                    f"SELECT gid, land_use_id, num_pixels FROM {self._prefix}_fires_land_structure")
+        # if table is dropped, recreate index
+        cur.execute("CREATE INDEX IF NOT EXISTS fires_land_structure_gid_idx ON fires_land_structure USING hash (gid);")
 
     def process_risk_land_structure(self):
-        print('Creating and filling risk_land_structure.')
+        print(f'Creating and filling {self._prefix}_risk_land_structure.')
+        
+        cur = self._conn.cursor()
+
+        cur.execute(f"""
+        DROP TABLE IF EXISTS public.{self._prefix}_risk_land_structure;
+        CREATE TABLE IF NOT EXISTS {self._prefix}_risk_land_structure (
+            id serial NOT NULL,
+            gid integer NOT NULL,
+            land_use_id int4 NULL,
+            num_pixels int4 NULL,
+            CONSTRAINT {self._prefix}_risk_land_structure_pk PRIMARY KEY (id)
+        );""")
+        
+        # crossing risk and raster land use data
+        landuse_raster = rasterio.open(f'{self._datapath}/{self._land_use_classes_fname}')
+        risk = gpd.GeoDataFrame.from_postgis(f'SELECT id as gid, geom FROM {self._risk_geom_table} ', self._conn)
+        coord_list = [(x,y) for x,y in zip(risk['geom'].x , risk['geom'].y)]
+        risk['value'] = [x for x in landuse_raster.sample(coord_list)]
+        with alive_bar(len(risk)) as bar:
+            for _, point in risk.iterrows():
+                if point['value'][0] > 0:
+                    cur.execute(
+                        f"INSERT INTO {self._prefix}_risk_land_structure (gid, land_use_id, num_pixels) "
+                        f"VALUES('{point.gid}', {point['value'][0]}, 1)")
+                bar()
+        # create index
+        cur.execute(f"""CREATE INDEX IF NOT EXISTS {self._prefix}_risk_land_structure_gid_idx
+                        ON public.{self._prefix}_risk_land_structure USING hash (gid);""")
+
+    def copy_risk_land_structure(self):
+        print(f'Copy data from {self._prefix}_risk_land_structure to risk_land_structure.')
         
         cur = self._conn.cursor()
 
@@ -152,22 +233,12 @@ class ClassifyByLandUse:
             CONSTRAINT risk_land_structure_pk PRIMARY KEY (id)
         );""")
         
-        # crossing risk and raster land use data
-        landuse_raster = rasterio.open(f'{self._datapath}/{self._land_use_classes_fname}')
-        risk = gpd.GeoDataFrame.from_postgis(f'SELECT id as gid, geom FROM {self._risk_geom_table} ', self._conn)
-        coord_list = [(x,y) for x,y in zip(risk['geom'].x , risk['geom'].y)]
-        risk['value'] = [x for x in landuse_raster.sample(coord_list)]
-        with alive_bar(len(risk)) as bar:
-            for _, point in risk.iterrows():
-                if point['value'][0] > 0:
-                    cur.execute(
-                        f"INSERT INTO risk_land_structure (gid, land_use_id, num_pixels) "
-                        f"VALUES('{point.gid}', {point['value'][0]}, 1)")
-                bar()
-        # recreate index
+        # copy data from temporary table
+        cur.execute(f"INSERT INTO risk_land_structure (gid, land_use_id, num_pixels) "
+                    f"SELECT gid, land_use_id, num_pixels FROM {self._prefix}_risk_land_structure")
+        # if table is dropped, recreate index
         cur.execute(f"""
         CREATE INDEX IF NOT EXISTS risk_land_structure_gid_idx ON public.risk_land_structure USING hash (gid);""")
-
 
     def _recreate_spatial_table(self, spatial_unit):
         """
@@ -219,7 +290,7 @@ class ClassifyByLandUse:
         cur = self._conn.cursor()
         land_structure = gpd.GeoDataFrame.from_postgis(f""" 
         SELECT a.id, a.land_use_id, a.num_pixels, d.name as classname, b.date, b.geom as geometry
-        FROM deter_land_structure a 
+        FROM {self._prefix}_deter_land_structure a 
         INNER JOIN 
         (SELECT tb.gid, tb.date, ST_PointOnSurface(tb.geom) as geom, tb.classname
         FROM (
@@ -235,6 +306,8 @@ class ClassifyByLandUse:
         INNER JOIN deter_class_group d
         ON c.group_id = d.id """, self._conn, geom_col='geometry')
         for spatial_unit in self._spatial_units.keys():
+            tmpspatial_unit=f"{self._prefix}_{spatial_unit}"
+            print(f'Processing {tmpspatial_unit}...')
             spatial_units = gpd.GeoDataFrame.from_postgis(
                 f'SELECT suid, geometry FROM "{spatial_unit}"',
                 self._conn, geom_col='geometry')
@@ -244,7 +317,6 @@ class ClassifyByLandUse:
             group = join[['suid', 'land_use_id', 'classname', 'date', 'num_pixels']].groupby(
                 ['suid', 'land_use_id', 'classname','date'])['num_pixels'].sum()
 
-            tmpspatial_unit=f"{self._prefix}_{spatial_unit}"
             with alive_bar(len(group)) as bar:
                 for key, value in group.items():
                     cur.execute(
@@ -258,11 +330,12 @@ class ClassifyByLandUse:
         cur = self._conn.cursor()
         land_structure = gpd.GeoDataFrame.from_postgis(f""" 
         SELECT a.id,a.land_use_id,a.num_pixels,'AF' as classname,b.view_date as date,b.geom as geometry
-        FROM fires_land_structure a 
+        FROM {self._prefix}_fires_land_structure a 
         INNER JOIN {self._fires_input_table} b 
         ON a.gid = b.id""", self._conn, geom_col='geometry')
         for spatial_unit in self._spatial_units.keys():
-            print(f'Processing {spatial_unit}...')
+            tmpspatial_unit=f"{self._prefix}_{spatial_unit}"
+            print(f'Processing {tmpspatial_unit}...')
             spatial_units = gpd.GeoDataFrame.from_postgis(
                 f'SELECT suid, geometry FROM "{spatial_unit}"',
                 self._conn, geom_col='geometry')
@@ -272,7 +345,6 @@ class ClassifyByLandUse:
             group = join[['suid', 'land_use_id', 'classname', 'date', 'num_pixels']].groupby(
                 ['suid', 'land_use_id', 'classname','date'])['num_pixels'].sum()
             
-            tmpspatial_unit=f"{self._prefix}_{spatial_unit}"
             with alive_bar(len(group)) as bar:
                 for key, value in group.items():
                     cur.execute(
@@ -286,11 +358,12 @@ class ClassifyByLandUse:
         cur = self._conn.cursor()
         land_structure = gpd.GeoDataFrame.from_postgis(f""" 
         SELECT a.id, a.land_use_id, a.num_pixels, 'RK' as classname, b.risk, b.view_date as date, b.geom as geometry
-        FROM risk_land_structure a 
+        FROM {self._prefix}_risk_land_structure a 
         INNER JOIN {self._risk_input_table} b 
         ON a.gid = b.id""", self._conn, geom_col='geometry')
         for spatial_unit in self._spatial_units.keys():
-            print(f'Processing {spatial_unit}...')
+            tmpspatial_unit=f"{self._prefix}_{spatial_unit}"
+            print(f'Processing {tmpspatial_unit}...')
             spatial_units = gpd.GeoDataFrame.from_postgis(
                 f'SELECT suid, geometry FROM "{spatial_unit}"',
                 self._conn, geom_col='geometry')
@@ -300,7 +373,6 @@ class ClassifyByLandUse:
             group = join[['suid', 'land_use_id', 'classname', 'date', 'risk', 'num_pixels']].groupby(
                 ['suid', 'land_use_id', 'classname','date', 'risk'])['num_pixels'].sum()
 
-            tmpspatial_unit=f"{self._prefix}_{spatial_unit}"
             with alive_bar(len(group)) as bar:
                 for key, value in group.items():
                     cur.execute(
@@ -314,7 +386,7 @@ class ClassifyByLandUse:
         cur = self._conn.cursor()
         for spatial_unit in self._spatial_units.keys():
             tmpspatial_unit=f"{self._prefix}_{spatial_unit}"
-            print(f'Processing {spatial_unit}...')
+            print(f'Processing {tmpspatial_unit}...')
             cur.execute(
             f"""UPDATE public."{tmpspatial_unit}_land_use"
             SET percentage=public."{tmpspatial_unit}_land_use".area/su.area*100
@@ -323,10 +395,15 @@ class ClassifyByLandUse:
     
     def copy_data_to_final_tables(self):
         print('Copy the new processed data to the final tables.')
+        self.copy_deter_land_structure()
+        self.copy_fires_land_structure()
+        if self._biome=="Amazônia":
+            self.copy_risk_land_structure()
+
         cur = self._conn.cursor()
         for spatial_unit in self._spatial_units.keys():
             tmpspatial_unit=f"{self._prefix}_{spatial_unit}"
-            print(f'Processing {spatial_unit}...')
+            print(f'Copy from {tmpspatial_unit} to {spatial_unit}')
             cur.execute(
             f"""INSERT INTO "{spatial_unit}_land_use" (suid, land_use_id, classname, "date", area, percentage, counts, risk)
             SELECT suid, land_use_id, classname, date, area, percentage, counts, risk FROM
@@ -354,9 +431,9 @@ class ClassifyByLandUse:
             print("Time control after commit on temp tables: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
 
             # Drop operacional tables to copy new data
-            self.reset_land_use_tables()
+            self.reset_land_use_tables(isTemp=False)
             self.copy_data_to_final_tables()
-            self.add_index_land_use_tables()
+            self.add_index_land_use_tables(isTemp=False)
             self._conn.commit()
             print("Finished in: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
         except Exception as e:
