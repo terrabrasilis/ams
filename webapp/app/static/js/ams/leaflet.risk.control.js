@@ -27,6 +27,8 @@ L.Control.RiskThresholdHandler = L.Control.extend({
     '<div class="risk-status-label">' + this.setLastDateStatus() + (this.options.date ? this.options.date : '') + '</div>';
     form.appendChild(label);
 
+    let idx=ams.Config.risk.range.findIndex((e)=>{if(e==ams.Config.defaultRiskFilter.threshold) return true;});
+
     let slidercontent = L.DomUtil.create('div', this._base_classname + '-content');
     slidercontent.innerHTML = '<input ' +
     'onchange="ams.RiskThresholdHandler.onChange()" ' +
@@ -36,7 +38,7 @@ L.Control.RiskThresholdHandler = L.Control.extend({
     'min="0" ' +
     'max="' + ((this.options.range.length) ? (this.options.range.length - 1) : (0)) + '" ' +
     'step="1" ' +
-    'value="' + Math.round((ams.App._riskThreshold - this.options.range[0]) / (this.options.range[this.options.range.length - 1] - this.options.range[0]) * (this.options.range.length - 1)) + '"'+
+    'value="' + this.options.range[idx] + '"'+
     'data-tick-step="1" ' +
     'data-tick-id="weightTicks" ' +
     'data-value-id="weightValue" ' +
