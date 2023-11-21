@@ -89,31 +89,33 @@ class FtpIBAMARisk:
         """
         client = aioftp.Client()
         log_msg=""
-        remote_file_date=None
+        file_date=None
         file_destination=""
         status=0
         try:
             await client.connect(self._host, int(self._port))
             await client.login(self._user, self._pass)
 
-            file_source=""
-            latest_file_date=None
+            remote_file_source=""
+            remote_file_date=None
+            remote_file_size=0
 
             # list files and sort by modified date
             for file_path, file_info in (await client.list(path=self._ftp_path, recursive=False)):
-                remote_file_size=int(file_info['size'])
+                file_size=int(file_info['size'])
                 file_mdate=file_info['modify']
-                remote_file_date=datetime(year=int(file_mdate[0:4]), month=int(file_mdate[4:6]), day=int(file_mdate[6:8])).date()
+                file_date=datetime(year=int(file_mdate[0:4]), month=int(file_mdate[4:6]), day=int(file_mdate[6:8])).date()
                 # get the latest file using metadata information
-                if latest_file_date is None or latest_file_date < remote_file_date:
-                    latest_file_date=remote_file_date
-                    file_source=file_path
+                if remote_file_date is None or remote_file_date < file_date:
+                    remote_file_date=file_date
+                    remote_file_source=file_path
+                    remote_file_size=file_size
 
             last_download_date=self.__get_last_download_date()
-            if last_download_date is None or latest_file_date > last_download_date:
+            if last_download_date is None or remote_file_date > last_download_date:
                 file_destination=f"""{self._output_path}/{self._output_file_name}"""
                 file_destination=path.abspath(file_destination)
-                await client.download(file_source, file_destination, write_into=True)
+                await client.download(remote_file_source, file_destination, write_into=True)
                 if path.isfile(file_destination) and path.getsize(file_destination) == remote_file_size:
                     log_msg="Success on download file."
                     status=1
@@ -143,8 +145,8 @@ class FtpIBAMARisk:
         finally:
             # close the ftp connection
             client.close()
-            self.__write_log2db(log_msg, status, remote_file_date, file_destination)
-            self.__write_expiration_date(status, remote_file_date)
+            self.__write_log2db(log_msg, status, file_date, file_destination)
+            self.__write_expiration_date(status, file_date)
 
             # close the database connection if exists
             if self._conn:
@@ -169,9 +171,9 @@ class FtpIBAMARisk:
         return dt
 
 
-    def __write_log2db(self, msg:str, status:int, remote_file_date:datetime, output_file_name:str):
+    def __write_log2db(self, msg:str, status:int, file_date:datetime, output_file_name:str):
 
-        dt=remote_file_date.strftime("%Y-%m-%d") if remote_file_date is not None else ""
+        dt=file_date.strftime("%Y-%m-%d") if file_date is not None else ""
         sql=f"""
         INSERT INTO {self._log_table} (file_name, process_status, process_message, last_file_date)
         VALUES('{output_file_name}', {status}, '{msg}', '{dt}');
@@ -186,10 +188,10 @@ class FtpIBAMARisk:
             print(e.__str__())
             raise e
 
-    def __write_expiration_date(self, status:int, remote_file_date:datetime):
+    def __write_expiration_date(self, status:int, file_date:datetime):
 
         if status==1:
-            dt=(remote_file_date + relativedelta(days = self._ndays_of_expiration)).strftime("%Y-%m-%d")
+            dt=(file_date + relativedelta(days = self._ndays_of_expiration)).strftime("%Y-%m-%d")
             sql=f"""INSERT INTO {self._risk_expiration_table} (expiration_date) VALUES('{dt}')"""
             try:
                 cur = self.__get_db_cursor()
