@@ -145,8 +145,8 @@ class FtpIBAMARisk:
         finally:
             # close the ftp connection
             client.close()
-            self.__write_log2db(log_msg, status, file_date, file_destination)
-            self.__write_expiration_date(status, file_date)
+            self.__write_log2db(log_msg, status, remote_file_date, file_destination)
+            self.__write_expiration_date(status, remote_file_date)
 
             # close the database connection if exists
             if self._conn:
@@ -190,7 +190,7 @@ class FtpIBAMARisk:
 
     def __write_expiration_date(self, status:int, file_date:datetime):
 
-        if status==1:
+        if status==1 and file_date is not None:
             dt=(file_date + relativedelta(days = self._ndays_of_expiration)).strftime("%Y-%m-%d")
             sql=f"""INSERT INTO {self._risk_expiration_table} (expiration_date) VALUES('{dt}')"""
             try:
