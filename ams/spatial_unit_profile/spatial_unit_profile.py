@@ -10,7 +10,6 @@ from datetime import datetime
 import json
 import re
 from dateutil.relativedelta import relativedelta
-import psycopg2
 
 class SpatialUnitProfile():
     """
@@ -26,8 +25,9 @@ class SpatialUnitProfile():
         params['tempUnit'], The selected temporal unit code. Ex.: {'7d','15d','1m','3m','1y'}
         params['suName'], The selected Spatial Unit name. Ex.: 'C13L08'
         params['landUse'], The list of selected land use ids
-        params['unit'], The current unit measure in the App. Ex.: {'km²','ha','focos'}
+        params['unit'], The current unit measure in the App. Ex.: {'km²','ha','focos','risco'}
         params['targetbiome'], The selected biome. Ex.: {'Cerrado', 'Amazônia'}
+        params['riskThreshold'] The selected risk threshold value.
     """
 
     def __init__(self, config, params):
@@ -37,6 +37,7 @@ class SpatialUnitProfile():
         self._conn = connect(self._dburl)
         self._query_limit = 20
         self._classname = params['className']
+        self._risk_threshold = 0
             
         # default column to sum statistics
         self.default_column="area"
@@ -46,8 +47,9 @@ class SpatialUnitProfile():
             self.default_col_name="Unidades"
 
         if(self._classname=='RK'):
-                self.default_column="counts"
-                self.default_col_name="Unidades"        
+            self._risk_threshold = params['riskThreshold']
+            self.default_column="counts"
+            self.default_col_name="Unidades"
 
         # standard area rounding
         self.round_factor=2
@@ -71,15 +73,16 @@ class SpatialUnitProfile():
         unit=params['unit']
         if(unit is None):
             # default area unit
-            self.area_unit="km²"
+            self.data_unit="km²"
         else:
-            self.area_unit=unit
+            self.data_unit=unit
 
         sql="""
         SELECT string_agg('"'||dataname||'":{"description":"'||description||'", "key":"'||as_attribute_name||'"}', ', ')
         FROM public.spatial_units
         """
         suinfo = self.execute_sql(sql=sql)
+        suinfo = suinfo if suinfo is not None else "error:'failure on get infos from database'"
         self._tableinfo = json.loads("{"+suinfo+"}")
 
         self._classes = pd.DataFrame(
@@ -139,9 +142,6 @@ class SpatialUnitProfile():
         elif temporal_unit == '3m': return (start_date_date + relativedelta(days = -90)).strftime('%Y-%m-%d')
         elif temporal_unit == '1y': return (start_date_date + relativedelta(days = -365)).strftime('%Y-%m-%d')
 
-    def period_where_clause(self):
-        return f" date > '{self._start_period_date}' and date <= '{self._start_date}'"
-
     def __get_period_settings(self):
         if self._temporal_unit == '7d': return 7,'day',self._query_limit*7
         elif self._temporal_unit == '15d': return 15,'day',self._query_limit*15
@@ -199,7 +199,7 @@ class SpatialUnitProfile():
             curr = self._conn.cursor()
             curr.execute(sql)
             rows = curr.fetchall()
-            return rows[0][0]
+            return rows[0][0] if rows else None
         except Exception as e:
             raise e
         finally:
@@ -214,16 +214,19 @@ class SpatialUnitProfile():
         return df
 
     def area_per_land_use(self):
-        where_if="" if(self._name=='*') else f"""b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}' AND"""
+
+        where_risk="" if(self._classname!='RK') else f" a.risk >= {self._risk_threshold} AND "
+        where_spatial_unit="" if(self._name=='*') else f"""b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}' AND"""
+        where_filter=f"{where_risk} {where_spatial_unit}"
 
         df = self.resultset_as_dataframe(
             f"select a.name,coalesce(resultsum, 0) as resultsum from land_use a "
             f"left join "
             f"(select a.land_use_id, sum(a.{self.default_column}) as resultsum from \"{self._spatial_unit}_land_use\" a "
             f"inner join \"{self._spatial_unit}\" b on a.suid = b.suid "
-            f"where {where_if} "
-            f" {self.period_where_clause()} "
-            f"and classname = '{self._classname}' "
+            f"where {where_filter} "
+            f"a.date > '{self._start_period_date}' and a.date <= '{self._start_date}' "
+            f"and a.classname = '{self._classname}' "
             f"and a.land_use_id = ANY (array[{self.land_use}]) "
             f"group by a.land_use_id) b on a.id = b.land_use_id "
             f"WHERE a.id = ANY (array[{self.land_use}]) "
@@ -233,20 +236,11 @@ class SpatialUnitProfile():
         return df
 
     def risk_expiration_date(self):        
-        conn = psycopg2.connect(self._dburl)
-        cur = conn.cursor()        
-        sql = """SELECT TO_CHAR(expiration_date, 'YYYY-MM-DD') AS formatted_expiration_date
-                 FROM risk.risk_ibama_date
-                 ORDER BY id DESC
-                 LIMIT 1;"""        
-        cur.execute(sql)
-        result = cur.fetchall()
-        
-        cur.close()
-        conn.close()
-
-        expiration_date = result[0][0] if result else None
-        return expiration_date
+        sql = """SELECT TO_CHAR(expiration_date, 'DD/MM/YYYY') as expdate
+        FROM risk.risk_ibama_date
+        ORDER BY id DESC
+        LIMIT 1;"""
+        return self.execute_sql(sql=sql)
 
     def form_title(self):
         """
@@ -266,8 +260,9 @@ class SpatialUnitProfile():
             """
 
         elif self._classname == 'RK':
-            expiration_date = self.risk_expiration_date()            
-            title = f"""Usando dados de Risco de desmatamento (IBAMA), para todo o bioma (Amazônia),
+            expiration_date = self.risk_expiration_date()
+            expiration_date = expiration_date if expiration_date is not None else "falhou ao obter a data"
+            title = f"""Usando dados de Risco de desmatamento (IBAMA), {spatial_unit} ({spatial_description}),
             para as categorias fundiárias selecionadas e validade até <b>{expiration_date}</b>."""
         else:
             title=f"""Usando dados de <b>{indicador}</b> {datasource} até <b>{last_date}</b>,
@@ -286,7 +281,7 @@ class SpatialUnitProfile():
         unid_temp=self._temporal_units[self._temporal_unit]
         total_area = df[self.default_col_name].sum()
 
-        if(self._classname!='AF' and self.area_unit=="ha"):
+        if(self._classname!='AF' and self.data_unit=="ha"):
             df["Área (ha)"]=df[self.default_col_name]*100
             self.default_col_name="Área (ha)"
             total_area = df[self.default_col_name].sum()
@@ -296,15 +291,15 @@ class SpatialUnitProfile():
         df[self.default_col_name] = df[self.default_col_name].round(self.round_factor)
 
         # default column to sum statistics
-        abstract_data=f"Área total: {total_area.round(self.round_factor)} {self.area_unit}"
+        abstract_data=f"Área total: {total_area.round(self.round_factor)} {self.data_unit}"
         chart_title = ""
         if(self._classname=='AF'):
-            abstract_data=f"Total de focos: {total_area.round(self.round_factor)} "
+            abstract_data=f"Contagem de focos: {total_area.round(self.round_factor)} "
             chart_title=f"""Porcentagem de <b>{indicador}</b> por categoria fundiária<br>"""
             chart_title=f"""{chart_title}no último período do <b>{unid_temp}. {abstract_data}</b>"""
         elif(self._classname=='RK'):
-            abstract_data=f"Total de pontos de risco: {total_area.round(self.round_factor)}"
-            chart_title=f"""Distribuição do risco por categoria fundiária."""
+            abstract_data=f"Total: {total_area.round(self.round_factor)}"
+            chart_title=f"""Contagem de pontos de risco distribuidos por categoria fundiária. {abstract_data}"""
         else:
             chart_title=f"""Porcentagem de <b>{indicador}</b> por categoria fundiária<br>"""
             chart_title=f"""{chart_title}no último período do <b>{unid_temp}. {abstract_data}</b>"""
@@ -375,7 +370,7 @@ class SpatialUnitProfile():
             df[self.default_col_name]=df[self.default_col_name].astype(int)
             df["label"]=df["label"].astype(int).astype(str)
         else:
-            if(self.area_unit=="ha"):
+            if(self.data_unit=="ha"):
                 df[self.default_col_name]=df[self.default_col_name]*100
                 df["label"] = df["label"]*100
                 self.round_factor=1

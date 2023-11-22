@@ -66,6 +66,7 @@ def get_profile(endpoint):
         # app unit measure
         unit=params['unit']
         appBiome=params['targetbiome']
+        riskThreshold=params['riskThreshold']
     except KeyError as ke:
         #exception KeyError
         #Raised when a mapping (dictionary) key is not found in the set of existing keys.
@@ -97,7 +98,9 @@ def get_profile(endpoint):
                 'AreaPerLandUse': spatial_unit_profile.fig_area_per_land_use()}
             )
         else:
-            return 
+            return json.dumps(
+                {'FormTitle': 'Sem gráficos para exibir com a configuração atual.'}
+            )
     except Exception as e:
         print(e)
         return "Something is wrong on the server. Please, send this error to our support service: terrabrasilis@inpe.br", 500
