@@ -322,12 +322,15 @@ ams.App = {
 						ams.App._priorViewParams.classname = e.acronym;
 						ams.App._suViewParams.updatePropertyName(ams.App._propertyName);
 						ams.App._priorViewParams.updatePropertyName(ams.App._propertyName);
-						ams.App._suViewParams.updateRiskThreshold(ams.App._riskThreshold);
-						ams.App._priorViewParams.updateRiskThreshold(ams.App._riskThreshold);
 						// try update the last date for new classname
 						let lastDateDynamic = ams.App._wfs.getLastDate(ldLayerName);
 						lastDateDynamic = lastDateDynamic?lastDateDynamic:ams.App._spatialUnits.getDefault().last_date;
-						ams.RiskThresholdHandler.setLastRiskDate(lastDateDynamic);
+						if(e.acronym=='RK'){
+							ams.App._suViewParams.updateRiskThreshold(ams.App._riskThreshold);
+							ams.App._priorViewParams.updateRiskThreshold(ams.App._riskThreshold);
+							lastDateDynamic=lastDateDynamic + ams.Config.defaultRiskFilter.expirationRisk;
+							ams.RiskThresholdHandler.setLastRiskDate(lastDateDynamic);
+						}
 						ams.App._dateControl.setPeriod(lastDateDynamic, ams.App._currentTemporalAggregate);
 						ams.PeriodHandler.changeDate(ams.App._dateControl.startdate);
 						needUpdateSuLayers=false;// no need because the changeDate Internally invokes layer update.

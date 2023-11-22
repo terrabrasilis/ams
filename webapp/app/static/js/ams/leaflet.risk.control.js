@@ -24,7 +24,7 @@ L.Control.RiskThresholdHandler = L.Control.extend({
 
     let label = L.DomUtil.create('div', this._base_classname + '-label');
     label.innerHTML = 'Número de pontos de risco maiores que: <span id="selectedvalue">'+ams.Config.defaultRiskFilter.threshold+'</span>'+
-    '<div class="risk-status-label">' + this.setLastDateStatus() + (this.options.date ? this.options.date : '') + '</div>';
+    '<div class="risk-status-label" id="expirationdate">' + (this.options.date ? 'Validade: '+this.options.date : 'Data de validade indisponível.') + '</div>';
     form.appendChild(label);
 
     let idx=ams.Config.risk.range.findIndex((e)=>{if(e==ams.Config.defaultRiskFilter.threshold) return true;});
@@ -107,31 +107,11 @@ L.Control.RiskThresholdHandler = L.Control.extend({
     selectedLabel.style.fontSize = '13px';
 
     this._container.getRootNode().getElementById('selectedvalue').innerText=this.options.range[position];
-  },     
-  
-   setLastDateStatus: function () {
-    let lastDateStatus;
-    
-    if (this.options.date === null) {
-      lastDateStatus = "Não há dados disponíveis";
-    } else {
-      lastDateStatus = "Validade: ";
-      // let currentDate = new Date();
-      // let lastDate = new Date(this.options.date);
-      // let timeDifference = currentDate.getTime() - lastDate.getTime();
-      // let daysDifference = Math.floor(timeDifference / (1000 * 3600 * 24));
-      
-      // if (daysDifference > 7) {
-      //   lastDateStatus = "Data desatualizada: ";
-      // } else {
-      //   lastDateStatus = "Data atualizada: ";
-      // }
-    }
-    
-    return lastDateStatus;
   },
-  
-  
+
+  _updateRiskDate: function (riskDate) {
+    this._container.getRootNode().getElementById('expirationdate').innerText='Validade: '+riskDate;
+  },
 
   onAdd: function (map) {
     this._initLayout(map);

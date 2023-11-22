@@ -41,7 +41,8 @@ ams.BiomeConfig["Amazônia"] = {
     priorityLimit: 10
   },
   defaultRiskFilter:{
-    threshold: 0.75 // used to process counts, including points where the value is greater than this threshold
+    threshold: 0.75, // used to process counts, including points where the value is greater than this threshold
+    expirationRisk: 7 // The number of days to set the risk forecast due date.
   }
 };
 

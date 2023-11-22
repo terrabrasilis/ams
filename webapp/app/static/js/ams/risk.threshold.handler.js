@@ -25,8 +25,9 @@ ams.RiskThresholdHandler = {
         }
     },
 
-    setLastRiskDate: function(lastRiskDate){ 
-        this._date = lastRiskDate;  
+    setLastRiskDate: function(lastRiskDate){
+        this._date = lastRiskDate;
+        this._control._updateRiskDate(lastRiskDate);
     },
 
     onChange: function(){
