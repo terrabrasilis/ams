@@ -290,6 +290,7 @@ ams.App = {
 					);
 
 				}else if(e.group.name=='INDICADOR'){// change reference layer (deter, fires or risk)?
+					ams.App._riskThreshold=0; // reset the risk limit so as not to interfere with the min max query
 					if(e.acronym=='RK'){
 						// the reference layer should be weekly_ibama_1km
 						layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.ibamaRisk;
@@ -322,14 +323,16 @@ ams.App = {
 						ams.App._priorViewParams.classname = e.acronym;
 						ams.App._suViewParams.updatePropertyName(ams.App._propertyName);
 						ams.App._priorViewParams.updatePropertyName(ams.App._propertyName);
+						ams.App._suViewParams.updateRiskThreshold(ams.App._riskThreshold);
+						ams.App._priorViewParams.updateRiskThreshold(ams.App._riskThreshold);
 						// try update the last date for new classname
 						let lastDateDynamic = ams.App._wfs.getLastDate(ldLayerName);
 						lastDateDynamic = lastDateDynamic?lastDateDynamic:ams.App._spatialUnits.getDefault().last_date;
 						if(e.acronym=='RK'){
-							ams.App._suViewParams.updateRiskThreshold(ams.App._riskThreshold);
-							ams.App._priorViewParams.updateRiskThreshold(ams.App._riskThreshold);
-							lastDateDynamic=lastDateDynamic + ams.Config.defaultRiskFilter.expirationRisk;
-							ams.RiskThresholdHandler.setLastRiskDate(lastDateDynamic);
+							let dt1 = new Date(lastDateDynamic);
+							dt1.setDate(dt1.getDate() + ams.Config.defaultRiskFilter.expirationRisk);
+							dt1 = dt1.toISOString().split('T')[0];
+							ams.RiskThresholdHandler.setLastRiskDate(dt1);
 						}
 						ams.App._dateControl.setPeriod(lastDateDynamic, ams.App._currentTemporalAggregate);
 						ams.PeriodHandler.changeDate(ams.App._dateControl.startdate);
