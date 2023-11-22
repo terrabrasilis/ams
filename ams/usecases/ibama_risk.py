@@ -208,6 +208,8 @@ class IBAMARisk:
         """
         Copy the risk data into the weekly table using the pre-extracted dot matrix for the Amazon biome.
 
+        The weekly table is cleaned by the truncate cascade over geometry table with dot matrix.
+
         Filter only values greater than zero.
         """
         has_new, rsktime_id = self.__has_new_risk(file_date=file_date)
