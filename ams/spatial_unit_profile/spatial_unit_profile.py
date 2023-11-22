@@ -34,7 +34,6 @@ class SpatialUnitProfile():
         self._config = config
         self._appBiome = params['targetbiome']
         self._dburl = self._config.DB_CERRADO_URL if (self._appBiome=='Cerrado') else self._config.DB_AMAZON_URL
-        self._conn = connect(self._dburl)
         self._query_limit = 20
         self._classname = params['className']
         self._risk_threshold = 0
@@ -195,15 +194,17 @@ class SpatialUnitProfile():
 
     def execute_sql(self, sql):
         curr = None
+        conn = None
         try:
-            curr = self._conn.cursor()
+            conn = connect(self._dburl)
+            curr = conn.cursor()
             curr.execute(sql)
             rows = curr.fetchall()
             return rows[0][0] if rows else None
         except Exception as e:
             raise e
         finally:
-            if(not self._conn.closed): self._conn.close()
+            if(not conn.closed): conn.close()
 
     def resultset_as_dataframe(self, sql):
         return pd.read_sql(sql, self._dburl)
@@ -263,7 +264,7 @@ class SpatialUnitProfile():
             expiration_date = self.risk_expiration_date()
             expiration_date = expiration_date if expiration_date is not None else "falhou ao obter a data"
             title = f"""Usando dados de Risco de desmatamento (IBAMA), {spatial_unit} ({spatial_description}),
-            para as categorias fundiárias selecionadas e validade até <b>{expiration_date}</b>."""
+            para as categorias fundiárias selecionadas, valor maior ou igual a {self._risk_threshold} e validade até <b>{expiration_date}</b>."""
         else:
             title=f"""Usando dados de <b>{indicador}</b> {datasource} até <b>{last_date}</b>,
             {spatial_unit} ({spatial_description}), para as categorias fundiárias selecionadas
