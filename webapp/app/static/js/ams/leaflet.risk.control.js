@@ -23,7 +23,7 @@ L.Control.RiskThresholdHandler = L.Control.extend({
     let form = L.DomUtil.create('div', this._base_classname + '-form');
 
     let label = L.DomUtil.create('div', this._base_classname + '-label');
-    label.innerHTML = 'Número de pontos de risco maiores que: <span id="selectedvalue">'+ams.Config.defaultRiskFilter.threshold+'</span>'+
+    label.innerHTML = 'Contar pontos de risco com valor maior ou igual a: <span id="selectedvalue">'+ams.Config.defaultRiskFilter.threshold+'</span>'+
     '<div class="risk-status-label" id="expirationdate">' + (this.options.date ? 'Validade: '+this.options.date : 'Data de validade indisponível.') + '</div>';
     form.appendChild(label);
 
