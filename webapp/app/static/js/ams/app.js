@@ -814,6 +814,7 @@ ams.App = {
 		async function getGraphics(  jsConfig ) {
 			jsConfig["unit"]=ams.Map.PopupControl._unit;
 			jsConfig["targetbiome"]=ams.Config.biome;
+			jsConfig["riskThreshold"]=ams.App._suViewParams.risk_threshold;
 			let jsConfigStr = JSON.stringify(jsConfig);
 			let response = await fetch("callback/spatial_unit_profile?sData=" + jsConfigStr).catch(
 				()=>{
