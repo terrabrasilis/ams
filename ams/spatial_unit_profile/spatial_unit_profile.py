@@ -264,7 +264,7 @@ class SpatialUnitProfile():
             expiration_date = self.risk_expiration_date()
             expiration_date = expiration_date if expiration_date is not None else "falhou ao obter a data"
             title = f"""Usando dados de Risco de desmatamento (IBAMA), {spatial_unit} ({spatial_description}),
-            para as categorias fundiárias selecionadas, valor maior ou igual a {self._risk_threshold} e validade até <b>{expiration_date}</b>."""
+            para as categorias fundiárias selecionadas, valor maior ou igual a <b>{self._risk_threshold}</b> e validade até <b>{expiration_date}</b>."""
         else:
             title=f"""Usando dados de <b>{indicador}</b> {datasource} até <b>{last_date}</b>,
             {spatial_unit} ({spatial_description}), para as categorias fundiárias selecionadas
