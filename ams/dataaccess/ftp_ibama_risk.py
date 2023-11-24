@@ -1,10 +1,12 @@
 from os import path
 import shutil
-from psycopg2 import OperationalError, connect
+from psycopg2 import OperationalError
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import aioftp
 import asyncio
+from ams.utils.database_utils import DatabaseUtils
+from ams.utils.risk_utils import RiskUtils
 
 class FtpIBAMARisk:
     """
@@ -48,16 +50,17 @@ class FtpIBAMARisk:
         self._ftp_path = ftp_path
         self._user = ftp_user
         self._pass = ftp_password
-        # database string connection
-        self._db_url = db_url
-        self._conn = None
+
+        self._db = DatabaseUtils(db_url=db_url)
+        self._ru = RiskUtils(db=self._db)
 
         self._output_path = output_path if output_path and path.exists(output_path) else path.join(path.dirname(__file__), '../../data')
         self._geoserver_output_path = geoserver_output_path if geoserver_output_path and path.exists(geoserver_output_path) else path.join(path.dirname(__file__), '../../data')
         self._output_file_name = f"""weekly_ibama_1km_{datetime.now().strftime("%d_%m_%Y")}.tif"""
         self._geoserver_file_name = f"""weekly_ibama_1km.tif"""
-        self._risk_expiration_table = 'risk.risk_ibama_date'
-        self._log_table = 'risk.etl_log_ibama'
+        self._db_schema = 'risk'
+        self._risk_expiration_table = 'risk_ibama_date'
+        self._log_table = 'etl_log_ibama'
 
     def set_expiration_days(self, ndays:int=7):
         """
@@ -66,17 +69,6 @@ class FtpIBAMARisk:
         """
         # number of days to set the risk forecast due date
         self._ndays_of_expiration = ndays
-
-    def __get_db_cursor(self):
-        """
-        Gets the database cursor to run queries.
-        
-        Make a connection if you are not connected or if the connection is broken.
-        """
-        if self._conn is None or self._conn.closed>0:
-            self._conn = connect(self._db_url)
-
-        return self._conn.cursor()
 
     async def __get_file(self):
         """
@@ -111,7 +103,7 @@ class FtpIBAMARisk:
                     remote_file_source=file_path
                     remote_file_size=file_size
 
-            last_download_date=self.__get_last_download_date()
+            risk_file, last_download_date = self._ru.get_last_file_info()
             if last_download_date is None or remote_file_date > last_download_date:
                 file_destination=f"""{self._output_path}/{self._output_file_name}"""
                 file_destination=path.abspath(file_destination)
@@ -147,58 +139,39 @@ class FtpIBAMARisk:
             client.close()
             self.__write_log2db(log_msg, status, remote_file_date, file_destination)
             self.__write_expiration_date(status, remote_file_date)
-
-            # close the database connection if exists
-            if self._conn:
-                self._conn.close()
-
-
-    def __get_last_download_date(self):
-        dt=None
-        sql=f"SELECT last_file_date FROM {self._log_table} WHERE process_status = 1 ORDER BY last_file_date DESC LIMIT 1;"
-        try:
-            cur = self.__get_db_cursor()
-            cur.execute(sql)
-            results=cur.fetchall()
-        except Exception as e:
-            print('Error on read the last date from database')
-            print(e.__str__())
-            raise e
-        
-        if len(results)>0:
-            dt=results[0][0]
-
-        return dt
-
+            self._db.close()
 
     def __write_log2db(self, msg:str, status:int, file_date:datetime, output_file_name:str):
 
         dt=file_date.strftime("%Y-%m-%d") if file_date is not None else ""
         sql=f"""
-        INSERT INTO {self._log_table} (file_name, process_status, process_message, last_file_date)
+        INSERT INTO {self._db_schema}.{self._log_table} (file_name, process_status, process_message, last_file_date)
         VALUES('{output_file_name}', {status}, '{msg}', '{dt}');
         """
         try:
-            cur = self.__get_db_cursor()
+            cur = self._db.get_db_cursor()
             cur.execute(sql)
-            self._conn.commit()
+            self._db.commit()
         except Exception as e:
-            self._conn.rollback()
+            self._db.rollback()
             print('Error on write log into database')
             print(e.__str__())
             raise e
 
     def __write_expiration_date(self, status:int, file_date:datetime):
+        """
+        Write an expiration date only if has new risk data. If status==1
+        """
 
         if status==1 and file_date is not None:
             dt=(file_date + relativedelta(days = self._ndays_of_expiration)).strftime("%Y-%m-%d")
-            sql=f"""INSERT INTO {self._risk_expiration_table} (expiration_date) VALUES('{dt}')"""
+            sql=f"""INSERT INTO {self._db_schema}.{self._risk_expiration_table} (expiration_date,risk_date) VALUES('{dt}','{file_date}')"""
             try:
-                cur = self.__get_db_cursor()
+                cur = self._db.get_db_cursor()
                 cur.execute(sql)
-                self._conn.commit()
+                self._db.commit()
             except Exception as e:
-                self._conn.rollback()
+                self._db.rollback()
                 print('Error on write log into database')
                 print(e.__str__())
                 raise e

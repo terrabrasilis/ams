@@ -1,22 +1,25 @@
 from os import path
-from psycopg2 import connect
 import rasterio
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import mapping
+from sqlalchemy import create_engine
 from rasterio.mask import mask
 import numpy as np
 from alive_progress import alive_bar
 from datetime import datetime
+from ams.utils.database_utils import DatabaseUtils
+from ams.utils.risk_utils import RiskUtils
 
 class ClassifyByLandUse:
-    """ClassifyByLandUse"""
+    """
+    Using to crossing the input data with the land use data and group this results by Spatial Units.
+    """
 
     def __init__(self, biome:str, db_url: str, input_tif: str, alldata=False):
         self._datapath = path.join(path.dirname(__file__), '../../data')
         self._scriptspath = path.join(path.dirname(__file__), '../../scripts')
         self._land_use_classes_fname = input_tif
-        self._conn = connect(db_url)
         self._biome = biome
         self._pixel_land_use_area = 29.875 * 29.875 * (10 ** -6)
         self._alldata = alldata
@@ -28,6 +31,13 @@ class ClassifyByLandUse:
         # temporary table prefix
         self._prefix = 'tmp'
 
+        self._engine = create_engine(url=db_url)
+        self._db = DatabaseUtils(db_url=db_url)
+        self._ru = RiskUtils(db=self._db)
+
+        # used to avoid uneeded risk processing
+        self._nrp = self.__need_risk_process()
+
     def read_spatial_units(self):
         """
         Gets the spatial units from database.
@@ -37,7 +47,7 @@ class ClassifyByLandUse:
         """
         self._spatial_units = {}
         sql = "SELECT dataname, as_attribute_name FROM public.spatial_units"
-        cur = self._conn.cursor()
+        cur = self._db.get_db_cursor()
         cur.execute(sql)
         results=cur.fetchall()
         self._spatial_units=dict(results)
@@ -61,7 +71,7 @@ class ClassifyByLandUse:
         
         Optional parameters:
         -------------------------------------------------
-        :param boolean isTemp: If Treu, use the prefix to change name to temporary or final objects on database
+        :param boolean isTemp: If True, use the prefix to change name to temporary or final objects on database
         """
         for spatial_unit in self._spatial_units.keys():
             if isTemp: spatial_unit=f"{self._prefix}_{spatial_unit}"
@@ -70,7 +80,7 @@ class ClassifyByLandUse:
 
     def process_deter_land_structure(self):
         print(f"Creating and filling {self._prefix}_deter_land_structure.")
-        cur = self._conn.cursor()
+        cur = self._db.get_db_cursor()
         cur.execute(f"""
         DROP TABLE IF EXISTS {self._prefix}_deter_land_structure;
         CREATE TABLE IF NOT EXISTS {self._prefix}_deter_land_structure (
@@ -83,7 +93,7 @@ class ClassifyByLandUse:
         """)
         
         landuse_raster = rasterio.open(f'{self._datapath}/{self._land_use_classes_fname}')
-        deter = gpd.GeoDataFrame.from_postgis(f'SELECT gid, geom FROM {self._deter_table}', self._conn)
+        deter = gpd.GeoDataFrame.from_postgis(sql=f'SELECT gid, geom FROM {self._deter_table}', con=self._engine)
         with alive_bar(len(deter)) as bar:
             for _, row in deter.iterrows():
                 geoms = [mapping(row.geom)]
@@ -103,7 +113,7 @@ class ClassifyByLandUse:
 
     def copy_deter_land_structure(self):
         print(f'Copy data from {self._prefix}_deter_land_structure to deter_land_structure.')
-        cur = self._conn.cursor()
+        cur = self._db.get_db_cursor()
         if self._alldata:
             cur.execute("""
             DROP TABLE IF EXISTS deter_land_structure;
@@ -131,7 +141,7 @@ class ClassifyByLandUse:
         print(f'Creating and filling {self._prefix}_fires_land_structure.')
         
         fires_where = ""
-        cur = self._conn.cursor()
+        cur = self._db.get_db_cursor()
 
         if self._alldata:
             cur.execute(f"""
@@ -149,7 +159,7 @@ class ClassifyByLandUse:
         
         # crossing fires and raster land use data
         landuse_raster = rasterio.open(f'{self._datapath}/{self._land_use_classes_fname}')
-        fires = gpd.GeoDataFrame.from_postgis(f'SELECT id as gid, geom FROM {self._fires_input_table} {fires_where}', self._conn)
+        fires = gpd.GeoDataFrame.from_postgis(sql=f'SELECT id as gid, geom FROM {self._fires_input_table} {fires_where}', con=self._engine)
         coord_list = [(x,y) for x,y in zip(fires['geom'].x , fires['geom'].y)]
         fires['value'] = [x for x in landuse_raster.sample(coord_list)]
         with alive_bar(len(fires)) as bar:
@@ -167,7 +177,7 @@ class ClassifyByLandUse:
     def copy_fires_land_structure(self):
         print(f'Copy data from {self._prefix}_fires_land_structure to fires_land_structure.')
         
-        cur = self._conn.cursor()
+        cur = self._db.get_db_cursor()
 
         if self._alldata:
             cur.execute(f"""
@@ -188,9 +198,16 @@ class ClassifyByLandUse:
         cur.execute("CREATE INDEX IF NOT EXISTS fires_land_structure_gid_idx ON fires_land_structure USING hash (gid);")
 
     def process_risk_land_structure(self):
+        """
+        Crossing the point matrix from risk data with land use raster data.
+
+        Only perform this step if we have new risk data.
+
+        Its DROP and CREATE the tmp_risk_land_structure table
+        """
         print(f'Creating and filling {self._prefix}_risk_land_structure.')
         
-        cur = self._conn.cursor()
+        cur = self._db.get_db_cursor()
 
         cur.execute(f"""
         DROP TABLE IF EXISTS public.{self._prefix}_risk_land_structure;
@@ -204,7 +221,8 @@ class ClassifyByLandUse:
         
         # crossing risk and raster land use data
         landuse_raster = rasterio.open(f'{self._datapath}/{self._land_use_classes_fname}')
-        risk = gpd.GeoDataFrame.from_postgis(f'SELECT id as gid, geom FROM {self._risk_geom_table} ', self._conn)
+        
+        risk = gpd.GeoDataFrame.from_postgis(sql=f'SELECT id as gid, geom FROM {self._risk_geom_table} ', con=self._engine)
         coord_list = [(x,y) for x,y in zip(risk['geom'].x , risk['geom'].y)]
         risk['value'] = [x for x in landuse_raster.sample(coord_list)]
         with alive_bar(len(risk)) as bar:
@@ -221,7 +239,7 @@ class ClassifyByLandUse:
     def copy_risk_land_structure(self):
         print(f'Copy data from {self._prefix}_risk_land_structure to risk_land_structure.')
         
-        cur = self._conn.cursor()
+        cur = self._db.get_db_cursor()
 
         cur.execute(f"""
         DROP TABLE IF EXISTS public.risk_land_structure;
@@ -243,12 +261,12 @@ class ClassifyByLandUse:
     def _recreate_spatial_table(self, spatial_unit):
         """
         Even if "alldata" is true, we recreate the final land_use table.
-        *The control is made in intermediary table called "*_land_structure"
+        *The control is made in intermediary table called "<target_data>_land_structure"
         """
         risk_col=""
         if self._biome=="Amazônia":
             risk_col="risk double precision NOT NULL DEFAULT 0.0,"
-        cur = self._conn.cursor()
+        cur = self._db.get_db_cursor()
         cur.execute(
             f"""DROP TABLE IF EXISTS "{spatial_unit}_land_use"; 
             CREATE TABLE IF NOT EXISTS "{spatial_unit}_land_use" (
@@ -274,7 +292,7 @@ class ClassifyByLandUse:
         if self._biome=="Amazônia":
             risk_index=f"""CREATE INDEX IF NOT EXISTS "{spatial_unit}_land_use_risk_idx" ON "{spatial_unit}_land_use"
             USING btree (risk ASC NULLS LAST);"""
-        cur = self._conn.cursor()
+        cur = self._db.get_db_cursor()
         cur.execute(
             f"""
             CREATE INDEX IF NOT EXISTS "{spatial_unit}_land_use_classname_idx" ON "{spatial_unit}_land_use"
@@ -287,8 +305,9 @@ class ClassifyByLandUse:
 
     def insert_deter_in_land_use_tables(self):
         print('Insert DETER data in land use tables for each spatial units.')
-        cur = self._conn.cursor()
-        land_structure = gpd.GeoDataFrame.from_postgis(f""" 
+        cur = self._db.get_db_cursor()
+        
+        land_structure = gpd.GeoDataFrame.from_postgis(sql=f""" 
         SELECT a.id, a.land_use_id, a.num_pixels, d.name as classname, b.date, b.geom as geometry
         FROM {self._prefix}_deter_land_structure a 
         INNER JOIN 
@@ -304,13 +323,13 @@ class ClassifyByLandUse:
         INNER JOIN deter_class c 
         ON b.classname = c.name
         INNER JOIN deter_class_group d
-        ON c.group_id = d.id """, self._conn, geom_col='geometry')
+        ON c.group_id = d.id """, con=self._engine, geom_col='geometry')
         for spatial_unit in self._spatial_units.keys():
             tmpspatial_unit=f"{self._prefix}_{spatial_unit}"
             print(f'Processing {tmpspatial_unit}...')
             spatial_units = gpd.GeoDataFrame.from_postgis(
-                f'SELECT suid, geometry FROM "{spatial_unit}"',
-                self._conn, geom_col='geometry')
+                sql=f'SELECT suid, geometry FROM "{spatial_unit}"',
+                con=self._engine, geom_col='geometry')
             print('Joining...')
             join = gpd.sjoin(land_structure, spatial_units, how='inner', op='intersects')
             print('Grouping...')
@@ -327,18 +346,19 @@ class ClassifyByLandUse:
 
     def insert_fires_in_land_use_tables(self):
         print('Insert active fires in land use tables for each spatial units.')
-        cur = self._conn.cursor()
-        land_structure = gpd.GeoDataFrame.from_postgis(f""" 
+        cur = self._db.get_db_cursor()
+        
+        land_structure = gpd.GeoDataFrame.from_postgis(sql=f""" 
         SELECT a.id,a.land_use_id,a.num_pixels,'AF' as classname,b.view_date as date,b.geom as geometry
         FROM {self._prefix}_fires_land_structure a 
         INNER JOIN {self._fires_input_table} b 
-        ON a.gid = b.id""", self._conn, geom_col='geometry')
+        ON a.gid = b.id""", con=self._engine, geom_col='geometry')
         for spatial_unit in self._spatial_units.keys():
             tmpspatial_unit=f"{self._prefix}_{spatial_unit}"
             print(f'Processing {tmpspatial_unit}...')
             spatial_units = gpd.GeoDataFrame.from_postgis(
-                f'SELECT suid, geometry FROM "{spatial_unit}"',
-                self._conn, geom_col='geometry')
+                sql=f'SELECT suid, geometry FROM "{spatial_unit}"',
+                con=self._engine, geom_col='geometry')
             print('Joining...')
             join = gpd.sjoin(land_structure, spatial_units, how='inner', op='intersects')
             print('Grouping...')
@@ -354,19 +374,23 @@ class ClassifyByLandUse:
                     bar()
 
     def insert_risk_in_land_use_tables(self):
+        """
+        Join and group the temporary land structure table data with the spatial units to populate the temporary land use tables with risk.
+        """
         print('Insert ibama risk in land use tables for each spatial units.')
-        cur = self._conn.cursor()
-        land_structure = gpd.GeoDataFrame.from_postgis(f""" 
+        cur = self._db.get_db_cursor()
+        
+        land_structure = gpd.GeoDataFrame.from_postgis(sql=f""" 
         SELECT a.id, a.land_use_id, a.num_pixels, 'RK' as classname, b.risk, b.view_date as date, b.geom as geometry
         FROM {self._prefix}_risk_land_structure a 
         INNER JOIN {self._risk_input_table} b 
-        ON a.gid = b.id""", self._conn, geom_col='geometry')
+        ON a.gid = b.id""", con=self._engine, geom_col='geometry')
         for spatial_unit in self._spatial_units.keys():
             tmpspatial_unit=f"{self._prefix}_{spatial_unit}"
             print(f'Processing {tmpspatial_unit}...')
             spatial_units = gpd.GeoDataFrame.from_postgis(
-                f'SELECT suid, geometry FROM "{spatial_unit}"',
-                self._conn, geom_col='geometry')
+                sql=f'SELECT suid, geometry FROM "{spatial_unit}"',
+                con=self._engine, geom_col='geometry')
             print('Joining...')
             join = gpd.sjoin(land_structure, spatial_units, how='inner', op='intersects')
             print('Grouping...')
@@ -383,7 +407,7 @@ class ClassifyByLandUse:
 
     def percentage_calculation_for_areas(self):
         print('Using Spatial Units areas and DETER areas to calculate percentage.')
-        cur = self._conn.cursor()
+        cur = self._db.get_db_cursor()
         for spatial_unit in self._spatial_units.keys():
             tmpspatial_unit=f"{self._prefix}_{spatial_unit}"
             print(f'Processing {tmpspatial_unit}...')
@@ -397,10 +421,10 @@ class ClassifyByLandUse:
         print('Copy the new processed data to the final tables.')
         self.copy_deter_land_structure()
         self.copy_fires_land_structure()
-        if self._biome=="Amazônia":
+        if self._biome=="Amazônia" and self._nrp:
             self.copy_risk_land_structure()
 
-        cur = self._conn.cursor()
+        cur = self._db.get_db_cursor()
         for spatial_unit in self._spatial_units.keys():
             tmpspatial_unit=f"{self._prefix}_{spatial_unit}"
             print(f'Copy from {tmpspatial_unit} to {spatial_unit}')
@@ -410,6 +434,15 @@ class ClassifyByLandUse:
             "{tmpspatial_unit}_land_use"
             """)
 
+    def __need_risk_process(self):
+        """
+        Do we need risk processing?
+        Responds true if there is new risk data that has not yet been processed.
+        """
+        risk_file, file_date = self._ru.get_last_file_info()
+        is_new, risk_time_id = self._ru.has_new_risk(file_date=file_date, expiration_risk=self._ndays_of_expiration)
+
+        return (path.isfile(risk_file) and is_new and risk_time_id is not None)
 
     def execute(self):
         try:
@@ -421,23 +454,26 @@ class ClassifyByLandUse:
             self.process_fires_land_structure()
             self.insert_deter_in_land_use_tables()
             self.insert_fires_in_land_use_tables()
-            if self._biome=="Amazônia":
+            if self._biome=="Amazônia" and self._nrp:
                 self.process_risk_land_structure()
-                self.insert_risk_in_land_use_tables()
+            # need this call because we drop the old temporary an operational land use tables
+            self.insert_risk_in_land_use_tables()
             print("Time control after process using temp tables: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
             self.add_index_land_use_tables(isTemp=True)
             self.percentage_calculation_for_areas()
-            self._conn.commit()
+            self._db.commit()
             print("Time control after commit on temp tables: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
 
-            # Drop operacional tables to copy new data
+            # Drop operational tables to copy new data
             self.reset_land_use_tables(isTemp=False)
             self.copy_data_to_final_tables()
             self.add_index_land_use_tables(isTemp=False)
-            self._conn.commit()
+            self._db.commit()
             print("Finished in: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
         except Exception as e:
-            self._conn.rollback()
+            self._db.rollback()
             print('Error on classify by land_structure, deter and fires')
             print(e.__str__())
             raise e
+        finally:
+            self._db.close()
