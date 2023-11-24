@@ -386,18 +386,10 @@ ams.App = {
 
 				if(needUpdateSuLayers) ams.App._updateSpatialUnitLayer();
 
-				window.setTimeout(
-					()=>{
-						$("#loading_data_info").css('display','none');
-					},500
-				);
+				window.setTimeout(()=>{$("#loading_data_info").css('display','none');},500);
 			};
 
-			window.setTimeout(
-				()=>{
-					changeCtrlFun(evn);
-				},100
-			);
+			window.setTimeout(()=>{changeCtrlFun(evn);},100);
 		});
 
 		map.whenReady(()=>{
@@ -444,13 +436,19 @@ ams.App = {
 		$("#profile-"+ams.BiomeConfig["Cerrado"].defaultWorkspace+"-button").click(profileBiomeClick);
 
 		let landUseFilterClick=function() {
-			if(ams.App._landUseList.length==0){
-				ams.App._resetMap("O filtro deve incluir ao menos uma categoria fundiária. A solicitação não foi concluída.");
-			}else{
-				ams.App._updateSpatialUnitLayer();
-				// apply change filters on reference layer
-				ams.App._updateReferenceLayer();
-			}
+			$("#loading_data_info").css('display','block');
+
+			let clickCtrlFun=function(e){
+				if(ams.App._landUseList.length==0){
+					ams.App._resetMap("O filtro deve incluir ao menos uma categoria fundiária. A solicitação não foi concluída.");
+				}else{
+					ams.App._updateSpatialUnitLayer();
+					// apply change filters on reference layer
+					ams.App._updateReferenceLayer();
+				}
+				window.setTimeout(()=>{$("#loading_data_info").css('display','none');},500);
+			};
+			window.setTimeout(()=>{clickCtrlFun(evn);},100);
 			return false;
 		};
 
