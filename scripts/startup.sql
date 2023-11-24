@@ -162,7 +162,7 @@ CREATE OR REPLACE VIEW public.last_risk_data
  SELECT geo.id,
     geo.geom,
     wd.risk,
-    (dt.expiration_date - '7 days'::interval)::date AS view_date
+    dt.risk_date AS view_date
    FROM risk.weekly_data wd,
     risk.matrix_ibama_1km geo,
     risk.risk_ibama_date dt
@@ -411,6 +411,7 @@ CREATE TABLE IF NOT EXISTS risk.risk_ibama_date
 (
     id serial NOT NULL,
     expiration_date date,
+    risk_date date,
     created_at date NOT NULL DEFAULT now()::date,
     CONSTRAINT risk_ibama_date_id_pk PRIMARY KEY (id)
 )
