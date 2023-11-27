@@ -440,7 +440,7 @@ class ClassifyByLandUse:
         Responds true if there is new risk data that has not yet been processed.
         """
         risk_file, file_date = self._ru.get_last_file_info()
-        is_new, risk_time_id = self._ru.has_new_risk(file_date=file_date, expiration_risk=self._ndays_of_expiration)
+        is_new, risk_time_id = self._ru.has_new_risk(file_date=file_date)
 
         return (path.isfile(risk_file) and is_new and risk_time_id is not None)
 
