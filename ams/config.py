@@ -17,7 +17,7 @@ class Config:
 	FTP_PORT = os.environ.get('FTP_PORT') or "21"
 	if os.path.exists(FTP_PORT):
 		FTP_PORT = open(FTP_PORT, 'r').read()
-	FTP_PATH = os.environ.get('FTP_PATH') or "/"
+	FTP_PATH = os.environ.get('FTP_PATH') or ""
 	if os.path.exists(FTP_PATH):
 		FTP_PATH = open(FTP_PATH, 'r').read()
 	FTP_USER = os.environ.get('FTP_USER') or "user"
