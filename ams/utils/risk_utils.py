@@ -31,7 +31,7 @@ class RiskUtils:
         WHERE process_status = 1 ORDER BY created_at DESC LIMIT 1;
         """
         try:
-            cur = self._db.__get_db_cursor()
+            cur = self._db.get_db_cursor()
             cur.execute(sql)
             results=cur.fetchall()
         except Exception as e:
@@ -72,7 +72,7 @@ class RiskUtils:
         );
         """
         try:
-            cur = self._db.__get_db_cursor()
+            cur = self._db.get_db_cursor()
             cur.execute(sql)
             results=cur.fetchall()
             if len(results)>0 and results[0][0]>0:
