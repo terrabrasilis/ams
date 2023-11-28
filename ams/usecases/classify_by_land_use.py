@@ -421,16 +421,18 @@ class ClassifyByLandUse:
         print('Copy the new processed data to the final tables.')
         self.copy_deter_land_structure()
         self.copy_fires_land_structure()
+        risk_column=""
         if self._nrp:
             self.copy_risk_land_structure()
+            risk_column=", risk"
 
         cur = self._db.get_db_cursor()
         for spatial_unit in self._spatial_units.keys():
             tmpspatial_unit=f"{self._prefix}_{spatial_unit}"
             print(f'Copy from {tmpspatial_unit} to {spatial_unit}')
             cur.execute(
-            f"""INSERT INTO "{spatial_unit}_land_use" (suid, land_use_id, classname, "date", area, percentage, counts, risk)
-            SELECT suid, land_use_id, classname, date, area, percentage, counts, risk FROM
+            f"""INSERT INTO "{spatial_unit}_land_use" (suid, land_use_id, classname, "date", area, percentage, counts {risk_column})
+            SELECT suid, land_use_id, classname, date, area, percentage, counts {risk_column} FROM
             "{tmpspatial_unit}_land_use"
             """)
 
