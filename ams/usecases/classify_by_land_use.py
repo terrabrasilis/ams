@@ -421,7 +421,7 @@ class ClassifyByLandUse:
         print('Copy the new processed data to the final tables.')
         self.copy_deter_land_structure()
         self.copy_fires_land_structure()
-        if self._biome=="Amazônia" and self._nrp:
+        if self._nrp:
             self.copy_risk_land_structure()
 
         cur = self._db.get_db_cursor()
@@ -436,9 +436,14 @@ class ClassifyByLandUse:
 
     def __need_risk_process(self):
         """
-        Do we need risk processing?
+        Do we need risk processing? Only if is in Amazonia database.
+
         Responds true if there is new risk data that has not yet been processed.
         """
+
+        if self._biome!="Amazônia":
+            return False
+
         risk_file, file_date = self._ru.get_last_file_info()
         is_new, risk_time_id = self._ru.has_new_risk(file_date=file_date)
 
@@ -454,7 +459,7 @@ class ClassifyByLandUse:
             self.process_fires_land_structure()
             self.insert_deter_in_land_use_tables()
             self.insert_fires_in_land_use_tables()
-            if self._biome=="Amazônia" and self._nrp:
+            if self._nrp:
                 self.process_risk_land_structure()
             # need this call because we drop the old temporary an operational land use tables
             self.insert_risk_in_land_use_tables()
