@@ -457,13 +457,23 @@ class ClassifyByLandUse:
             self.reset_land_use_tables(isTemp=True)
             self.process_deter_land_structure()
             self.process_fires_land_structure()
+            # we need commit this results because the next step open a new conection with database
+            self._db.commit()
+            print("Time control after process deter and fires in land structure tables: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
+
             self.insert_deter_in_land_use_tables()
             self.insert_fires_in_land_use_tables()
+            self._db.commit()
+            print("Time control after insert deter and fires in land use tables: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
+
             if self._nrp:
                 self.process_risk_land_structure()
-            # need this call because we drop the old temporary an operational land use tables
-            self.insert_risk_in_land_use_tables()
-            print("Time control after process using temp tables: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
+                # we need commit this results because the next step open a new conection with database
+                self._db.commit()
+                print("Time control after process risk in land structure table: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
+                self.insert_risk_in_land_use_tables()
+            
+            print("Time control after process all using temp tables: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
             self.add_index_land_use_tables(isTemp=True)
             self.percentage_calculation_for_areas()
             self._db.commit()
