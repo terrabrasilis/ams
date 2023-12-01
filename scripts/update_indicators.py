@@ -20,7 +20,7 @@ deterupdate.execute()
 firesupdate = ActiveFires(db_url=Config.DATABASE_URL, biome=Config.BIOME, alldata=alldata)
 firesupdate.execute()
 
-# only for Amazonia
+# deforestation risk data - only for Amazonia
 if Config.BIOME=="Amazônia":
     ftp = FtpIBAMARisk(db_url=Config.DATABASE_URL, ftp_host=Config.FTP_HOST, ftp_path=Config.FTP_PATH,
                        ftp_user=Config.FTP_USER, ftp_password=Config.FTP_PASS, ftp_port=Config.FTP_PORT,

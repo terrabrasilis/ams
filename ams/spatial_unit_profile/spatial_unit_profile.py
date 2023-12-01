@@ -31,6 +31,11 @@ class SpatialUnitProfile():
     """
 
     def __init__(self, config, params):
+        # The class name is fixed to 'RK' as is all code that checks the risk class name.
+        self._risk_classname = 'RK'
+        # The class name is fixed to 'AF' as is all code that checks the fire class name.
+        self._fire_classname = 'AF'
+
         self._config = config
         self._appBiome = params['targetbiome']
         self._dburl = self._config.DB_CERRADO_URL if (self._appBiome=='Cerrado') else self._config.DB_AMAZON_URL
@@ -41,18 +46,18 @@ class SpatialUnitProfile():
         # default column to sum statistics
         self.default_column="area"
         self.default_col_name="Área (km²)"
-        if(self._classname=='AF'):
+        if(self._classname==self._fire_classname):
             self.default_column="counts"
             self.default_col_name="Unidades"
 
-        if(self._classname=='RK'):
+        if(self._classname==self._risk_classname):
             self._risk_threshold = params['riskThreshold']
             self.default_column="counts"
             self.default_col_name="Unidades"
 
         # standard area rounding
         self.round_factor=2
-        if(self._classname=='AF'):
+        if(self._classname==self._fire_classname):
             self.round_factor=0
 
         self._spatial_unit = params['spatialUnit']
@@ -85,7 +90,7 @@ class SpatialUnitProfile():
         self._tableinfo = json.loads("{"+suinfo+"}")
 
         self._classes = pd.DataFrame(
-            {'code': pd.Series(['DS','DG', 'CS', 'MN', 'AF', 'RK'], dtype='str'),
+            {'code': pd.Series(['DS','DG', 'CS', 'MN', self._fire_classname, self._risk_classname], dtype='str'),
              'name': pd.Series(['Desmatamento','Degrada&#231;&#227;o',
                       'Corte-Seletivo','Minera&#231;&#227;o', 'Focos', 'Índice'], dtype='str'),
              'color': pd.Series(['#0d0887', '#46039f', '#7201a8', '#9c179e'], dtype='str')})
@@ -151,7 +156,7 @@ class SpatialUnitProfile():
     def __get_temporal_unit_sql(self):
         # local round factor used into SQL to read data from database
         round_factor=4
-        if(self._classname=='AF'):
+        if(self._classname==self._fire_classname):
             round_factor=0
         
         interval_val,period_unit,period_series=self.__get_period_settings()
@@ -216,7 +221,7 @@ class SpatialUnitProfile():
 
     def area_per_land_use(self):
 
-        where_risk="" if(self._classname!='RK') else f" a.risk >= {self._risk_threshold} AND "
+        where_risk="" if(self._classname!=self._risk_classname) else f" a.risk >= {self._risk_threshold} AND "
         where_spatial_unit="" if(self._name=='*') else f"""b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}' AND"""
         where_filter=f"{where_risk} {where_spatial_unit}"
 
@@ -254,13 +259,13 @@ class SpatialUnitProfile():
         temporal_unit=self._temporal_units[self._temporal_unit]
 
         datasource="do DETER"
-        if(self._classname=='AF'):
+        if(self._classname==self._fire_classname):
             title=f"""Usando dados de <b>{indicador}</b> de Queimadas até <b>{last_date}</b>,
             {spatial_unit} ({spatial_description}), para as categorias fundiárias selecionadas
             e unidade temporal <b>{temporal_unit}</b>.
             """
 
-        elif self._classname == 'RK':
+        elif self._classname == self._risk_classname:
             expiration_date = self.risk_expiration_date()
             expiration_date = expiration_date if expiration_date is not None else "falhou ao obter a data"
             title = f"""Usando dados de Risco de desmatamento (IBAMA), {spatial_unit} ({spatial_description}),
@@ -282,7 +287,7 @@ class SpatialUnitProfile():
         unid_temp=self._temporal_units[self._temporal_unit]
         total_area = df[self.default_col_name].sum()
 
-        if(self._classname!='AF' and self.data_unit=="ha"):
+        if(self._classname!=self._fire_classname and self.data_unit=="ha"):
             df["Área (ha)"]=df[self.default_col_name]*100
             self.default_col_name="Área (ha)"
             total_area = df[self.default_col_name].sum()
@@ -294,11 +299,11 @@ class SpatialUnitProfile():
         # default column to sum statistics
         abstract_data=f"Área total: {total_area.round(self.round_factor)} {self.data_unit}"
         chart_title = ""
-        if(self._classname=='AF'):
+        if(self._classname==self._fire_classname):
             abstract_data=f"Contagem de focos: {total_area.round(self.round_factor)} "
             chart_title=f"""Porcentagem de <b>{indicador}</b> por categoria fundiária<br>"""
             chart_title=f"""{chart_title}no último período do <b>{unid_temp}. {abstract_data}</b>"""
-        elif(self._classname=='RK'):
+        elif(self._classname==self._risk_classname):
             abstract_data=f"Total: {total_area.round(self.round_factor)}"
             chart_title=f"""Contagem de pontos de risco distribuidos por categoria fundiária. {abstract_data}"""
         else:
@@ -367,7 +372,7 @@ class SpatialUnitProfile():
         # duplicate series to use in label chart
         df["label"]=df[self.default_col_name]
 
-        if(self._classname=='AF'):
+        if(self._classname==self._fire_classname):
             df[self.default_col_name]=df[self.default_col_name].astype(int)
             df["label"]=df["label"].astype(int).astype(str)
         else:
