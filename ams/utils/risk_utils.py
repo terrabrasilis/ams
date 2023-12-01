@@ -21,8 +21,8 @@ class RiskUtils:
         self._final_land_use_table = 'public.amz_states_land_use'
         self._db = db
 
-        # The class name is fixed to 'RK' as is all code that checks the risk class name.
-        self._risk_classname = 'RK'
+        # The class name is fixed to "RK" as is all code that checks the risk class name.
+        self._risk_classname = "RK"
 
     def get_last_file_info(self):
         """
@@ -109,7 +109,7 @@ class RiskUtils:
         SELECT COUNT(*)::integer
         FROM {self._risk_table} rk, 
         {self._final_land_use_table} rk_final
-        WHERE rk_final.classname={self._risk_classname}
+        WHERE rk_final.classname='{self._risk_classname}'
         AND rk_final.date='{risk_date}'::date
         AND rk_final.date=rk.view_date;
         """

@@ -32,9 +32,9 @@ class SpatialUnitProfile():
 
     def __init__(self, config, params):
         # The class name is fixed to 'RK' as is all code that checks the risk class name.
-        self._risk_classname = 'RK'
+        self._risk_classname = "RK"
         # The class name is fixed to 'AF' as is all code that checks the fire class name.
-        self._fire_classname = 'AF'
+        self._fire_classname = "AF"
 
         self._config = config
         self._appBiome = params['targetbiome']

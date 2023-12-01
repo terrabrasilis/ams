@@ -34,7 +34,7 @@ class DeterDaily:
         self._alldata = alldata
         self._biome = biome
         # The class name is fixed to 'AF' as is all code that checks the fire class name.
-        self._fire_classname = 'AF'
+        self._fire_classname = "AF"
 
         # ignore classes that are not related to DETER data.
         # For more than one, use single quotes and comma like this: "'AF','DS','EX'"
