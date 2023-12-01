@@ -35,9 +35,6 @@ class ClassifyByLandUse:
         self._db = DatabaseUtils(db_url=db_url)
         self._ru = RiskUtils(db=self._db)
 
-        # used to avoid uneeded risk processing
-        self._nrp = self.__need_risk_process()
-
         # The class name is fixed to "RK" as is all code that checks the risk class name.
         self._risk_classname = "RK"
         # The class name is fixed to "AF" as is all code that checks the fire class name.
@@ -427,7 +424,9 @@ class ClassifyByLandUse:
         self.copy_deter_land_structure()
         self.copy_fires_land_structure()
         risk_column=""
-        if self._nrp:
+
+        # used to avoid uneeded risk processing
+        if self.__need_risk_process():
             self.copy_risk_land_structure()
             risk_column=", risk"
 
@@ -445,7 +444,7 @@ class ClassifyByLandUse:
         """
         Do we need risk processing? Only if is in Amazonia database.
 
-        Responds true if there is new risk data that has not yet been processed.
+        Responds true if there is new risk data that has not yet been processed in second phase.
         """
 
         if self._biome!="Amazônia":
@@ -472,8 +471,9 @@ class ClassifyByLandUse:
             self.insert_fires_in_land_use_tables()
             self._db.commit()
             print("Time control after insert deter and fires in land use tables: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
-
-            if self._nrp:
+            
+            # used to avoid uneeded risk processing
+            if self.__need_risk_process():
                 self.process_risk_land_structure()
                 # we need commit this results because the next step open a new conection with database
                 self._db.commit()
