@@ -106,12 +106,13 @@ class RiskUtils:
         phase_two = False
 
         sql=f"""
-        SELECT COUNT(*)::integer
-        FROM {self._risk_table} rk, 
-        {self._final_land_use_table} rk_final
-        WHERE rk_final.classname='{self._risk_classname}'
-        AND rk_final.date='{risk_date}'::date
-        AND rk_final.date=rk.view_date;
+        SELECT COUNT(t1.id)::integer
+        FROM {self._db_schema}.{self._risk_expiration_table} t1 
+        WHERE t1.risk_date='{risk_date}'::date 
+        AND NOT EXISTS(
+            SELECT 1 FROM {self._final_land_use_table} t2
+            WHERE t2.classname='{self._risk_classname}' AND t2.date=t1.risk_date
+        );
         """
         try:
             cur = self._db.get_db_cursor()
