@@ -38,6 +38,11 @@ class ClassifyByLandUse:
         # used to avoid uneeded risk processing
         self._nrp = self.__need_risk_process()
 
+        # The class name is fixed to 'RK' as is all code that checks the risk class name.
+        self._risk_classname = 'RK'
+        # The class name is fixed to 'AF' as is all code that checks the fire class name.
+        self._fire_classname = 'AF'
+
     def read_spatial_units(self):
         """
         Gets the spatial units from database.
@@ -155,7 +160,7 @@ class ClassifyByLandUse:
             );
             """)
         else:
-            fires_where = f""" WHERE view_date > (SELECT MAX(date) FROM "{list(self._spatial_units.keys())[0]}_land_use" WHERE classname='AF')"""
+            fires_where = f""" WHERE view_date > (SELECT MAX(date) FROM "{list(self._spatial_units.keys())[0]}_land_use" WHERE classname={self._fire_classname})"""
         
         # crossing fires and raster land use data
         landuse_raster = rasterio.open(f'{self._datapath}/{self._land_use_classes_fname}')
@@ -349,7 +354,7 @@ class ClassifyByLandUse:
         cur = self._db.get_db_cursor()
         
         land_structure = gpd.GeoDataFrame.from_postgis(sql=f""" 
-        SELECT a.id,a.land_use_id,a.num_pixels,'AF' as classname,b.view_date as date,b.geom as geometry
+        SELECT a.id,a.land_use_id,a.num_pixels,{self._fire_classname} as classname,b.view_date as date,b.geom as geometry
         FROM {self._prefix}_fires_land_structure a 
         INNER JOIN {self._fires_input_table} b 
         ON a.gid = b.id""", con=self._engine, geom_col='geometry')
@@ -381,7 +386,7 @@ class ClassifyByLandUse:
         cur = self._db.get_db_cursor()
         
         land_structure = gpd.GeoDataFrame.from_postgis(sql=f""" 
-        SELECT a.id, a.land_use_id, a.num_pixels, 'RK' as classname, b.risk, b.view_date as date, b.geom as geometry
+        SELECT a.id, a.land_use_id, a.num_pixels, {self._risk_classname} as classname, b.risk, b.view_date as date, b.geom as geometry
         FROM {self._prefix}_risk_land_structure a 
         INNER JOIN {self._risk_input_table} b 
         ON a.gid = b.id""", con=self._engine, geom_col='geometry')
@@ -415,7 +420,7 @@ class ClassifyByLandUse:
             f"""UPDATE public."{tmpspatial_unit}_land_use"
             SET percentage=public."{tmpspatial_unit}_land_use".area/su.area*100
             FROM public."{spatial_unit}" su WHERE public."{tmpspatial_unit}_land_use".suid=su.suid
-            AND public."{tmpspatial_unit}_land_use".classname NOT IN ('AF','RK') """)
+            AND public."{tmpspatial_unit}_land_use".classname NOT IN ({self._fire_classname},{self._risk_classname}) """)
     
     def copy_data_to_final_tables(self):
         print('Copy the new processed data to the final tables.')
@@ -446,10 +451,10 @@ class ClassifyByLandUse:
         if self._biome!="Amazônia":
             return False
 
-        risk_file, file_date = self._ru.get_last_file_info()
-        is_new, risk_time_id = self._ru.has_new_risk(file_date=file_date)
+        risk_file, risk_date = self._ru.get_last_file_info()
+        is_new = self._ru.second_phase_already(risk_date=risk_date)
 
-        return (path.isfile(risk_file) and is_new and risk_time_id is not None)
+        return (path.isfile(risk_file) and is_new)
 
     def execute(self):
         try:

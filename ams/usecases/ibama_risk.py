@@ -5,8 +5,6 @@ from sqlalchemy import create_engine
 import rasterio as rio
 from shapely.geometry import Point
 import numpy as np
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
 from ams.dataaccess.ftp_ibama_risk import FtpIBAMARisk
 from ams.utils.database_utils import DatabaseUtils
 from ams.utils.risk_utils import RiskUtils
@@ -69,8 +67,8 @@ class IBAMARisk:
         About the function to_postgis of GeoDataFrame(GeoPandas):
         https://geopandas.org/en/stable/docs/reference/api/geopandas.GeoDataFrame.to_postgis.html
         """
-        risk_file, file_date = self._ru.get_last_file_info()
-        is_new, risk_time_id = self._ru.has_new_risk(file_date=file_date, expiration_risk=self._ndays_of_expiration)
+        risk_file, risk_date = self._ru.get_last_file_info()
+        is_new, risk_time_id = self._ru.first_phase_already(risk_date=risk_date)
 
         if path.isfile(risk_file) and is_new and risk_time_id is not None:
 
