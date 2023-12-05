@@ -329,15 +329,10 @@ ams.App = {
 						let lastDateDynamic = ams.App._wfs.getLastDate(ldLayerName);
 						lastDateDynamic = lastDateDynamic?lastDateDynamic:ams.App._spatialUnits.getDefault().last_date;
 						if(e.acronym=='RK'){
-							// it's define the date used to display the expiration date on UI
 							let dt1 = new Date(lastDateDynamic);
 							dt1.setDate(dt1.getDate() + ams.Config.defaultRiskFilter.expirationRisk);
 							dt1 = dt1.toISOString().split('T')[0];
 							ams.RiskThresholdHandler.setLastRiskDate(dt1);
-							// we need to change the reference date used to filter the data because the range uses "greater than" for the end date
-							let dt2 = new Date(lastDateDynamic);
-							dt2.setDate(dt2.getDate() - 1);
-							lastDateDynamic = dt2.toISOString().split('T')[0];
 						}
 						ams.App._dateControl.setPeriod(lastDateDynamic, ams.App._currentTemporalAggregate);
 						ams.PeriodHandler.changeDate(ams.App._dateControl.startdate);
