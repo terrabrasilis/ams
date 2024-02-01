@@ -42,7 +42,7 @@
 	<div id="content">
 		<nav class="navbar navbar-expand-lg materialnav navbar-header">
 
-			<a class="navbar-brand" href="http://terrabrasilis.dpi.inpe.br/"><span class="amarelo">Terra</span><span class="verde">Brasilis</span></a>
+			<a class="navbar-brand" href="/"><span class="amarelo">Terra</span><span class="verde">Brasilis</span></a>
 			<div class="collapse navbar-collapse justify-content-between">
 				<div class="navbar-nav">
 					<a class="nav-item nav-link" href="#" id="header-panel">| Sala de Situação</a>
@@ -53,7 +53,7 @@
 							<i class="material-icons iconmobile">assignment </i><span id="analysis-sup">Novas ferramentas</span>
 						</a>
 						<div aria-labelledby="navbarDropdownMenuLink" class="dropdown-menu submenu"> 
-							<a class="dropdown-item" target="_blank" href="http://terrabrasilis.dpi.inpe.br/download/ams/ams-novas-funcionalidades.pdf" title="Abrir documento com informações detalhadas sobre as novas ferramentas."><i class="material-icons iconmenu">new_releases</i><span id="info-doc">Texto informativo</span></a>
+							<a class="dropdown-item" target="_blank" href="/download/ams/ams-novas-funcionalidades.pdf" title="Abrir documento com informações detalhadas sobre as novas ferramentas."><i class="material-icons iconmenu">new_releases</i><span id="info-doc">Texto informativo</span></a>
 							<a class="dropdown-item" href="#modal-container-video" data-toggle="modal"  title="Abrir vídeo demonstrativo da Sala de Situação"><i class="material-icons iconmenu">movie</i><span id="info-media">Vídeo demonstrativo</span></a>
 						</div>
 					</li>
@@ -212,7 +212,7 @@
 								</div>
 								<div class="embed-video">
 									<video style="width: 100%" controls>
-										<source src="http://terrabrasilis.dpi.inpe.br/download/ams/ams-demonstration-tools.mp4" type="video/mp4">
+										<source src="/download/ams/ams-demonstration-tools.mp4" type="video/mp4">
 										<!--track src="movies/subtitles/dashboard-in-action_pt_br.vtt" kind="subtitles" srclang="pt-BR" label="Portuguese" default>
 										<track src="movies/subtitles/dashboard-in-action_en.vtt" kind="subtitles" srclang="en" label="English">
 										<track src="movies/subtitles/dashboard-in-action_es.vtt" kind="subtitles" srclang="es" label="Spanish"-->
@@ -276,7 +276,7 @@
 						<a class="nav-item nav-link" href="https://ufmg.br/"><img class="dim-logos" src="{{ url_for('static', filename='imgs/ufmg.jpg') }}"></a>
 					</div>
 					<!-- <a href="#" title="Parcerias institucionais"><i class="material-icons iconmenu">movie</i><span id="info-media">Parceiros</span></a> -->
-					<p><a href="http://terrabrasilis.dpi.inpe.br"> TerraBrasilis</a>&nbsp;<a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Licença Creative Commons" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/80x15.png" /></a></p>
+					<p><a href="/"> TerraBrasilis</a>&nbsp;<a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Licença Creative Commons" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/80x15.png" /></a></p>
 					<div class="version_style" id="version"></div>
 				</footer>
 				<!--/.Footer-->
@@ -312,7 +312,13 @@
 	<script type="text/javascript" src="{{url_for('static', filename='js/lib/popper/1.14.3/popper.min.js')}}"></script>
 	<!-- jQuery Custom Scroller -->
 	<script type="text/javascript" src="{{url_for('static', filename='js/lib/jquery/plugin/jquery.mCustomScrollbar.concat.min.js')}}"></script>
-	<script type="text/javascript" src="http://terrabrasilis.dpi.inpe.br/oauth-api/getoauthjs"></script>
+	
+	<script type="text/javascript">
+        let randomNumber = Math.floor((Math.random() * 1000000) + 1);
+        let base_url=document.location.protocol+'//'+document.location.hostname;
+        let oauthURL = base_url+"/oauth-api/getoauthjs?"+randomNumber;
+        document.writeln("<script type='text/javascript' src='"+oauthURL+"'><\/script>");
+    </script>
 	<!-- Global site tag (gtag.js) - Google Analytics -->
 	<script type="text/javascript" async src="https://www.googletagmanager.com/gtag/js?id=G-VF4139FH8F"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/terrabrasilis-start.min.js')}}"></script>
