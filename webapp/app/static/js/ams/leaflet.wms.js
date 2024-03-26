@@ -17,7 +17,7 @@ ams.LeafletWms = {
         'showFeatureInfo': function (latlng, jsonTxt) {
             if(jsonTxt.includes("no features were found")) {
                 $('.toast').toast('show');
-			    $('.toast-body').html("Sem informações para este local.");
+                $('.toast-body').html("Sem informações para este local.");
                 return;
             }
             let featureInfo = JSON.parse(jsonTxt);
@@ -131,6 +131,12 @@ ams.LeafletWms = {
             conf["spatialUnit"]=ams.App._currentSULayerName.split(":")[1];
             conf["startDate"]=ams.App._dateControl.startdate;
             conf["tempUnit"]=ams.App._currentTemporalAggregate;
+
+            if (conf["tempUnit"] === "custom") {
+                conf["tempUnit"] = ams.App._dateControl.customDays + "d";
+                conf["custom"] = true;
+            }
+            
             conf["suName"]=n;
             conf["landUse"]=ams.App._landUseList.join(',');
             return conf;
@@ -203,29 +209,29 @@ ams.LeafletWms = {
                 "view_date": ""
             };
             this._updateResults(result, featureInfo);
-			return this._createAFInfoTable(result);
-		},
+            return this._createAFInfoTable(result);
+        },
 
         '_createAFInfoTable': function(result) {
-			let table = '<table class="popup-deter-table" style="width:100%">'
-						+ "<tr>"
-							+ "<th></th>"
-							+ "<th></th>"
-							+ "</tr>";
-			for(let k in result) {
-				let v = result[k];
-				if(k.includes("view_date")) {
-					v = this._formatDate(v);
-				}
+            let table = '<table class="popup-deter-table" style="width:100%">'
+                        + "<tr>"
+                            + "<th></th>"
+                            + "<th></th>"
+                            + "</tr>";
+            for(let k in result) {
+                let v = result[k];
+                if(k.includes("view_date")) {
+                    v = this._formatDate(v);
+                }
                 table += "<tr>"
                 + "<td>" + k + "  </td>"
                 + "<td>" + (v != "null" ? v : " ") + "</td>"
                 + "</tr>";
-			}
-			table += "<tr><td colspan='2'><a target='_blank' href='"+ams.Config.AFMetadataURL+"'>Ver detalhes dos atributos</a></td></tr>";
-			table += "</table>"
-			return table;
-		},
+            }
+            table += "<tr><td colspan='2'><a target='_blank' href='"+ams.Config.AFMetadataURL+"'>Ver detalhes dos atributos</a></td></tr>";
+            table += "</table>"
+            return table;
+        },
 
         '_formatDeterPopup': function(featureInfo) {
             let result = {
@@ -248,50 +254,50 @@ ams.LeafletWms = {
                 "velocidade": 0
             };
             this._updateResults(result, featureInfo);
-			return this._createDeterInfoTable(result);
-		},
+            return this._createDeterInfoTable(result);
+        },
 
         '_createDeterInfoTable': function(result) {
-			let table = '<table class="popup-deter-table" style="width:100%">'
-						+ "<tr>"
-							+ "<th></th>"
-							+ "<th></th>"
-							+ "</tr>";
-			for(let k in result) {
-				let v = result[k];
-				if(k.includes("view_date")) {
-					v = this._formatDate(v);
-				}
-				if(k.includes("car_imovel") && (v.split(";")).length>=1 ) {
-					table += "<tr>"
-								+ "<td colspan='2'>"
-								+ k
-								+ (v != "null" ? this._formatListCAR(v) : " ")
-								+ "</td>"
-								+ "</tr>";
-				}else{
-					table += "<tr>"
-								+ "<td>" + k + "  </td>"
-								+ "<td>" + (v != "null" ? v : " ") + "</td>"
-								+ "</tr>";
-				}
-			}
-			table += "<tr><td colspan='2'><a target='_blank' href='"+ams.Config.DETERMetadataURL+"'>Ver detalhes dos atributos</a></td></tr>";
-			table += "</table>"
-			return table;
-		},
+            let table = '<table class="popup-deter-table" style="width:100%">'
+                        + "<tr>"
+                            + "<th></th>"
+                            + "<th></th>"
+                            + "</tr>";
+            for(let k in result) {
+                let v = result[k];
+                if(k.includes("view_date")) {
+                    v = this._formatDate(v);
+                }
+                if(k.includes("car_imovel") && (v.split(";")).length>=1 ) {
+                    table += "<tr>"
+                                + "<td colspan='2'>"
+                                + k
+                                + (v != "null" ? this._formatListCAR(v) : " ")
+                                + "</td>"
+                                + "</tr>";
+                }else{
+                    table += "<tr>"
+                                + "<td>" + k + "  </td>"
+                                + "<td>" + (v != "null" ? v : " ") + "</td>"
+                                + "</tr>";
+                }
+            }
+            table += "<tr><td colspan='2'><a target='_blank' href='"+ams.Config.DETERMetadataURL+"'>Ver detalhes dos atributos</a></td></tr>";
+            table += "</table>"
+            return table;
+        },
 
         '_formatDate': function (str) {
             let res = str.replace("Z", "").split("-");
             return `${res[2]}/${res[1]}/${res[0]}`
         },
 
-		'_formatListCAR': function(str) {
-			let ids = str.replaceAll(";","\n");
-			return "<div id='ids_car'>"+
-			"<textarea name='listcars' rows='2' cols='40' readonly "+
-			"style='resize: none;max-width: fit-content;border:0;font-size:xx-small;'>"+
-			ids+"</textarea></div>";
-		}
+        '_formatListCAR': function(str) {
+            let ids = str.replaceAll(";","\n");
+            return "<div id='ids_car'>"+
+            "<textarea name='listcars' rows='2' cols='40' readonly "+
+            "style='resize: none;max-width: fit-content;border:0;font-size:xx-small;'>"+
+            ids+"</textarea></div>";
+        }
     })
 };

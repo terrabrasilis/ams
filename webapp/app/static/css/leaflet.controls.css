@@ -54,10 +54,6 @@
   margin-top: 4px;
   cursor: pointer;
 }
-#datepicker-end {
-  background-color: #dbdbdb;
-  color: gray;
-}
 #numdays {
   border: none;
   background-color: rgb(0, 121, 107);
