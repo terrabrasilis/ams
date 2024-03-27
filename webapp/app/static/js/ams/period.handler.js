@@ -13,7 +13,7 @@ ams.PeriodHandler = {
                 startDate:this._startdate
             });
         }
-        
+
         this._control.addTo(map);
         this._control._setDatepicker();
     },
@@ -42,9 +42,9 @@ ams.PeriodHandler = {
         this._previousdate.setUTCDate(this._previousdate.getUTCDate()+1);
     },
 
-    changeDate: function(date){
+    changeDate: function(date, datetype){
         if(typeof date!='undefined')
-            ams.App._dateControl.setPeriod(date, ams.App._currentTemporalAggregate);
+            ams.App._dateControl.setPeriod(date, ams.App._currentTemporalAggregate, datetype);
         ams.App._suViewParams.updateDates(ams.App._dateControl);
         ams.App._priorViewParams.updateDates(ams.App._dateControl);
         ams.App._updateSpatialUnitLayer();

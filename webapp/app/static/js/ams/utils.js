@@ -159,5 +159,15 @@ ams.Utils = {
    */
   resetlocalStorage: function(){
     localStorage.clear();
-  }
+  },
+
+    /**
+     * Assertion.
+     */
+    assert: function(condition, msg) {
+        if (!condition) {
+            throw new Error(msg || "assertion error");
+        }
+    },
+
 };
