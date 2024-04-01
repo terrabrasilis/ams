@@ -205,6 +205,20 @@ L.Control.GroupedLayers = L.Control.extend({
     return btFragment;
   },
 
+  handleRiskSelection: function (classificationMapGroupId, obj) {
+    if (obj.name.toLowerCase().includes('risco') && obj.checked) {
+      var mapClassificationElement = document.querySelector('[id="leaflet-control-layers-group-' + classificationMapGroupId + '"]');
+      mapClassificationElement.style.display = 'none';
+      ams.PeriodHandler.remove(this._map);
+      ams.RiskThresholdHandler.init(this._map);
+    } else {
+      var mapClassificationElement = document.querySelector('[id="leaflet-control-layers-group-' + classificationMapGroupId + '"]');
+      mapClassificationElement.style.display = 'block';
+      ams.PeriodHandler.init(this._map);
+      ams.RiskThresholdHandler.remove(this._map);
+    }
+  },
+
   _addItem: function (obj) {
     // for initial state of checked control, use the ams.Config.defaultFilters defines...
 
@@ -238,7 +252,22 @@ L.Control.GroupedLayers = L.Control.extend({
         profileBt = this._createProfileBiomeButton(obj.name);
         label.appendChild(profileBt);
       }
-    }else{
+    }
+    else if (obj.group.name == 'CLASSIFICAÇÃO DO MAPA') {
+      label.appendChild(input);
+      label.appendChild(name);            
+      this.classificationMapGroupId = obj.group.id;
+
+    }
+    else if (obj.group.name == "INDICADOR") {
+      label.appendChild(input);
+      label.appendChild(name);
+    
+      L.DomEvent.on(input, 'click', function () {
+        this.handleRiskSelection(this.classificationMapGroupId, obj);
+      }, this);
+    }
+    else{
       label.appendChild(input);
       label.appendChild(name);
     }
@@ -257,7 +286,7 @@ L.Control.GroupedLayers = L.Control.extend({
         if(obj.group.name=="UNIDADE TEMPORAL")
           groupContainer.style="display:none;";
         if(obj.group.name=="CATEGORIA FUNDIÁRIA")
-          groupContainer.className = 'leaflet-control-layers-group lclg-landuse';
+          groupContainer.className = 'leaflet-control-layers-group lclg-landuse';        
 
         var groupLabel = document.createElement('label');
         groupLabel.className = 'leaflet-control-layers-group-label';
@@ -318,7 +347,7 @@ L.Control.GroupedLayers = L.Control.extend({
         title='Alterna entre as bases de dados dos biomas disponíveis.';
         break;
       case "INDICADOR":
-        title='Aplica um filtro com base nas classes dos dados do DETER e focos do Programa Queimadas, sendo:\n';
+        title='Aplica um filtro com base nas classes dos dados do DETER, focos do Programa Queimadas e Risco sendo:\n';
         for (let index = 0; index < ams.App._appClassGroups.groups.length; index++) {
           const group = ams.App._appClassGroups.groups[index];
           title+=' - '+group.name+': '+group.classes.join(', ')+';\n';

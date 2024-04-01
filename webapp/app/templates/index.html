@@ -96,7 +96,6 @@
 
 	<!-- area util central onde deverao ser colocados os componentes da aplicação -->
 	<div class="container-fluid" id="panel_container">
-
 		<div class="loading-data" id="loading_data_info">
 			<img src="{{ url_for('static', filename='imgs/loading_map.gif') }}" alt="loading gif when waiting data" />
 		</div>
@@ -211,7 +210,7 @@
 									<span id="txt1d">Veja o vídeo demonstrativo da interação com as novas ferramentas do painel.</span>
 								</div>
 								<div class="embed-video">
-									<video style="width: 100%" controls>
+									<video preload="none" style="width: 100%" controls>
 										<source src="/download/ams/ams-demonstration-tools.mp4" type="video/mp4">
 										<!--track src="movies/subtitles/dashboard-in-action_pt_br.vtt" kind="subtitles" srclang="pt-BR" label="Portuguese" default>
 										<track src="movies/subtitles/dashboard-in-action_en.vtt" kind="subtitles" srclang="en" label="English">
@@ -303,6 +302,8 @@
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/leaflet.wms.min.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/app.min.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/leaflet.period.control.min.js')}}"></script>
+	<script type="text/javascript" src="{{url_for('static', filename='js/ams/leaflet.risk.control.min.js')}}"></script>
+	<script type="text/javascript" src="{{url_for('static', filename='js/ams/risk.threshold.handler.min.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/period.handler.min.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/lib/Leaflet.Coordinates-0.1.5.min.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/lib/Leaflet.controls.position.min.js')}}"></script>

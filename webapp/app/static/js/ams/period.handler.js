@@ -7,12 +7,22 @@ ams.PeriodHandler = {
     _control: null,
 
     init: function(map){
-        this._updatePeriodInfo();
+        this._updatePeriodInfo();// gets start date from App configuration and injects here
+        if(!this._control) {
+            this._control = L.control.PeriodHandler({
+                startDate:this._startdate
+            });
+        }
 
-        this._control = L.control.PeriodHandler({
-            startDate:this._startdate
-        }).addTo(map);
+        this._control.addTo(map);
         this._control._setDatepicker();
+    },
+
+    remove: function(map) {
+        if(this._control){
+            map.removeControl(this._control);
+            this._control=null;
+        }
     },
 
     /**
@@ -32,9 +42,9 @@ ams.PeriodHandler = {
         this._previousdate.setUTCDate(this._previousdate.getUTCDate()+1);
     },
 
-    changeDate: function(date){
+    changeDate: function(date, datetype){
         if(typeof date!='undefined')
-            ams.App._dateControl.setPeriod(date, ams.App._currentTemporalAggregate);
+            ams.App._dateControl.setPeriod(date, ams.App._currentTemporalAggregate, datetype);
         ams.App._suViewParams.updateDates(ams.App._dateControl);
         ams.App._priorViewParams.updateDates(ams.App._dateControl);
         ams.App._updateSpatialUnitLayer();

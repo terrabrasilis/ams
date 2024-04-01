@@ -18,6 +18,12 @@ class DeterDaily:
     Otherwise, you must provide this SQL View before running historical statistics.
     See the README.md file for instructions.
 
+    @param {str} db_url, the PostgreSQL database connection parameters as string format.
+    Example: "postgresql://<user>:<password>@<host or ip>:<port>/<database_name>"
+
+    @param {str} biome, the name of biome used to filter active fires data.
+    See the names in raw_active_fires table. Ex.: "Amazônia"
+    
     @param {boolean} alldata, Default is False, if True, all data of DETER will be processed, historical and current.
     Otherwise, only current is processed.
 
@@ -27,9 +33,12 @@ class DeterDaily:
         self._conn = connect(db_url)
         self._alldata = alldata
         self._biome = biome
+        # The class name is fixed to 'AF' as is all code that checks the fire class name.
+        self._fire_classname = "AF"
+
         # ignore classes that are not related to DETER data.
         # For more than one, use single quotes and comma like this: "'AF','DS','EX'"
-        self.ignore_classes="'AF'" # AF=Active Fires by now.
+        self.ignore_classes=f"{self._fire_classname}" # AF=Active Fires by now.
         print('Processing the DETER alerts data...')
 
     def update_current_tables(self):
@@ -80,7 +89,7 @@ class DeterDaily:
             """
             cur.execute(truncate)
             cur.execute(insert)
-            if(self._biome=="'Amazônia'"):
+            if(self._biome=="Amazônia"):
                 cur.execute(update)
             print(f'DETER alerts for {table} have been updated.')
 

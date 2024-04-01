@@ -12,6 +12,9 @@ L.Control.WMSLegend = L.Control.extend({
             },
             af:{
                 url:''
+            },
+            risk:{
+                url:''
             }
         }
     },
@@ -39,9 +42,17 @@ L.Control.WMSLegend = L.Control.extend({
             afl.src = this.options.static.af.url;
             afl.alt = 'Active Fires Legend';
         }
+        // static active fires legend
+        if(this.options.static.risk.url){
+            let lafl = L.DomUtil.create('span', 'wms-label-legend', container);
+            lafl.innerText='Risco de desmatamento (IBAMA)';
+            let afl = L.DomUtil.create('img', legendClassName, container);
+            afl.src = this.options.static.risk.url;
+            afl.alt = 'IBAMA Risk Legend';
+        }
         // dinamic spatial unit legend
         let limg = L.DomUtil.create('span', 'wms-label-legend', container);
-        limg.innerText='Unidade espacial ('+ams.Map.PopupControl._unit+')';
+        limg.innerText=ams.Map.PopupControl._prefix+ams.Map.PopupControl._text;
         this.img = L.DomUtil.create('img', legendClassName, container);
         this.img.src = this.options.uri;
         this.img.alt = 'Spatial Unit Legend';

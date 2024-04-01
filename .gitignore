@@ -4,3 +4,4 @@ venv/
 .idea/
 .vscode/
 /data/*.tif
+.env*

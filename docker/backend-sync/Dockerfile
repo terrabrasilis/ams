@@ -43,7 +43,6 @@ RUN pip install -r ${INSTALL_PATH}/ams/requirements.txt
 # ------------------------------------------------------
 COPY ams/ ${INSTALL_PATH}/ams/
 COPY scripts/ ${INSTALL_PATH}/scripts/
-ADD webapp/app/config.py ${INSTALL_PATH}/webapp/app/
 # ------------------------------------------------------
 
 ## THE ENV VARS

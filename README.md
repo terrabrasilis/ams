@@ -6,6 +6,8 @@ AMS is a Web Mapping GIS application, which integrates with REST and OGC web ser
 
 The backend consists of some tasks initiated by a cronjob and aims to synchronize DETER and Active Fires data from external databases and pre-process the statistics for the layers of spatial units.
 
+After the IBAMA risk file is downloaded, it is copied to the datadir geoserver to replace the old risk file. To do this, we need the shared directory between the geoserver's datadir and the backend service's workdir to achieve this.
+
 ### Database requirements
 
 Database requirements to support backend tasks are:

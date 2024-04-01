@@ -1,27 +1,44 @@
 version: '3.3'
 services:
   ams-webapp:
-    image: terrabrasilis/ams-webapp:v1.2.0
+    image: terrabrasilis/ams-webapp:vx.y.z
     container_name: ams.webapp
     restart: always
     ports:
       - 81:7000
     environment:
-      - "HOMOLOGATION=False"
       - "SCRIPT_NAME=/ams"
       - "GEOSERVER_URL=http://terrabrasilis.dpi.inpe.br/geoams/"
       - "SERVER_NAME=terrabrasilis.dpi.inpe.br"
       - "APPLICATION_ROOT=/ams/"
     env_file:
-      - webapp-secrets.env
+      - frontend-secrets.env
 
-  ams-sync:
-    image: terrabrasilis/ams-sync:v1.2.0
-    container_name: ams.sync
+  ams-sync-amazonia:
+    image: terrabrasilis/ams-sync:vx.y.z
+    container_name: ams.sync.amazonia
+    restart: always
+    volumes:
+      - "/some/local/dir/data:/usr/local/data"
+      - "/some/geoserver/datadir:/usr/local/geoserver"
+    environment:
+      - "BIOME=Amazônia"
+      - "INPUT_GEOTIFF_FUNDIARY_STRUCTURE=estrutura_fundiaria_cst_2023.tif"
+      - "ALL_DATA=True"
+      - "RISK_OUTPUT_PATH=/usr/local/data"
+      - "GEOSERVER_OUTPUT_PATH=/usr/local/geoserver"
+    env_file:
+      - amz-backend-secrets.env
+
+  ams-sync-cerrado:
+    image: terrabrasilis/ams-sync:vx.y.z
+    container_name: ams.sync.cerrado
     restart: always
     volumes:
       - "/some/local/dir/data:/usr/local/data"
     environment:
-      - "INPUT_GEOTIFF_FUNDIARY_STRUCTURE=estrutura_fundiaria_cst_lzw_4326.tif"
+      - "BIOME=Cerrado"
+      - "INPUT_GEOTIFF_FUNDIARY_STRUCTURE=estrutura_fundiaria_cst_2023.tif"
+      - "ALL_DATA=True"
     env_file:
-      - webapp-secrets.env
+      - cer-backend-secrets.env
