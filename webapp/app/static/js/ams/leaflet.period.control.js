@@ -12,7 +12,6 @@ L.Control.PeriodHandler = L.Control.extend({
   
     initialize: function (options) {
         L.Util.setOptions(this, options);
-        console.log("initialize");
     },
 
     _initLayout: function (map) {
