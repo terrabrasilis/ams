@@ -42,6 +42,8 @@ class SpatialUnitProfile():
         self._query_limit = 20
         self._classname = params['className']
         self._risk_threshold = 0
+
+        self._custom = 'custom' in params
             
         # default column to sum statistics
         self.default_column="area"
@@ -122,6 +124,12 @@ class SpatialUnitProfile():
             group by TO_CHAR(date, 'YYYY'),classname
             order by 1 desc limit {2}'''}
 
+        if self._custom:
+            days = int(self._temporal_unit[:-1])
+            self._temporal_units[self._temporal_unit] = f"Agregado customizado ({days} dias)"
+            if not days in self._temporal_unit_sql:
+                self._temporal_unit_sql[days] = self._temporal_unit_sql[7]
+
     def format_date(self, date: str)->str:
         return f'{date[8:10]}/{date[5:7]}/{date[0:4]}'
 
@@ -133,6 +141,9 @@ class SpatialUnitProfile():
         Gets the previous date based on reference date using a rule for each temporal unit.
         It's result is used to highlight bars
         """
+        if self._custom:
+            return (ref_date - relativedelta(years = +1)).strftime('%Y-%m')
+        
         if self._temporal_unit == '7d': return (ref_date - relativedelta(years = +1)).strftime('%Y-%m')
         elif self._temporal_unit == '15d': return (ref_date - relativedelta(years = +1)).strftime('%Y-%m')
         elif self._temporal_unit == '1m': return (ref_date - relativedelta(years = +1)).strftime('%Y-%m')
@@ -140,6 +151,10 @@ class SpatialUnitProfile():
 
     def get_prev_date_temporal_unit(self, temporal_unit: str)->str:
         start_date_date = datetime.strptime(self._start_date, '%Y-%m-%d')
+
+        if self._custom:
+            return (start_date_date + relativedelta(days=-int(temporal_unit[:-1]))).strftime('%Y-%m-%d')
+        
         if temporal_unit == '7d': return (start_date_date + relativedelta(days = -7)).strftime('%Y-%m-%d')
         elif temporal_unit == '15d': return (start_date_date + relativedelta(days = -15)).strftime('%Y-%m-%d')
         elif temporal_unit == '1m': return (start_date_date + relativedelta(days = -30)).strftime('%Y-%m-%d')
@@ -147,6 +162,10 @@ class SpatialUnitProfile():
         elif temporal_unit == '1y': return (start_date_date + relativedelta(days = -365)).strftime('%Y-%m-%d')
 
     def __get_period_settings(self):
+        if self._custom:
+            days = int(self._temporal_unit[:-1])
+            return days,'day',self._query_limit*days            
+        
         if self._temporal_unit == '7d': return 7,'day',self._query_limit*7
         elif self._temporal_unit == '15d': return 15,'day',self._query_limit*15
         elif self._temporal_unit == '1m': return 30,'day',self._query_limit*30
@@ -362,9 +381,8 @@ class SpatialUnitProfile():
 
         indicador=self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
         unid_temp=self._temporal_units[self._temporal_unit]
-        chart_title=f"""Evolução temporal de <b>{indicador}</b>
-        <br>para os períodos do <b>{unid_temp}</b>
-        (limitado aos últimos {self._query_limit} períodos)."""
+        chart_title=f"""Evolução temporal de <b>{indicador}</b> para os períodos do
+        <br><b>{unid_temp}</b> (limitado aos últimos {self._query_limit} períodos)."""
 
         cto=df['Data de referência'].to_list()
         df['Data de referência']=df['Data de referência'].apply(self.formatDate)

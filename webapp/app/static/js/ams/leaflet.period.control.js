@@ -11,7 +11,8 @@ L.Control.PeriodHandler = L.Control.extend({
     _container:null,
   
     initialize: function (options) {
-      L.Util.setOptions(this, options);
+        L.Util.setOptions(this, options);
+        console.log("initialize");
     },
 
     _initLayout: function (map) {
@@ -20,17 +21,18 @@ L.Control.PeriodHandler = L.Control.extend({
 
         let info = L.DomUtil.create('div', className+'-form '+className+'-info ');
         let select='<select name="numdays" id="numdays">'
-        +'<option value="7">7 dias</option>'
-        +'<option value="15">15 dias</option>'
-        +'<option value="30">30 dias</option>'
-        +'<option value="90">90 dias</option>'
-        +'<option value="365">365 dias</option>'
-        +'</select>';
+            +'<option value="7">7 dias</option>'
+            +'<option value="15">15 dias</option>'
+            +'<option value="30">30 dias</option>'
+            +'<option value="90">90 dias</option>'
+            +'<option value="365">365 dias</option>'
+            +'<option value="0">personalizado</option>'
+            +'</select>';
         info.innerHTML='Controle da unidade temporal '+select+' ';
         container.appendChild(info);
 
         let form = L.DomUtil.create('div', className+'-form');
-        form.innerHTML='<i onclick="ams.PeriodHandler.previousPeriod()" '
+        form.innerHTML='<i id="previous-period" onclick="ams.PeriodHandler.previousPeriod()" '
         + 'title="Período anterior" '
         + 'class="material-icons icon-period-control noselect">chevron_left</i>'
         + '<label class="period-control">'
@@ -70,41 +72,82 @@ L.Control.PeriodHandler = L.Control.extend({
     },
 
     _setDatepicker: function() {
-		let datepicker = new ams.datepicker.Datepicker();
-		$.datepicker.regional['br'] = datepicker.regional("br");
-		$.datepicker.setDefaults($.datepicker.regional["br"]);
+        let startDate = this.options.startDate;
+        
+        let datepicker = new ams.datepicker.Datepicker();
+        $.datepicker.regional['br'] = datepicker.regional("br");
+        $.datepicker.setDefaults($.datepicker.regional["br"]);
 
-		$('#datepicker-start').datepicker({
-			showButtonPanel: true,
-			defaultDate: this.options.startDate,
-			minDate: new Date("2017-01-01T00:00:00"),
-			maxDate: this.options.startDate,
-			changeMonth: true,
-			changeYear: true,	
-			todayBtn: "linked",	
-			onSelect: function() {
-				// changes the reference date used to the max date for displayed data
-				let selected = $(this).val().split("/");
-				let date = selected[2] + "-" + selected[1] + "-" + selected[0];
-                ams.PeriodHandler.changeDate(date);
-			},
-			beforeShow: function() {
-				setTimeout(function() {
-					$('.ui-datepicker').css('z-index', 99999999999999);
-				}, 0);
-			}
-		}).val(this.options.startDate.toLocaleDateString("pt-BR"));
+        function _validatePeriod() {
+            let startDate = ams.Date.fromString($('#datepicker-start').val(), "dd/mm/yyyy");
+            let endDate = ams.Date.fromString($('#datepicker-end').val(), "dd/mm/yyyy");
+            return startDate >= endDate;
+        }
+
+        function _changeDate(val, datetype) {
+            if (ams.App._dateControl.getPeriod() === "custom" && !_validatePeriod()) {
+                $('.toast').toast('show');
+                $('.toast-body').html("Período inválido.");
+                if (datetype === "start") {
+                    $('#datepicker-start').val("");
+                } else {
+                    $('#datepicker-end').val("");
+                }
+                return;
+            }
+            
+            // changes the reference date used to the max date for displayed data
+            let selected = val.split("/");
+            let date = ams.Date.fromString(selected[2] + "-" + selected[1] + "-" + selected[0]);
+
+            if (datetype == "end") {
+                date.setUTCDate(date.getUTCDate() - 1);
+            }
+
+            ams.PeriodHandler.changeDate(ams.App._dateControl.toUTCDate(date), datetype);
+        }
+
+        function _updateCustomPeriod() {
+            let startDate = $('#datepicker-start').val().split("/");
+            let endDate = $('#datepicker-end').val().split("/");
+            ams.App._dateControl.setCustomPeriod(
+                startDate[2] + "-" + startDate[1] + "-" + startDate[0],
+                endDate[2] + "-" + endDate[1] + "-" + endDate[0],
+            );
+        }
+
+
+        $('#datepicker-start').datepicker({
+            showButtonPanel: true,
+            defaultDate: this.options.startDate,
+            minDate: new Date("2017-01-01T00:00:00"),
+            maxDate: startDate,
+            changeMonth: true,
+            changeYear: true,    
+            todayBtn: "linked",    
+            onSelect: function() {
+                _changeDate($(this).val(), "start")
+            },
+            beforeShow: function() {
+                setTimeout(function() {
+                    $('.ui-datepicker').css('z-index', 99999999999999);
+                }, 0);
+            }
+        }).val(startDate.toLocaleDateString("pt-BR"));
 
         $('#datepicker-end').datepicker({
-			showButtonPanel: true,
-			defaultDate: ams.PeriodHandler._enddate,
-			minDate: new Date("2017-01-01T00:00:00"),
-			maxDate: ams.PeriodHandler._enddate,
-			changeMonth: true,
-			changeYear: true,	
-			todayBtn: "linked"
-		}).val(ams.PeriodHandler._enddate.toLocaleDateString("pt-BR"));
-
+            showButtonPanel: true,
+            defaultDate: ams.PeriodHandler._enddate,
+            minDate: new Date("2017-01-01T00:00:00"),
+            maxDate: ams.PeriodHandler._enddate,
+            changeMonth: true,
+            changeYear: true,    
+            todayBtn: "linked",
+            onSelect:  function() {
+                _changeDate($(this).val(), "end");
+            },
+        }).val(ams.PeriodHandler._enddate.toLocaleDateString("pt-BR"));
+        
         // about new period selector
         $('#numdays').on('change',(ev)=>{
             let options=ev.target;
@@ -115,6 +158,25 @@ L.Control.PeriodHandler = L.Control.extend({
                     break;
                 }
             }
+
+            let custom = numdays === 0;
+
+            if (!custom && ams.App._dateControl.getPeriod() === "custom") {
+                ams.App._dateControl.disableCustomPeriod();
+            }
+            
+            $("#datepicker-end").attr("disabled", !custom);
+
+            let maxDate = custom? new Date(startDate - 1) : ams.PeriodHandler._enddate;
+            $('#datepicker-end').datepicker("option", "maxDate", maxDate);
+
+            if (custom) {
+                let startDate = ams.Date.fromString($('#datepicker-start').val(), "dd/mm/yyyy");
+                let endDate = ams.Date.fromString($('#datepicker-end').val(), "dd/mm/yyyy");
+                numdays = ams.Date.differenceInDays(endDate, startDate);
+                _updateCustomPeriod();
+            }
+            
             let obj={
                 "acronym": ams.App._dateControl.getPeriodByDays(numdays),
                 "name": "Agregado "+numdays+" dias",
@@ -122,14 +184,15 @@ L.Control.PeriodHandler = L.Control.extend({
                     "name": "UNIDADE TEMPORAL"
                 }
             }
+
             // dispache event to update layers using selected filters
             ams.App._map.fire('changectrl', obj);
         });
-        let numdays = ams.App._dateControl.getNumberOfDays();
+        let numdays = ams.App._dateControl.getPeriod() === "custom"? 0 : ams.App._dateControl.getNumberOfDays();
         let options=$('#numdays')[0];
-        for (let option in options){
-            if(option.value==numdays)
-                option.selected=true;
+        for (let i=0; i < options.length; ++i) {
+            if(options[i].value==numdays)
+                options[i].selected=true;
         }
     },
   
