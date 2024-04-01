@@ -43,9 +43,13 @@ $(document).ready(function () {
    * of the authentication chain.
    */
   if(typeof Authentication != 'undefined')
-    if(ams.Utils.isHomologationEnvironment()) {
-      Authentication.internalValidationOauthApiURL="http://terrabrasilis.dpi.inpe.br/oauth-api/";
-      Authentication.init(Lang.language, ams.Utils.restartApp, "http://terrabrasilis.dpi.inpe.br/oauth-api/");
+    if(ams.Utils.isHomologationEnvironment()) 
+    {
+      let base_url=document.location.protocol+'//'+document.location.hostname;
+      let oauthURL = base_url+"/oauth-api/";      
+
+      Authentication.internalValidationOauthApiURL=oauthURL;
+      Authentication.init(Lang.language, ams.Utils.restartApp, oauthURL);
     }
     else Authentication.init(Lang.language, ams.Utils.restartApp);
 
