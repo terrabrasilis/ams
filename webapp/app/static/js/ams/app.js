@@ -874,5 +874,44 @@ ams.App = {
                 ams.App._resetMap("O filtro deve incluir ao menos uma categoria fundiária. A solicitação não foi concluída.");
             }
         }
+    },
+
+    saveAlerts: function (jsConfig) {
+        async function _saveAlerts (jsConfig) {
+            $("#loading_data_info").css('display','block');
+
+            jsConfig["targetbiome"] = ams.Config.biome;
+            jsConfig["isAuthenticated"] = ams.Auth.isAuthenticated();
+            
+            let jsConfigStr = JSON.stringify(jsConfig);
+            let response = await fetch("alerts?sData=" + jsConfigStr).catch(
+                ()=>{
+                    console.log("The backend service may be offline or your internet connection has been interrupted.");
+                }
+            );
+
+            $("#loading_data_info").css('display','none');
+            
+            if (response && response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'alertas.zip';
+                link.click();
+                window.URL.revokeObjectURL(url);
+            } else {
+                let emsg = "";
+                if(response) emsg = "HTTP-Error: " + response.status + " on spatial_unit_profile";
+                else emsg="O servidor está indisponível ou sua internet está desligada.";
+                console.log(emsg);
+                $('.toast').toast('show');
+                $('.toast-body').html("Encontrou um erro na solicitação ao servidor.<br />"+emsg);
+            }
+        }
+        
+        _saveAlerts(jsConfig);
     }
+
+
 };
