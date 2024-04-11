@@ -114,6 +114,9 @@ ams.LeafletWms = {
             let sButton = "";
             if(result.area!=0){
                 sButton = this._createGraphicButton(result.name);
+                if (["DS", "DG", "CS", "MN"].includes(result.classname)) {
+                    sButton += this._createSaveButton(result.name);
+                }
             }
             return this._createSpatialUnitInfoTable(result) + sButton;
         },
@@ -145,10 +148,20 @@ ams.LeafletWms = {
         '_createGraphicButton': function (suName) {
             let viewConfig=this._getViewConfig(suName);
             let sButton=
-                  '<div style="width:100%;display:flex;justify-content:space-between;">'
-                + '<button class="btn btn-primary-p btn-success" onclick=ams.App.displayGraph('  // see app.js
+                  '<div style="display:inline-flex;justify-content:space-between;">'
+                + '<button class="btn btn-primary-p btn-success" style="margin:1px" onclick=ams.App.displayGraph('  // see app.js
                 + JSON.stringify(viewConfig)
                 + ')>Perfil</button>'
+                + '</div>';
+            return sButton;
+        },
+        '_createSaveButton': function (suName) {
+            let viewConfig=this._getViewConfig(suName);
+            let sButton=
+                '<div style="display:inline-flex;justify-content:space-between;">'
+                + '<button class="btn btn-primary-p btn-success" style="margin:1px" onclick=ams.App.saveAlerts('  // see app.js
+                + JSON.stringify(viewConfig)
+                + ')>Salvar alertas</button>'
                 + '</div>';
             return sButton;
         },

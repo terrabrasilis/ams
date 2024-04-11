@@ -11,6 +11,7 @@ import json
 import re
 from dateutil.relativedelta import relativedelta
 
+
 class SpatialUnitProfile():
     """
     Data extraction to generate the profile graph panel for a spatial unit.
@@ -28,6 +29,7 @@ class SpatialUnitProfile():
         params['unit'], The current unit measure in the App. Ex.: {'km²','ha','focos','risco'}
         params['targetbiome'], The selected biome. Ex.: {'Cerrado', 'Amazônia'}
         params['riskThreshold'] The selected risk threshold value.
+        params['custom'], when the period is customized.
     """
 
     def __init__(self, config, params):

@@ -1,8 +1,9 @@
-from flask import render_template, request
+from flask import render_template, request, send_file
 import json
 import os;
 
 from ams.spatial_unit_profile import SpatialUnitProfile
+from ams.save_alerts import prepare_alerts_to_save
 from .controllers import AppConfigController
 from .config import Config
 from . import bp as app
@@ -104,3 +105,58 @@ def get_profile(endpoint):
     except Exception as e:
         print(e)
         return "Something is wrong on the server. Please, send this error to our support service: terrabrasilis@inpe.br", 500
+
+def _validate_params(json_str, required_params):
+    params = json.loads(json_str)
+
+    for name in required_params:
+        if not name in params:
+            # exception KeyError
+            # Raised when a mapping (dictionary) key is not found in the set of existing keys.
+            # HTTP 412: Precondition Failed
+            return False, (f"Input parameters are missing: {name}.", 412)
+    return True, params
+
+@app.route('/alerts', methods=['GET'])
+def get_alerts():
+    args = request.args
+
+    status, params_or_error = _validate_params(
+        json_str=args.get('sData'),
+        required_params=[
+            'targetbiome',
+            'isAuthenticated',
+            'className',
+            'spatialUnit',
+            'startDate',
+            'tempUnit',
+            'suName',
+        ]
+    )
+
+    if not status:
+        return params_or_error
+    
+    try:
+        params = params_or_error
+
+        biome = params['targetbiome']
+        name = params['suName'].replace('|',' ')
+        if name == biome:
+            name = '*'
+        
+        zip_data = prepare_alerts_to_save(
+            dburl=Config.DB_CERRADO_URL if (biome == 'Cerrado') else Config.DB_AMAZON_URL,
+            is_authenticated=params['isAuthenticated'],
+            spatial_unit=params['spatialUnit'],
+            classname=params['className'],
+            start_date=params['startDate'],
+            temporal_unit=params['tempUnit'],
+            name=name,
+            custom='custom' in params,
+        )
+    except Exception as e:
+        print(e)
+        return "Something is wrong on the server. Please, send this error to our support service: terrabrasilis@inpe.br", 500
+
+    return send_file(zip_data, as_attachment=True, download_name="alerts.zip")
