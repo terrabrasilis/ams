@@ -131,12 +131,13 @@ def get_alerts():
             'startDate',
             'tempUnit',
             'suName',
+            'filenamePrefix',
         ]
     )
 
     if not status:
         return params_or_error
-    
+
     try:
         params = params_or_error
 
@@ -154,6 +155,7 @@ def get_alerts():
             temporal_unit=params['tempUnit'],
             name=name,
             custom='custom' in params,
+            filename_prefix=params['filenamePrefix']
         )
     except Exception as e:
         print(e)

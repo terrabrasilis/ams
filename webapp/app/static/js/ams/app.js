@@ -548,6 +548,7 @@ ams.App = {
             if(!this._map.hasLayer(l)) l.addTo(this._map);
             l.bringToBack();
         }
+        $("#dataname-to-download").text(ams.App._appClassGroups.getGroupName(ams.App._suViewParams.classname));
     },
 
     /**
@@ -880,8 +881,29 @@ ams.App = {
         async function _saveAlerts (jsConfig) {
             $("#loading_data_info").css('display','block');
 
+            // defining filename prefix
+            let layerName = ams.App._getLayerPrefix();
+            layerName = ams.App._spatialUnits.find(
+                layerName.substring(layerName.indexOf(':') + 1).replace("_view", "")
+            );
+            layerName = (layerName)?(layerName.description):(baseName);
+            layerName = layerName.replaceAll(" ", "_");
+
+            let dataName = ams.App._appClassGroups.getGroupName(ams.App._suViewParams.classname);
+            dataName = (dataName)?(dataName):(viewParams.classname);
+            dataName=dataName.replaceAll(" ", "_");
+
+            let sdt = ams.PeriodHandler._startdate.toLocaleDateString().replaceAll('/','-');
+            let edt = ams.PeriodHandler._enddate.toLocaleDateString().replaceAll('/','-');
+
+            let filenamePrefix = (
+                ams.Config.biome + "_" + layerName + "-" + jsConfig["suName"] + "_" + dataName + "_" + edt + "_" + sdt
+            );
+
+            // defining params to send
             jsConfig["targetbiome"] = ams.Config.biome;
             jsConfig["isAuthenticated"] = ams.Auth.isAuthenticated();
+            jsConfig["filenamePrefix"] = filenamePrefix;
             
             let jsConfigStr = JSON.stringify(jsConfig);
             let response = await fetch("alerts?sData=" + jsConfigStr).catch(
@@ -897,7 +919,7 @@ ams.App = {
                 const url = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = 'alertas.zip';
+                link.download = filenamePrefix + '.zip';
                 link.click();
                 window.URL.revokeObjectURL(url);
             } else {

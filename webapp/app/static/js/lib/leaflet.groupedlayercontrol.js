@@ -408,12 +408,13 @@ L.Control.GroupedLayers = L.Control.extend({
     let title = 'title="O arquivo inclui dados filtrados por: BIOMA, INDICADOR e PERÍODO.\n';
     title = title + ' - CSV: inclui apenas as unidades espaciais priorizadas;\n';
     title = title + ' - Shapefile: inclui todas as unidades espaciais;" ';
+    let dataName = ams.App._appClassGroups.getGroupName(ams.App._suViewParams.classname);
     fctrl.innerHTML='<div class="leaflet-control-layers-group" id="shapezip-control-layers-group">'
     + '<label class="leaflet-control-layers-group-label">'
     + '<span class="leaflet-control-layers-group-name">DOWNLOAD</span></label>'
     + '<label class="leaflet-control-layers-group-name" '+title+'>'
     + '<span style="white-space: pre-wrap;">'
-    + 'Baixar arquivo da unidade<br>espacial selecionada.</span></label>'
+    + 'Baixar valores dos indicadores <br>(<span id="dataname-to-download">' + dataName +'</span>).</label>'
     + '<label class="leaflet-control-layers-group-name btn-download">'
     + '<button class="btn btn-primary-p btn-success" id="csv-download-button"> CSV </button>'
     + '&nbsp;&nbsp;'
