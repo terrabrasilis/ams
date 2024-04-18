@@ -253,7 +253,7 @@ ams.Map = {
                                         + ";orderby:" + propertyName
                                         + ";landuse:" + ams.App._landUseList.join('%5C,')
                                         + ";risk:" + viewParams.risk_threshold
-                                        + ";limit:" + viewParams.limit
+                                        + ";limit:ALL"
                                         + ((extension=='csv')?(""):(";optype:DOWNLOAD"));
 
             if (extension == 'csv') {

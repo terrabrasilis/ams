@@ -406,7 +406,7 @@ L.Control.GroupedLayers = L.Control.extend({
   _getDownloadControlDOM: function() {
     let fctrl = document.createElement('div');
     let title = 'title="O arquivo inclui dados filtrados por: BIOMA, INDICADOR e PERÍODO.\n';
-    title = title + ' - CSV: inclui apenas as unidades espaciais priorizadas;\n';
+    title = title + ' - CSV: inclui todas as unidades espaciais com valores dos indicadores superiores a zero;\n';
     title = title + ' - Shapefile: inclui todas as unidades espaciais;" ';
     let dataName = ams.App._appClassGroups.getGroupName(ams.App._suViewParams.classname);
     fctrl.innerHTML='<div class="leaflet-control-layers-group" id="shapezip-control-layers-group">'
