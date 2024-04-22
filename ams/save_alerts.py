@@ -52,7 +52,8 @@ def prepare_alerts_to_save(
     start_date: str,
     temporal_unit: str,
     name: str,
-    custom: bool
+    custom: bool,
+    filename_prefix: str    
 ):
     """
     Retrieve spatial unit alerts, convert them into a shapefile format, 
@@ -105,7 +106,7 @@ def prepare_alerts_to_save(
 
     alerts_geom = gpd.read_postgis(alerts_sql, dburl)
     alerts_geom["date"] = alerts_geom["date"].astype(str)
-    alerts_geom.to_file(temp_dir / "alertas.shp")
+    alerts_geom.to_file(temp_dir / f"{filename_prefix}.shp")
     
     # spatial unit geometry
     spatial_unit_sql = f'''
@@ -122,8 +123,10 @@ def prepare_alerts_to_save(
 
     with zipfile.ZipFile(zip_data, mode='w') as zip_file:
         for filename in list(temp_dir.glob("*")):
-            zip_file.write(filename)
-
+            zip_file.write(filename, arcname=filename.name)
+            filename.unlink()
+    temp_dir.rmdir()
+    
     zip_data.seek(0)
 
     return zip_data
