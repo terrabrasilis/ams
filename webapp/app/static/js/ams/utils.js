@@ -22,6 +22,10 @@ ams.Utils = {
     );
   },
 
+  getServerConfigParam: function(param) {
+      return $('meta[name="' + param + '"]').attr('content');
+  },
+
   startApp: function(generalConfig){
 
     if(typeof generalConfig=='undefined'){

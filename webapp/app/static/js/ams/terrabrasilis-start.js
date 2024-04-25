@@ -43,7 +43,7 @@ $(document).ready(function () {
    * of the authentication chain.
    */
   if(typeof Authentication != 'undefined')
-    if(ams.Utils.isHomologationEnvironment()) 
+    if(ams.Utils.isHomologationEnvironment())
     {
       let base_url=document.location.protocol+'//'+document.location.hostname;
       let oauthURL = base_url+"/oauth-api/";      
@@ -54,6 +54,9 @@ $(document).ready(function () {
     else Authentication.init(Lang.language, ams.Utils.restartApp);
 
   /** Launch the app when loading the page for the first time */
+  if (ams.Utils.getServerConfigParam('reset_local_storage') === "True") {
+    ams.Utils.resetlocalStorage();
+  }    
   ams.Utils.startApp();
 
   /** config google analytics */

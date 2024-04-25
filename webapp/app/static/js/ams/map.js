@@ -125,7 +125,7 @@ ams.Map = {
                     + viewParams.startdate
                     + ") "
                     + classFilter;
-        }    
+        }
 
         this.getGroupName = function(acronym) {
             return this._groupNamesMap[acronym];
@@ -407,11 +407,12 @@ ams.Map = {
                 this._wmsLegendControl.options.static.deter.url=null;
                 this._wmsLegendControl.options.static.risk.url=null;
             }else{
-                // Legend to risk raster layer from raw data
-                this._wmsLegendControl.options.static.af.url=null;
-                this._wmsLegendControl.options.static.deter.url=null;
-                let riskurl = baseurl + "&LAYER=" + ams.App._referenceLayerName;
-                this._wmsLegendControl.options.static.risk.url=riskurl;
+                let rurl = baseurl + "&LAYER=" + ams.App._referenceLayerName
+                    + "&STYLE=risk_legend"
+                    + "&LEGEND_OPTIONS=forceLabels:on;";
+                this._wmsLegendControl.options.static.af.url = null;
+                this._wmsLegendControl.options.static.deter.url = null;
+                this._wmsLegendControl.options.static.risk.url = rurl;
             }
         }
     }
