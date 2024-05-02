@@ -3,9 +3,7 @@ sqlalchemy-utils
 psycopg2-binary
 geoalchemy2
 geopandas
-pyproj
 plotly
 alive-progress
 rasterio
-pygeos
 aioftp

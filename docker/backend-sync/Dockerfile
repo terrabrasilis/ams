@@ -2,7 +2,7 @@
 #   docker build -t terrabrasilis/ams-sync:<version> -f docker/backend-sync/Dockerfile .
 #
 #--------- Generic stuff all our Dockerfiles should start with so we get caching ------------
-FROM python:3.8.10-alpine
+FROM python:3.9.18-alpine
 
 LABEL "br.inpe.dpi"="INPE/DPI-TerraBrasilis"
 LABEL br.inpe.dpi.terrabrasilis="ams-sync"
