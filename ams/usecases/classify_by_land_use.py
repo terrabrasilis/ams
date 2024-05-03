@@ -477,10 +477,11 @@ class ClassifyByLandUse:
                 self.process_risk_land_structure()
                 # we need commit this results because the next step open a new conection with database
                 self._db.commit()
+                # reinsert all risk data into spatial unit land use tables
+                self.insert_risk_in_land_use_tables()
+                # we need commit this results because the next step open a new conection with database
+                self._db.commit()
                 print("Time control after process risk in land structure table: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
-            
-            # reinsert all risk data into spatial unit land use tables
-            self.insert_risk_in_land_use_tables()
             
             print("Time control after process all using temp tables: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
             self.add_index_land_use_tables(isTemp=True)
