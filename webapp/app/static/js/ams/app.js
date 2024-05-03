@@ -29,6 +29,12 @@ ams.App = {
 		this._appClassGroups=appClassGroups;
 		// start land use list with default itens to use in viewparams at start App
 		this._landUseList=ams.Config.landUses.map((lu)=>{return(lu.id);});
+		
+		// //REMOVE ME (Debug Purposes)
+		// if(ams.Auth.isAuthenticated()==false)
+		// {
+		// 	geoserverUrl = "http://localhost/geoserver/"
+		// }
 
 		this._wfs = new ams.Map.WFS(geoserverUrl);
 		var ldLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.lastDate;
@@ -531,15 +537,7 @@ ams.App = {
 		}
 	},
 
-	_addAutorizationToken: function(options) {
-		if(ams.Auth.isAuthenticated()){
-			if(!options) options={};
-			options["access_token"]=Authentication.getToken();
-		}
-	},
-
 	_addWmsOptionsBase: function(options) {
-		this._addAutorizationToken(options);
 		let wmsOptionsBase = {
 			"transparent": true, 
 			"tiled": true, 

@@ -16,7 +16,8 @@ var defaultConfig = {
     area:{
       changeunit: "auto", // used to automatically change the area unit between km² and ha when the threshold changes
       threshold: 2 // if the absolute area value is less than threshold, the unit will be changed to ha
-    }
+    },
+    oauthAPIProxyURI: "/oauth-api/proxy?url="
   }
 };
 

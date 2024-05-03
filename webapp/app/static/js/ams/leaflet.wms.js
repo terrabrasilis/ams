@@ -1,18 +1,23 @@
 var ams = ams || {};
 
 ams.LeafletWms = {
+    
     Source: L.WMS.Source.extend({
         'initialize': function (url, options, deterClassGroups) {
             //L.WMS.Source.prototype.initialize(url, options); # TODO: call base class initialize instead
             L.setOptions(this, options);
             if (this.options.tiled) {
                 this.options.untiled = false;
-            }
+            }            
             this._url = url;
             this._subLayers = {};
+            // Invoke createOverlay on leaflet.wms.js lib
             this._overlay = this.createOverlay(this.options.untiled);
-            this._deterClassGroups = deterClassGroups;
-        },
+            this._deterClassGroups = deterClassGroups;     
+            console.log("Layer - URL: " + url);
+            console.log("Layer - options: " + options);
+            console.log("Layer - Overlayer: " + this._overlay);       
+        },   
 
         'showFeatureInfo': function (latlng, jsonTxt) {
             if(jsonTxt.includes("no features were found")) {
@@ -96,7 +101,6 @@ ams.LeafletWms = {
                 }
             }
         },
-
         '_formatSpatialUnitPopup': function (featureInfo) {
             let result = {
                 "name": "",

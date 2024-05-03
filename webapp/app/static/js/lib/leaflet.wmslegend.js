@@ -24,27 +24,17 @@ L.Control.WMSLegend = L.Control.extend({
         this.ll.innerText='LEGENDA';
         let container = L.DomUtil.create('div', controlClassName, this.fcontainer);
         // static deter legend
-        if(this.options.static.deter.url){
-            let ldl = L.DomUtil.create('span', 'wms-label-legend', container);
-            ldl.innerText='DETER';
-            let dl = L.DomUtil.create('img', legendClassName, container);
-            dl.src = this.options.static.deter.url;
-            dl.alt = 'DETER Legend';
+        if(this.options.static.deter.url)
+        {
+            this.createLegendImage(container,'DETER','DETER Legend',legendClassName,  this.options.static.deter.url)
         }
         // static active fires legend
-        if(this.options.static.af.url){
-            let lafl = L.DomUtil.create('span', 'wms-label-legend', container);
-            lafl.innerText='Focos de Queimadas';
-            let afl = L.DomUtil.create('img', legendClassName, container);
-            afl.src = this.options.static.af.url;
-            afl.alt = 'Active Fires Legend';
+        if(this.options.static.af.url)
+        {
+            this.createLegendImage(container,'Focos de Queimadas','Active Fires Legend',legendClassName,  this.options.static.af.url)
         }
         // dinamic spatial unit legend
-        let limg = L.DomUtil.create('span', 'wms-label-legend', container);
-        limg.innerText='Unidade espacial ('+ams.Map.PopupControl._unit+')';
-        this.img = L.DomUtil.create('img', legendClassName, container);
-        this.img.src = this.options.uri;
-        this.img.alt = 'Spatial Unit Legend';
+        this.img = this.createLegendImage(container,'Unidade espacial ('+ams.Map.PopupControl._unit+')','Spatial Unit Legend',legendClassName,  this.options.uri)
 
         let stop = L.DomEvent.stopPropagation;
         L.DomEvent
@@ -60,6 +50,27 @@ L.Control.WMSLegend = L.Control.extend({
         this.width = null;
         this.container=container;
         return this.fcontainer;
+    },
+    createLegendImage: function(container, text, alt, legendClassName, url)
+    {   
+        
+        let ldl = L.DomUtil.create('span', 'wms-label-legend', container);
+        ldl.innerText=text;
+        let dl = L.DomUtil.create('img', legendClassName, container);
+        dl.alt = alt;
+
+        const options = {
+            headers: {
+                "Authorization": "Bearer " + AuthenticationService.getToken()
+            }
+        };
+
+        fetch(url, options)
+            .then(res => res.blob())
+                .then(blob => {
+                    dl.src = URL.createObjectURL(blob); 
+        });
+        return dl;
     },
     _click: function (e) {
         L.DomEvent.stopPropagation(e);
@@ -94,3 +105,7 @@ L.wmsLegend = function (uri) {
     map.addControl(wmsLegendControl);
     return wmsLegendControl;
 };
+
+
+
+
