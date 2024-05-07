@@ -5,6 +5,8 @@
  * MIT License
  */
 
+const { omit } = require('lodash');
+
 (function (factory) {
     // Module systems magic dance, Leaflet edition
     if (typeof define === 'function' && define.amd) {
@@ -56,7 +58,9 @@ async function fetchImage(url, callback, headers, abort) {
       method: "GET",
       headers: _headers,
       mode: "cors",
-      signal: signal
+      signal: signal,
+      credentials: 'omit',
+      cache: 'no-cache'
     });
     const blob = await f.blob();
     callback(blob);
