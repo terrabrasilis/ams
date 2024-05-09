@@ -363,7 +363,7 @@ ams.Map = {
         this._map = map;
 
         this.setUrl = function(layerName, layerStyle) {
-            this._url = this._wmsUrl 
+            this._url = this.getURL()
                         + "?REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20"
                         + "&LAYER=" + layerName
                         + "&SLD_BODY=" + layerStyle.getEncodeURI();

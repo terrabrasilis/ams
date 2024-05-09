@@ -535,7 +535,9 @@ wms.WMSHeader = L.TileLayer.WMS.extend({
     {
         if(ams.Auth.isAuthenticated())
         {
-            this._url = this._baseUrl + ams.Config.general.oauthAPIProxyURI + this._initURL;
+            this._url = this._baseUrl;
+            this._url += ams.Config.general.oauthAPIProxyURI;
+            this._url +=this._initURL;
 
             this._headers = [
             {
