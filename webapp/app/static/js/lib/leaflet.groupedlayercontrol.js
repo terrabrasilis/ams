@@ -210,12 +210,10 @@ L.Control.GroupedLayers = L.Control.extend({
       var mapClassificationElement = document.querySelector('[id="leaflet-control-layers-group-' + classificationMapGroupId + '"]');
       mapClassificationElement.style.display = 'none';
       ams.PeriodHandler.remove(this._map);
-      ams.RiskThresholdHandler.init(this._map);
     } else {
       var mapClassificationElement = document.querySelector('[id="leaflet-control-layers-group-' + classificationMapGroupId + '"]');
       mapClassificationElement.style.display = 'block';
       ams.PeriodHandler.init(this._map);
-      ams.RiskThresholdHandler.remove(this._map);
     }
   },
 

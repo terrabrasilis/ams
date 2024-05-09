@@ -42,7 +42,7 @@ L.Control.WMSLegend = L.Control.extend({
             afl.src = this.options.static.af.url;
             afl.alt = 'Active Fires Legend';
         }
-        // static active fires legend
+        // static risk legend
         if(this.options.static.risk.url){
             let lafl = L.DomUtil.create('span', 'wms-label-legend', container);
             lafl.innerText='Risco de desmatamento (IBAMA)';

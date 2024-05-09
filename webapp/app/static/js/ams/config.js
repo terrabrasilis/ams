@@ -14,7 +14,6 @@ var defaultConfig = {
     rk:"counts" // and "counts" to risk too, because risk is trated as points as Active Fire
   },
   risk:{
-    range:[0, 0.25, 0.5, 0.75, 1]
   },
   general:{
     area:{
@@ -30,7 +29,7 @@ ams.BiomeConfig["Amazônia"] = {
     biomeBorder:"prodes-amazon-nb:amazon_biome_border",// Layer name of Amazon biome border from TerraBrasilis service ( The workspace is fixed)
     deter:"deter-ams", // The layer name of DETER alerts from TerraBrasilis service. The workspace is dinamic and based on authentication state
     activeFire:"active-fire", // The layer name of Focos de Queimadas from TerraBrasilis service. The workspace is dinamic and based on authentication state
-    ibamaRisk:"weekly_ibama_1km", // The layer name of weekly risk with the default prediction data of risk of deforestation from IBAMA.
+    ibamaRisk: "risk-ibama-weekly-data", // The layer name of weekly risk with the default prediction data of risk of deforestation from IBAMA.
     lastDate: "last_date" // The layer name to get the last update date of available data. The workspace is dinamic and based on authentication state
   },
   defaultFilters: {
@@ -41,7 +40,8 @@ ams.BiomeConfig["Amazônia"] = {
     priorityLimit: 10
   },
   defaultRiskFilter:{
-    threshold: 0.75, // used to process counts, including points where the value is greater than this threshold
+    // used to process counts, including points where the value is greater than this threshold
+    threshold: parseFloat(ams.Utils.getServerConfigParam('risk_threshold')),
     expirationRisk: 7 // The number of days to set the risk forecast due date.
   }
 };

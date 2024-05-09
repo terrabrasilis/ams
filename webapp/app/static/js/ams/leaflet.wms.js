@@ -31,8 +31,11 @@ ams.LeafletWms = {
                     name="Queimadas";
                     type="af";// used to controls
                     htmlInfo=this._formatAFPopup(featureInfo);
-                }else if (this._isRKInfo()) {}
-                else{
+                } else if (this._isRKInfo()) {
+                    name = "Risco de Desmatamento";
+                    type = "risk";
+                    htmlInfo = this._formatRiskPopup(featureInfo);
+                } else {
                     name="Unidade Espacial";
                     type="su";// used to controls
                     htmlInfo=this._formatSpatialUnitPopup(featureInfo);
@@ -209,6 +212,37 @@ ams.LeafletWms = {
                 + focus
                 + deter
             +"</table>";
+        },
+
+        '_formatRiskPopup': function(featureInfo) {
+            let result = {
+                "id": 0,
+                "risk": 0,
+                "expiration_date": "",
+                "risk_date": "",
+            }
+            this._updateResults(result, featureInfo);
+            return this._createRiskInfoTable(result);
+        },
+
+        '_createRiskInfoTable': function(result) {
+            let table = '<table class="popup-deter-table" style="width:100%">'
+                        + "<tr>"
+                            + "<th></th>"
+                            + "<th></th>"
+                            + "</tr>";
+            for(let k in result) {
+                let v = result[k];
+                if(k.includes("date")) {
+                    v = this._formatDate(v);
+                }
+                table += "<tr>"
+                + "<td>" + k + "  </td>"
+                + "<td>" + (v != "null" ? v : " ") + "</td>"
+                + "</tr>";
+            }
+            table += "</table>"
+            return table;
         },
 
         '_formatAFPopup': function(featureInfo) {

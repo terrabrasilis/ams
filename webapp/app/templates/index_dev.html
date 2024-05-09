@@ -19,6 +19,10 @@
 	<meta name="author" content="Rodrigo Avancini - avancinirodrigo@gmail.com">
 	<meta name="author" content="Mauro Assis - assismauro@hotmail.com">
 	<meta name="author" content="Miguel Gastelumendi - miguel.gastelumendi@gmail.com">
+
+        {% for key, value in params.items() %}
+        <meta name="{{ key }}" content="{{ value }}">
+        {% endfor %}
 	
 	<link rel="shortcut icon" href="{{ url_for('static', filename='imgs/favicon.ico') }}" type="image/x-icon">
 	<link rel="icon" href="{{ url_for('static', filename='imgs/favicon.ico') }}" type="image/x-icon">
@@ -293,8 +297,8 @@
 	<script type="text/javascript" src="{{url_for('static', filename='js/lib/leaflet.groupedlayercontrol.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/lib/d3/d3.v6.min.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/app.version.js')}}"></script>
-	<script type="text/javascript" src="{{url_for('static', filename='js/ams/config.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/utils.js')}}"></script>
+        <script type="text/javascript" src="{{url_for('static', filename='js/ams/config.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/auth.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/map.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/sld.styles.js')}}"></script>
@@ -304,7 +308,6 @@
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/app.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/leaflet.risk.control.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/leaflet.period.control.js')}}"></script>
-	<script type="text/javascript" src="{{url_for('static', filename='js/ams/risk.threshold.handler.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/period.handler.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/lib/Leaflet.Coordinates-0.1.5.min.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/lib/Leaflet.controls.position.js')}}"></script>

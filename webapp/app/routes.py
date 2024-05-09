@@ -12,7 +12,11 @@ from . import bp as app
 def get_config():
     try:
         isDevelopmentEnv=os.getenv("FLASK_ENV", "production")
-        return render_template('index_dev.html') if(isDevelopmentEnv=="development") else render_template('index.html')
+        params = Config.get_params_to_frontend()
+        return (
+            render_template('index_dev.html', params=params) if(isDevelopmentEnv=="development") else
+            render_template('index.html', params=params)
+        )
     except Exception as e:
         # HTTP 500: Internal error 
         return "Template configurations are missing: {0}".format(str(e)), 412
@@ -34,16 +38,25 @@ def get_biome_config(endpoint):
     try:
         dburl = Config.DB_CERRADO_URL if (appBiome=='Cerrado') else Config.DB_AMAZON_URL
         ctrl = AppConfigController(dburl)
-        sui=ctrl.read_spatial_units()
-        cg=ctrl.read_class_groups()
-        ldu=ctrl.read_land_uses()
+        sui = ctrl.read_spatial_units()
+        cg = ctrl.read_class_groups()
+        ldu = ctrl.read_land_uses()
+
+        # incluing thresholds in the layer names
+        cg = json.loads(cg.replace("'", '"'))
+        for _ in cg:
+            if _['name'] == 'RK':
+                _['title'] += f" (>= {Config.RISK_THRESHOLD:.2f})"
+                break
+        cg = json.dumps(cg)
+
         return json.dumps(
             {
                 'geoserver_url': Config.GEOSERVER_URL,
                 'appBiome': appBiome,
-                'spatial_units_info':sui,
-                'deter_class_groups':cg,
-                'land_uses':ldu
+                'spatial_units_info': sui,
+                'deter_class_groups': cg,
+                'land_uses': ldu
             }
         )
     except Exception as e:

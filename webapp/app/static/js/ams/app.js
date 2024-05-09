@@ -117,12 +117,9 @@ ams.App = {
             "viewparams": "landuse:" + ams.App._landUseList.join('\\,')
         };
         ams.App._addWmsOptionsBase(AFWmsOptions);
-        var RKWmsOptions = {};
-        // Disable options because the base risk layer is a raster type and do not use the parameters
-        // var RKWmsOptions = {
-        //     "cql_filter": appClassGroups.getCqlFilter(this._suViewParams, false),
-        //     "viewparams": "landuse:" + ams.App._landUseList.join('\\,')
-        // };
+        var RKWmsOptions = {
+            "cql_filter": "(risk >= " + ams.Config.defaultRiskFilter.threshold + ")"
+        };
         ams.App._addWmsOptionsBase(RKWmsOptions);
 
         var tbDeterAlertsSource = new ams.LeafletWms.Source(this._baseURL, tbDeterAlertsWmsOptions, appClassGroups);
@@ -292,7 +289,6 @@ ams.App = {
                 }else if(e.group.name=='INDICADOR'){// change reference layer (deter, fires or risk)?
                     ams.App._riskThreshold=0; // reset the risk limit so as not to interfere with the min max query
                     if(e.acronym=='RK'){
-                        // the reference layer should be weekly_ibama_1km
                         layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.ibamaRisk;
                         ams.App._propertyName=ams.Config.propertyName.rk;
                         ams.App._riskThreshold=ams.Config.defaultRiskFilter.threshold;
@@ -328,15 +324,9 @@ ams.App = {
                         // try update the last date for new classname
                         let lastDateDynamic = ams.App._wfs.getLastDate(ldLayerName);
                         lastDateDynamic = lastDateDynamic?lastDateDynamic:ams.App._spatialUnits.getDefault().last_date;
-                        if(e.acronym=='RK'){
-                            let dt1 = new Date(lastDateDynamic);
-                            dt1.setDate(dt1.getDate() + ams.Config.defaultRiskFilter.expirationRisk);
-                            dt1 = dt1.toISOString().split('T')[0];
-                            ams.RiskThresholdHandler.setLastRiskDate(dt1);
-                        }
                         ams.App._dateControl.setPeriod(lastDateDynamic, ams.App._currentTemporalAggregate);
                         ams.PeriodHandler.changeDate(ams.App._dateControl.startdate);
-                        needUpdateSuLayers=false;// no need because the changeDate Internally invokes layer update.
+                        needUpdateSuLayers=false; //no need because the changeDate Internally invokes layer update
                     }
                 }else if(e.group.name=='CATEGORIA FUNDIÁRIA'){
                     let luid=+e.acronym;
