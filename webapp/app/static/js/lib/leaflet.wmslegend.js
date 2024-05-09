@@ -27,35 +27,22 @@ L.Control.WMSLegend = L.Control.extend({
         this.ll.innerText='LEGENDA';
         let container = L.DomUtil.create('div', controlClassName, this.fcontainer);
         // static deter legend
-        if(this.options.static.deter.url){
-            let ldl = L.DomUtil.create('span', 'wms-label-legend', container);
-            ldl.innerText='DETER';
-            let dl = L.DomUtil.create('img', legendClassName, container);
-            dl.src = this.options.static.deter.url;
-            dl.alt = 'DETER Legend';
+        if(this.options.static.deter.url)
+        {
+            this.createLegendImage(container,'DETER','DETER Legend',legendClassName, this.options.static.deter.url);
         }
         // static active fires legend
-        if(this.options.static.af.url){
-            let lafl = L.DomUtil.create('span', 'wms-label-legend', container);
-            lafl.innerText='Focos de Queimadas';
-            let afl = L.DomUtil.create('img', legendClassName, container);
-            afl.src = this.options.static.af.url;
-            afl.alt = 'Active Fires Legend';
+        if(this.options.static.af.url)
+        {
+            this.createLegendImage(container,'Focos de Queimadas','Active Fires Legend',legendClassName, this.options.static.af.url);
         }
         // static risk legend
-        if(this.options.static.risk.url){
-            let lafl = L.DomUtil.create('span', 'wms-label-legend', container);
-            lafl.innerText='Risco de desmatamento (IBAMA)';
-            let afl = L.DomUtil.create('img', legendClassName, container);
-            afl.src = this.options.static.risk.url;
-            afl.alt = 'IBAMA Risk Legend';
+        if(this.options.static.risk.url)
+        {
+            this.createLegendImage(container,'Risco de desmatamento (IBAMA)','IBAMA Risk Legend',legendClassName, this.options.static.risk.url);
         }
-        // dinamic spatial unit legend
-        let limg = L.DomUtil.create('span', 'wms-label-legend', container);
-        limg.innerText=ams.Map.PopupControl._prefix+ams.Map.PopupControl._text;
-        this.img = L.DomUtil.create('img', legendClassName, container);
-        this.img.src = this.options.uri;
-        this.img.alt = 'Spatial Unit Legend';
+
+        this.img = this.createLegendImage(container, ams.Map.PopupControl._prefix+ams.Map.PopupControl._text,'Spatial Unit Legend',legendClassName, this.options.uri);
 
         let stop = L.DomEvent.stopPropagation;
         L.DomEvent
@@ -97,6 +84,27 @@ L.Control.WMSLegend = L.Control.extend({
             this.fcontainer.style.width = '20px';
         }
     },
+    createLegendImage: function(container, text, alt, legendClassName, url)
+    {   
+
+        let ldl = L.DomUtil.create('span', 'wms-label-legend', container);
+        ldl.innerText=text;
+        let dl = L.DomUtil.create('img', legendClassName, container);
+        dl.alt = alt;
+
+        const options = {
+            headers: {
+                "Authorization": "Bearer " + AuthenticationService.getToken()
+            }
+        };
+
+        fetch(url, options)
+            .then(res => res.blob())
+                .then(blob => {
+                    dl.src = URL.createObjectURL(blob); 
+        });
+        return dl;
+    }
 });
 
 L.wmsLegend = function (uri) {

@@ -587,15 +587,7 @@ ams.App = {
         }
     },
 
-    _addAutorizationToken: function(options) {
-        if(ams.Auth.isAuthenticated()){
-            if(!options) options={};
-            options["access_token"]=Authentication.getToken();
-        }
-    },
-
     _addWmsOptionsBase: function(options) {
-        this._addAutorizationToken(options);
         let wmsOptionsBase = {
             "transparent": true, 
             "tiled": true, 

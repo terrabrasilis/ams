@@ -10,6 +10,7 @@ ams.LeafletWms = {
             }
             this._url = url;
             this._subLayers = {};
+            // Invoke createOverlay on leaflet.wms.js lib
             this._overlay = this.createOverlay(this.options.untiled);
             this._deterClassGroups = deterClassGroups;
         },

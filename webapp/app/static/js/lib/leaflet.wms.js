@@ -38,6 +38,34 @@ if (!('keys' in Object)) {
     };
 }
 
+
+/**
+ * Function to acquire Leaflet image using authentication header from WMS
+ */
+async function fetchImage(url, callback, headers, abort) {
+    let _headers = {};
+    if (headers) {
+      headers.forEach(h => {
+        _headers[h.header] = h.value;
+      });
+    }
+    const controller = new AbortController();
+    const signal = controller.signal;
+    if (abort) {
+      abort.subscribe(() => {
+        controller.abort();
+      });
+    }
+    const f = await fetch(url, {
+      method: "GET",
+      headers: _headers,
+      mode: "cors",
+      signal: signal
+    });
+    const blob = await f.blob();
+    callback(blob);
+  }
+
 /*
  * wms.Source
  * The Source object manages a single WMS connection.  Multiple "layers" can be
@@ -72,7 +100,7 @@ wms.Source = L.Layer.extend({
         if (untiled) {
             return wms.overlay(this._url, overlayOptions);
         } else {
-            return wms.tileLayer(this._url, overlayOptions);
+            return wms.wmsHeader(this._url, overlayOptions);
         }
     },
 
@@ -490,6 +518,70 @@ function ajax(url, callback) {
         }
     }
 }
+/**
+ * WMS Layer with header using fetch image implementation
+ */
+wms.WMSHeader = L.TileLayer.WMS.extend({
+    initialize: function (url, options) 
+    {
+        L.TileLayer.WMS.prototype.initialize.call(this, url, options);
+        this._initURL = url;
+        this._baseURL = document.location.protocol+'//'+document.location.hostname;
+        this.updateURL();
+    },
+    updateURL : function()
+    {
+        if(ams.Auth.isAuthenticated())
+        {
+            this._url = this._baseUrl + ams.Config.general.oauthAPIProxyURI + this._initURL;
+
+            this._headers = [
+            {
+                header: "Authorization",
+                value: "Bearer " + AuthenticationService.getToken()
+            }
+            ]
+        }
+        else
+        {
+            this._url = this._initURL;
+            this._headers = [];
+        }
+    },
+    createTile : function(coords, done) 
+    {
+        this.updateURL();        
+        const url = this.getTileUrl(coords);
+        const img = document.createElement("img");
+
+        img.setAttribute("role", "presentation");
+
+        self = this;
+
+        fetchImage(
+        url,
+        resp => {
+            const reader = new FileReader();
+            reader.onload = () => {
+            img.src = reader.result;
+            if (self.results) {
+                self.results.next(reader.result);
+            };
+            };
+            reader.readAsDataURL(resp);
+            done(null, img);
+        },
+        this._headers,
+        null
+        );
+        return img;
+    },
+});
+
+wms.wmsHeader = function (url, options, headers, abort, results) {
+    return new wms.WMSHeader(url, options, headers, abort, results);
+};
+
 
 return wms;
 

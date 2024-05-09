@@ -133,9 +133,22 @@ ams.Map = {
     },
 
     WFS: function(baseUrl) {
-        this.url = baseUrl + "/ows?SERVICE=WFS&REQUEST=GetFeature";
+        this.baseUrl = baseUrl;
+		this.url = this.baseUrl + "/ows?SERVICE=WFS&REQUEST=GetFeature";
+
+		this.getURL = function()
+		{
+			let geoserverURL = this.url;
+
+			if(ams.Auth.isAuthenticated())
+			{
+				let baseDomain=document.location.protocol+'//'+document.location.hostname;
+				geoserverURL = baseDomain + ams.Config.general.oauthAPIProxyURI + this.url;
+			}
+			return geoserverURL;
+		}
         this.getMinOrMax = function(layerName, propertyName, viewParams, isMin) {
-            let wfsUrl = this.url
+            let wfsUrl = this.getURL()
                 + "&typeName=" + layerName
                 + "&propertyName=" + propertyName
                 + "&outputFormat=json"
@@ -177,7 +190,7 @@ ams.Map = {
         this.getLastDate = function (layerName) {
             let propertyName = "last_date";
             let classname = (ams.App._suViewParams) ? (ams.App._suViewParams.classname) : (ams.Config.defaultFilters.indicator);
-            let wfsUrl = this.url +
+            let wfsUrl = this.getURL() +
             "&typeName=" + layerName +
             "&propertyName=" + propertyName +
             "&outputFormat=json" +
@@ -240,7 +253,7 @@ ams.Map = {
                 + extension;
 
             // operation type (optype) is used to get all spatial units on shapefile download. See SQL Views inside GeoServer.
-            let wfsUrl = this.url 
+            let wfsUrl = this.getURL() 
                         + "&typeName=" + layerName
                         + "&outputFormat=" + outputFormat
                         + "&format_options=filename:" + filename
@@ -277,7 +290,7 @@ ams.Map = {
                 });
             } else {
                 let a = document.createElement("a");
-                a.href = wfsUrl + ((ams.Auth.isAuthenticated())?("&access_token="+Authentication.getToken()):(""));
+                a.href = wfsUrl;
                 a.setAttribute("download", filename);
                 a.click();
             }
@@ -343,19 +356,30 @@ ams.Map = {
         }        
     },
 
-    LegendController: function(map, wmsUrl) {
+    LegendController: function(map, baseURL) {
         this._wmsLegendControl = new L.Control.WMSLegend;
         this._url;
-        this._wmsUrl = wmsUrl;
+        this.baseURL = baseURL;
         this._map = map;
 
         this.setUrl = function(layerName, layerStyle) {
             this._url = this._wmsUrl 
                         + "?REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20"
                         + "&LAYER=" + layerName
-                        + "&SLD_BODY=" + layerStyle.getEncodeURI()
-                        + ((ams.Auth.isAuthenticated())?("&access_token="+Authentication.getToken()):(""));
+                        + "&SLD_BODY=" + layerStyle.getEncodeURI();
         }
+
+        this.getURL = function()
+		{
+			let geoserverURL = this.baseURL;
+
+			if(ams.Auth.isAuthenticated())
+			{
+				let baseDomain=document.location.protocol+'//'+document.location.hostname;
+				geoserverURL = baseDomain + ams.Config.general.oauthAPIProxyURI + this.baseURL;
+			}
+			return geoserverURL;
+		}
 
         this.init = function(layerName, layerStyle)    {
             this._setStaticLegends();// for default layers defined in config.js
@@ -387,9 +411,8 @@ ams.Map = {
          * https://docs.geoserver.org/stable/en/user/services/wms/get_legend_graphic/index.html
          */
         this._setStaticLegends = function() {
-            let baseurl = this._wmsUrl
-            + "?REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20"
-            + ((ams.Auth.isAuthenticated())?("&access_token="+Authentication.getToken()):(""));
+            let baseurl = this.getURL()
+            + "?REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20";
             if(ams.App._referenceLayerName.includes(ams.Config.defaultLayers.deter)){
                 let cql=ams.App._appClassGroups.getCqlFilter(ams.App._suViewParams, ams.App._hasClassFilter);
                 let deterurl = baseurl + "&LAYER=" + ams.App._referenceLayerName
