@@ -8,6 +8,8 @@ import numpy as np
 from ams.dataaccess.ftp_ibama_risk import FtpIBAMARisk
 from ams.utils.database_utils import DatabaseUtils
 from ams.utils.risk_utils import RiskUtils
+from ams.config import Config
+
 
 class IBAMARisk:
     """
@@ -52,6 +54,7 @@ class IBAMARisk:
         self._risk_input_table = 'weekly_data'
         self._geom_table = 'matrix_ibama_1km'
         self._risk_temp_table = 'weekly_ibama_tmp'
+        self._risk_threshold = Config.RISK_THRESHOLD_DB
 
         # input data configuration
         self._SRID = srid if srid is not None else srid
@@ -183,7 +186,7 @@ class IBAMARisk:
         SELECT {risk_time_id}, geom.id, rkt.data
         FROM {self._db_schema}.{self._risk_temp_table} rkt, {self._db_schema}.{self._geom_table} geom
         WHERE ST_Equals(ST_Transform(rkt.geometry,4674), geom.geom)
-        AND rkt.data > 0.0;
+        AND rkt.data > {self._risk_threshold};
         """
         restoreindex=f"""
         CREATE INDEX {self._db_schema}_{self._risk_input_table}_date_idx
