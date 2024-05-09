@@ -60,7 +60,9 @@ async function fetchImage(url, callback, headers, abort) {
       method: "GET",
       headers: _headers,
       mode: "cors",
-      signal: signal
+      signal: signal,
+      credentials: 'omit',
+      cache: 'no-cache'
     });
     const blob = await f.blob();
     callback(blob);

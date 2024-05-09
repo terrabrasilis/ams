@@ -95,7 +95,9 @@ L.Control.WMSLegend = L.Control.extend({
         const options = {
             headers: {
                 "Authorization": "Bearer " + AuthenticationService.getToken()
-            }
+            },
+            credentials: 'omit',
+            cache: 'no-cache'
         };
 
         fetch(url, options)
