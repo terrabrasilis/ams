@@ -77,9 +77,13 @@ class IBAMARisk:
 
             with rio.open(risk_file) as dataset:
                 val = dataset.read(1) # band 5
-                no_data=dataset.nodata
-                geometry = [Point(dataset.xy(x,y)[0],dataset.xy(x,y)[1]) for x,y in np.ndindex(val.shape) if val[x,y] != no_data]
-                v = [val[x,y] for x,y in np.ndindex(val.shape) if val[x,y] != no_data]
+                
+                indices = np.where(val > self._risk_threshold)
+                indices = list(zip(indices[0], indices[1]))
+                
+                geometry = [Point(dataset.xy(x,y)[0], dataset.xy(x,y)[1]) for x, y in indices]
+                v = [val[x,y] for x, y in indices]
+                
                 crs = self._SRID if self._force_srid else None
                 df = gpd.GeoDataFrame({'geometry':geometry,'data':v}, crs=crs)
                 df.crs = dataset.crs
@@ -185,8 +189,7 @@ class IBAMARisk:
         INSERT INTO {self._db_schema}.{self._risk_input_table} (date_id,geom_id,risk)
         SELECT {risk_time_id}, geom.id, rkt.data
         FROM {self._db_schema}.{self._risk_temp_table} rkt, {self._db_schema}.{self._geom_table} geom
-        WHERE ST_Equals(ST_Transform(rkt.geometry,4674), geom.geom)
-        AND rkt.data > {self._risk_threshold};
+        WHERE ST_Equals(ST_Transform(rkt.geometry,4674), geom.geom);
         """
         restoreindex=f"""
         CREATE INDEX {self._db_schema}_{self._risk_input_table}_date_idx
