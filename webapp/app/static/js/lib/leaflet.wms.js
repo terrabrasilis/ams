@@ -5,8 +5,6 @@
  * MIT License
  */
 
-const { omit } = require('lodash');
-
 (function (factory) {
     // Module systems magic dance, Leaflet edition
     if (typeof define === 'function' && define.amd) {
