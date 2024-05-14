@@ -506,8 +506,24 @@ wms.overlay = function(url, options) {
 function ajax(url, callback) {
     var context = this,
         request = new XMLHttpRequest();
-    request.onreadystatechange = change;
+    request.onreadystatechange = change;   
+    
+    let authorizationBearer = null;
+
+    if(ams.Auth.isAuthenticated())
+    {
+        let proxyURL = document.location.protocol+'//'+document.location.hostname + ams.Config.general.oauthAPIProxyURI;
+        authorizationBearer="Bearer " + AuthenticationService.getToken();        
+        url = proxyURL + url;        
+    } 
+
     request.open('GET', url);
+    
+    if(authorizationBearer)
+    {
+        request.setRequestHeader("Authorization", authorizationBearer);        
+    }
+
     request.send();
 
     function change() {
@@ -527,15 +543,15 @@ wms.WMSHeader = L.TileLayer.WMS.extend({
     initialize: function (url, options) 
     {
         L.TileLayer.WMS.prototype.initialize.call(this, url, options);
-        this._initURL = url;
-        this._baseURL = document.location.protocol+'//'+document.location.hostname;
+        this._initURL = url;        
         this.updateURL();
     },
     updateURL : function()
     {
         if(ams.Auth.isAuthenticated())
         {
-            this._url = this._baseUrl;
+            
+            this._url = document.location.protocol+'//'+document.location.hostname;
             this._url += ams.Config.general.oauthAPIProxyURI;
             this._url +=this._initURL;
 

@@ -31,7 +31,7 @@ ams.App = {
         // start land use list with default itens to use in viewparams at start App
         this._landUseList=ams.Config.landUses.map((lu)=>{return(lu.id);});
 
-    	//  //REMOVE ME (Debug Purposes)
+    	 //REMOVE ME (Debug Purposes)
 		//  if(ams.Auth.isAuthenticated()==false)
 		//  {
 		//  	geoserverUrl = "http://localhost/geoserver/"
