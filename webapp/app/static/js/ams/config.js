@@ -61,6 +61,10 @@ ams.BiomeConfig["Cerrado"] = {
     temporalUnit: '7d',
     diffClassify: 'onPeriod',// can be 'onPeriod' or 'periodDiff'
     priorityLimit: 10
+  },
+  defaultRiskFilter: {
+    threshold: 0,
+    expirationRisk: 0
   }
 };
 
