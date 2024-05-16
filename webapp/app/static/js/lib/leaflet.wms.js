@@ -499,12 +499,9 @@ wms.overlay = function(url, options) {
 };
 
 // Simple AJAX helper (since we can't assume jQuery etc. are present)
-function ajax(url, callback) {
-    var context = this,
-        request = new XMLHttpRequest();
-
-    request.onreadystatechange = change;   
-
+function ajax(url, callback) 
+{
+    var context = this;    
     let authorizationBearer = null;
 
     if(ams.Auth.isAuthenticated())
@@ -513,26 +510,31 @@ function ajax(url, callback) {
         authorizationBearer="Bearer " + AuthenticationService.getToken();        
         url = proxyURL + url;        
     } 
-
-    request.open('GET', url);
+    
+    let headers = {};
 
     if(authorizationBearer)
     {
-        request.setRequestHeader("Authorization", authorizationBearer);        
+        headers["Authorization"] = authorizationBearer;
     }
 
-    request.send();
-
-    function change() {
-        if (request.readyState === 4) {
-            if (request.status === 200) {
-                callback.call(context, request.responseText);
-            } else {
-                callback.call(context, "error");
-            }
-        }
-    }
-};
+    fetch(url, {
+        method: "GET",
+        headers: headers,
+        mode: "cors",
+        credentials: 'omit',
+        cache: 'no-cache'
+      }).then((resp)=>
+      {
+        resp.text().then((responseText)=>
+        {
+            callback.call(context, responseText);
+        });        
+      }).catch((error)=>{
+        console.log(error);
+        callback.call(context, "error");
+      });
+}
 
 wms.WMSHeader = L.TileLayer.WMS.extend({
     initialize: function (url, options) 
