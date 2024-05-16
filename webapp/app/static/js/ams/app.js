@@ -32,10 +32,10 @@ ams.App = {
         this._landUseList=ams.Config.landUses.map((lu)=>{return(lu.id);});
 
     	 //REMOVE ME (Debug Purposes)
-		//  if(ams.Auth.isAuthenticated()==false)
-		//  {
-		//  	geoserverUrl = "http://localhost/geoserver/"
-		//  }
+		 if(ams.Auth.isAuthenticated()==false)
+		 {
+		 	geoserverUrl = "http://localhost/geoserver/"
+		 }
 
         this._wfs = new ams.Map.WFS(geoserverUrl);
         var ldLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.lastDate;
