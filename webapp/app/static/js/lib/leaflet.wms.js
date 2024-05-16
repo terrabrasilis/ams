@@ -508,6 +508,7 @@ function ajax(url, callback) {
         request = new XMLHttpRequest();
     request.onreadystatechange = change;   
     
+    
     let authorizationBearer = null;
 
     if(ams.Auth.isAuthenticated())
@@ -518,6 +519,7 @@ function ajax(url, callback) {
     } 
 
     request.open('GET', url);
+    request.withCredentials = false;
     
     if(authorizationBearer)
     {
