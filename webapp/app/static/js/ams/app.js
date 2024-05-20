@@ -437,7 +437,7 @@ ams.App = {
         $("#profile-"+ams.BiomeConfig["Amazônia"].defaultWorkspace+"-button").click(profileBiomeClick);
         $("#profile-"+ams.BiomeConfig["Cerrado"].defaultWorkspace+"-button").click(profileBiomeClick);
 
-        let landUseFilterClick=function() {
+        let landUseFilterClick=function(evn) {
             $("#loading_data_info").css('display','block');
 
             let clickCtrlFun=function(e){
