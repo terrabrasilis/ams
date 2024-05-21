@@ -31,11 +31,10 @@ ams.App = {
         // start land use list with default itens to use in viewparams at start App
         this._landUseList=ams.Config.landUses.map((lu)=>{return(lu.id);});
 
-    	 //REMOVE ME (Debug Purposes)
-		//  if(ams.Auth.isAuthenticated()==false)
-		//  {
-		//  	geoserverUrl = "http://localhost/geoserver/"
-		//  }
+    	// REMOVE ME (Debug Purposes)
+	    // if(ams.Auth.isAuthenticated()==false) {
+        //   geoserverUrl = "http://localhost/geoserver"
+        // }
 
         this._wfs = new ams.Map.WFS(geoserverUrl);
         var ldLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.lastDate;
@@ -124,7 +123,8 @@ ams.App = {
         };
         ams.App._addWmsOptionsBase(AFWmsOptions);
         var RKWmsOptions = {
-            "cql_filter": "(risk >= " + ams.Config.defaultRiskFilter.threshold + ")"
+            "cql_filter": "(risk >= " + ams.Config.defaultRiskFilter.threshold + ") "
+                + "AND (expiration_date >= " + ams.App._suViewParams.startdate + ")"
         };
         ams.App._addWmsOptionsBase(RKWmsOptions);
 
@@ -437,7 +437,7 @@ ams.App = {
         $("#profile-"+ams.BiomeConfig["Amazônia"].defaultWorkspace+"-button").click(profileBiomeClick);
         $("#profile-"+ams.BiomeConfig["Cerrado"].defaultWorkspace+"-button").click(profileBiomeClick);
 
-        let landUseFilterClick=function() {
+        let landUseFilterClick=function(evn) {
             $("#loading_data_info").css('display','block');
 
             let clickCtrlFun=function(e){
