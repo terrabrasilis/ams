@@ -32,8 +32,8 @@ ams.App = {
         this._landUseList=ams.Config.landUses.map((lu)=>{return(lu.id);});
 
     	// REMOVE ME (Debug Purposes)
-	    // if(ams.Auth.isAuthenticated()==false) {
-        //   geoserverUrl = "http://localhost/geoserver"
+	// if(ams.Auth.isAuthenticated()==false) {
+        // geoserverUrl = "http://localhost/geoserver"
         // }
 
         this._wfs = new ams.Map.WFS(geoserverUrl);
@@ -124,7 +124,8 @@ ams.App = {
         ams.App._addWmsOptionsBase(AFWmsOptions);
         var RKWmsOptions = {
             "cql_filter": "(risk >= " + ams.Config.defaultRiskFilter.threshold + ") "
-                + "AND (expiration_date >= " + ams.App._suViewParams.startdate + ")"
+                + "AND (expiration_date > " + ams.App._suViewParams.startdate + ")",
+            "viewparams": "landuse:" + ams.App._landUseList.join('\\,')
         };
         ams.App._addWmsOptionsBase(RKWmsOptions);
 
@@ -535,11 +536,13 @@ ams.App = {
         if(l) {
             let cqlobj = {};
             if(!this._referenceLayerName.includes(ams.Config.defaultLayers.ibamaRisk)){
-                let cql=ams.App._appClassGroups.getCqlFilter(ams.App._suViewParams, this._hasClassFilter);
+                let cql = ams.App._appClassGroups.getCqlFilter(ams.App._suViewParams, this._hasClassFilter);
                 l._source.options["cql_filter"] = cql;
-                cqlobj = {"cql_filter": cql,"viewparams": "landuse:" + ams.App._landUseList.join('\\,')};
-                this._addWmsOptionsBase(cqlobj);
+                cqlobj = {"cql_filter": cql};
             }
+            cqlobj["viewparams"] = "landuse:" + ams.App._landUseList.join('\\,');
+            this._addWmsOptionsBase(cqlobj);
+
             l._source._overlay.setParams(cqlobj);
             if(!this._map.hasLayer(l)) l.addTo(this._map);
             l.bringToBack();
