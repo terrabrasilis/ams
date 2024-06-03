@@ -33,7 +33,7 @@ ams.App = {
 
     	// REMOVE ME (Debug Purposes)
 	// if(ams.Auth.isAuthenticated()==false) {
-        // geoserverUrl = "http://localhost/geoserver"
+        //    geoserverUrl = "http://localhost/geoserver";
         // }
 
         this._wfs = new ams.Map.WFS(geoserverUrl);
@@ -516,6 +516,23 @@ ams.App = {
             localStorage.setItem('ams.config.general.area.changeunit', ams.Config.general.area.changeunit);
         });
 
+        $("#modal-credits-check").click(
+            function() {
+                if ($("#modal-credits-check").prop('checked')) {
+                    localStorage.setItem("ams.config.modal.notshowcredits", true);
+                } else {
+                    localStorage.removeItem("ams.config.modal.notshowcredits");
+                }
+                return true;
+            }
+        );
+
+        $("#show-modal-credits").click(
+            function() {
+                $("#modal-container-credits").modal();
+            }
+        );
+
         $(function() {
             if(localStorage.getItem('ams.config.general.area.changeunit')!==null){
                 ams.Config.general.area.changeunit=localStorage.getItem('ams.config.general.area.changeunit');
@@ -525,6 +542,10 @@ ams.App = {
             }
             $("#threshold").val(ams.Config.general.area.threshold);
             $("#changeunit")[0].checked=ams.Config.general.area.changeunit=="auto";
+
+            if (localStorage.getItem('ams.config.modal.notshowcredits') == null) {
+                $("#modal-container-credits").modal();
+            }
         });
     },// end of run method
 
@@ -925,6 +946,5 @@ ams.App = {
         
         _saveAlerts(jsConfig);
     }
-
 
 };

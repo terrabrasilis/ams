@@ -760,6 +760,25 @@ min-width:500px !important;
 .modal-body { margin-top: 0px; padding-top: 0px; min-width: 200px;}
 .textoc { color: #707070; font-size: 12px; margin-left: 5px;}
 
+/* modal-credits */
+.modal-dialog.modal-credits {
+    min-width: auto !important;
+    min-height: auto !important;
+}
+
+.logo img {
+    max-width: 110px;
+    max-height: 110px;
+}
+
+.logo img.maxw-150 {
+    max-width: 150px;
+}
+
+.logo img.maxw-400 {
+    max-width: 400px;
+}
+
 /* indicadores do carousel */
 .sobre .carousel-indicators {
 left: 0;
@@ -800,6 +819,13 @@ margin: 0;
 color: #fff !important;
 position: absolute;
 left: calc(50% - 170px);
+}
+
+.credits-link {
+    display: flex;
+    align-items: center;
+    margin-left: 5px;
+    font-size: small;
 }
 
 .iconmobile {display: none !important; color: #888888; margin-right: 10px; float: left;} 
