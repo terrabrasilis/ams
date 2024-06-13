@@ -11,6 +11,10 @@ L.Control.PeriodHandler = L.Control.extend({
     _container:null,
   
     initialize: function (options) {
+        this._setOptions(options);
+    },
+
+    _setOptions: function (options) {
         L.Util.setOptions(this, options);
     },
 
@@ -70,7 +74,10 @@ L.Control.PeriodHandler = L.Control.extend({
         this._container=container;
     },
 
-    _setDatepicker: function() {
+    _setDatepicker: function(options) {
+        if (options !== undefined) {
+            this._setOptions(options);
+        }
         let startDate = this.options.startDate;
         
         let datepicker = new ams.datepicker.Datepicker();
@@ -188,10 +195,10 @@ L.Control.PeriodHandler = L.Control.extend({
             ams.App._map.fire('changectrl', obj);
         });
         let numdays = ams.App._dateControl.getPeriod() === "custom"? 0 : ams.App._dateControl.getNumberOfDays();
-        let options=$('#numdays')[0];
-        for (let i=0; i < options.length; ++i) {
-            if(options[i].value==numdays)
-                options[i].selected=true;
+        let form_options = $('#numdays')[0];
+        for (let i=0; i < form_options.length; ++i) {
+            if(form_options[i].value==numdays)
+                form_options[i].selected=true;
         }
     },
   

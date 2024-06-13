@@ -8,14 +8,14 @@ ams.PeriodHandler = {
 
     init: function(map){
         this._updatePeriodInfo();// gets start date from App configuration and injects here
-        if(!this._control) {
-            this._control = L.control.PeriodHandler({
-                startDate:this._startdate
-            });
-        }
+        let options = {startDate: this._startdate};
 
+        if(!this._control) {
+            this._control = L.control.PeriodHandler(options);
+        }
+        
         this._control.addTo(map);
-        this._control._setDatepicker();
+        this._control._setDatepicker(options);
     },
 
     remove: function(map) {
@@ -31,6 +31,7 @@ ams.PeriodHandler = {
      */
     _updatePeriodInfo: function(){
         this._startdate=new Date(ams.App._dateControl.startdate + "T00:00:00");
+
         /**
          * Change the end date and previous date just to display the value
          * as the range in the compare filter uses "is greater than this date",
