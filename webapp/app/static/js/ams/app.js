@@ -33,7 +33,7 @@ ams.App = {
 
     	// REMOVE ME (Debug Purposes)
 	// if(ams.Auth.isAuthenticated()==false) {
-        //    geoserverUrl = "http://localhost/geoserver";
+        // geoserverUrl = "http://localhost/geoserver";
         // }
 
         this._wfs = new ams.Map.WFS(geoserverUrl);
@@ -123,8 +123,7 @@ ams.App = {
         };
         ams.App._addWmsOptionsBase(AFWmsOptions);
         var RKWmsOptions = {
-            "cql_filter": "(risk >= " + ams.Config.defaultRiskFilter.threshold + ") "
-                + "AND (expiration_date > " + ams.App._suViewParams.startdate + ")",
+            "cql_filter": "(risk >= " + ams.Config.defaultRiskFilter.threshold + ")",
             "viewparams": "landuse:" + ams.App._landUseList.join('\\,')
         };
         ams.App._addWmsOptionsBase(RKWmsOptions);
