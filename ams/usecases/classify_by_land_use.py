@@ -207,6 +207,8 @@ class ClassifyByLandUse:
 
         Its DROP and CREATE the tmp_risk_land_structure table
         """
+        assert self._biome=="Amazônia"
+        
         print(f'Creating and filling {self._prefix}_risk_land_structure.')
         
         cur = self._db.get_db_cursor()
@@ -379,6 +381,8 @@ class ClassifyByLandUse:
         """
         Join and group the temporary land structure table data with the spatial units to populate the temporary land use tables with risk.
         """
+        assert self._biome=="Amazônia"
+        
         print('Insert ibama risk in land use tables for each spatial units.')
         cur = self._db.get_db_cursor()
         
@@ -473,16 +477,17 @@ class ClassifyByLandUse:
             print("Time control after insert deter and fires in land use tables: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
             
             # used to avoid uneeded risk processing
-            if self.__need_risk_process():
-                self.process_risk_land_structure()
+            if self._biome=="Amazônia":
+                if self.__need_risk_process():
+                    self.process_risk_land_structure()
+                    # we need commit this results because the next step open a new conection with database
+                    self._db.commit()
+                
+                # reinsert all risk data into spatial unit land use tables
+                self.insert_risk_in_land_use_tables()
                 # we need commit this results because the next step open a new conection with database
                 self._db.commit()
-                
-            # reinsert all risk data into spatial unit land use tables
-            self.insert_risk_in_land_use_tables()
-            # we need commit this results because the next step open a new conection with database
-            self._db.commit()
-            print("Time control after process risk in land structure table: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
+                print("Time control after process risk in land structure table: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
             
             print("Time control after process all using temp tables: "+datetime.now().strftime("%d/%m/%YT%H:%M:%S"))
             self.add_index_land_use_tables(isTemp=True)
