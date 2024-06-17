@@ -219,7 +219,6 @@ ams.LeafletWms = {
             let result = {
                 "id": 0,
                 "risk": 0,
-                "expiration_date": "",
                 "risk_date": "",
             }
             this._updateResults(result, featureInfo);
