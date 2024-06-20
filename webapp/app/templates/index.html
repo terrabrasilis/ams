@@ -19,6 +19,10 @@
 	<meta name="author" content="Rodrigo Avancini - avancinirodrigo@gmail.com">
 	<meta name="author" content="Mauro Assis - assismauro@hotmail.com">
 	<meta name="author" content="Miguel Gastelumendi - miguel.gastelumendi@gmail.com">
+
+        {% for key, value in params.items() %}
+        <meta name="{{ key }}" content="{{ value }}">
+        {% endfor %}
 	
 	<link rel="shortcut icon" href="{{ url_for('static', filename='imgs/favicon.ico') }}" type="image/x-icon">
 	<link rel="icon" href="{{ url_for('static', filename='imgs/favicon.ico') }}" type="image/x-icon">
@@ -42,7 +46,7 @@
 	<div id="content">
 		<nav class="navbar navbar-expand-lg materialnav navbar-header">
 
-			<a class="navbar-brand" href="http://terrabrasilis.dpi.inpe.br/"><span class="amarelo">Terra</span><span class="verde">Brasilis</span></a>
+			<a class="navbar-brand" href="/"><span class="amarelo">Terra</span><span class="verde">Brasilis</span></a>
 			<div class="collapse navbar-collapse justify-content-between">
 				<div class="navbar-nav">
 					<a class="nav-item nav-link" href="#" id="header-panel">| Sala de Situação</a>
@@ -53,7 +57,7 @@
 							<i class="material-icons iconmobile">assignment </i><span id="analysis-sup">Novas ferramentas</span>
 						</a>
 						<div aria-labelledby="navbarDropdownMenuLink" class="dropdown-menu submenu"> 
-							<a class="dropdown-item" target="_blank" href="http://terrabrasilis.dpi.inpe.br/download/ams/ams-novas-funcionalidades.pdf" title="Abrir documento com informações detalhadas sobre as novas ferramentas."><i class="material-icons iconmenu">new_releases</i><span id="info-doc">Texto informativo</span></a>
+							<a class="dropdown-item" target="_blank" href="/download/ams/ams-novas-funcionalidades.pdf" title="Abrir documento com informações detalhadas sobre as novas ferramentas."><i class="material-icons iconmenu">new_releases</i><span id="info-doc">Texto informativo</span></a>
 							<a class="dropdown-item" href="#modal-container-video" data-toggle="modal"  title="Abrir vídeo demonstrativo da Sala de Situação"><i class="material-icons iconmenu">movie</i><span id="info-media">Vídeo demonstrativo</span></a>
 						</div>
 					</li>
@@ -96,7 +100,6 @@
 
 	<!-- area util central onde deverao ser colocados os componentes da aplicação -->
 	<div class="container-fluid" id="panel_container">
-
 		<div class="loading-data" id="loading_data_info">
 			<img src="{{ url_for('static', filename='imgs/loading_map.gif') }}" alt="loading gif when waiting data" />
 		</div>
@@ -211,8 +214,8 @@
 									<span id="txt1d">Veja o vídeo demonstrativo da interação com as novas ferramentas do painel.</span>
 								</div>
 								<div class="embed-video">
-									<video style="width: 100%" controls>
-										<source src="http://terrabrasilis.dpi.inpe.br/download/ams/ams-demonstration-tools.mp4" type="video/mp4">
+									<video preload="none" style="width: 100%" controls>
+										<source src="/download/ams/ams-demonstration-tools.mp4" type="video/mp4">
 										<!--track src="movies/subtitles/dashboard-in-action_pt_br.vtt" kind="subtitles" srclang="pt-BR" label="Portuguese" default>
 										<track src="movies/subtitles/dashboard-in-action_en.vtt" kind="subtitles" srclang="en" label="English">
 										<track src="movies/subtitles/dashboard-in-action_es.vtt" kind="subtitles" srclang="es" label="Spanish"-->
@@ -239,6 +242,56 @@
 					<!--/ modal-dialog -->
 				</div>
 				<!-- / modal -->
+
+                                <!-- modal credits -->
+				<div class="modal fade" id="modal-container-credits">
+				  <div class="modal-dialog modal-credits">
+				    <div class="modal-content modalinf">
+				      
+                                      <div class="modal-header fechar">
+					<button id="modal-credits-close" type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="material-icons">clear</i></button>
+				      </div>
+
+				      <div class="modal-body ">
+                                        <div>
+                                          <h5 class="modal-title boxtitletable">Desenvolvido por:</h5>
+                                          <div class="row justify-content-center">
+                                            <div class="col d-flex align-items-center justify-content-center logo">
+                                              <img src="{{ url_for('static', filename='imgs/inpe1.png') }}" alt="inpe" class="img-fluid mx-10">
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div>
+                                          <h5 class="modal-title boxtitletable">Colaboradores:</h5>
+                                          <div class="row justify-content-center">
+                                            <div class="col d-flex align-items-center justify-content-center logo">
+                                              <img src="{{ url_for('static', filename='imgs/ufmg.png') }}" alt="ufmg" class="img-fluid mx-10 maxw-150">
+                                            </div>
+                                            <div class="col d-flex align-items-center justify-content-center logo">
+                                              <img src="{{ url_for('static', filename='imgs/ibama-mma1.png') }}" alt="ibama-mma" class="img-fluid mx-10">
+                                            </div>
+                                            <div class="col d-flex align-items-center justify-content-center logo">
+                                              <img src="{{ url_for('static', filename='imgs/semas-pa1.png') }}" alt="semas-para" class="img-fluid mx-10 maxw-400">
+                                            </div>
+                                            <div class="col d-flex align-items-center justify-content-center logo">
+                                              <img src="{{ url_for('static', filename='imgs/UT-ITC-logo-RGB.png') }}" alt="itc" class="img-fluid mx-10 maxw-150">
+                                            </div>
+
+                                          </div>
+				        </div>
+                                      </div>
+
+                                      <div class="modal-footer">
+                                        <div class="checkbox">
+                                          <label>
+                                            <input id="modal-credits-check" class="modal-check" name="modal-check" type="checkbox"><span class="textoc">Não mostrar novamente.</span>
+                                          </label>
+                                        </div>
+				      </div>
+				    </div>
+				  </div>
+				</div>
+                                <!-- END modal logo -->
 
 				<!--chart panel -->
                 <div class="modal fade" id="modal-container-general-info"  role="dialog" aria-labelledby="general-info" aria-hidden="true">
@@ -269,14 +322,11 @@
 
 				<!--Footer-->
 				<footer class="footer">
-					<div class="partners">
-						<a class="nav-item nav-link" href="https://www.gov.br/inpe/pt-br"><img class="dim-logos" src="{{ url_for('static', filename='imgs/inpe.png') }}"></a>
-						<a class="nav-item nav-link" href="http://www.ibama.gov.br/component/tags/tag/mma"><img class="dim-logos" src="{{ url_for('static', filename='imgs/ibama-mma.png') }}"></a>
-						<a class="nav-item nav-link" href="https://www.semas.pa.gov.br/"><img class="dim-logos" src="{{ url_for('static', filename='imgs/semas-pa-color.png') }}"></a>
-						<a class="nav-item nav-link" href="https://ufmg.br/"><img class="dim-logos" src="{{ url_for('static', filename='imgs/ufmg.jpg') }}"></a>
-					</div>
-					<!-- <a href="#" title="Parcerias institucionais"><i class="material-icons iconmenu">movie</i><span id="info-media">Parceiros</span></a> -->
-					<p><a href="http://terrabrasilis.dpi.inpe.br"> TerraBrasilis</a>&nbsp;<a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Licença Creative Commons" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/80x15.png" /></a></p>
+                                  <div class="container credits-link">
+                                    <a id="show-modal-credits" title="Desenvolvedores e colaboradores" href="javascript:void(0);" class="text-white">Créditos</a>
+                                  </div>                                  
+				  <!-- <a href="#" title="Parcerias institucionais"><i class="material-icons iconmenu">movie</i><span id="info-media">Parceiros</span></a> -->
+					<p><a href="/"> TerraBrasilis</a>&nbsp;<a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Licença Creative Commons" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/80x15.png" /></a></p>
 					<div class="version_style" id="version"></div>
 				</footer>
 				<!--/.Footer-->
@@ -293,8 +343,8 @@
 	<script type="text/javascript" src="{{url_for('static', filename='js/lib/leaflet.groupedlayercontrol.min.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/lib/d3/d3.v6.min.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/app.version.js')}}"></script>
-	<script type="text/javascript" src="{{url_for('static', filename='js/ams/config.min.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/utils.min.js')}}"></script>
+        <script type="text/javascript" src="{{url_for('static', filename='js/ams/config.min.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/auth.min.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/map.min.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/sld.styles.min.js')}}"></script>
@@ -303,6 +353,7 @@
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/leaflet.wms.min.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/app.min.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/leaflet.period.control.min.js')}}"></script>
+	<script type="text/javascript" src="{{url_for('static', filename='js/ams/leaflet.risk.control.min.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/period.handler.min.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/lib/Leaflet.Coordinates-0.1.5.min.js')}}"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/lib/Leaflet.controls.position.min.js')}}"></script>
@@ -312,7 +363,13 @@
 	<script type="text/javascript" src="{{url_for('static', filename='js/lib/popper/1.14.3/popper.min.js')}}"></script>
 	<!-- jQuery Custom Scroller -->
 	<script type="text/javascript" src="{{url_for('static', filename='js/lib/jquery/plugin/jquery.mCustomScrollbar.concat.min.js')}}"></script>
-	<script type="text/javascript" src="http://terrabrasilis.dpi.inpe.br/oauth-api/getoauthjs"></script>
+	
+	<script type="text/javascript">
+        let randomNumber = Math.floor((Math.random() * 1000000) + 1);
+        let base_url=document.location.protocol+'//'+document.location.hostname;
+        let oauthURL = base_url+"/oauth-api/getoauthjs?"+randomNumber;
+        document.writeln("<script type='text/javascript' src='"+oauthURL+"'><\/script>");
+    </script>
 	<!-- Global site tag (gtag.js) - Google Analytics -->
 	<script type="text/javascript" async src="https://www.googletagmanager.com/gtag/js?id=G-VF4139FH8F"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/terrabrasilis-start.min.js')}}"></script>

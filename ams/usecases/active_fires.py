@@ -9,12 +9,14 @@ class ActiveFires:
      - Copy points of active fires from a external database to complete the local database table;
      - Counting the number of points intercept with the spatial units;
 
-    @param {boolean} alldata, Default is False, if True, all data of RAW database will be processed.
-    Otherwise, only new data is processed.
+    @param {str} db_url, the PostgreSQL database connection parameters as string format.
+    Example: "postgresql://<user>:<password>@<host or ip>:<port>/<database_name>"
 
     @param {str} biome, the name of biome used to filter active fires data.
-    See the names in raw_active_fires table. Ex.: """ 'Amazônia' """
-    
+    See the names in raw_active_fires table. Ex.: "Amazônia"
+
+    @param {boolean} alldata, Default is False, if True, all data of RAW database will be processed.
+    Otherwise, only new data is processed.    
     """
 
     def __init__(self, db_url: str, biome: str, alldata=False):
@@ -57,7 +59,7 @@ class ActiveFires:
         INSERT INTO {self._fires_input_table}(id, view_date, satelite, estado, municipio, diasemchuva, precipitacao, riscofogo, geom)
         SELECT a.id, a.view_date, a.satelite, a.estado, a.municipio, a.diasemchuva, a.precipitacao, a.riscofogo, a.geom
         FROM public.raw_active_fires a
-        WHERE a.bioma = {self._biome}
+        WHERE a.bioma = '{self._biome}'
         {bydate}
         """
         cur.execute(update)

@@ -205,6 +205,18 @@ L.Control.GroupedLayers = L.Control.extend({
     return btFragment;
   },
 
+  handleRiskSelection: function (classificationMapGroupId, obj) {
+    if (obj.name.toLowerCase().includes('risco') && obj.checked) {
+      var mapClassificationElement = document.querySelector('[id="leaflet-control-layers-group-' + classificationMapGroupId + '"]');
+      mapClassificationElement.style.display = 'none';
+      ams.PeriodHandler.remove(this._map);
+    } else {
+      var mapClassificationElement = document.querySelector('[id="leaflet-control-layers-group-' + classificationMapGroupId + '"]');
+      mapClassificationElement.style.display = 'block';
+      ams.PeriodHandler.init(this._map);
+    }
+  },
+
   _addItem: function (obj) {
     // for initial state of checked control, use the ams.Config.defaultFilters defines...
 
@@ -238,7 +250,22 @@ L.Control.GroupedLayers = L.Control.extend({
         profileBt = this._createProfileBiomeButton(obj.name);
         label.appendChild(profileBt);
       }
-    }else{
+    }
+    else if (obj.group.name == 'CLASSIFICAÇÃO DO MAPA') {
+      label.appendChild(input);
+      label.appendChild(name);            
+      this.classificationMapGroupId = obj.group.id;
+
+    }
+    else if (obj.group.name == "INDICADOR") {
+      label.appendChild(input);
+      label.appendChild(name);
+    
+      L.DomEvent.on(input, 'click', function () {
+        this.handleRiskSelection(this.classificationMapGroupId, obj);
+      }, this);
+    }
+    else{
       label.appendChild(input);
       label.appendChild(name);
     }
@@ -257,7 +284,7 @@ L.Control.GroupedLayers = L.Control.extend({
         if(obj.group.name=="UNIDADE TEMPORAL")
           groupContainer.style="display:none;";
         if(obj.group.name=="CATEGORIA FUNDIÁRIA")
-          groupContainer.className = 'leaflet-control-layers-group lclg-landuse';
+          groupContainer.className = 'leaflet-control-layers-group lclg-landuse';        
 
         var groupLabel = document.createElement('label');
         groupLabel.className = 'leaflet-control-layers-group-label';
@@ -318,7 +345,7 @@ L.Control.GroupedLayers = L.Control.extend({
         title='Alterna entre as bases de dados dos biomas disponíveis.';
         break;
       case "INDICADOR":
-        title='Aplica um filtro com base nas classes dos dados do DETER e focos do Programa Queimadas, sendo:\n';
+        title='Aplica um filtro com base nas classes dos dados do DETER, focos do Programa Queimadas e Risco sendo:\n';
         for (let index = 0; index < ams.App._appClassGroups.groups.length; index++) {
           const group = ams.App._appClassGroups.groups[index];
           title+=' - '+group.name+': '+group.classes.join(', ')+';\n';
@@ -377,14 +404,15 @@ L.Control.GroupedLayers = L.Control.extend({
   _getDownloadControlDOM: function() {
     let fctrl = document.createElement('div');
     let title = 'title="O arquivo inclui dados filtrados por: BIOMA, INDICADOR e PERÍODO.\n';
-    title = title + ' - CSV: inclui apenas as unidades espaciais priorizadas;\n';
+    title = title + ' - CSV: inclui todas as unidades espaciais com valores dos indicadores n&#227;o nulos;\n';
     title = title + ' - Shapefile: inclui todas as unidades espaciais;" ';
+    let dataName = ams.App._appClassGroups.getGroupName(ams.App._suViewParams.classname);
     fctrl.innerHTML='<div class="leaflet-control-layers-group" id="shapezip-control-layers-group">'
     + '<label class="leaflet-control-layers-group-label">'
     + '<span class="leaflet-control-layers-group-name">DOWNLOAD</span></label>'
     + '<label class="leaflet-control-layers-group-name" '+title+'>'
     + '<span style="white-space: pre-wrap;">'
-    + 'Baixar arquivo da unidade<br>espacial selecionada.</span></label>'
+    + 'Baixar valores dos indicadores <br>(<span id="dataname-to-download">' + dataName +'</span>).</label>'
     + '<label class="leaflet-control-layers-group-name btn-download">'
     + '<button class="btn btn-primary-p btn-success" id="csv-download-button"> CSV </button>'
     + '&nbsp;&nbsp;'

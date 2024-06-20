@@ -2,7 +2,7 @@
 #   docker build -t terrabrasilis/ams-webapp:<version> -f docker/webapp/Dockerfile .
 #
 #--------- Generic stuff all our Dockerfiles should start with so we get caching ------------
-FROM python:3.8.10-alpine
+FROM python:3.9.18-alpine
 
 LABEL "br.inpe.dpi"="INPE/DPI-TerraBrasilis"
 LABEL br.inpe.dpi.terrabrasilis="ams-webapp"
@@ -28,6 +28,8 @@ RUN apk update \
     geos-dev \
     && rm -rf /var/cache/apk/*
 
+#RUN /usr/local/bin/python -m pip install --upgrade pip
+
 # define the timezone to run cron
 ENV TZ=America/Sao_Paulo
 
@@ -40,8 +42,8 @@ RUN mkdir $INSTALL_PATH/ams && mkdir $INSTALL_PATH/webapp
 ADD ams/requirements.txt $INSTALL_PATH/ams/requirements.txt
 ADD webapp/requirements.txt $INSTALL_PATH/webapp/requirements.txt
 # Install Python requirements
-RUN pip install -r $INSTALL_PATH/ams/requirements.txt \
-    && pip install -r $INSTALL_PATH/webapp/requirements.txt
+RUN pip install -r $INSTALL_PATH/ams/requirements.txt
+RUN pip install -r $INSTALL_PATH/webapp/requirements.txt
 # END REQUIREMENTS INSTALATION
 # ------------------------------------------------------
 

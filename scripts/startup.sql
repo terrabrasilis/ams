@@ -153,6 +153,24 @@ CREATE OR REPLACE VIEW public.raw_active_fires
    FROM dblink('hostaddr=<IP or hostname> port=5432 dbname=<DB_NAME> user=postgres password=postgres'::text, 'SELECT id, data as view_date, satelite, estado, municipio, diasemchuva, precipitacao, riscofogo, bioma, geom FROM public.focos_aqua_referencia'::text) remote_data(id integer, view_date date, satelite character varying(254), estado character varying(254), municipio character varying(254), diasemchuva integer, precipitacao double precision, riscofogo double precision, bioma character varying(254), geom geometry(Point,4674));
 
 
+-- View: public.last_risk_data
+
+-- DROP VIEW public.last_risk_data;
+
+CREATE OR REPLACE VIEW public.last_risk_data
+ AS
+ SELECT geo.id,
+    geo.geom,
+    wd.risk,
+    dt.risk_date AS view_date
+   FROM risk.weekly_data wd,
+    risk.matrix_ibama_1km geo,
+    risk.risk_ibama_date dt
+  WHERE wd.date_id = (( SELECT risk_ibama_date.id
+           FROM risk.risk_ibama_date
+          ORDER BY risk_ibama_date.expiration_date DESC
+         LIMIT 1)) AND wd.geom_id = geo.id AND dt.id = wd.date_id;
+
 -- -------------------------------------------------------------------------
 -- This session is used for create tables of AMS model
 -- -------------------------------------------------------------------------
@@ -360,6 +378,95 @@ CREATE INDEX IF NOT EXISTS active_fires_view_date_idx
     (view_date ASC NULLS LAST);
 
 -- -------------------------------------------------------------------------
+-- This session is used for the Risk IBAMA model
+-- -------------------------------------------------------------------------
+
+-- SCHEMA: risk
+
+-- DROP SCHEMA IF EXISTS risk ;
+
+CREATE SCHEMA IF NOT EXISTS risk AUTHORIZATION postgres;
+
+-- Table: risk.etl_log_ibama
+
+-- DROP TABLE IF EXISTS risk.etl_log_ibama;
+
+CREATE TABLE IF NOT EXISTS risk.etl_log_ibama
+(
+    id serial NOT NULL,
+    file_name character varying,
+    process_status integer,
+    process_message character varying,
+    last_file_date date NOT NULL,
+    created_at timestamp with time zone NOT NULL DEFAULT now(),
+    CONSTRAINT etl_log_ibama_id_pk PRIMARY KEY (id)
+)
+TABLESPACE pg_default;
+
+-- Table: risk.risk_ibama_date
+
+-- DROP TABLE IF EXISTS risk.risk_ibama_date;
+
+CREATE TABLE IF NOT EXISTS risk.risk_ibama_date
+(
+    id serial NOT NULL,
+    expiration_date date,
+    risk_date date,
+    created_at date NOT NULL DEFAULT now()::date,
+    CONSTRAINT risk_ibama_date_id_pk PRIMARY KEY (id)
+)
+TABLESPACE pg_default;
+
+-- Table: risk.matrix_ibama_1km
+
+-- DROP TABLE IF EXISTS risk.matrix_ibama_1km;
+
+CREATE TABLE IF NOT EXISTS risk.matrix_ibama_1km
+(
+    id serial NOT NULL,
+    geom geometry(Point,4674),
+    CONSTRAINT matrix_ibama_1km_id_pk PRIMARY KEY (id)
+)
+TABLESPACE pg_default;
+
+-- Index: risk_matrix_ibama_1km_geom_idx
+
+-- DROP INDEX IF EXISTS risk.risk_matrix_ibama_1km_geom_idx;
+
+CREATE INDEX IF NOT EXISTS risk_matrix_ibama_1km_geom_idx
+    ON risk.matrix_ibama_1km USING gist
+    (geom);
+
+
+-- Table: risk.weekly_data
+
+-- DROP TABLE IF EXISTS risk.weekly_data CASCADE;
+
+CREATE TABLE IF NOT EXISTS risk.weekly_data
+(
+    id serial NOT NULL,
+    date_id integer,
+    geom_id integer,
+    risk double precision,
+    CONSTRAINT weekly_data_id_pk PRIMARY KEY (id),
+    CONSTRAINT weekly_data_date_id_fk FOREIGN KEY (date_id)
+        REFERENCES risk.risk_ibama_date (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE,
+    CONSTRAINT weekly_data_geom_id_fk FOREIGN KEY (geom_id)
+        REFERENCES risk.matrix_ibama_1km (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE
+)
+TABLESPACE pg_default;
+
+-- DROP INDEX IF EXISTS risk.risk_weekly_data_date_idx;
+
+CREATE INDEX IF NOT EXISTS risk_weekly_data_date_idx
+    ON risk.weekly_data USING btree
+    (date_id ASC NULLS LAST);
+
+-- -------------------------------------------------------------------------
 -- This session is used for the Land Use model
 -- -------------------------------------------------------------------------
 
@@ -395,6 +502,7 @@ INSERT INTO public.deter_class_group(id, name) VALUES (2, 'DG', 'DETER Degradaç
 INSERT INTO public.deter_class_group(id, name) VALUES (3, 'CS', 'DETER Corte seletivo', 2);
 INSERT INTO public.deter_class_group(id, name) VALUES (4, 'MN', 'DETER Mineração', 3);
 INSERT INTO public.deter_class_group(id, name) VALUES (5, 'AF', 'Focos (Programa Queimadas)', 4);
+INSERT INTO public.deter_class_group(id, name) VALUES (6, 'RK', 'Risco de desmatamento (IBAMA)', 5);
 
 INSERT INTO public.deter_class(id, name, group_id) VALUES (1, 'DESMATAMENTO_CR', 1);
 INSERT INTO public.deter_class(id, name, group_id) VALUES (2, 'DESMATAMENTO_VEG', 1);
@@ -404,6 +512,7 @@ INSERT INTO public.deter_class(id, name, group_id) VALUES (5, 'CS_DESORDENADO', 
 INSERT INTO public.deter_class(id, name, group_id) VALUES (6, 'CS_GEOMETRICO', 3);
 INSERT INTO public.deter_class(id, name, group_id) VALUES (7, 'MINERACAO', 4);
 INSERT INTO public.deter_class(id, name, group_id) VALUES (8, 'FOCOS', 5);
+INSERT INTO public.deter_class(id, name, group_id) VALUES (9, 'RISCO_IBAMA', 6);
 
 -- Attention: id values are mapped to "land use" pixel values from the Geotiff file.
 INSERT INTO land_use values(1,'APA',3);

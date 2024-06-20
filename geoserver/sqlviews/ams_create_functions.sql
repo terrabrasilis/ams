@@ -1,13 +1,13 @@
 -- DROP old functions
 
--- DROP FUNCTION IF EXISTS public.get_25km(character varying, date, date);
--- DROP FUNCTION IF EXISTS public.get_25km_auth(character varying, date, date);
--- DROP FUNCTION IF EXISTS public.get_150km(character varying, date, date);
--- DROP FUNCTION IF EXISTS public.get_150km_auth(character varying, date, date);
--- DROP FUNCTION IF EXISTS public.get_municipalities(character varying, date, date);
--- DROP FUNCTION IF EXISTS public.get_municipalities_auth(character varying, date, date);
--- DROP FUNCTION IF EXISTS public.get_states(character varying, date, date);
--- DROP FUNCTION IF EXISTS public.get_states_auth(character varying, date, date);
+-- DROP FUNCTION IF EXISTS public.get_25km(character varying, date, date, integer[]);
+-- DROP FUNCTION IF EXISTS public.get_25km_auth(character varying, date, date, integer[], double precision);
+-- DROP FUNCTION IF EXISTS public.get_150km(character varying, date, date, integer[]);
+-- DROP FUNCTION IF EXISTS public.get_150km_auth(character varying, date, date, integer[], double precision);
+-- DROP FUNCTION IF EXISTS public.get_municipalities(character varying, date, date, integer[]);
+-- DROP FUNCTION IF EXISTS public.get_municipalities_auth(character varying, date, date, integer[], double precision);
+-- DROP FUNCTION IF EXISTS public.get_states(character varying, date, date, integer[]);
+-- DROP FUNCTION IF EXISTS public.get_states_auth(character varying, date, date, integer[], double precision);
 
 -- Create functions with new signature
 --
@@ -52,15 +52,16 @@ ALTER FUNCTION public.get_25km(character varying, date, date, integer[])
     OWNER TO postgres;
 
 
--- FUNCTION: public.get_25km_auth(character varying, date, date, integer[])
+-- FUNCTION: public.get_25km_auth(character varying, date, date, integer[], double precision)
 
--- DROP FUNCTION IF EXISTS public.get_25km_auth(character varying, date, date, integer[]);
+-- DROP FUNCTION public.get_25km_auth(character varying, date, date, integer[], double precision);
 
 CREATE OR REPLACE FUNCTION public.get_25km_auth(
 	clsname character varying,
 	startdate date,
 	enddate date,
-	land_use_ids integer[])
+	land_use_ids integer[],
+	risk_threshold double precision)
     RETURNS TABLE(suid integer, name character varying, geometry geometry, classname character varying, date date, percentage double precision, area double precision, counts bigint) 
     LANGUAGE 'plpgsql'
     COST 100
@@ -79,13 +80,14 @@ LEFT JOIN (
 		AND rii.classname = clsname
 		AND	rii.date > enddate
 		AND	rii.date <= startdate
+		AND rii.risk >= risk_threshold
 	GROUP BY rii.suid, rii.classname
 ) AS ri
 ON su.suid = ri.suid;
 end;
 $BODY$;
 
-ALTER FUNCTION public.get_25km_auth(character varying, date, date, integer[])
+ALTER FUNCTION public.get_25km_auth(character varying, date, date, integer[], double precision)
     OWNER TO postgres;
 
 
@@ -126,15 +128,16 @@ $BODY$;
 ALTER FUNCTION public.get_150km(character varying, date, date, integer[])
     OWNER TO postgres;
 
--- FUNCTION: public.get_150km_auth(character varying, date, date, integer[])
+-- FUNCTION: public.get_150km_auth(character varying, date, date, integer[], double precision)
 
--- DROP FUNCTION IF EXISTS public.get_150km_auth(character varying, date, date, integer[]);
+-- DROP FUNCTION IF EXISTS public.get_150km_auth(character varying, date, date, integer[], double precision);
 
 CREATE OR REPLACE FUNCTION public.get_150km_auth(
 	clsname character varying,
 	startdate date,
 	enddate date,
-	land_use_ids integer[])
+	land_use_ids integer[],
+	risk_threshold double precision)
     RETURNS TABLE(suid integer, name character varying, geometry geometry, classname character varying, date date, percentage double precision, area double precision, counts bigint) 
     LANGUAGE 'plpgsql'
     COST 100
@@ -153,15 +156,15 @@ LEFT JOIN (
 		AND rii.classname = clsname
 		AND	rii.date > enddate
 		AND	rii.date <= startdate
+		AND rii.risk >= risk_threshold
 	GROUP BY rii.suid, rii.classname
 ) AS ri
 ON su.suid = ri.suid;
 end;
 $BODY$;
 
-ALTER FUNCTION public.get_150km_auth(character varying, date, date, integer[])
+ALTER FUNCTION public.get_150km_auth(character varying, date, date, integer[], double precision)
     OWNER TO postgres;
-
 
 -- FUNCTION: public.get_municipalities(character varying, date, date, integer[])
 
@@ -201,15 +204,16 @@ ALTER FUNCTION public.get_municipalities(character varying, date, date, integer[
     OWNER TO postgres;
 
 
--- FUNCTION: public.get_municipalities_auth(character varying, date, date, integer[])
+-- FUNCTION: public.get_municipalities_auth(character varying, date, date, integer[], double precision)
 
--- DROP FUNCTION IF EXISTS public.get_municipalities_auth(character varying, date, date, integer[]);
+-- DROP FUNCTION IF EXISTS public.get_municipalities_auth(character varying, date, date, integer[], double precision);
 
 CREATE OR REPLACE FUNCTION public.get_municipalities_auth(
 	clsname character varying,
 	startdate date,
 	enddate date,
-	land_use_ids integer[])
+	land_use_ids integer[],
+	risk_threshold double precision)
     RETURNS TABLE(suid integer, name character varying, geometry geometry, classname character varying, date date, percentage double precision, area double precision, counts bigint) 
     LANGUAGE 'plpgsql'
     COST 100
@@ -227,16 +231,16 @@ INNER JOIN (
 	WHERE rii.land_use_id = ANY (land_use_ids)
 		AND rii.classname = clsname
 		AND	rii.date > enddate
-		AND	rii.date <= startdate		
+		AND	rii.date <= startdate
+		AND rii.risk >= risk_threshold
 	GROUP BY rii.suid, rii.classname
 ) AS ri
 ON su.suid = ri.suid;
 end;
 $BODY$;
 
-ALTER FUNCTION public.get_municipalities_auth(character varying, date, date, integer[])
+ALTER FUNCTION public.get_municipalities_auth(character varying, date, date, integer[], double precision)
     OWNER TO postgres;
-
 
 -- FUNCTION: public.get_states(character varying, date, date, integer[])
 
@@ -276,15 +280,16 @@ ALTER FUNCTION public.get_states(character varying, date, date, integer[])
     OWNER TO postgres;
 
 
--- FUNCTION: public.get_states_auth(character varying, date, date, integer[])
+-- FUNCTION: public.get_states_auth(character varying, date, date, integer[], double precision)
 
--- DROP FUNCTION IF EXISTS public.get_states_auth(character varying, date, date, integer[]);
+-- DROP FUNCTION IF EXISTS public.get_states_auth(character varying, date, date, integer[], double precision);
 
 CREATE OR REPLACE FUNCTION public.get_states_auth(
 	clsname character varying,
 	startdate date,
 	enddate date,
-	land_use_ids integer[])
+	land_use_ids integer[],
+	risk_threshold double precision)
     RETURNS TABLE(suid integer, name character varying, geometry geometry, classname character varying, date date, percentage double precision, area double precision, counts bigint) 
     LANGUAGE 'plpgsql'
     COST 100
@@ -302,12 +307,13 @@ INNER JOIN (
 	WHERE rii.land_use_id = ANY (land_use_ids)
 		AND rii.classname = clsname
 		AND	rii.date > enddate
-		AND	rii.date <= startdate		
+		AND	rii.date <= startdate
+		AND rii.risk >= risk_threshold
 	GROUP BY rii.suid, rii.classname
 ) AS ri
 ON su.suid = ri.suid;
 end;
 $BODY$;
 
-ALTER FUNCTION public.get_states_auth(character varying, date, date, integer[])
+ALTER FUNCTION public.get_states_auth(character varying, date, date, integer[], double precision)
     OWNER TO postgres;
