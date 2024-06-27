@@ -1,5 +1,4 @@
 from os import path
-import shutil
 from psycopg2 import OperationalError
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -24,7 +23,7 @@ class FtpIBAMARisk:
 
     """
 
-    def __init__(self, db_url:str, ftp_host:str, ftp_path:str, ftp_user:str, ftp_password:str, ftp_port:int=None, output_path:str=None, geoserver_output_path:str=None):
+    def __init__(self, db_url:str, ftp_host:str, ftp_path:str, ftp_user:str, ftp_password:str, ftp_port:int=None, output_path:str=None):
         """
         Settings for FTP connection and file download.
 
@@ -40,7 +39,6 @@ class FtpIBAMARisk:
         -------------------------------------------------
         :param int ftp_port: The port number for connection
         :param str output_path: The output directory to write the downloaded file
-        :param srt geoserver_output_path: The output directory to copy the last risk file
         
         """
 
@@ -55,9 +53,7 @@ class FtpIBAMARisk:
         self._ru = RiskUtils(db=self._db)
 
         self._output_path = output_path if output_path and path.exists(output_path) else path.join(path.dirname(__file__), '../../data')
-        self._geoserver_output_path = geoserver_output_path if geoserver_output_path and path.exists(geoserver_output_path) else path.join(path.dirname(__file__), '../../data')
         self._output_file_name = f"""weekly_ibama_1km_{datetime.now().strftime("%d_%m_%Y")}.tif"""
-        self._geoserver_file_name = f"""weekly_ibama_1km.tif"""
         self._db_schema = 'risk'
         self._risk_expiration_table = 'risk_ibama_date'
         self._log_table = 'etl_log_ibama'
@@ -84,13 +80,13 @@ class FtpIBAMARisk:
         file_date=None
         file_destination=""
         status=0
+        remote_file_source=""
+        remote_file_date=None
+        remote_file_size=0
+        
         try:
             await client.connect(self._host, int(self._port))
             await client.login(self._user, self._pass)
-
-            remote_file_source=""
-            remote_file_date=None
-            remote_file_size=0
 
             # list files and sort by modified date
             for file_path, file_info in (await client.list(path=self._ftp_path, recursive=False)):
@@ -111,10 +107,6 @@ class FtpIBAMARisk:
                 if path.isfile(file_destination) and path.getsize(file_destination) == remote_file_size:
                     log_msg="Success on download file."
                     status=1
-                    # copy file to geoserver datadir location
-                    to_geoserver=f"""{self._geoserver_output_path}/{self._geoserver_file_name}"""
-                    shutil.copy(src=file_destination,dst=to_geoserver)
-                    shutil.chown(path=to_geoserver,user=1099,group=1099)
                 else:
                     log_msg="The file is downloaded but is invalid."
                     file_destination=""
@@ -125,11 +117,7 @@ class FtpIBAMARisk:
         except OperationalError as e:
             log_msg=f"Error on database connection. exception_msg: {e.__str__()}"
             raise e
-        
-        except FileNotFoundError as e:
-            log_msg=f"Error on copy risk file to geoserver location. exception_msg: {e.__str__()}"
-            raise e
-        
+
         except Exception as e:
             log_msg=f"Error on download file from FTP. exception_msg: {e.__str__()}"
             raise e
