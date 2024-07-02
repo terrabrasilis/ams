@@ -260,40 +260,36 @@ ams.Map = {
                         + "&version=1.0.0"
                         + "&propertyName=" + (properties ? properties : "")
                         + "&viewparams=classname:" + viewParams.classname
-                                        + ";startdate:" + viewParams.startdate
-                                        + ";enddate:" + viewParams.enddate
-                                        + ";prevdate:" + viewParams.prevdate
-                                        + ";orderby:" + propertyName
-                                        + ";landuse:" + ams.App._landUseList.join('%5C,')
-                                        + ";risk:" + viewParams.risk_threshold
-                                        + ";limit:ALL"
-                                        + ((extension=='csv')?(""):(";optype:DOWNLOAD"));
+                        + ";startdate:" + viewParams.startdate
+                        + ";enddate:" + viewParams.enddate
+                        + ";prevdate:" + viewParams.prevdate
+                        + ";orderby:" + propertyName
+                        + ";landuse:" + ams.App._landUseList.join('%5C,')
+                        + ";risk:" + viewParams.risk_threshold
+                        + ";limit:ALL";
 
-            if (extension == 'csv') {
-                $.ajax({
-                    url: wfsUrl,
-                    async: false,
-                    headers: {
-                        'Authorization': 'Bearer ' + ((ams.Auth.isAuthenticated()) ? (Authentication.getToken()) : (""))
-                    },
-                    success: function(data) {
-                        const blob = new Blob([data], {type: "application/octet-stream"});
-                        const url = window.URL.createObjectURL(blob);
-                        const a = document.createElement("a");
-                        a.href = url;
-                        a.download = filename;
-                        a.click();
-                    },
-                    error: function (jqXHR, textStatus) {
-                        window.console.log(textStatus);
-                    }
-                });
-            } else {
-                let a = document.createElement("a");
-                a.href = wfsUrl;
-                a.setAttribute("download", filename);
-                a.click();
-            }
+            let ftype = (extension == 'csv')? "text/csv" : "application/zip";
+
+            $.ajax({
+                url: wfsUrl,
+                headers: {
+                    'Authorization': 'Bearer ' + ((ams.Auth.isAuthenticated()) ? (Authentication.getToken()) : (""))
+                },
+                xhrFields: {
+                    responseType: 'blob'
+                },
+                success: function(data) {
+                    const blob = new Blob([data], {type: ftype});
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = filename;
+                    a.click();
+                },
+                error: function (jqXHR, textStatus) {
+                    window.console.log(textStatus);
+                }
+            })
         }
 
         this.getShapeZip = function(layerName, viewParams) {

@@ -15,6 +15,9 @@
 .leaflet-center.leaflet-middle {
   transform: translate(-50%, -50%);
 }
+.leaflet-control-zoom {
+  border: none !important;
+}
 .leaflet-period-control-form {
   background-color: #f8f9facf;
   padding: 4px 0px 4px 6px;
