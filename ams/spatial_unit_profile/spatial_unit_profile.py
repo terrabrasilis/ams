@@ -66,7 +66,7 @@ class SpatialUnitProfile():
 
         self._spatial_unit = params['spatialUnit']
         if(self._spatial_unit==self._appBiome):
-            self._spatial_unit = 'cer_states' if (self._appBiome=='Cerrado') else 'amz_states'
+            self._spatial_unit = 'states'
 
         self._start_date = params['startDate']
         self._temporal_unit = params['tempUnit']
@@ -86,9 +86,10 @@ class SpatialUnitProfile():
             self.data_unit=unit
 
         sql="""
-        SELECT string_agg('"'||dataname||'":{"description":"'||description||'", "key":"'||as_attribute_name||'"}', ', ')
-        FROM public.spatial_units
+            SELECT string_agg('"'||dataname||'":{"description":"'||description||'", "key":"'||as_attribute_name||'"}', ', ')
+            FROM public.spatial_units
         """
+
         suinfo = self.execute_sql(sql=sql)
         suinfo = suinfo if suinfo is not None else "error:'failure on get infos from database'"
         self._tableinfo = json.loads("{"+suinfo+"}")
@@ -104,6 +105,7 @@ class SpatialUnitProfile():
             "1m": "Agregado 30 dias",
             "3m": "Agregado 90 dias",
             "1y": "Agregado 365 dias"}
+
         self._temporal_unit_sql = {
             7:'''select TO_CHAR(date, 'YYYY/WW') as period,classname,sum(a.'''+self.default_column+''') as 
             resultsum from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
@@ -182,41 +184,59 @@ class SpatialUnitProfile():
         
         interval_val,period_unit,period_series=self.__get_period_settings()
         calendar=f"""
-        SELECT ((ld::date - interval '{interval_val} {period_unit}') + interval '1 day')::date as fd,
-        ld::date as ld
-        FROM generate_series(('{self._start_date}'::date - interval '{period_series} {period_unit}')::date,
-        date '{self._start_date}', interval '{interval_val} {period_unit}') as t(ld)
-        ORDER BY 1 DESC LIMIT {self._query_limit}"""
+            SELECT
+                ((ld::date - interval '{interval_val} {period_unit}') + interval '1 day')::date as fd,
+                ld::date as ld
+            FROM generate_series(
+                ('{self._start_date}'::date - interval '{period_series} {period_unit}')::date,
+                date '{self._start_date}',
+                interval '{interval_val} {period_unit}'
+            ) AS t(ld)
+            ORDER BY 1 DESC
+            LIMIT {self._query_limit}
+        """
+    
+        where_group = "" if(self._name=='*') else f"""b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}' AND"""
+        where_biome = f" a.biome = '{self._appBiome}' "
 
-        where_group="" if(self._name=='*') else f"""b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}' AND"""
         group_by_periods=f"""
-        WITH calendar AS ({calendar}),
-        bar_chart AS (
-            SELECT (calendar.fd || '/' || calendar.ld) as period, ROUND(sum(a.{self.default_column})::numeric,{round_factor}) as resultsum
-            FROM calendar, "{self._spatial_unit}_land_use" a inner join "{self._spatial_unit}" b on a.suid = b.suid
-            WHERE {where_group} classname = '{self._classname}'
-            AND date >= calendar.fd
-            AND date <= calendar.ld
-            AND a.land_use_id = ANY (array[{self.land_use}])
-            GROUP BY period
-            ORDER BY period DESC LIMIT {self._query_limit}
-        )
-        SELECT TO_CHAR(cd.fd::date, 'dd/mm/yyyy')|| '-' ||TO_CHAR(cd.ld::date, 'dd/mm/yyyy') as period,
-        cd.fd as firstday, COALESCE(bc.resultsum,0) as resultsum
-        FROM calendar cd left join bar_chart bc on (cd.fd || '/' || cd.ld)=bc.period
-        ORDER BY 2 ASC"""
+            WITH calendar AS (
+                {calendar}
+            ),
+            bar_chart AS (
+                SELECT
+                    (calendar.fd || '/' || calendar.ld) as period,
+                    ROUND(sum(a.{self.default_column})::numeric,{round_factor}) as resultsum
+                FROM
+                    calendar,
+                    "{self._spatial_unit}_land_use" a
+                    INNER JOIN "{self._spatial_unit}" b
+                        ON a.suid = b.suid
+                WHERE
+                    {where_group}
+                    {where_biome}
+                    AND classname = '{self._classname}'
+                    AND date >= calendar.fd
+                    AND date <= calendar.ld
+                    AND a.land_use_id = ANY (array[{self.land_use}])
+                GROUP BY
+                    period
+                ORDER BY
+                    period DESC
+                LIMIT {self._query_limit}
+            )
+            SELECT
+                TO_CHAR(cd.fd::date, 'dd/mm/yyyy')|| '-' ||TO_CHAR(cd.ld::date, 'dd/mm/yyyy') as period,
+                cd.fd as firstday, COALESCE(bc.resultsum,0) as resultsum
+            FROM
+                calendar cd LEFT JOIN bar_chart bc
+                    ON (cd.fd || '/' || cd.ld)=bc.period
+            ORDER BY
+                2 ASC
+        """
+        # print(" ".join(group_by_periods.split()))
 
         return group_by_periods
-
-    def get_temporal_unit_sql(self):
-        delta = datetime.strptime(self._start_date, '%Y-%m-%d') - datetime.strptime(self._start_period_date, '%Y-%m-%d')
-        for key, value in self._temporal_unit_sql.items():
-            if delta.days <= key:
-                where_if="" if(self._name=='*') else f"""b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}' AND"""
-                where = f"{where_if} " \
-                        f"classname = '{self._classname}' " \
-                        f"and date <= '{self._start_date}'"
-                return f"select * from ({value.format(self._spatial_unit,where)}) a order by 1"
 
     def execute_sql(self, sql):
         curr = None
@@ -241,24 +261,43 @@ class SpatialUnitProfile():
         return df
 
     def area_per_land_use(self):
-
         where_risk="" if(self._classname!=self._risk_classname) else f" a.risk >= {self._risk_threshold} AND "
         where_spatial_unit="" if(self._name=='*') else f"""b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}' AND"""
-        where_filter=f"{where_risk} {where_spatial_unit}"
+        where_biome = f" a.biome = '{self._appBiome}' AND "
+        where_filter=f"{where_risk} {where_spatial_unit} {where_biome}"
 
-        df = self.resultset_as_dataframe(
-            f"select a.name,coalesce(resultsum, 0) as resultsum from land_use a "
-            f"left join "
-            f"(select a.land_use_id, sum(a.{self.default_column}) as resultsum from \"{self._spatial_unit}_land_use\" a "
-            f"inner join \"{self._spatial_unit}\" b on a.suid = b.suid "
-            f"where {where_filter} "
-            f"a.date > '{self._start_period_date}' and a.date <= '{self._start_date}' "
-            f"and a.classname = '{self._classname}' "
-            f"and a.land_use_id = ANY (array[{self.land_use}]) "
-            f"group by a.land_use_id) b on a.id = b.land_use_id "
-            f"WHERE a.id = ANY (array[{self.land_use}]) "
-            f"ORDER BY a.priority ASC "
-        )
+        sql = f"""
+            SELECT
+                a.name,
+                COALESCE(resultsum, 0) AS resultsum
+            FROM land_use a 
+            LEFT JOIN (
+                SELECT
+                    a.land_use_id,
+                    SUM(a.{self.default_column}) AS resultsum
+                FROM
+                    \"{self._spatial_unit}_land_use\" a 
+                INNER JOIN
+                    \"{self._spatial_unit}\" b on a.suid = b.suid 
+                WHERE
+                    {where_filter}
+                    a.date > '{self._start_period_date}'
+                    AND a.date <= '{self._start_date}' 
+                    AND a.classname = '{self._classname}' 
+                    AND a.land_use_id = ANY (ARRAY[{self.land_use}]) 
+                GROUP BY
+                    a.land_use_id
+            ) b
+            ON
+                a.id = b.land_use_id 
+            WHERE
+                a.id = ANY (array[{self.land_use}]) 
+            ORDER BY
+                a.priority ASC 
+        """
+        # print(" ".join(sql.split()))
+
+        df = self.resultset_as_dataframe(sql)
         df.columns = ['Categoria Fundiária', self.default_col_name]
         return df
 
