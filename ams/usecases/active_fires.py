@@ -56,8 +56,8 @@ class ActiveFires:
             bydate = f" AND a.view_date > ( SELECT MAX(view_date) FROM {self._fires_input_table} )"
 
         update = f"""
-        INSERT INTO {self._fires_input_table}(id, view_date, satelite, estado, municipio, diasemchuva, precipitacao, riscofogo, geom)
-        SELECT a.id, a.view_date, a.satelite, a.estado, a.municipio, a.diasemchuva, a.precipitacao, a.riscofogo, a.geom
+        INSERT INTO {self._fires_input_table}(id, uuid, view_date, satelite, estado, municipio, geom)
+        SELECT a.id, a.uuid, a.view_date, a.satelite, a.estado, a.municipio, a.geom
         FROM public.raw_active_fires a
         WHERE a.bioma = '{self._biome}'
         {bydate}
