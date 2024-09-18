@@ -509,9 +509,9 @@ function ajax(url, callback) {
 
     if(ams.Auth.isAuthenticated())
     {
-        let proxyURL = document.location.protocol+'//'+document.location.hostname + ams.Config.general.oauthAPIProxyURI;
         authorizationBearer="Bearer " + AuthenticationService.getToken();        
-        url = proxyURL + url;        
+
+        url = ams.Auth.getOAuthProxyUrl(url);
     } 
     
     let headers = {};
@@ -551,11 +551,8 @@ wms.WMSHeader = L.TileLayer.WMS.extend({
     updateURL : function()
     {
         if(ams.Auth.isAuthenticated())
-        {
-            
-            this._url = document.location.protocol+'//'+document.location.hostname;
-            this._url += ams.Config.general.oauthAPIProxyURI;
-            this._url +=this._initURL;
+        {            
+            this._url = ams.Auth.getOAuthProxyUrl(this._initURL);
 
             this._headers = [
             {

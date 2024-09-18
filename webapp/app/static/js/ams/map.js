@@ -142,8 +142,7 @@ ams.Map = {
 
 			if(ams.Auth.isAuthenticated())
 			{
-				let baseDomain=document.location.protocol+'//'+document.location.hostname;
-				geoserverURL = baseDomain + ams.Config.general.oauthAPIProxyURI + this.url;
+                geoserverURL = ams.Auth.getOAuthProxyUrl(this.url);
 			}
 			return geoserverURL;
 		}
@@ -371,8 +370,7 @@ ams.Map = {
 
 			if(ams.Auth.isAuthenticated())
 			{
-				let baseDomain=document.location.protocol+'//'+document.location.hostname;
-				geoserverURL = baseDomain + ams.Config.general.oauthAPIProxyURI + this.baseURL;
+                geoserverURL = ams.Auth.getOAuthProxyUrl(this.baseURL);
 			}
 			return geoserverURL;
 		}

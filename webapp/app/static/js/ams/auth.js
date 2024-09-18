@@ -40,6 +40,10 @@ ams.Auth = {
   getAuthSuffix: function() {
     return this.gsAuthSuffix;
   },
+  getOAuthProxyUrl: function(url)
+  {
+	Authentication.getOAuthProxyUrl(url, AuthenticationService.getOAuthClientId(), AuthenticationService.getOAuthResouceRole());
+  },
 
   /**
    * Workspace always use the suffix. For anonymous users, the suffix is empty.
