@@ -42,7 +42,7 @@ ams.Auth = {
   },
   getOAuthProxyUrl: function(url)
   {
-	Authentication.getOAuthProxyUrl(url, AuthenticationService.getOAuthClientId(), AuthenticationService.getOAuthResouceRole());
+	return Authentication.getOAuthProxyUrl(url, AuthenticationService.getOAuthClientId(), AuthenticationService.getOAuthResouceRole());
   },
 
   /**

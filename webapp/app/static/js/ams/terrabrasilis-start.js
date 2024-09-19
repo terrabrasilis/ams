@@ -46,14 +46,14 @@ $(document).ready(function () {
   {
     let authenticationClientId = null
     let authenticationResourceRole = null;
-    if(ams.Config.general.authenticationClientId)
+    if(defaultConfig.general.authenticationClientId)
     {
-      authenticationClientId = ams.Config.general.authenticationClientId;
+      authenticationClientId = defaultConfig.general.authenticationClientId;
     }
 
-    if(ams.Config.general.authenticationResourceRole)
+    if(defaultConfig.general.authenticationResourceRole)
     {
-      authenticationResourceRole = ams.Config.general.authenticationResourceRole;
+      authenticationResourceRole = defaultConfig.general.authenticationResourceRole;
     }
     
     Authentication.init(Lang.language, ams.Utils.restartApp, "", authenticationClientId, authenticationResourceRole);
