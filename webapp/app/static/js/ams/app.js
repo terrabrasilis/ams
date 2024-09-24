@@ -23,6 +23,8 @@ ams.App = {
     _currentClassify: null,
     _spatialUnits: null,
     _landUseList: [],
+    _biomes: [],
+    _subset: null,
 
     run: function(geoserverUrl, spatialUnits, appClassGroups) {
 
@@ -31,10 +33,15 @@ ams.App = {
         // start land use list with default itens to use in viewparams at start App
         this._landUseList=ams.Config.landUses.map((lu)=>{return(lu.id);});
 
+        this._biomes=ams.Config.appSelectedBiomes;
+        this._subset=ams.Config.appSelectedSubset;
+
     	// REMOVE ME (Debug Purposes)
-	// if(ams.Auth.isAuthenticated()==false) {
-        // geoserverUrl = "http://localhost/geoserver";
-        // }
+        // /*
+          if(ams.Auth.isAuthenticated()==false) {
+            geoserverUrl = "http://localhost/geoserver";
+        }
+        // */
 
         this._wfs = new ams.Map.WFS(geoserverUrl);
         var ldLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.lastDate;
@@ -107,21 +114,32 @@ ams.App = {
 
         // Adding reference layers
         var tbDeterAlertsLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.deter;
-        var AFLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.activeFire;
-        var RKLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.ibamaRisk;
         var tbDeterAlertsWmsOptions = {
             "cql_filter": appClassGroups.getCqlFilter(this._suViewParams, true),
-            "viewparams": "landuse:" + ams.App._landUseList.join('\\,')
+            "viewparams": (
+                "landuse:" + ams.App._landUseList.join('\\,') + ";" +
+                "biomes:" + ams.App._biomes.join('\\,')
+            )
         };
         ams.App._addWmsOptionsBase(tbDeterAlertsWmsOptions);
+
+        var AFLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.activeFire;
         var AFWmsOptions = {
             "cql_filter": appClassGroups.getCqlFilter(this._suViewParams, false),
-            "viewparams": "landuse:" + ams.App._landUseList.join('\\,')
+            "viewparams": (
+                "landuse:" + ams.App._landUseList.join('\\,')  + ";" +
+                "biomes:" + ams.App._biomes.join('\\,')
+            )
         };
         ams.App._addWmsOptionsBase(AFWmsOptions);
+
+        var RKLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.ibamaRisk;
         var RKWmsOptions = {
             "cql_filter": "(risk >= " + ams.Config.defaultRiskFilter.threshold + ")",
-            "viewparams": "landuse:" + ams.App._landUseList.join('\\,')
+            "viewparams": (
+                "landuse:" + ams.App._landUseList.join('\\,') +  ";" +
+                "biomes:" + ams.App._biomes.join('\\,')
+            )
         };
         ams.App._addWmsOptionsBase(RKWmsOptions);
 
@@ -165,30 +183,53 @@ ams.App = {
         // ---------------------------------------------------------------------------------
         // this structure is used into leaflet.groupedlayercontrol.js to create controls for filters panel...
         var controlGroups = {
+            "RECORTE BIOMA": {
+                type: "selectControl",
+                defaultFilter: ams.Config.appSelectedBiomes[0],
+                defaultSubset: ams.Config.appSelectedSubset,
+                group: "RECORTE",
+                name: "Bioma",
+                values: ams.Config.allBiomes,
+            },
+            "RECORTE MUNICIPIOS": {
+                type: "selectControl",
+                defaultFilter: ams.Config.appSelectedMunicipality,
+                defaultSubset: ams.Config.appSelectedSubset,
+                group: "RECORTE",
+                name: "Municípios",
+                values: ams.Config.allMunicipalities,
+            },
             "BIOMA":{
-                defaultFilter:ams.Config.biome
+                type: "simpleControl",
+                defaultFilter:ams.Config.biome,
             },
             "INDICADOR": {
                 defaultFilter:ams.Config.defaultFilters.indicator,
-                propertyName:this._propertyName
+                propertyName:this._propertyName,
+                type: "simpleControl"
             },
             "CATEGORIA FUNDIÁRIA":{
-                defaultFilter: ''
+                defaultFilter: '',
+                type: "simpleControl"
             },
             "UNIDADE ESPACIAL": {
-                defaultFilter: ams.Config.defaultFilters.spatialUnit
+                defaultFilter: ams.Config.defaultFilters.spatialUnit,
+                type: "simpleControl"
             },
             "UNIDADE TEMPORAL": {
-                defaultFilter:ams.Config.defaultFilters.temporalUnit
+                defaultFilter:ams.Config.defaultFilters.temporalUnit,
+                type: "simpleControl"
             },
             "CLASSIFICAÇÃO DO MAPA": {
-                defaultFilter:ams.Config.defaultFilters.diffClassify
+                defaultFilter:ams.Config.defaultFilters.diffClassify,
+                type: "simpleControl"
             },
         };
 
         for (let p in ams.BiomeConfig) {
-            if(ams.BiomeConfig.hasOwnProperty(p))
+            if(ams.BiomeConfig.hasOwnProperty(p)) {
                 controlGroups["BIOMA"][p] = p;
+            }
         }
 
         for (let p in ams.Config.landUses) {
@@ -220,16 +261,18 @@ ams.App = {
         }
         // ---------------------------------------------------------------------------------
 
-        var groupControl = L.control.groupedLayers(controlGroups, {
-            exclusiveGroups: [
-                "UNIDADE ESPACIAL", 
-                "INDICADOR", 
-                "UNIDADE TEMPORAL", 
-                "CLASSIFICAÇÃO DO MAPA",
-            ],
-            collapsed: false,
-            position: "topleft",
-        }).addTo(map);
+        var groupControl = L.control.groupedLayers(
+            controlGroups, {
+                exclusiveGroups: [
+                    "UNIDADE ESPACIAL", 
+                    "INDICADOR", 
+                    "UNIDADE TEMPORAL", 
+                    "CLASSIFICAÇÃO DO MAPA",
+                ],
+                collapsed: false,
+                position: "topleft",
+            }
+        ).addTo(map);
 
         // to apply new heigth for groupControl UI component when window is resized
         ams.groupControl=groupControl;

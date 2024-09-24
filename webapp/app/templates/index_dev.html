@@ -23,7 +23,7 @@
         {% for key, value in params.items() %}
         <meta name="{{ key }}" content="{{ value }}">
         {% endfor %}
-	
+
 	<link rel="shortcut icon" href="{{ url_for('static', filename='imgs/favicon.ico') }}" type="image/x-icon">
 	<link rel="icon" href="{{ url_for('static', filename='imgs/favicon.ico') }}" type="image/x-icon">
 
@@ -364,7 +364,15 @@
 	<script type="text/javascript" src="{{url_for('static', filename='js/lib/popper/1.14.3/popper.min.js')}}"></script>
 	<!-- jQuery Custom Scroller -->
 	<script type="text/javascript" src="{{url_for('static', filename='js/lib/jquery/plugin/jquery.mCustomScrollbar.concat.min.js')}}"></script>
-        <script type="text/javascript" src="http://terrabrasilis.dpi.inpe.br/oauth-api/getoauthjs"></script>
+
+	<script type="text/javascript">
+          let randomNumber = Math.floor((Math.random() * 1000000) + 1);
+          let base_url=document.location.protocol+'//'+document.location.hostname;
+          let oauthURL = base_url+"/oauth-api/getoauthjs?"+randomNumber;
+          document.writeln("<script type='text/javascript' src='"+oauthURL+"'><\/script>");
+        </script>
+
+        <!-- <script type="text/javascript" src="http://terrabrasilis.dpi.inpe.br/oauth-api/getoauthjs"></script> -->
 	<!-- Global site tag (gtag.js) - Google Analytics -->
 	<script type="text/javascript" async src="https://www.googletagmanager.com/gtag/js?id=G-VF4139FH8F"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/terrabrasilis-start.js')}}"></script>

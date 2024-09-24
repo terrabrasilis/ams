@@ -20,7 +20,18 @@ var defaultConfig = {
       changeunit: "auto", // used to automatically change the area unit between km² and ha when the threshold changes
       threshold: 2 // if the absolute area value is less than threshold, the unit will be changed to ha
     },
-    oauthAPIProxyURI: "/oauth-api/proxy?url="    
+    oauthAPIProxyURI: "/oauth-api/proxy?url=",
+  },
+  subset: {
+      defaultMunicipality: 'Matopiba',
+      defaultBiome: 'Cerrado',
+      defaultFilters: {
+          indicator: 'DS', // can be group's name of DETER classnames, 'DS', 'DG', 'CS' and 'MN', or 'AF' to Queimadas or 'RK' to risk
+          spatialUnit: 'cs_150km',
+          temporalUnit: '7d',
+          diffClassify: 'onPeriod', // can be 'onPeriod' or 'periodDiff'
+          priorityLimit: 10
+      },
   }
 };
 

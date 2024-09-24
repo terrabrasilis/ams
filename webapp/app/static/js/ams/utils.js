@@ -4,7 +4,7 @@ ams.Utils = {
   tid:null,
 
   isHomologationEnvironment: function(){
-    return window.location.pathname.includes("homologation") || window.location.hostname=='127.0.0.1';
+    return  window.location.pathname.includes("homologation") || window.location.hostname=='127.0.0.1';
   },
 
   setMapHeight: function(){
@@ -33,17 +33,50 @@ ams.Utils = {
       let b=localStorage.getItem('ams.previous.biome.setting.selection');
       ams.Utils.biomeChanges( ((b!==null)?(b):(ams.defaultBiome)) );
     }else{
+      // console.log(generalConfig.appBiome);
+
       // evaluate the user area_profile on start app
       ams.Auth.evaluate();
+
       // set map div to available height
       ams.Utils.setMapHeight();
-      var sus = JSON.parse(generalConfig.spatial_units_info.replace(/'/g,"\""));
+
+      // config
       ams.Config = ams.BiomeConfig[generalConfig.appBiome];
-      ams.Config.biome=generalConfig.appBiome;
-      ams.Config.landUses=JSON.parse(generalConfig.land_uses.replace(/'/g,"\""));
-      var spatialUnits = new ams.Map.SpatialUnits(sus, ams.Config.defaultFilters.spatialUnit);
-      var appClassGroups = new ams.Map.AppClassGroups(JSON.parse(generalConfig.deter_class_groups.replace(/'/g,"\"")));
+
+      ams.Config.biome = generalConfig.appBiome;
+
+      ams.Config.landUses = JSON.parse(generalConfig.land_uses.replace(/'/g,"\""));
+      
+      // config:subset
+      ams.Config.appSelectedSubset = "Bioma";
+      ams.Config.appSelectedBiomes = JSON.parse(generalConfig.selected_biomes.replace(/'/g,"\""));
+      ams.Config.appSelectedMunicipality = ams.Config.subset.defaultMunicipality;
+
+      ams.Config.allBiomes = JSON.parse(generalConfig.biomes.replace(/'/g,"\""));
+      ams.Config.allMunicipalities = JSON.parse(generalConfig.municipalities.replace(/'/g,"\""));
+
+      // spatial units
+      var spatialUnits = new ams.Map.SpatialUnits(
+          JSON.parse(generalConfig.spatial_units_info.replace(/'/g,"\"")),
+          ams.Config.defaultFilters.spatialUnit
+      );
+      console.log(spatialUnits);
+
+      var spatialUnitsSubset = new ams.Map.SpatialUnits(
+          JSON.parse(generalConfig.spatial_units_info_for_subset.replace(/'/g,"\"")),
+          ams.Config.subset.defaultFilters.spatialUnit
+      );
+      console.log(spatialUnitsSubset);
+
+      // class groups
+      var appClassGroups = new ams.Map.AppClassGroups(
+          JSON.parse(generalConfig.deter_class_groups.replace(/'/g,"\""))
+      );
+
+      // geoserver
       var geoserverUrl = generalConfig.geoserver_url;
+
       try {
         ams.App.run(geoserverUrl, spatialUnits, appClassGroups);
       } catch (error) {
@@ -75,7 +108,6 @@ ams.Utils = {
    * Used when selected biome changes
    */
     biomeChanges: function(selectedBiome){
-
       const loadConfig = new Promise((resolve, reject) => {
 
         /**
@@ -86,6 +118,7 @@ ams.Utils = {
           let response = await fetch("biome/config?targetbiome=" + selectedBiome);
           if (response&&response.ok) {
             let generalConfig = await response.json();
+
             if (generalConfig.appBiome) {
               // write on local storage
               localStorage.setItem('ams.biome.config.'+selectedBiome, JSON.stringify(generalConfig));

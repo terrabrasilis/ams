@@ -19,6 +19,7 @@ ams.Map = {
         this.propertyName = propertyName;
         this.limit = limit;
         this.risk_threshold = ( (typeof risk_threshold=='undefined')?(0.0):(risk_threshold) );
+
         this.toWmsFormat = function() {
             return "classname:" + this.classname
                     + ";startdate:" + this.startdate
@@ -27,7 +28,7 @@ ams.Map = {
                     + ";orderby:" + this.propertyName
                     + ";landuse:" + ams.App._landUseList.join('\\,')
                     + ";limit:" + this.limit
-                    + ";risk:" + this.risk_threshold;
+                    + ";risk:" + this.risk_threshold
         };
 
         this.updateDates = function(dateControll) {

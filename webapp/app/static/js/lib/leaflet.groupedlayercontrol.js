@@ -14,18 +14,42 @@ L.Control.GroupedLayers = L.Control.extend({
 
   initialize: function (controlGroups, options) {
     var i, j;
+
+    console.log(controlGroups);
+    console.log(options);
+
     L.Util.setOptions(this, options);
 
     this._ctrls = [];
     this._groupList = [];
     this._domGroups = [];
+    this._selectCtrls = {};
 
-    for (i in controlGroups) {
-      for (j in controlGroups[i]) {
-        if(j=='defaultFilter' || j=='propertyName') continue;
-        this._addControl(controlGroups[i][j], j, i, controlGroups[i]['defaultFilter'], true);
-      }
+    for (i in controlGroups) {  // group
+        type = controlGroups[i]["type"];
+
+        if (type=="simpleControl") {
+            for (j in controlGroups[i]) {  // name
+                // console.log("i", i, "|", "j", j);
+                if(j=='defaultFilter' || j=='propertyName' || j=='type' || j == 'defaultSubset') continue;
+                // acronym, name, group, defaultFilter, overlay
+                this._addControl(controlGroups[i][j], j, i, controlGroups[i]['defaultFilter'], true, type);
+            }
+        }
+
+        if (type=='selectControl') {
+            this._addControl(
+                controlGroups[i]['defaultSubset'],
+                controlGroups[i]['name'],
+                controlGroups[i]['group'],
+                controlGroups[i]['defaultFilter'],
+                true,
+                type,
+                controlGroups[i]['values'],
+            );
+        }
     }
+
   },
 
   onAdd: function (map) {
@@ -105,12 +129,14 @@ L.Control.GroupedLayers = L.Control.extend({
     }
   },
 
-  _addControl: function (acronym, name, group, defaultFilter, overlay) {
+  _addControl: function (acronym, name, group, defaultFilter, overlay, type, values) {
     var _ctrl = {
       acronym: acronym,
       name: name,
       defaultFilter: defaultFilter,
-      overlay: overlay
+      overlay: overlay,
+      type: type,
+      values: values || [],
     };
     _ctrl["ctrlId"]=L.Util.stamp(_ctrl);
     this._ctrls.push(_ctrl);
@@ -147,7 +173,20 @@ L.Control.GroupedLayers = L.Control.extend({
 
     for (var i = 0; i < this._ctrls.length; i++) {
       obj = this._ctrls[i];
-      this._addItem(obj);
+
+        if (obj.group.name === "RECORTE BIOMA") {
+            console.log("recorte bioma: _update");
+            // continue;
+        }
+
+        if (obj.type == "simpleControl") {
+            this._addItem(obj);
+        }
+
+        if (obj.type == "selectControl") {
+            this._addOptionItem(obj);
+        }
+
       overlaysPresent = overlaysPresent || obj.overlay;
       baseLayersPresent = baseLayersPresent || !obj.overlay;
     }
@@ -159,10 +198,13 @@ L.Control.GroupedLayers = L.Control.extend({
   },
 
   // IE7 bugs out if you create a radio dynamically, so you have to do it this hacky way (see http://bit.ly/PqYLBe)
-  _createInputElement: function (name, type, checked) {
+  _createInputElement: function (name, type, checked, userDefined) {
     var inputHtml = '<input type="'+type+'" class="leaflet-control-layers-selector" name="' + name + '"';
     if (checked) {
       inputHtml += ' checked="checked"';
+    }
+    if (userDefined) {
+        inputHtml += 'data-user-defined="' + userDefined + '"';
     }
     inputHtml += '/>';
 
@@ -205,6 +247,28 @@ L.Control.GroupedLayers = L.Control.extend({
     return btFragment;
   },
 
+  _createSubsetSelect: function (name) {
+      var subset = document.createElement('div');
+
+      subset.classname = "leaflet-dropdown-menu";
+      subset.innerHTML = (
+          '<select name="' + name + '-subset-select" class="leaflet-dropdown-select">' +
+          '</select>'
+      );
+
+      return subset;
+  },
+
+  _createSubsetSelectOption: function (text, value, selected) {
+      var option = document.createElement('option');
+
+      option.textContent = text;
+      option.value = value;
+      option.selected = selected;
+
+      return option;
+  },
+
   handleRiskSelection: function (classificationMapGroupId, obj) {
     if (obj.name.toLowerCase().includes('risco') && obj.checked) {
       var mapClassificationElement = document.querySelector('[id="leaflet-control-layers-group-' + classificationMapGroupId + '"]');
@@ -215,6 +279,86 @@ L.Control.GroupedLayers = L.Control.extend({
       mapClassificationElement.style.display = 'block';
       ams.PeriodHandler.init(this._map);
     }
+  },
+
+  _addOptionItem: function (obj) {
+    var label = document.createElement('label'),
+      input,
+      container,
+      profileBt=null;
+
+    var checked = obj.acronym == obj.name;
+    var groupRadioName = 'leaflet-exclusive-group-layer-' + obj.group.id;
+
+    var name = document.createElement('span');
+    name.innerHTML = ' ' + obj.name;
+
+    var input = this._createInputElement(groupRadioName, 'radio', checked, obj.name + "-subset-radio")
+    L.DomEvent.on(input, 'click', this._onInputClick, this);
+
+    input.ctrlId = obj.ctrlId;
+    input.groupID = obj.group.id;
+
+    var selectCtrl = this._selectCtrls[obj.name];
+
+    if (!selectCtrl) {
+        label.className = 'leaflet-biome-control-item';
+            
+        let div = document.createElement('div');
+        div.appendChild(input);
+        div.appendChild(name);
+
+        label.appendChild(div);
+        
+        selectCtrl = this._createSubsetSelect(obj.name);
+        this._selectCtrls[obj.name] = selectCtrl;
+        
+        label.appendChild(selectCtrl);
+    }
+
+    var select = selectCtrl.querySelector('select');
+    L.DomEvent.on(select, 'change', this._onSelectChange, this);
+
+    for (let p of obj.values) {
+        select.appendChild(this._createSubsetSelectOption(p, p, p === obj.defaultFilter));
+    }
+      
+    if (obj.overlay) {
+      container = this._overlaysList;
+
+      var groupContainer = this._domGroups[obj.group.id];
+
+      // Create the group container if it doesn't exist
+      if (!groupContainer) {
+        groupContainer = document.createElement('div');
+        groupContainer.className = 'leaflet-control-layers-group';
+        groupContainer.id = 'leaflet-control-layers-group-' + obj.group.id;
+        groupContainer.title = this._getTitleByGroup(obj.group.name);
+
+        var groupLabel = document.createElement('label');
+        groupLabel.className = 'leaflet-control-layers-group-label';
+
+        var groupName = document.createElement('span');
+        groupName.className = 'leaflet-control-layers-group-name';
+
+        groupName.innerHTML = obj.group.name;
+        groupLabel.appendChild(groupName);
+        groupContainer.appendChild(groupLabel);
+
+        container.appendChild(groupContainer);
+
+        this._domGroups[obj.group.id] = groupContainer;
+      }
+
+      container = groupContainer;
+
+    } else {
+      container = this._baseLayersList;
+    }
+
+    container.appendChild(label);
+
+    return label;
   },
 
   _addItem: function (obj) {
@@ -228,7 +372,7 @@ L.Control.GroupedLayers = L.Control.extend({
       profileBt=null,
       type=(obj.group.name=="CATEGORIA FUNDIÁRIA")?('checkbox'):('radio');
 
-    groupRadioName = 'leaflet-exclusive-group-layer-' + obj.group.id;
+    groupRadioName = 'leaflet-exclusive-group-layer-' + obj.group.id; // leaflet-exclusive-group-layer-0
     input = this._createInputElement(groupRadioName, type, checked);
 
     input.ctrlId = obj.ctrlId;
@@ -281,20 +425,29 @@ L.Control.GroupedLayers = L.Control.extend({
         groupContainer.className = 'leaflet-control-layers-group';
         groupContainer.id = 'leaflet-control-layers-group-' + obj.group.id;
         groupContainer.title = this._getTitleByGroup(obj.group.name);
-        if(obj.group.name=="UNIDADE TEMPORAL")
-          groupContainer.style="display:none;";
-        if(obj.group.name=="CATEGORIA FUNDIÁRIA")
-          groupContainer.className = 'leaflet-control-layers-group lclg-landuse';        
+
+        if(obj.group.name=="UNIDADE TEMPORAL") {
+            groupContainer.style="display:none;";
+        }
+
+        if(obj.group.name=="CATEGORIA FUNDIÁRIA") {
+            groupContainer.className = 'leaflet-control-layers-group lclg-landuse';        
+        }
 
         var groupLabel = document.createElement('label');
         groupLabel.className = 'leaflet-control-layers-group-label';
-        if(obj.group.name=="CATEGORIA FUNDIÁRIA")
-          groupLabel.style="border-top-right-radius: unset; background-color: #dae9c5;";
+
+        if(obj.group.name=="CATEGORIA FUNDIÁRIA") {
+            groupLabel.style="border-top-right-radius: unset; background-color: #dae9c5;";
+        }
 
         var groupName = document.createElement('span');
         groupName.className = 'leaflet-control-layers-group-name';
-        if(obj.group.name=="CATEGORIA FUNDIÁRIA")
-          groupName.style = "color: #3e3e3e;";
+
+        if(obj.group.name=="CATEGORIA FUNDIÁRIA") {
+            groupName.style = "color: #3e3e3e;";
+        }
+
         groupName.innerHTML = obj.group.name;
         groupLabel.appendChild(groupName);
         groupContainer.appendChild(groupLabel);
@@ -373,6 +526,9 @@ L.Control.GroupedLayers = L.Control.extend({
         title+=' - Destaque em tons de vermelho indicam aumento do valor no período corrente em relação ao período anterior.\n';
         title+=' - Destaque em tons de azul indicam diminuição do valor no período corrente em relação ao período anterior.\n';
         break;
+      case "RECORTE":
+        title="Alterna entre as diferentes formas de visualização dos dados."
+        break;
       default:
         break;
     }
@@ -423,11 +579,33 @@ L.Control.GroupedLayers = L.Control.extend({
   },
 
   _onInputClick: function (e) {
-    let obj = this._getControlById(e.target.ctrlId);
+    var obj = this._getControlById(e.target.ctrlId);
+
     obj["inputtype"]=e.target.type;
     obj["checked"]=e.target.checked;
+
+    if (obj.type === "selectControl") {
+        var selectCtrl = this._selectCtrls[obj.name];
+        select = selectCtrl.querySelector('select');
+
+        obj.group.name = obj.name.toUpperCase();
+        obj.name = select.value;
+        obj.acronym = select.value;
+    }
+
     // dispache event to update layers using selected filters
     this._map.fire('changectrl', obj);
+  },
+
+  _onSelectChange: function (e) {
+    console.log(e);
+    let radioName = e.target.name.replace("-select", "-radio");
+    console.log(radioName);
+
+    var radio = document.querySelector('input[type="radio"][data-user-defined="' + radioName + '"]');
+    console.log(radio);
+
+    radio.click();
   },
 
   _expand: function () {
