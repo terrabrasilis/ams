@@ -9,32 +9,6 @@ class AppConfigController:
     def __init__(self, db_url: str):
         self._conn = connect(db_url)
 
-    def read_spatial_units(self):
-        """
-        Gets the spatial units from database.
-        Prerequisites:
-                - The public.spatial_units table must exist in the database and have data.
-        See the README.md file for instructions.
-        """
-
-        sql = """SELECT string_agg( c1, ',' )
-		
-		FROM (
-			SELECT string_agg('{''dataname'':'''||su.dataname||
-			''',''description'':'''||su.description||
-			''',''center_lat'':'|| su.center_lat || 
-			',''center_lng'':'|| su.center_lng ||
-			',''last_date'':'''||pd.date||'''}', ',') as c1
-			FROM public.spatial_units su, deter.deter_publish_date pd
-			GROUP BY su.id ORDER BY su.id ASC
-		) as tb1"""
-
-        cur = self._conn.cursor()
-        cur.execute(sql)
-        results = cur.fetchall()
-
-        return "["+results[0][0]+"]"
-
     def read_class_groups(self):
         """
         Gets the class names grouped by class groups.
@@ -45,7 +19,7 @@ class AppConfigController:
 		FROM (
 			SELECT '{''name'':'''||dcg.name||''', ''title'':'''||dcg.title||'''' as c1,
 			dcg.orderby, '''classes'':[' || string_agg(''''||dc.name||'''', ',') || ']}' as c2
-			FROM public.deter_class_group dcg, public.deter_class dc
+			FROM public.class_group dcg, public.class dc
 			WHERE dcg.id=dc.group_id GROUP BY 1,2 ORDER BY dcg.orderby
 		) as tb1"""
         cur = self._conn.cursor()
@@ -72,7 +46,6 @@ class AppConfigController:
         """
         Gets the spatial units from database for the given subset.
         """
-
         
         sql = """SELECT string_agg( c1, ',' )
 		FROM (
@@ -92,12 +65,9 @@ class AppConfigController:
 		) as tb1
         """
 
-        conn = connect("postgresql://ams:postgres@192.168.0.51:5432/AMSCHECK")
-        cur = conn.cursor()
+        cur = self._conn.cursor()
         cur.execute(sql % subset)
-        
         results = cur.fetchall()
-
         return "["+results[0][0]+"]"
 
 
@@ -105,11 +75,42 @@ class AppConfigController:
         """
         Gets the biomes from database.
         """
-        return json.dumps(['Amazônia', 'Cerrado'])
+        sql = "SELECT biome from public.biome"
+        cur = self._conn.cursor()
+        cur.execute(sql)
+        results = [_[0] for _ in cur.fetchall()]
+        return json.dumps(results)
 
 
     def read_municipalities(self):
         """
         Gets the municipalities from database.
         """
-        return json.dumps(['Priorit\xe1rios', 'Matopiba'])
+        sql = "SELECT name from public.municipalities_group"
+        cur = self._conn.cursor()
+        cur.execute(sql)
+        results = [_[0] for _ in cur.fetchall()]
+        return json.dumps(results)
+
+    def read_municipality_biomes(self, municipality=None):
+        """
+        Gets the biomes from database.
+        """
+        sql = f"""
+           SELECT DISTINCT mb.biome
+           FROM public.municipalities_biome mb
+           WHERE geocode IN (
+              SELECT geocode
+              FROM public.municipalities_group_members mgm
+              WHERE mgm.group_id = (
+                 SELECT mg.id
+                 FROM public.municipalities_group mg
+                 WHERE mg.name='{municipality}'
+              )
+           )
+        """
+        print(sql)
+        cur = self._conn.cursor()
+        cur.execute(sql)
+        results = [_[0] for _ in cur.fetchall()]
+        return json.dumps(results)

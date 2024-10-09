@@ -2,3 +2,4 @@ flask
 flask-cors
 gunicorn
 plotly
+Flask-Caching

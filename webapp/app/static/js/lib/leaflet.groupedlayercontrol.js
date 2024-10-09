@@ -216,12 +216,11 @@ L.Control.GroupedLayers = L.Control.extend({
 
   _createProfileBiomeButton: function(biome) {
 
-    let biomeId=ams.BiomeConfig[biome].defaultWorkspace;
-
-    let bt='<button title="Visualize o perfil para todo o bioma."'
+    let bt = '<label class="leaflet-control-layers-group-name"><button title="Visualize o perfil para todo o recorte."'
     +' class="btn btn-primary-p profile-bt"'
-    +' id="profile-'+biomeId+'-button">'
-    +'<i class="material-icons profile-bt-icon">leaderboard</i>Perfil</button>';
+    +' id="profile-button">'
+    +'<i class="material-icons profile-bt-icon">leaderboard</i>Perfil</button>'
+    +'</label>'
 
     var btFragment = document.createElement('div');
     btFragment.innerHTML = bt;
@@ -284,8 +283,7 @@ L.Control.GroupedLayers = L.Control.extend({
   _addOptionItem: function (obj) {
     var label = document.createElement('label'),
       input,
-      container,
-      profileBt=null;
+      container;
 
     var checked = obj.acronym == obj.name;
     var groupRadioName = 'leaflet-exclusive-group-layer-' + obj.group.id;
@@ -345,6 +343,9 @@ L.Control.GroupedLayers = L.Control.extend({
         groupLabel.appendChild(groupName);
         groupContainer.appendChild(groupLabel);
 
+        profileBt = this._createProfileBiomeButton(obj.name);
+        groupContainer.appendChild(profileBt);
+
         container.appendChild(groupContainer);
 
         this._domGroups[obj.group.id] = groupContainer;
@@ -382,6 +383,7 @@ L.Control.GroupedLayers = L.Control.extend({
     var name = document.createElement('span');
     name.innerHTML = ' ' + obj.name;
 
+    /*
     if(obj.group.name=="BIOMA"){
       let divbiome = document.createElement('div');
       divbiome.appendChild(input);
@@ -395,7 +397,9 @@ L.Control.GroupedLayers = L.Control.extend({
         label.appendChild(profileBt);
       }
     }
-    else if (obj.group.name == 'CLASSIFICAÇÃO DO MAPA') {
+    */
+
+    if (obj.group.name == 'CLASSIFICAÇÃO DO MAPA') {
       label.appendChild(input);
       label.appendChild(name);            
       this.classificationMapGroupId = obj.group.id;

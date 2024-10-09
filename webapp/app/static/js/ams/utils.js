@@ -31,9 +31,10 @@ ams.Utils = {
     if(typeof generalConfig=='undefined'){
       // use the previous selection or default biome (see config.js)
       let b=localStorage.getItem('ams.previous.biome.setting.selection');
-      ams.Utils.biomeChanges( ((b!==null)?(b):(ams.defaultBiome)) );
+      // ams.Utils.biomeChanges( ((b!==null)?(b):(ams.defaultBiome)) );
+      ams.Utils.biomeChanges(ams.defaultBiome, ams.defaultSubset);
     }else{
-      // console.log(generalConfig.appBiome);
+      console.log(generalConfig);
 
       // evaluate the user area_profile on start app
       ams.Auth.evaluate();
@@ -44,24 +45,14 @@ ams.Utils = {
       // config
       ams.Config = ams.BiomeConfig[generalConfig.appBiome];
 
-      ams.Config.biome = generalConfig.appBiome;
-
-      ams.Config.landUses = JSON.parse(generalConfig.land_uses.replace(/'/g,"\""));
-      
-      // config:subset
-      ams.Config.appSelectedSubset = "Bioma";
-      ams.Config.appSelectedBiomes = JSON.parse(generalConfig.selected_biomes.replace(/'/g,"\""));
-      ams.Config.appSelectedMunicipality = ams.Config.subset.defaultMunicipality;
-
       ams.Config.allBiomes = JSON.parse(generalConfig.biomes.replace(/'/g,"\""));
       ams.Config.allMunicipalities = JSON.parse(generalConfig.municipalities.replace(/'/g,"\""));
+      ams.Config.landUses = JSON.parse(generalConfig.land_uses.replace(/'/g,"\""));
 
-      // spatial units
-      var spatialUnits = new ams.Map.SpatialUnits(
-          JSON.parse(generalConfig.spatial_units_info.replace(/'/g,"\"")),
-          ams.Config.defaultFilters.spatialUnit
-      );
-      console.log(spatialUnits);
+      ams.Config.biome = generalConfig.appBiome;
+      ams.Config.appSelectedSubset = generalConfig.selected_subset;
+      ams.Config.appSelectedBiomes = JSON.parse(generalConfig.selected_biomes.replace(/'/g,"\""));
+      ams.Config.appSelectedMunicipality = ams.Config.defaultMunicipality;
 
       var spatialUnitsSubset = new ams.Map.SpatialUnits(
           JSON.parse(generalConfig.spatial_units_info_for_subset.replace(/'/g,"\"")),
@@ -78,7 +69,7 @@ ams.Utils = {
       var geoserverUrl = generalConfig.geoserver_url;
 
       try {
-        ams.App.run(geoserverUrl, spatialUnits, appClassGroups);
+        ams.App.run(geoserverUrl, spatialUnitsSubset, appClassGroups);
       } catch (error) {
         console.log(error);
         // if any error occurs, clear the local storage to try again
@@ -107,15 +98,15 @@ ams.Utils = {
     /**
    * Used when selected biome changes
    */
-    biomeChanges: function(selectedBiome){
+    biomeChanges: function(selectedBiome, selectedSubset=" "){
       const loadConfig = new Promise((resolve, reject) => {
 
         /**
          * If we need read configurations from server by a selected biome.
          * @param {string} selectedBiome The name of selected biome.
          */
-        async function getConfigByBiome( selectedBiome ) {
-          let response = await fetch("biome/config?targetbiome=" + selectedBiome);
+        async function getConfigByBiome( selectedBiome, selectedSubset ) {
+          let response = await fetch("biome/config?targetbiome=" + selectedBiome + "&subset=" + selectedSubset);
           if (response&&response.ok) {
             let generalConfig = await response.json();
 

@@ -29,6 +29,7 @@ ams.Map = {
                     + ";landuse:" + ams.App._landUseList.join('\\,')
                     + ";limit:" + this.limit
                     + ";risk:" + this.risk_threshold
+                    + ";biomes:" + ams.App._biomes
         };
 
         this.updateDates = function(dateControll) {

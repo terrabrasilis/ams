@@ -39,8 +39,10 @@ class SpatialUnitProfile():
         self._fire_classname = "AF"
 
         self._config = config
+
+        self._dburl = self._config.DB_URL
+
         self._appBiome = params['targetbiome']
-        self._dburl = self._config.DB_CERRADO_URL if (self._appBiome=='Cerrado') else self._config.DB_AMAZON_URL
         self._query_limit = 20
         self._classname = params['className']
         self._risk_threshold = 0
@@ -197,7 +199,8 @@ class SpatialUnitProfile():
         """
     
         where_group = "" if(self._name=='*') else f"""b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}' AND"""
-        where_biome = f" a.biome = '{self._appBiome}' "
+        biomes = ",".join([f"'{_}'" for _ in self._appBiome.split(",")])
+        where_biome = f" a.biome IN ({biomes}) "
 
         group_by_periods=f"""
             WITH calendar AS (
@@ -235,7 +238,6 @@ class SpatialUnitProfile():
                 2 ASC
         """
         # print(" ".join(group_by_periods.split()))
-
         return group_by_periods
 
     def execute_sql(self, sql):
@@ -263,8 +265,10 @@ class SpatialUnitProfile():
     def area_per_land_use(self):
         where_risk="" if(self._classname!=self._risk_classname) else f" a.risk >= {self._risk_threshold} AND "
         where_spatial_unit="" if(self._name=='*') else f"""b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}' AND"""
-        where_biome = f" a.biome = '{self._appBiome}' AND "
-        where_filter=f"{where_risk} {where_spatial_unit} {where_biome}"
+        biomes = ",".join([f"'{_}'" for _ in self._appBiome.split(",")])
+        where_biome = f" a.biome IN ({biomes}) AND "
+
+        where_filter=f"{where_biome} {where_risk} {where_spatial_unit}"
 
         sql = f"""
             SELECT
@@ -299,6 +303,7 @@ class SpatialUnitProfile():
 
         df = self.resultset_as_dataframe(sql)
         df.columns = ['Categoria Fundiária', self.default_col_name]
+
         return df
 
     def risk_expiration_date(self):        

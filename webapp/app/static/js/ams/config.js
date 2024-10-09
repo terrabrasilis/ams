@@ -1,6 +1,10 @@
 var ams = ams || {};
 ams.BiomeConfig={};
-ams.defaultBiome="Amazônia";
+
+//ams.defaultBiome="Amazônia";
+ams.defaultSubset="Bioma";
+ams.defaultBiome="Cerrado";
+ams.defaultMunicipality="";
 
 var defaultConfig = {
   terrabrasilisURL:"http://terrabrasilis.dpi.inpe.br",
@@ -23,8 +27,6 @@ var defaultConfig = {
     oauthAPIProxyURI: "/oauth-api/proxy?url=",
   },
   subset: {
-      defaultMunicipality: 'Matopiba',
-      defaultBiome: 'Cerrado',
       defaultFilters: {
           indicator: 'DS', // can be group's name of DETER classnames, 'DS', 'DG', 'CS' and 'MN', or 'AF' to Queimadas or 'RK' to risk
           spatialUnit: 'cs_150km',
@@ -36,17 +38,17 @@ var defaultConfig = {
 };
 
 ams.BiomeConfig["Amazônia"] = {
-  defaultWorkspace: 'ams',
+  defaultWorkspace: 'amsnew1',
   defaultLayers:{
-    biomeBorder:"prodes-amazon-nb:amazon_biome_border",// Layer name of Amazon biome border from TerraBrasilis service ( The workspace is fixed)
-    deter:"deter-ams", // The layer name of DETER alerts from TerraBrasilis service. The workspace is dinamic and based on authentication state
+    biomeBorder:"amsnew1:biome_border",
+    deter:"deter_ams", // The layer name of DETER alerts from TerraBrasilis service. The workspace is dinamic and based on authentication state
     activeFire:"active-fire", // The layer name of Focos de Queimadas from TerraBrasilis service. The workspace is dinamic and based on authentication state
     ibamaRisk: "risk-ibama-weekly-data", // The layer name of weekly risk with the default prediction data of risk of deforestation from IBAMA.
     lastDate: "last_date" // The layer name to get the last update date of available data. The workspace is dinamic and based on authentication state
   },
   defaultFilters: {
     indicator: 'DS',// can be group's name of DETER classnames, 'DS', 'DG', 'CS' and 'MN', or 'AF' to Queimadas or 'RK' to risk
-    spatialUnit: 'csAmz_150km',
+    spatialUnit: 'cs_150km',
     temporalUnit: '7d',
     diffClassify: 'onPeriod',// can be 'onPeriod' or 'periodDiff'
     priorityLimit: 10
@@ -59,16 +61,16 @@ ams.BiomeConfig["Amazônia"] = {
 };
 
 ams.BiomeConfig["Cerrado"] = {
-  defaultWorkspace: 'cer',
+  defaultWorkspace: 'amsnew1',
   defaultLayers:{
-    biomeBorder:"prodes-cerrado-nb:biome_border",// Layer name of Cerrado biome border from TerraBrasilis service. The workspace is fixed
-    deter:"deter-ams", // The layer name of DETER alerts from TerraBrasilis service. The workspace is dinamic and based on authentication state
+    biomeBorder:"amsnew1:biome_border",
+    deter:"deter_ams", // The layer name of DETER alerts from TerraBrasilis service. The workspace is dinamic and based on authentication state
     activeFire:"active-fire", // The layer name of Focos de Queimadas from TerraBrasilis service. The workspace is dinamic and based on authentication state
     lastDate: "last_date" // The layer name to get the last update date of available data. The workspace is dinamic and based on authentication state
   },
   defaultFilters: {
     indicator: 'DS',// can be group's name of DETER classname 'DS' or 'AF' to Queimadas
-    spatialUnit: 'csCer_150km',
+    spatialUnit: 'cs_150km',
     temporalUnit: '7d',
     diffClassify: 'onPeriod',// can be 'onPeriod' or 'periodDiff'
     priorityLimit: 10

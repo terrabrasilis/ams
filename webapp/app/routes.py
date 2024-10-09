@@ -32,7 +32,7 @@ def get_biome_config(endpoint):
     try:
         args = request.args
         appBiome = args["targetbiome"]
-        subset = "Municípios"
+        subset = "Bioma"
     except KeyError as ke:
         # exception KeyError
         # Raised when a mapping (dictionary) key is not found in the set of existing keys.
@@ -40,43 +40,39 @@ def get_biome_config(endpoint):
         return "Input parameters are missing: {0}".format(str(ke)), 412
 
     try:
-        dburl = Config.DB_CERRADO_URL if (
-            appBiome == 'Cerrado') else Config.DB_AMAZON_URL
+        dburl = Config.DB_URL
 
         ctrl = AppConfigController(dburl)
-        sui = ctrl.read_spatial_units()
-        cg = ctrl.read_class_groups()
         ldu = ctrl.read_land_uses()
-
-        biomes = ctrl.read_biomes()
-        selected_biomes = biomes if appBiome == "all" else json.dumps([appBiome])
-
-        municipalities = ctrl.read_municipalities()
-
         sui_subset = ctrl.read_spatial_units_for_subset(subset=subset)
+        cg = ctrl.read_class_groups()
 
         # incluing thresholds in the layer names
         cg = json.loads(cg.replace("'", '"'))
+
         for _ in cg:
             if _['name'] == 'RK':
                 _['title'] += f" (>= {Config.RISK_THRESHOLD:.2f})"
                 break
         cg = json.dumps(cg)
 
-        return json.dumps(
-            {
-                'geoserver_url': Config.GEOSERVER_URL,
-                'appBiome': appBiome,
-                'spatial_units_info': sui,
-                'deter_class_groups': cg,
-                'land_uses': ldu,
-                'subset': subset,
-                'selected_biomes': selected_biomes,
-                'biomes': biomes,
-                'spatial_units_info_for_subset': sui_subset,
-                'municipalities': municipalities,
-            }
-        )
+        biomes = ctrl.read_biomes()  # all biomes
+        municipalities = ctrl.read_municipalities()  # all municipalities (group or municipality names)
+        selected_biomes = json.dumps([appBiome]) if subset == "Bioma" else biomes  # used to filter
+
+        res = {
+            'geoserver_url': Config.GEOSERVER_URL,
+            'appBiome': appBiome,
+            'deter_class_groups': cg,
+            'land_uses': ldu,
+            'spatial_units_info_for_subset': sui_subset,
+            'biomes': biomes,
+            'municipalities': municipalities,
+            'selected_subset': subset,
+            'selected_biomes': selected_biomes,
+        }
+        # print(res)
+        return json.dumps(res)
     except Exception as e:
         return "Something is wrong on the server. Please, send this error to our support service: terrabrasilis@inpe.br", 500
 
@@ -87,6 +83,7 @@ def get_profile(endpoint):
         return "Bad endpoint", 404
 
     args = request.args
+
     try:
         params = json.loads(args.get('sData'))
         # validate if there are required input parameters
@@ -100,6 +97,7 @@ def get_profile(endpoint):
         unit = params['unit']
         appBiome = params['targetbiome']
         riskThreshold = params['riskThreshold']
+
     except KeyError as ke:
         # exception KeyError
         # Raised when a mapping (dictionary) key is not found in the set of existing keys.
@@ -108,6 +106,7 @@ def get_profile(endpoint):
 
     try:
         spatial_unit_profile = SpatialUnitProfile(Config, params)
+
         # onlyOneLandUse = (land_use).find(',')
         count = land_use.split(',')
         onlyOneLandUse = len(count) if count[0] != '' else -1

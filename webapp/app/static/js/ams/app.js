@@ -38,9 +38,9 @@ ams.App = {
 
     	// REMOVE ME (Debug Purposes)
         // /*
-          if(ams.Auth.isAuthenticated()==false) {
-            geoserverUrl = "http://localhost/geoserver";
-        }
+        // if(ams.Auth.isAuthenticated()==false) {
+        geoserverUrl = "http://127.0.0.1/geoserver";
+        // }
         // */
 
         this._wfs = new ams.Map.WFS(geoserverUrl);
@@ -155,9 +155,11 @@ ams.App = {
         }else if(this._referenceLayerName==AFLayerName){
             AFLayer.addTo(map);
             AFLayer.bringToBack();
-        }else{
+        }else if(this._referenceLayerName==RKLayerName){
             RKLayer.addTo(map);
             RKLayer.bringToBack();
+        } else {
+            ams.Utils.assert(false, "invalid layer name");
         }
         // Store layers to handler after controls change
         this._addedLayers[tbDeterAlertsLayerName]=tbDeterAlertsLayer;
@@ -174,7 +176,12 @@ ams.App = {
 
         // Fixed biome border layer
         var tbBiomeLayerName = ams.Config.defaultLayers.biomeBorder;
-        var onlyWmsBase = {identify:false};// set this to disable GetFeatureInfo
+        var onlyWmsBase = {
+            identify: false,
+            "viewparams": (
+                "biomes:" + ams.App._biomes.join('\\,')
+            )
+        }; // set this to disable GetFeatureInfo
         ams.App._addWmsOptionsBase(onlyWmsBase);
         var tbBiomeSource = new ams.LeafletWms.Source(this._baseURL, onlyWmsBase, this._appClassGroups);
         ams.App._biomeLayer = tbBiomeSource.getLayer(tbBiomeLayerName);
@@ -199,10 +206,6 @@ ams.App = {
                 name: "Municípios",
                 values: ams.Config.allMunicipalities,
             },
-            "BIOMA":{
-                type: "simpleControl",
-                defaultFilter:ams.Config.biome,
-            },
             "INDICADOR": {
                 defaultFilter:ams.Config.defaultFilters.indicator,
                 propertyName:this._propertyName,
@@ -225,12 +228,6 @@ ams.App = {
                 type: "simpleControl"
             },
         };
-
-        for (let p in ams.BiomeConfig) {
-            if(ams.BiomeConfig.hasOwnProperty(p)) {
-                controlGroups["BIOMA"][p] = p;
-            }
-        }
 
         for (let p in ams.Config.landUses) {
             if(ams.Config.landUses.hasOwnProperty(p)&&ams.Config.landUses[p]){
@@ -456,8 +453,9 @@ ams.App = {
             return false;
         });
         
-        let profileBiomeClick=function() {
+        let profileClick=function() {
             let conf={};
+
             conf["className"]=ams.App._suViewParams.classname;
             conf["spatialUnit"]=ams.Config.biome;
             conf["startDate"]=ams.App._dateControl.startdate;
@@ -471,11 +469,11 @@ ams.App = {
             conf["suName"]=ams.Config.biome;
             conf["landUse"]=ams.App._landUseList.join(',');
             ams.App.displayGraph(conf);
+
             return false;
         };
 
-        $("#profile-"+ams.BiomeConfig["Amazônia"].defaultWorkspace+"-button").click(profileBiomeClick);
-        $("#profile-"+ams.BiomeConfig["Cerrado"].defaultWorkspace+"-button").click(profileBiomeClick);
+        $("#profile-button").click(profileClick);
 
         let landUseFilterClick=function(evn) {
             $("#loading_data_info").css('display','block');
@@ -600,7 +598,10 @@ ams.App = {
                 l._source.options["cql_filter"] = cql;
                 cqlobj = {"cql_filter": cql};
             }
-            cqlobj["viewparams"] = "landuse:" + ams.App._landUseList.join('\\,');
+            cqlobj["viewparams"] = (
+                "landuse:" + ams.App._landUseList.join('\\,') + ";" +
+                "biomes:" + ams.App._biomes.join('\\,')
+            );
             this._addWmsOptionsBase(cqlobj);
 
             l._source._overlay.setParams(cqlobj);
