@@ -9,7 +9,7 @@ class AppConfigController:
     def __init__(self, db_url: str):
         self._conn = connect(db_url)
 
-    def read_class_groups(self):
+    def read_class_groups(self, biomes):
         """
         Gets the class names grouped by class groups.
         Including class titles and a required order to use on the frontend
@@ -20,10 +20,11 @@ class AppConfigController:
 			SELECT '{''name'':'''||dcg.name||''', ''title'':'''||dcg.title||'''' as c1,
 			dcg.orderby, '''classes'':[' || string_agg(''''||dc.name||'''', ',') || ']}' as c2
 			FROM public.class_group dcg, public.class dc
-			WHERE dcg.id=dc.group_id GROUP BY 1,2 ORDER BY dcg.orderby
+			WHERE dcg.id=dc.group_id AND dc.biome IN (%s)
+                        GROUP BY 1,2 ORDER BY dcg.orderby
 		) as tb1"""
         cur = self._conn.cursor()
-        cur.execute(sql)
+        cur.execute(sql % ",".join([f"'{_}'" for _ in biomes]))
         results = cur.fetchall()
         return "["+results[0][0]+"]"
 
@@ -42,34 +43,39 @@ class AppConfigController:
         results = cur.fetchall()
         return "["+results[0][0]+"]"
 
-    def read_spatial_units_for_subset(self, subset):
+    def read_spatial_units_for_subset(self, subset, biome="ALL"):
         """
         Gets the spatial units from database for the given subset.
         """
-        
-        sql = """SELECT string_agg( c1, ',' )
-		FROM (
-			SELECT string_agg('{''dataname'':'''||su.dataname||
-			''',''description'':'''||su.description||
-			''',''center_lat'':'|| su.center_lat || 
-			',''center_lng'':'|| su.center_lng ||
-			',''last_date'':'''||pd.date||'''}', ',') as c1
-			FROM public.spatial_units su, deter.deter_publish_date pd
-                        WHERE su.id IN (
-                            SELECT spatial_unit_id
-                            FROM public.spatial_units_subsets
-                            WHERE subset = '%s'
-                        )
-			GROUP BY su.id ORDER BY su.id ASC
-        
-		) as tb1
+        sql = """
+        WITH date_agg AS (
+            SELECT su.id as spatial_unit_id, su.dataname, su.description, su.center_lat, su.center_lng, MAX(pd.date) AS last_date
+            FROM public.spatial_units su, deter.deter_publish_date pd
+            WHERE su.id IN (
+                SELECT spatial_unit_id
+                FROM public.spatial_units_subsets
+                WHERE subset = '%s'
+            )
+            AND ('%s' = 'ALL' OR pd.biome = '%s')
+            GROUP BY su.id
+            ORDER BY su.id ASC
+        )
+        SELECT string_agg(
+            '{''dataname'':''' || da.dataname ||
+            ''',''description'':''' || da.description ||
+            ''',''center_lat'':''' || da.center_lat || 
+            ''',''center_lng'':''' || da.center_lng ||
+            ''',''last_date'':''' || da.last_date ||
+            '''}', 
+            ','
+        ) AS c1
+        FROM date_agg da;
         """
-
+        sql = sql % (subset, biome, biome)
         cur = self._conn.cursor()
-        cur.execute(sql % subset)
+        cur.execute(sql)
         results = cur.fetchall()
         return "["+results[0][0]+"]"
-
 
     def read_biomes(self):
         """
@@ -80,7 +86,6 @@ class AppConfigController:
         cur.execute(sql)
         results = [_[0] for _ in cur.fetchall()]
         return json.dumps(results)
-
 
     def read_municipalities(self):
         """
@@ -109,7 +114,6 @@ class AppConfigController:
               )
            )
         """
-        print(sql)
         cur = self._conn.cursor()
         cur.execute(sql)
         results = [_[0] for _ in cur.fetchall()]

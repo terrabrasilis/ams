@@ -32,7 +32,8 @@ def get_biome_config(endpoint):
     try:
         args = request.args
         appBiome = args["targetbiome"]
-        subset = "Bioma"
+        subset = args["subset"]
+        municipality = args["municipality"]
     except KeyError as ke:
         # exception KeyError
         # Raised when a mapping (dictionary) key is not found in the set of existing keys.
@@ -41,12 +42,23 @@ def get_biome_config(endpoint):
 
     try:
         dburl = Config.DB_URL
-
         ctrl = AppConfigController(dburl)
-        ldu = ctrl.read_land_uses()
-        sui_subset = ctrl.read_spatial_units_for_subset(subset=subset)
-        cg = ctrl.read_class_groups()
 
+        biomes = ctrl.read_biomes()  # all biomes
+        municipalities = ctrl.read_municipalities()  # all municipalities (group or municipality names)
+
+        if subset == "Bioma":
+            selected_biomes = json.dumps([appBiome])
+            municipality = "ALL"
+            sui_subset = ctrl.read_spatial_units_for_subset(subset=subset, biome=appBiome)
+        else:
+            selected_biomes = ctrl.read_municipality_biomes(municipality)
+            appBiome = json.loads(selected_biomes)[0]
+            sui_subset = ctrl.read_spatial_units_for_subset(subset=subset)
+
+        ldu = ctrl.read_land_uses()
+
+        cg = ctrl.read_class_groups(biomes=json.loads(selected_biomes))
         # incluing thresholds in the layer names
         cg = json.loads(cg.replace("'", '"'))
 
@@ -55,10 +67,6 @@ def get_biome_config(endpoint):
                 _['title'] += f" (>= {Config.RISK_THRESHOLD:.2f})"
                 break
         cg = json.dumps(cg)
-
-        biomes = ctrl.read_biomes()  # all biomes
-        municipalities = ctrl.read_municipalities()  # all municipalities (group or municipality names)
-        selected_biomes = json.dumps([appBiome]) if subset == "Bioma" else biomes  # used to filter
 
         res = {
             'geoserver_url': Config.GEOSERVER_URL,
@@ -70,8 +78,9 @@ def get_biome_config(endpoint):
             'municipalities': municipalities,
             'selected_subset': subset,
             'selected_biomes': selected_biomes,
+            'selected_municipality': municipality,
         }
-        # print(res)
+
         return json.dumps(res)
     except Exception as e:
         return "Something is wrong on the server. Please, send this error to our support service: terrabrasilis@inpe.br", 500

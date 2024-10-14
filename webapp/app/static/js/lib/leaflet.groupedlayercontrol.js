@@ -24,6 +24,7 @@ L.Control.GroupedLayers = L.Control.extend({
     this._groupList = [];
     this._domGroups = [];
     this._selectCtrls = {};
+    this._subsetChanged = true;
 
     for (i in controlGroups) {  // group
         type = controlGroups[i]["type"];
@@ -583,18 +584,20 @@ L.Control.GroupedLayers = L.Control.extend({
   },
 
   _onInputClick: function (e) {
-    var obj = this._getControlById(e.target.ctrlId);
+    var obj = JSON.parse(JSON.stringify(this._getControlById(e.target.ctrlId)));
 
     obj["inputtype"]=e.target.type;
     obj["checked"]=e.target.checked;
 
     if (obj.type === "selectControl") {
         var selectCtrl = this._selectCtrls[obj.name];
-        select = selectCtrl.querySelector('select');
+        var select = selectCtrl.querySelector('select');
 
         obj.group.name = obj.name.toUpperCase();
+        obj.subset = obj.name;
         obj.name = select.value;
         obj.acronym = select.value;
+        obj.subsetChanged = this._subsetChanged;
     }
 
     // dispache event to update layers using selected filters
@@ -608,6 +611,8 @@ L.Control.GroupedLayers = L.Control.extend({
 
     var radio = document.querySelector('input[type="radio"][data-user-defined="' + radioName + '"]');
     console.log(radio);
+
+    this._subsetChanged = false;
 
     radio.click();
   },

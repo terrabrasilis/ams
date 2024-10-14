@@ -30,6 +30,7 @@ ams.Map = {
                     + ";limit:" + this.limit
                     + ";risk:" + this.risk_threshold
                     + ";biomes:" + ams.App._biomes
+                    + ";municipality_group_name:" + ams.App._municipality
         };
 
         this.updateDates = function(dateControll) {

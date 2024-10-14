@@ -25,6 +25,7 @@ ams.App = {
     _landUseList: [],
     _biomes: [],
     _subset: null,
+    _municipality: null,
 
     run: function(geoserverUrl, spatialUnits, appClassGroups) {
 
@@ -35,6 +36,7 @@ ams.App = {
 
         this._biomes=ams.Config.appSelectedBiomes;
         this._subset=ams.Config.appSelectedSubset;
+        this._municipality=ams.Config.appSelectedMunicipality;
 
     	// REMOVE ME (Debug Purposes)
         // /*
@@ -118,7 +120,8 @@ ams.App = {
             "cql_filter": appClassGroups.getCqlFilter(this._suViewParams, true),
             "viewparams": (
                 "landuse:" + ams.App._landUseList.join('\\,') + ";" +
-                "biomes:" + ams.App._biomes.join('\\,')
+                "biomes:" + ams.App._biomes.join('\\,') + ";" +
+                "municipality_group_name:" + ams.App._municipality_group_name
             )
         };
         ams.App._addWmsOptionsBase(tbDeterAlertsWmsOptions);
@@ -128,7 +131,8 @@ ams.App = {
             "cql_filter": appClassGroups.getCqlFilter(this._suViewParams, false),
             "viewparams": (
                 "landuse:" + ams.App._landUseList.join('\\,')  + ";" +
-                "biomes:" + ams.App._biomes.join('\\,')
+                "biomes:" + ams.App._biomes.join('\\,') + ";" +
+                "municipality_group_name:" + ams.App._municipality_group_name
             )
         };
         ams.App._addWmsOptionsBase(AFWmsOptions);
@@ -138,7 +142,8 @@ ams.App = {
             "cql_filter": "(risk >= " + ams.Config.defaultRiskFilter.threshold + ")",
             "viewparams": (
                 "landuse:" + ams.App._landUseList.join('\\,') +  ";" +
-                "biomes:" + ams.App._biomes.join('\\,')
+                "biomes:" + ams.App._biomes.join('\\,') + ";" +
+                "municipality_group_name:" + ams.App._municipality_group_name
             )
         };
         ams.App._addWmsOptionsBase(RKWmsOptions);
@@ -307,7 +312,7 @@ ams.App = {
                 let layerToAdd,needUpdateSuLayers=true;
                 
                 if(e.group.name=='BIOMA'){
-                    if(e.acronym==ams.Config.biome){
+                    if(e.acronym==ams.Config.biome && e.subsetChanged==false){
                         return;
                     }
                     if(ams.App._landUseList.length!=ams.Config.landUses.length){
@@ -321,15 +326,38 @@ ams.App = {
                     ams.App._priorViewParams=null;
                     ams.App._diffOn = ( (ams.Config.defaultFilters.diffClassify=="onPeriod")?(false):(true) );
                     // write on local storage
-                    localStorage.setItem('ams.previous.biome.setting.selection', e.acronym);
+
+                    // localStorage.setItem('ams.previous.biome.setting.selection', e.acronym);
+
                     needUpdateSuLayers=false;// disable the call at the end because the call is inside the Promise callback below
-                    ams.Utils.biomeChanges(e.acronym).then(
+                    ams.Utils.biomeChanges(e.acronym, e.subset).then(
+                        ()=>{
+                            ams.App._updateSpatialUnitLayer();
+                        }
+                    );
+                } else if(e.group.name =='MUNIC\xcdPIOS'){
+                    if(ams.App._landUseList.length!=ams.Config.landUses.length){
+                        $('.toast').toast('show');
+                        $('.toast-body').html("O filtro por categorias fundiárias foi restaurado ao padrão.");
+                        // to avoid the toast msg at _updateSpatialUnitLayer
+                        ams.App._landUseList=ams.Config.landUses.map((lu)=>{return(lu.id);});
+                    }
+                    // reset some data to avoid getting wrong data
+                    ams.App._suViewParams=null;
+                    ams.App._priorViewParams=null;
+                    ams.App._diffOn = ( (ams.Config.defaultFilters.diffClassify=="onPeriod")?(false):(true) );
+                    // write on local storage
+
+                    // localStorage.setItem('ams.previous.biome.setting.selection', e.acronym);
+
+                    needUpdateSuLayers=false; // disable the call at the end because the call is inside the Promise callback below
+                    ams.Utils.biomeChanges("all", e.subset, e.name).then(
                         ()=>{
                             ams.App._updateSpatialUnitLayer();
                         }
                     );
 
-                }else if(e.group.name=='INDICADOR'){// change reference layer (deter, fires or risk)?
+                } else if(e.group.name=='INDICADOR'){// change reference layer (deter, fires or risk)?
                     ams.App._riskThreshold=0; // reset the risk limit so as not to interfere with the min max query
                     if(e.acronym=='RK'){
                         layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.ibamaRisk;
@@ -600,7 +628,8 @@ ams.App = {
             }
             cqlobj["viewparams"] = (
                 "landuse:" + ams.App._landUseList.join('\\,') + ";" +
-                "biomes:" + ams.App._biomes.join('\\,')
+                "biomes:" + ams.App._biomes.join('\\,') + ";" +
+                "municipality_group_name:" + ams.App._municipality_group_name
             );
             this._addWmsOptionsBase(cqlobj);
 

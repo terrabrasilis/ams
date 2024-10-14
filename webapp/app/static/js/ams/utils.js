@@ -32,10 +32,8 @@ ams.Utils = {
       // use the previous selection or default biome (see config.js)
       let b=localStorage.getItem('ams.previous.biome.setting.selection');
       // ams.Utils.biomeChanges( ((b!==null)?(b):(ams.defaultBiome)) );
-      ams.Utils.biomeChanges(ams.defaultBiome, ams.defaultSubset);
+      ams.Utils.biomeChanges(ams.defaultBiome);
     }else{
-      console.log(generalConfig);
-
       // evaluate the user area_profile on start app
       ams.Auth.evaluate();
 
@@ -52,13 +50,12 @@ ams.Utils = {
       ams.Config.biome = generalConfig.appBiome;
       ams.Config.appSelectedSubset = generalConfig.selected_subset;
       ams.Config.appSelectedBiomes = JSON.parse(generalConfig.selected_biomes.replace(/'/g,"\""));
-      ams.Config.appSelectedMunicipality = ams.Config.defaultMunicipality;
+      ams.Config.appSelectedMunicipality = generalConfig.selected_municipality;
 
       var spatialUnitsSubset = new ams.Map.SpatialUnits(
           JSON.parse(generalConfig.spatial_units_info_for_subset.replace(/'/g,"\"")),
           ams.Config.subset.defaultFilters.spatialUnit
       );
-      console.log(spatialUnitsSubset);
 
       // class groups
       var appClassGroups = new ams.Map.AppClassGroups(
@@ -98,15 +95,28 @@ ams.Utils = {
     /**
    * Used when selected biome changes
    */
-    biomeChanges: function(selectedBiome, selectedSubset=" "){
+    biomeChanges: function(selectedBiome, selectedSubset, selectedMunicipality){
+      // console.log(selectedBiome, selectedSubset, selectedMunicipality);
+      if (selectedSubset === undefined) {
+          selectedSubset = ams.defaultSubset;
+      }
+
+      if (selectedMunicipality === undefined) {
+          selectedMunicipality = ams.defaultMunicipality;
+      }
+
       const loadConfig = new Promise((resolve, reject) => {
 
         /**
          * If we need read configurations from server by a selected biome.
          * @param {string} selectedBiome The name of selected biome.
          */
-        async function getConfigByBiome( selectedBiome, selectedSubset ) {
-          let response = await fetch("biome/config?targetbiome=" + selectedBiome + "&subset=" + selectedSubset);
+        async function getConfigByBiome( selectedBiome, selectedSubset, selectedMunicipality ) {
+          let response = await fetch(
+              "biome/config?targetbiome=" + selectedBiome +
+              "&subset=" + selectedSubset +
+              "&municipality=" + selectedMunicipality
+          );
           if (response&&response.ok) {
             let generalConfig = await response.json();
 
@@ -156,14 +166,14 @@ ams.Utils = {
               if(ams.BiomeConfig.hasOwnProperty(p))
                 localStorage.removeItem('ams.biome.config.'+p);
             }
-            getConfigByBiome(selectedBiome);
+            getConfigByBiome(selectedBiome, selectedSubset, selectedMunicipality);
           }else{
             let biomeConfiguration=JSON.parse(localStorage.getItem('ams.biome.config.'+selectedBiome));
             ams.Utils.startApp(biomeConfiguration);
             resolve();
           }
         }else{
-          getConfigByBiome(selectedBiome);
+          getConfigByBiome(selectedBiome, selectedSubset, selectedMunicipality);
         }
 
       });// end of promise
