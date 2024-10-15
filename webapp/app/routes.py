@@ -53,7 +53,7 @@ def get_biome_config(endpoint):
             sui_subset = ctrl.read_spatial_units_for_subset(subset=subset, biome=appBiome)
         else:
             selected_biomes = ctrl.read_municipality_biomes(municipality)
-            appBiome = json.loads(selected_biomes)[0]
+            appBiome = ','.join(json.loads(selected_biomes))
             sui_subset = ctrl.read_spatial_units_for_subset(subset=subset)
 
         ldu = ctrl.read_land_uses()
@@ -106,6 +106,7 @@ def get_profile(endpoint):
         unit = params['unit']
         appBiome = params['targetbiome']
         riskThreshold = params['riskThreshold']
+        municipality = params["municipality"]
 
     except KeyError as ke:
         # exception KeyError

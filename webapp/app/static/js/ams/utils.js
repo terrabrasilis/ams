@@ -41,7 +41,9 @@ ams.Utils = {
       ams.Utils.setMapHeight();
 
       // config
-      ams.Config = ams.BiomeConfig[generalConfig.appBiome];
+      var biome = generalConfig.appBiome.split(",")[0];
+
+      ams.Config = ams.BiomeConfig[biome];
 
       ams.Config.allBiomes = JSON.parse(generalConfig.biomes.replace(/'/g,"\""));
       ams.Config.allMunicipalities = JSON.parse(generalConfig.municipalities.replace(/'/g,"\""));
@@ -96,7 +98,8 @@ ams.Utils = {
    * Used when selected biome changes
    */
     biomeChanges: function(selectedBiome, selectedSubset, selectedMunicipality){
-      // console.log(selectedBiome, selectedSubset, selectedMunicipality);
+      console.log(selectedBiome, selectedSubset, selectedMunicipality);
+
       if (selectedSubset === undefined) {
           selectedSubset = ams.defaultSubset;
       }

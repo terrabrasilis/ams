@@ -163,7 +163,10 @@ ams.Map = {
                 + ";orderby:" + propertyName
                 + ";landuse:" + ams.App._landUseList.join('%5C,')
                 + ";risk:" + viewParams.risk_threshold
-                + ";limit:1";
+                + ";limit:1"
+                + ";biomes:" + ams.App._biomes.join('\\,')
+                + ";municipality_group_name:" + ams.App._municipality;
+
             let res;
             $.ajax({
                 dataType: "json",
@@ -242,7 +245,7 @@ ams.Map = {
             dataName = (dataName)?(dataName):(viewParams.classname);
             dataName=dataName.replaceAll(" ", "_");
 
-            let filename = ams.Config.biome
+            let filename = ams.Config.biome.replaceAll(",", "_")
                 + "_"    
                 + suName
                 + "_"
@@ -269,7 +272,11 @@ ams.Map = {
                         + ";orderby:" + propertyName
                         + ";landuse:" + ams.App._landUseList.join('%5C,')
                         + ";risk:" + viewParams.risk_threshold
-                        + ";limit:ALL";
+                        + ";limit:ALL"
+                        + ";biomes:" + ams.App._biomes.join('\\,')
+                        + ";municipality_group_name:" + ams.App._municipality;
+
+            console.log(wfsUrl);
 
             let ftype = (extension == 'csv')? "text/csv" : "application/zip";
 

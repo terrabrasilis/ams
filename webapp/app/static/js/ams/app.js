@@ -121,7 +121,7 @@ ams.App = {
             "viewparams": (
                 "landuse:" + ams.App._landUseList.join('\\,') + ";" +
                 "biomes:" + ams.App._biomes.join('\\,') + ";" +
-                "municipality_group_name:" + ams.App._municipality_group_name
+                "municipality_group_name:" + ams.App._municipality
             )
         };
         ams.App._addWmsOptionsBase(tbDeterAlertsWmsOptions);
@@ -132,7 +132,7 @@ ams.App = {
             "viewparams": (
                 "landuse:" + ams.App._landUseList.join('\\,')  + ";" +
                 "biomes:" + ams.App._biomes.join('\\,') + ";" +
-                "municipality_group_name:" + ams.App._municipality_group_name
+                "municipality_group_name:" + ams.App._municipality
             )
         };
         ams.App._addWmsOptionsBase(AFWmsOptions);
@@ -143,7 +143,7 @@ ams.App = {
             "viewparams": (
                 "landuse:" + ams.App._landUseList.join('\\,') +  ";" +
                 "biomes:" + ams.App._biomes.join('\\,') + ";" +
-                "municipality_group_name:" + ams.App._municipality_group_name
+                "municipality_group_name:" + ams.App._municipality
             )
         };
         ams.App._addWmsOptionsBase(RKWmsOptions);
@@ -496,6 +496,7 @@ ams.App = {
             
             conf["suName"]=ams.Config.biome;
             conf["landUse"]=ams.App._landUseList.join(',');
+
             ams.App.displayGraph(conf);
 
             return false;
@@ -629,7 +630,7 @@ ams.App = {
             cqlobj["viewparams"] = (
                 "landuse:" + ams.App._landUseList.join('\\,') + ";" +
                 "biomes:" + ams.App._biomes.join('\\,') + ";" +
-                "municipality_group_name:" + ams.App._municipality_group_name
+                "municipality_group_name:" + ams.App._municipality
             );
             this._addWmsOptionsBase(cqlobj);
 
@@ -901,6 +902,8 @@ ams.App = {
             jsConfig["unit"]=ams.Map.PopupControl._unit;
             jsConfig["targetbiome"]=ams.Config.biome;
             jsConfig["riskThreshold"]=ams.App._suViewParams.risk_threshold;
+            jsConfig["municipality"]=ams.App._municipality
+
             let jsConfigStr = JSON.stringify(jsConfig);
             let response = await fetch("callback/spatial_unit_profile?sData=" + jsConfigStr).catch(
                 ()=>{

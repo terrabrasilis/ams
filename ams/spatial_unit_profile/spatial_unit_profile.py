@@ -48,6 +48,8 @@ class SpatialUnitProfile():
         self._risk_threshold = 0
 
         self._custom = 'custom' in params
+
+        self._municipality = params['municipality']
             
         # default column to sum statistics
         self.default_column="area"
@@ -199,8 +201,22 @@ class SpatialUnitProfile():
         """
     
         where_group = "" if(self._name=='*') else f"""b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}' AND"""
+
         biomes = ",".join([f"'{_}'" for _ in self._appBiome.split(",")])
-        where_biome = f" a.biome IN ({biomes}) "
+        where_biome = f"('{self._appBiome}' = 'ALL' OR a.biome IN ({biomes}))"
+        
+        where_municipality = f""" AND (
+            '{self._municipality}' = 'ALL' OR a.geocode =
+            ANY(
+                SELECT geocode
+                FROM public.municipalities_group_members mgm
+                WHERE mgm.group_id = (
+                    SELECT mg.id
+                    FROM public.municipalities_group mg
+                    WHERE mg.name='{self._municipality}'
+                )
+            )   
+        ) """
 
         group_by_periods=f"""
             WITH calendar AS (
@@ -218,6 +234,7 @@ class SpatialUnitProfile():
                 WHERE
                     {where_group}
                     {where_biome}
+                    {where_municipality}
                     AND classname = '{self._classname}'
                     AND date >= calendar.fd
                     AND date <= calendar.ld
@@ -237,7 +254,8 @@ class SpatialUnitProfile():
             ORDER BY
                 2 ASC
         """
-        # print(" ".join(group_by_periods.split()))
+        # print(group_by_periods)
+
         return group_by_periods
 
     def execute_sql(self, sql):
@@ -265,10 +283,24 @@ class SpatialUnitProfile():
     def area_per_land_use(self):
         where_risk="" if(self._classname!=self._risk_classname) else f" a.risk >= {self._risk_threshold} AND "
         where_spatial_unit="" if(self._name=='*') else f"""b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}' AND"""
-        biomes = ",".join([f"'{_}'" for _ in self._appBiome.split(",")])
-        where_biome = f" a.biome IN ({biomes}) AND "
 
-        where_filter=f"{where_biome} {where_risk} {where_spatial_unit}"
+        biomes = ",".join([f"'{_}'" for _ in self._appBiome.split(",")])
+        where_biome = f"('{self._appBiome}' = 'ALL' OR a.biome IN ({biomes})) AND"
+
+        where_municipality = f"""(
+            '{self._municipality}' = 'ALL' OR a.geocode =
+            ANY(
+                SELECT geocode
+                FROM public.municipalities_group_members mgm
+                WHERE mgm.group_id = (
+                    SELECT mg.id
+                    FROM public.municipalities_group mg
+                    WHERE mg.name='{self._municipality}'
+                )
+            )   
+        ) AND """
+
+        where_filter=f"{where_biome} {where_municipality} {where_risk} {where_spatial_unit}"
 
         sql = f"""
             SELECT
@@ -299,7 +331,7 @@ class SpatialUnitProfile():
             ORDER BY
                 a.priority ASC 
         """
-        # print(" ".join(sql.split()))
+        # print(sql)
 
         df = self.resultset_as_dataframe(sql)
         df.columns = ['Categoria Fundiária', self.default_col_name]

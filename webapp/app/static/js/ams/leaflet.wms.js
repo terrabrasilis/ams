@@ -22,6 +22,7 @@ ams.LeafletWms = {
                 return;
             }
             let featureInfo = JSON.parse(jsonTxt);
+
             let htmlInfo="",name="",type="";
             if(featureInfo.numberReturned>=1){
                 if (this._isDeterInfo()) {
@@ -146,6 +147,9 @@ ams.LeafletWms = {
             
             conf["suName"]=n;
             conf["landUse"]=ams.App._landUseList.join(',');
+            conf["targetbiome"]=ams.Config.biome;
+            conf["municipality"]=ams.App._municipality
+
             return conf;
         },
 
