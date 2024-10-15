@@ -31,6 +31,7 @@ def get_biome_config(endpoint):
 
     try:
         args = request.args
+
         appBiome = args["targetbiome"]
         subset = args["subset"]
         municipality = args["municipality"]
@@ -175,6 +176,7 @@ def get_alerts():
             'tempUnit',
             'suName',
             'filenamePrefix',
+            'municipality',
         ]
     )
 
@@ -190,8 +192,7 @@ def get_alerts():
             name = '*'
 
         zip_data = prepare_alerts_to_save(
-            dburl=Config.DB_CERRADO_URL if (
-                biome == 'Cerrado') else Config.DB_AMAZON_URL,
+            dburl = Config.DB_URL,
             is_authenticated=params['isAuthenticated'],
             spatial_unit=params['spatialUnit'],
             classname=params['className'],
@@ -199,7 +200,9 @@ def get_alerts():
             temporal_unit=params['tempUnit'],
             name=name,
             custom='custom' in params,
-            filename_prefix=params['filenamePrefix']
+            filename_prefix=params['filenamePrefix'],
+            biomes=biome,
+            municipality=params['municipality'],
         )
     except Exception as e:
         print(e)

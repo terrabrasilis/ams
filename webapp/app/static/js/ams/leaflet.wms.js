@@ -292,17 +292,9 @@ ams.LeafletWms = {
                 "areatotalkm": 0,
                 "areauckm": 0,
                 "municipality": "",
-                "ncar_ids": null,
                 "uc": null,
                 "uf": "",
-                "car_imovel": null,
-                "continuo": "",
-                "deltad": 0,
-                "dominio": "",
-                "est_fund": "",
-                "ncar_ids": null,
-                "tp_dominio": "",
-                "velocidade": 0
+                "biome": "",
             };
             this._updateResults(result, featureInfo);
             return this._createDeterInfoTable(result);

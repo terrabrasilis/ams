@@ -48,7 +48,12 @@ ams.PeriodHandler = {
             ams.App._dateControl.setPeriod(date, ams.App._currentTemporalAggregate, datetype);
         ams.App._suViewParams.updateDates(ams.App._dateControl);
         ams.App._priorViewParams.updateDates(ams.App._dateControl);
-        ams.App._updateSpatialUnitLayer();
+
+        if (!ams.App.hasSpatialUnitLayer()) {
+            ams.App.addSpatialUnitLayer();
+        } else {        
+            ams.App._updateSpatialUnitLayer();
+        }
         ams.App._updateReferenceLayer();
         this._updatePeriodInfo();
         $('#datepicker-start').datepicker().val(this._startdate.toLocaleDateString("pt-BR"));

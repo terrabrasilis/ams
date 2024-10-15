@@ -813,6 +813,14 @@ ams.App = {
     _getLayerPrefix: function(){
         return this._currentSULayerName + ( (this._currentClassify=="onPeriod")?("_view"):("_diff_view") );
     },
+    
+    hasSpatialUnitLayer: function () {
+        return this._addedLayers.hasOwnProperty(ams.App._getLayerPrefix());
+    },
+
+    addSpatialUnitLayer: function() {
+        this._addSpatialUnitLayer(this._getLayerPrefix(),this._propertyName);
+    },
 
     _getMinMax: function(layerName, propertyName){
         let min=( (ams.App._diffOn)?(ams.App._wfs.getMin(layerName, propertyName, ams.App._suViewParams)):(0) );
@@ -832,9 +840,10 @@ ams.App = {
             return false;
         }
         let l=ams.App._getLayerByName(ams.App._getLayerPrefix());
-        if(l && !ams.App._map.hasLayer(l)){
+        if(l && !ams.App._map.hasLayer(l)) {
             ams.App._addSpatialUnitLayer(ams.App._getLayerPrefix(),ams.App._propertyName);
         }
+
         return mm;
     },
 

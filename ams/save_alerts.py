@@ -53,7 +53,9 @@ def prepare_alerts_to_save(
     temporal_unit: str,
     name: str,
     custom: bool,
-    filename_prefix: str    
+    filename_prefix: str,
+    biomes: str,
+    municipality: str,
 ):
     """
     Retrieve spatial unit alerts, convert them into a shapefile format, 
@@ -87,18 +89,35 @@ def prepare_alerts_to_save(
         [
             f"deter.{_}" for _ in [
                 "geom", "gid", "origin_gid", "classname", "date", "areamunkm", "areatotalkm", "areauckm",
-                "mun", "ncar_ids", "uc", "uf", "car_imovel", "continuo", "deltad",
-                "est_fund", "dominio", "tp_dominio", "velocidade"
+                "mun", "uc", "uf"
             ]
         ]
     )
 
     table = "deter_auth" if is_authenticated else "deter"
 
+    biomes_ = ",".join([f"'{_}'" for _ in biomes.split(",")])
+    where_biome = f"('{biomes}' = 'ALL' OR deter.biome IN ({biomes_}))"
+
+    where_municipality = f""" (
+        '{municipality}' = 'ALL' OR deter.geocode =
+        ANY(
+            SELECT geocode
+            FROM public.municipalities_group_members mgm
+            WHERE mgm.group_id = (
+                SELECT mg.id
+                FROM public.municipalities_group mg
+                WHERE mg.name='{municipality}'
+            )
+        )   
+    ) """
+
     alerts_sql = f'''
     SELECT {columns}
     FROM deter.{table} deter, public."{spatial_unit}" su
     WHERE deter.date > '{start_period_date}' AND deter.date <= '{start_date}'
+    AND {where_biome}
+    AND {where_municipality}
     AND su.{spatial_unit_table_id} = '{name}'
     AND ({classname_cond})
     AND NOT ST_IsEmpty(ST_Intersection(deter.geom, su.geometry));
