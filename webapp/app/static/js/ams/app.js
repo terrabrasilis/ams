@@ -6,7 +6,7 @@ ams.App = {
     _layerControl: null,
     _baseLayers: [],
     _addedLayers: [],
-    _biomeLayer: null,
+    _borderLayer: null,
     _appClassGroups: null,
     _suViewParams: null,
     _priorViewParams: null,
@@ -179,18 +179,19 @@ ams.App = {
         ams.Config.defaultFilters.spatialUnit=this._spatialUnits.getDefault().dataname;// update the default for later use in filter change in control.
         this._addSpatialUnitLayer(this._getLayerPrefix(),this._propertyName);
 
-        // Fixed biome border layer
-        var tbBiomeLayerName = ams.Config.defaultLayers.biomeBorder;
+        var tbBorderLayerName = (this._subset == "Bioma") ? ams.Config.defaultLayers.biomeBorder : ams.Config.defaultLayers.municipalitiesBorder;
         var onlyWmsBase = {
             identify: false,
             "viewparams": (
-                "biomes:" + ams.App._biomes.join('\\,')
+                "biomes:" + ams.App._biomes.join('\\,') + ";" +
+                    "municipality_group_name:" + ams.App._municipality
             )
         }; // set this to disable GetFeatureInfo
         ams.App._addWmsOptionsBase(onlyWmsBase);
-        var tbBiomeSource = new ams.LeafletWms.Source(this._baseURL, onlyWmsBase, this._appClassGroups);
-        ams.App._biomeLayer = tbBiomeSource.getLayer(tbBiomeLayerName);
-        ams.App._biomeLayer.addTo(map).bringToBack();
+        
+        var tbBorderSource = new ams.LeafletWms.Source(this._baseURL, onlyWmsBase, this._appClassGroups);
+        ams.App._borderLayer = tbBorderSource.getLayer(tbBorderLayerName);
+        ams.App._borderLayer.addTo(map).bringToBack();
 
         // ---------------------------------------------------------------------------------
         // this structure is used into leaflet.groupedlayercontrol.js to create controls for filters panel...
@@ -327,7 +328,7 @@ ams.App = {
                     ams.App._diffOn = ( (ams.Config.defaultFilters.diffClassify=="onPeriod")?(false):(true) );
                     // write on local storage
 
-                    // localStorage.setItem('ams.previous.biome.setting.selection', e.acronym);
+                    localStorage.setItem('ams.previous.biome.setting.selection', e.acronym);
 
                     needUpdateSuLayers=false;// disable the call at the end because the call is inside the Promise callback below
                     ams.Utils.biomeChanges(e.acronym, e.subset).then(
@@ -717,8 +718,8 @@ ams.App = {
                 if(lname!==false) ol[lname]=ams.App._addedLayers[ll];
             }
         }
-        if(ams.App._biomeLayer) {
-            ol[ams.Config.biome]=ams.App._biomeLayer;
+        if(ams.App._borderLayer) {
+            ol[ams.Config.biome]=ams.App._borderLayer;
         }
         ams.App._layerControl=L.control.layers(bs,ol).addTo(ams.App._map);
     },

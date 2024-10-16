@@ -52,17 +52,17 @@ def get_biome_config(endpoint):
             selected_biomes = json.dumps([appBiome])
             municipality = "ALL"
             sui_subset = ctrl.read_spatial_units_for_subset(subset=subset, biome=appBiome)
+            cg = ctrl.read_class_groups(biomes=json.loads(selected_biomes))
         else:
-            selected_biomes = ctrl.read_municipality_biomes(municipality)
+            selected_biomes = json.dumps(["ALL"])
             appBiome = ','.join(json.loads(selected_biomes))
             sui_subset = ctrl.read_spatial_units_for_subset(subset=subset)
+            cg = ctrl.read_class_groups(biomes=json.loads(biomes))
 
         ldu = ctrl.read_land_uses()
 
-        cg = ctrl.read_class_groups(biomes=json.loads(selected_biomes))
         # incluing thresholds in the layer names
         cg = json.loads(cg.replace("'", '"'))
-
         for _ in cg:
             if _['name'] == 'RK':
                 _['title'] += f" (>= {Config.RISK_THRESHOLD:.2f})"

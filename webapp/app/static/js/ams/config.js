@@ -41,6 +41,7 @@ ams.BiomeConfig["Amazônia"] = {
   defaultWorkspace: 'amsnew1',
   defaultLayers:{
     biomeBorder:"amsnew1:biome_border",
+    municipalitiesBorder:"amsnew1:municipalities_border",
     deter:"deter_ams", // The layer name of DETER alerts from TerraBrasilis service. The workspace is dinamic and based on authentication state
     activeFire:"active-fire", // The layer name of Focos de Queimadas from TerraBrasilis service. The workspace is dinamic and based on authentication state
     ibamaRisk: "risk-ibama-weekly-data", // The layer name of weekly risk with the default prediction data of risk of deforestation from IBAMA.
@@ -64,6 +65,7 @@ ams.BiomeConfig["Cerrado"] = {
   defaultWorkspace: 'amsnew1',
   defaultLayers:{
     biomeBorder:"amsnew1:biome_border",
+    municipalitiesBorder:"amsnew1:municipalities_border",
     deter:"deter_ams", // The layer name of DETER alerts from TerraBrasilis service. The workspace is dinamic and based on authentication state
     activeFire:"active-fire", // The layer name of Focos de Queimadas from TerraBrasilis service. The workspace is dinamic and based on authentication state
     lastDate: "last_date" // The layer name to get the last update date of available data. The workspace is dinamic and based on authentication state
@@ -83,3 +85,4 @@ ams.BiomeConfig["Cerrado"] = {
 
 ams.BiomeConfig["Cerrado"] = {...ams.BiomeConfig["Cerrado"], ...defaultConfig};
 ams.BiomeConfig["Amazônia"] = {...ams.BiomeConfig["Amazônia"], ...defaultConfig};
+ams.BiomeConfig["ALL"] = {...ams.BiomeConfig["Amazônia"], ...defaultConfig};

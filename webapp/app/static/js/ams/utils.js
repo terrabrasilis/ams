@@ -31,8 +31,7 @@ ams.Utils = {
     if(typeof generalConfig=='undefined'){
       // use the previous selection or default biome (see config.js)
       let b=localStorage.getItem('ams.previous.biome.setting.selection');
-      // ams.Utils.biomeChanges( ((b!==null)?(b):(ams.defaultBiome)) );
-      ams.Utils.biomeChanges(ams.defaultBiome);
+      ams.Utils.biomeChanges( ((b!==null)?(b):(ams.defaultBiome)) );
     }else{
       // evaluate the user area_profile on start app
       ams.Auth.evaluate();
@@ -127,6 +126,8 @@ ams.Utils = {
               // write on local storage
               localStorage.setItem('ams.biome.config.'+selectedBiome, JSON.stringify(generalConfig));
               localStorage.setItem('ams.config.created.at', (new Date()).toISOString().split('T')[0] );
+              localStorage.setItem('ams.config.subset', selectedSubset);
+              localStorage.setItem('ams.config.municipality', selectedMunicipality);
               ams.Utils.startApp(generalConfig);
               resolve();
             }else{
@@ -164,7 +165,11 @@ ams.Utils = {
           // the local storage expiration date 
           let createdAt=new Date(localStorage.getItem('ams.config.created.at')+'T03:00:00.000Z');
           let nowDate=new Date((new Date()).toISOString().split('T')[0]+'T03:00:00.000Z');
-          if(createdAt<nowDate){
+          if(
+              createdAt<nowDate ||
+              localStorage.getItem('ams.config.subset') != selectedSubset ||
+              localStorage.getItem('ams.config.municipality') != selectedMunicipality
+          ) {
             for (let p in ams.BiomeConfig) {
               if(ams.BiomeConfig.hasOwnProperty(p))
                 localStorage.removeItem('ams.biome.config.'+p);
