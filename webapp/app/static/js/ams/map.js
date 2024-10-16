@@ -201,7 +201,8 @@ ams.Map = {
             "&propertyName=" + propertyName +
             "&outputFormat=json" +
             "&viewparams=classname:" + classname +
-            ";landuse:" + ams.App._landUseList.join('%5C,');
+            ";landuse:" + ams.App._landUseList.join('%5C,') +
+            ";biomes:" + ams.App._biomes.join('\\,');
             let res;
             $.ajax({
             dataType: "json",

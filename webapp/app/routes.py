@@ -1,6 +1,8 @@
 import json
 import os
 
+from datetime import datetime
+
 from ams.save_alerts import prepare_alerts_to_save
 from ams.spatial_unit_profile import SpatialUnitProfile
 from flask import render_template, request, send_file
@@ -31,10 +33,10 @@ def get_biome_config(endpoint):
 
     try:
         args = request.args
-
         appBiome = args["targetbiome"]
         subset = args["subset"]
         municipality = args["municipality"]
+        is_authenticated = args['isAuthenticated'] == "true"
     except KeyError as ke:
         # exception KeyError
         # Raised when a mapping (dictionary) key is not found in the set of existing keys.
@@ -52,12 +54,17 @@ def get_biome_config(endpoint):
             selected_biomes = json.dumps([appBiome])
             municipality = "ALL"
             sui_subset = ctrl.read_spatial_units_for_subset(subset=subset, biome=appBiome)
-            cg = ctrl.read_class_groups(biomes=json.loads(selected_biomes))
+            cg = ctrl.read_class_groups(biomes=[appBiome])
         else:
             selected_biomes = json.dumps(["ALL"])
             appBiome = ','.join(json.loads(selected_biomes))
             sui_subset = ctrl.read_spatial_units_for_subset(subset=subset)
             cg = ctrl.read_class_groups(biomes=json.loads(biomes))
+
+        publish_date = (
+            ctrl.read_publish_date(biomes=json.loads(selected_biomes)) if not is_authenticated else
+            datetime.now().strftime("%Y-%m-%d")
+        )
 
         ldu = ctrl.read_land_uses()
 
@@ -80,6 +87,7 @@ def get_biome_config(endpoint):
             'selected_subset': subset,
             'selected_biomes': selected_biomes,
             'selected_municipality': municipality,
+            'publish_date': publish_date,
         }
 
         return json.dumps(res)

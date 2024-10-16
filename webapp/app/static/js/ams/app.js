@@ -47,11 +47,12 @@ ams.App = {
 
         this._wfs = new ams.Map.WFS(geoserverUrl);
         var ldLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.lastDate;
-
         var temporalUnits = new ams.Map.TemporalUnits();
         this._dateControl = new ams.Date.DateController();
         let lastDateDynamic = this._wfs.getLastDate(ldLayerName);
-        lastDateDynamic = lastDateDynamic?lastDateDynamic:this._spatialUnits.getDefault().last_date;        
+        lastDateDynamic = lastDateDynamic?lastDateDynamic:this._spatialUnits.getDefault().last_date;
+        lastDateDynamic = ams.Date.getMin(ams.Config.publishDate, lastDateDynamic);
+
         this._currentTemporalAggregate = temporalUnits.getAggregates()[0].key;
         this._dateControl.setPeriod(lastDateDynamic, this._currentTemporalAggregate);
         this._baseURL = geoserverUrl + "/wms";

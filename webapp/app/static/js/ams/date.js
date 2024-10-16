@@ -179,6 +179,15 @@ ams.Date = {
         return ams.Date.DateController.toUTCDate(date);
     },
 
+    getMin: function (dateStr1, dateStr2) {
+        var date1 = new Date(dateStr1);
+        var date2 = new Date(dateStr2);
+
+        var minDate = date1 < date2 ? date1 : date2;
+
+        return minDate.toISOString().slice(0, 10);
+    }
+
 };
 
 if(typeof module !== 'undefined') {

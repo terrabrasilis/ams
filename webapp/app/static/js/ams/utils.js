@@ -52,6 +52,7 @@ ams.Utils = {
       ams.Config.appSelectedSubset = generalConfig.selected_subset;
       ams.Config.appSelectedBiomes = JSON.parse(generalConfig.selected_biomes.replace(/'/g,"\""));
       ams.Config.appSelectedMunicipality = generalConfig.selected_municipality;
+      ams.Config.publishDate = generalConfig.publish_date;
 
       var spatialUnitsSubset = new ams.Map.SpatialUnits(
           JSON.parse(generalConfig.spatial_units_info_for_subset.replace(/'/g,"\"")),
@@ -117,7 +118,8 @@ ams.Utils = {
           let response = await fetch(
               "biome/config?targetbiome=" + selectedBiome +
               "&subset=" + selectedSubset +
-              "&municipality=" + selectedMunicipality
+              "&municipality=" + selectedMunicipality +
+              "&isAuthenticated=" + ams.Auth.isAuthenticated()
           );
           if (response&&response.ok) {
             let generalConfig = await response.json();

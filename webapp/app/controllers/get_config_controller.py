@@ -118,3 +118,18 @@ class AppConfigController:
         cur.execute(sql)
         results = [_[0] for _ in cur.fetchall()]
         return json.dumps(results)
+
+    def read_publish_date(self, biomes):
+        """
+        Gets the deter publish date.
+        """
+        biomes  = ",".join([f"'{_}'" for _ in biomes])
+
+        sql = f"""
+            SELECT MAX(date) FROM deter.deter_publish_date dpd
+            WHERE ('ALL' IN (%s) OR dpd.biome IN (%s));
+        """
+        
+        cur = self._conn.cursor()
+        cur.execute(sql % (biomes, biomes))
+        return cur.fetchone()[0].strftime("%Y-%m-%d")
