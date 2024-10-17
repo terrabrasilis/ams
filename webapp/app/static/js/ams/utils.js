@@ -56,7 +56,7 @@ ams.Utils = {
 
       var spatialUnitsSubset = new ams.Map.SpatialUnits(
           JSON.parse(generalConfig.spatial_units_info_for_subset.replace(/'/g,"\"")),
-          ams.Config.subset.defaultFilters.spatialUnit
+          ams.Config.defaultFilters.spatialUnit
       );
 
       // class groups

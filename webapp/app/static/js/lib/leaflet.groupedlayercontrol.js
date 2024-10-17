@@ -15,9 +15,6 @@ L.Control.GroupedLayers = L.Control.extend({
   initialize: function (controlGroups, options) {
     var i, j;
 
-    console.log(controlGroups);
-    console.log(options);
-
     L.Util.setOptions(this, options);
 
     this._ctrls = [];
@@ -174,11 +171,6 @@ L.Control.GroupedLayers = L.Control.extend({
 
     for (var i = 0; i < this._ctrls.length; i++) {
       obj = this._ctrls[i];
-
-        if (obj.group.name === "RECORTE BIOMA") {
-            console.log("recorte bioma: _update");
-            // continue;
-        }
 
         if (obj.type == "simpleControl") {
             this._addItem(obj);
@@ -383,22 +375,6 @@ L.Control.GroupedLayers = L.Control.extend({
 
     var name = document.createElement('span');
     name.innerHTML = ' ' + obj.name;
-
-    /*
-    if(obj.group.name=="BIOMA"){
-      let divbiome = document.createElement('div');
-      divbiome.appendChild(input);
-      divbiome.appendChild(name);
-      label.appendChild(divbiome);
-      label.className = 'leaflet-biome-control-item';
-
-      // adding profile biome button
-      if(checked){
-        profileBt = this._createProfileBiomeButton(obj.name);
-        label.appendChild(profileBt);
-      }
-    }
-    */
 
     if (obj.group.name == 'CLASSIFICAÇÃO DO MAPA') {
       label.appendChild(input);
