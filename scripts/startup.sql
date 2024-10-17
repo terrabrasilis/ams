@@ -352,16 +352,23 @@ CREATE TABLE IF NOT EXISTS fires.active_fires
 (
     id integer NOT NULL,
     view_date date,
-    satelite character varying(254),
-    estado character varying(254),
-    municipio character varying(254),
-    diasemchuva integer,
-    precipitacao double precision,
-    riscofogo double precision,
+    uuid character varying(254) COLLATE pg_catalog."default",
+    satelite character varying(254) COLLATE pg_catalog."default",
+    estado character varying(254) COLLATE pg_catalog."default",
+    municipio character varying(254) COLLATE pg_catalog."default",
     geom geometry(Point,4674),
     CONSTRAINT active_fires_id_pk PRIMARY KEY (id)
 )
 TABLESPACE pg_default;
+
+-- Index: active_fires_view_date_idx
+
+-- DROP INDEX IF EXISTS fires.active_fires_view_date_idx;
+
+CREATE INDEX IF NOT EXISTS active_fires_view_date_idx
+    ON fires.active_fires USING btree
+    (view_date ASC NULLS LAST)
+    TABLESPACE pg_default;
 
 -- Index: idx_fires_active_fires_geom
 
@@ -369,13 +376,8 @@ TABLESPACE pg_default;
 
 CREATE INDEX IF NOT EXISTS idx_fires_active_fires_geom
     ON fires.active_fires USING gist
-    (geom);
-
--- DROP INDEX IF EXISTS fires.active_fires_view_date_idx;
-
-CREATE INDEX IF NOT EXISTS active_fires_view_date_idx
-    ON fires.active_fires USING btree
-    (view_date ASC NULLS LAST);
+    (geom)
+    TABLESPACE pg_default;
 
 -- -------------------------------------------------------------------------
 -- This session is used for the Risk IBAMA model

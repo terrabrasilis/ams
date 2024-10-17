@@ -25,6 +25,8 @@ var defaultConfig = {
       threshold: 2 // if the absolute area value is less than threshold, the unit will be changed to ha
     },
     oauthAPIProxyURI: "/oauth-api/proxy?url=",
+    authenticationClientId: "terrabrasilis-apps",
+    authenticationResourceRole: "terrabrasilis-user"   
   },
   subset: {
       defaultFilters: {
@@ -33,7 +35,7 @@ var defaultConfig = {
           temporalUnit: '7d',
           diffClassify: 'onPeriod', // can be 'onPeriod' or 'periodDiff'
           priorityLimit: 10
-      },
+      }
   }
 };
 

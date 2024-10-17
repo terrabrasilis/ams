@@ -25,9 +25,9 @@ ams.Auth = {
 	 * for authenticated users uses "_auth" by convention.
 	 */
 	evaluate: function() {
-	    //this.gsAuthSuffix=( (this.isAuthenticated())?("_auth"):("") );
+	    this.gsAuthSuffix=( (this.isAuthenticated())?("_auth"):("") );
 	    // set the appropriate workspace name if it is homologation environment
-	    // this.gsHomologationSuffix=( (ams.Utils.isHomologationEnvironment())?(''):('') );
+	    this.gsHomologationSuffix=( (ams.Utils.isHomologationEnvironment())?('h'):('') );
 	},
 
   /**
@@ -39,6 +39,11 @@ ams.Auth = {
 
   getAuthSuffix: function() {
       return this.gsAuthSuffix;
+  },
+
+  getOAuthProxyUrl: function(url)
+  {
+	return Authentication.getOAuthProxyUrl(url, AuthenticationService.getOAuthClientId(), AuthenticationService.getOAuthResouceRole());
   },
 
   /**

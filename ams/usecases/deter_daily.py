@@ -21,8 +21,7 @@ class DeterDaily:
     @param {str} db_url, the PostgreSQL database connection parameters as string format.
     Example: "postgresql://<user>:<password>@<host or ip>:<port>/<database_name>"
 
-    @param {str} biome, the name of biome used to filter active fires data.
-    See the names in raw_active_fires table. Ex.: "Amazônia"
+    @param {str} biome, the name of the biome used to toggle the data stream.
     
     @param {boolean} alldata, Default is False, if True, all data of DETER will be processed, historical and current.
     Otherwise, only current is processed.

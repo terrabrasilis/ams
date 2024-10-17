@@ -43,15 +43,21 @@ $(document).ready(function () {
    * of the authentication chain.
    */
   if(typeof Authentication != 'undefined')
-    if(ams.Utils.isHomologationEnvironment())
+  {
+    let authenticationClientId = null
+    let authenticationResourceRole = null;
+    if(defaultConfig.general.authenticationClientId)
     {
-      let base_url=document.location.protocol+'//'+document.location.hostname;
-      let oauthURL = base_url+"/oauth-api/";      
-
-      Authentication.internalValidationOauthApiURL=oauthURL;
-      Authentication.init(Lang.language, ams.Utils.restartApp, oauthURL);
+      authenticationClientId = defaultConfig.general.authenticationClientId;
     }
-    else Authentication.init(Lang.language, ams.Utils.restartApp);
+
+    if(defaultConfig.general.authenticationResourceRole)
+    {
+      authenticationResourceRole = defaultConfig.general.authenticationResourceRole;
+    }
+    
+    Authentication.init(Lang.language, ams.Utils.restartApp, "", authenticationClientId, authenticationResourceRole);
+  }  
 
   /** Launch the app when loading the page for the first time */
   if (ams.Utils.getServerConfigParam('reset_local_storage') === "True") {
