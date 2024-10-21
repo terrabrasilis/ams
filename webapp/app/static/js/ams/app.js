@@ -210,7 +210,7 @@ ams.App = {
                 defaultFilter: ams.Config.appSelectedMunicipalitiesGroup,
                 defaultSubset: ams.Config.appSelectedSubset,
                 group: "RECORTE",
-                name: "Municípios",
+                name: "Municípios de Interesse",
                 values: ams.Config.allMunicipalitiesGroup,
             },
             "INDICADOR": {
@@ -337,7 +337,7 @@ ams.App = {
                             ams.App._updateSpatialUnitLayer();
                         }
                     );
-                } else if(e.group.name =='MUNIC\xcdPIOS'){
+                } else if(e.group.name =='MUNIC\xcdPIOS DE INTERESSE'){
                     if(ams.App._landUseList.length!=ams.Config.landUses.length){
                         $('.toast').toast('show');
                         $('.toast-body').html("O filtro por categorias fundiárias foi restaurado ao padrão.");

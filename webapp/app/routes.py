@@ -57,7 +57,7 @@ def get_biome_config(endpoint):
         else:
             selected_biomes = json.dumps(["ALL"])
             appBiome = "ALL"
-            sui_subset = ctrl.read_spatial_units_for_subset(subset=subset)
+            sui_subset = ctrl.read_spatial_units_for_subset(subset='Munic\xedpios')
             cg = ctrl.read_class_groups(biomes=["ALL"])
 
         publish_date = (

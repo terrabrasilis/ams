@@ -351,25 +351,31 @@ class SpatialUnitProfile():
         """
         indicador=self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
         last_date=self.format_date(self._start_date)
-        spatial_unit='para todo o bioma' if(self._name=='*') else f"""com recorte na unidade espacial <b>{self._name}</b>"""
-        spatial_description=self._appBiome if(self._name=='*') else self._tableinfo[self._spatial_unit]['description']
+        
+        if self._name == '*':
+            spatial_unit = 'para todo o bioma' if self._municipalities_group == 'ALL' else 'para os municípios de interesse'
+            spatial_description = f" ({self._appBiome})" if self._municipalities_group == 'ALL' else ""
+        else:
+            spatial_unit = f"com recorte na unidade espacial <b>{self._name}</b>"
+            spatial_description = f" ({self._tableinfo[self._spatial_unit]['description']})"
+
         temporal_unit=self._temporal_units[self._temporal_unit]
 
         datasource="do DETER"
         if(self._classname==self._fire_classname):
             title=f"""Usando dados de <b>{indicador}</b> de Queimadas até <b>{last_date}</b>,
-            {spatial_unit} ({spatial_description}), para as categorias fundiárias selecionadas
+            {spatial_unit}{spatial_description}, para as categorias fundiárias selecionadas
             e unidade temporal <b>{temporal_unit}</b>.
             """
 
         elif self._classname == self._risk_classname:
             expiration_date = self.risk_expiration_date()
             expiration_date = expiration_date if expiration_date is not None else "falhou ao obter a data"
-            title = f"""Usando dados de Risco de desmatamento (IBAMA), {spatial_unit} ({spatial_description}),
+            title = f"""Usando dados de Risco de desmatamento (IBAMA), {spatial_unit}{spatial_description},
             para as categorias fundiárias selecionadas, valor maior ou igual a <b>{self._risk_threshold}</b> e validade até <b>{expiration_date}</b>."""
         else:
             title=f"""Usando dados de <b>{indicador}</b> {datasource} até <b>{last_date}</b>,
-            {spatial_unit} ({spatial_description}), para as categorias fundiárias selecionadas
+            {spatial_unit}{spatial_description}, para as categorias fundiárias selecionadas
             e unidade temporal <b>{temporal_unit}</b>.
             """
 
