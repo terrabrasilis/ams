@@ -148,7 +148,7 @@ ams.LeafletWms = {
             conf["suName"]=n;
             conf["landUse"]=ams.App._landUseList.join(',');
             conf["targetbiome"]=ams.Config.biome;
-            conf["municipality"]=ams.App._municipality
+            conf["municipalitiesGroup"]=ams.App._municipalitiesGroup
 
             return conf;
         },

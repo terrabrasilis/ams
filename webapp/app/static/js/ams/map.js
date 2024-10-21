@@ -30,7 +30,7 @@ ams.Map = {
                     + ";limit:" + this.limit
                     + ";risk:" + this.risk_threshold
                     + ";biomes:" + ams.App._biomes
-                    + ";municipality_group_name:" + ams.App._municipality
+                    + ";municipality_group_name:" + ams.App._municipalitiesGroup
         };
 
         this.updateDates = function(dateControll) {
@@ -164,7 +164,7 @@ ams.Map = {
                 + ";risk:" + viewParams.risk_threshold
                 + ";limit:1"
                 + ";biomes:" + ams.App._biomes.join('\\,')
-                + ";municipality_group_name:" + ams.App._municipality;
+                + ";municipality_group_name:" + ams.App._municipalitiesGroup;
 
             let res;
             $.ajax({
@@ -274,7 +274,7 @@ ams.Map = {
                         + ";risk:" + viewParams.risk_threshold
                         + ";limit:ALL"
                         + ";biomes:" + ams.App._biomes.join('\\,')
-                        + ";municipality_group_name:" + ams.App._municipality;
+                        + ";municipality_group_name:" + ams.App._municipalitiesGroup;
 
             console.log(wfsUrl);
 

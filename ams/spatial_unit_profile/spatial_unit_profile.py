@@ -49,7 +49,7 @@ class SpatialUnitProfile():
 
         self._custom = 'custom' in params
 
-        self._municipality = params['municipality']
+        self._municipalities_group = params['municipalitiesGroup']
             
         # default column to sum statistics
         self.default_column="area"
@@ -205,15 +205,15 @@ class SpatialUnitProfile():
         biomes = ",".join([f"'{_}'" for _ in self._appBiome.split(",")])
         where_biome = f"('{self._appBiome}' = 'ALL' OR a.biome IN ({biomes}))"
         
-        where_municipality = f""" AND (
-            '{self._municipality}' = 'ALL' OR a.geocode =
+        where_municipalities_group = f""" AND (
+            '{self._municipalities_group}' = 'ALL' OR a.geocode =
             ANY(
                 SELECT geocode
                 FROM public.municipalities_group_members mgm
                 WHERE mgm.group_id = (
                     SELECT mg.id
                     FROM public.municipalities_group mg
-                    WHERE mg.name='{self._municipality}'
+                    WHERE mg.name='{self._municipalities_group}'
                 )
             )   
         ) """
@@ -234,7 +234,7 @@ class SpatialUnitProfile():
                 WHERE
                     {where_group}
                     {where_biome}
-                    {where_municipality}
+                    {where_municipalities_group}
                     AND classname = '{self._classname}'
                     AND date >= calendar.fd
                     AND date <= calendar.ld
@@ -287,20 +287,20 @@ class SpatialUnitProfile():
         biomes = ",".join([f"'{_}'" for _ in self._appBiome.split(",")])
         where_biome = f"('{self._appBiome}' = 'ALL' OR a.biome IN ({biomes})) AND"
 
-        where_municipality = f"""(
-            '{self._municipality}' = 'ALL' OR a.geocode =
+        where_municipalities_group = f"""(
+            '{self._municipalities_group}' = 'ALL' OR a.geocode =
             ANY(
                 SELECT geocode
                 FROM public.municipalities_group_members mgm
                 WHERE mgm.group_id = (
                     SELECT mg.id
                     FROM public.municipalities_group mg
-                    WHERE mg.name='{self._municipality}'
+                    WHERE mg.name='{self._municipalities_group}'
                 )
             )   
         ) AND """
 
-        where_filter=f"{where_biome} {where_municipality} {where_risk} {where_spatial_unit}"
+        where_filter=f"{where_biome} {where_municipalities_group} {where_risk} {where_spatial_unit}"
 
         sql = f"""
             SELECT

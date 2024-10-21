@@ -25,7 +25,7 @@ ams.App = {
     _landUseList: [],
     _biomes: [],
     _subset: null,
-    _municipality: null,
+    _municipalitiesGroup: null,
 
     run: function(geoserverUrl, spatialUnits, appClassGroups) {
 
@@ -36,7 +36,7 @@ ams.App = {
 
         this._biomes=ams.Config.appSelectedBiomes;
         this._subset=ams.Config.appSelectedSubset;
-        this._municipality=ams.Config.appSelectedMunicipality;
+        this._municipalitiesGroup=ams.Config.appSelectedMunicipalitiesGroup;
 
     	// REMOVE ME (Debug Purposes)
         // /*
@@ -122,7 +122,7 @@ ams.App = {
             "viewparams": (
                 "landuse:" + ams.App._landUseList.join('\\,') + ";" +
                 "biomes:" + ams.App._biomes.join('\\,') + ";" +
-                "municipality_group_name:" + ams.App._municipality
+                "municipality_group_name:" + ams.App._municipalitiesGroup
             )
         };
         ams.App._addWmsOptionsBase(tbDeterAlertsWmsOptions);
@@ -133,7 +133,7 @@ ams.App = {
             "viewparams": (
                 "landuse:" + ams.App._landUseList.join('\\,')  + ";" +
                 "biomes:" + ams.App._biomes.join('\\,') + ";" +
-                "municipality_group_name:" + ams.App._municipality
+                "municipality_group_name:" + ams.App._municipalitiesGroup
             )
         };
         ams.App._addWmsOptionsBase(AFWmsOptions);
@@ -144,7 +144,7 @@ ams.App = {
             "viewparams": (
                 "landuse:" + ams.App._landUseList.join('\\,') +  ";" +
                 "biomes:" + ams.App._biomes.join('\\,') + ";" +
-                "municipality_group_name:" + ams.App._municipality
+                "municipality_group_name:" + ams.App._municipalitiesGroup
             )
         };
         ams.App._addWmsOptionsBase(RKWmsOptions);
@@ -185,7 +185,7 @@ ams.App = {
             identify: false,
             "viewparams": (
                 "biomes:" + ams.App._biomes.join('\\,') + ";" +
-                    "municipality_group_name:" + ams.App._municipality
+                    "municipality_group_name:" + ams.App._municipalitiesGroup
             )
         }; // set this to disable GetFeatureInfo
         ams.App._addWmsOptionsBase(onlyWmsBase);
@@ -207,11 +207,11 @@ ams.App = {
             },
             "RECORTE MUNICIPIOS": {
                 type: "selectControl",
-                defaultFilter: ams.Config.appSelectedMunicipality,
+                defaultFilter: ams.Config.appSelectedMunicipalitiesGroup,
                 defaultSubset: ams.Config.appSelectedSubset,
                 group: "RECORTE",
                 name: "Municípios",
-                values: ams.Config.allMunicipalities,
+                values: ams.Config.allMunicipalitiesGroup,
             },
             "INDICADOR": {
                 defaultFilter:ams.Config.defaultFilters.indicator,
@@ -632,7 +632,7 @@ ams.App = {
             cqlobj["viewparams"] = (
                 "landuse:" + ams.App._landUseList.join('\\,') + ";" +
                 "biomes:" + ams.App._biomes.join('\\,') + ";" +
-                "municipality_group_name:" + ams.App._municipality
+                "municipality_group_name:" + ams.App._municipalitiesGroup
             );
             this._addWmsOptionsBase(cqlobj);
 
@@ -913,7 +913,7 @@ ams.App = {
             jsConfig["unit"]=ams.Map.PopupControl._unit;
             jsConfig["targetbiome"]=ams.Config.biome;
             jsConfig["riskThreshold"]=ams.App._suViewParams.risk_threshold;
-            jsConfig["municipality"]=ams.App._municipality
+            jsConfig["municipalitiesGroup"]=ams.App._municipalitiesGroup
 
             let jsConfigStr = JSON.stringify(jsConfig);
             let response = await fetch("callback/spatial_unit_profile?sData=" + jsConfigStr).catch(

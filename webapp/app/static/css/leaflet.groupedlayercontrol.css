@@ -32,6 +32,10 @@
   color: white;
   text-align: center;
 }
+.leaflet-dropdown-select {
+  margin-left: 5px;
+  padding: 1px;
+}
 .btn-download{
   padding: 6px;
   text-align: center;

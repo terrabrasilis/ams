@@ -45,13 +45,13 @@ ams.Utils = {
       ams.Config = ams.BiomeConfig[biome];
 
       ams.Config.allBiomes = JSON.parse(generalConfig.biomes.replace(/'/g,"\""));
-      ams.Config.allMunicipalities = JSON.parse(generalConfig.municipalities.replace(/'/g,"\""));
+      ams.Config.allMunicipalitiesGroup = JSON.parse(generalConfig.municipalities_group.replace(/'/g,"\""));
       ams.Config.landUses = JSON.parse(generalConfig.land_uses.replace(/'/g,"\""));
 
       ams.Config.biome = generalConfig.appBiome;
       ams.Config.appSelectedSubset = generalConfig.selected_subset;
       ams.Config.appSelectedBiomes = JSON.parse(generalConfig.selected_biomes.replace(/'/g,"\""));
-      ams.Config.appSelectedMunicipality = generalConfig.selected_municipality;
+      ams.Config.appSelectedMunicipalitiesGroup = generalConfig.selected_municipalities_group;
       ams.Config.publishDate = generalConfig.publish_date;
 
       var spatialUnitsSubset = new ams.Map.SpatialUnits(
@@ -97,15 +97,13 @@ ams.Utils = {
     /**
    * Used when selected biome changes
    */
-    biomeChanges: function(selectedBiome, selectedSubset, selectedMunicipality){
-      console.log(selectedBiome, selectedSubset, selectedMunicipality);
-
+    biomeChanges: function(selectedBiome, selectedSubset, selectedMunicipalitiesGroup){
       if (selectedSubset === undefined) {
           selectedSubset = ams.defaultSubset;
       }
 
-      if (selectedMunicipality === undefined) {
-          selectedMunicipality = ams.defaultMunicipality;
+      if (selectedMunicipalitiesGroup === undefined) {
+          selectedMunicipalitiesGroup = ams.defaultMunicipalitiesGroup;
       }
 
       const loadConfig = new Promise((resolve, reject) => {
@@ -114,11 +112,11 @@ ams.Utils = {
          * If we need read configurations from server by a selected biome.
          * @param {string} selectedBiome The name of selected biome.
          */
-        async function getConfigByBiome( selectedBiome, selectedSubset, selectedMunicipality ) {
+        async function getConfigByBiome( selectedBiome, selectedSubset, selectedMunicipalitiesGroup ) {
           let response = await fetch(
               "biome/config?targetbiome=" + selectedBiome +
               "&subset=" + selectedSubset +
-              "&municipality=" + selectedMunicipality +
+              "&municipalitiesGroup=" + selectedMunicipalitiesGroup +
               "&isAuthenticated=" + ams.Auth.isAuthenticated()
           );
           if (response&&response.ok) {
@@ -129,7 +127,7 @@ ams.Utils = {
               localStorage.setItem('ams.biome.config.'+selectedBiome, JSON.stringify(generalConfig));
               localStorage.setItem('ams.config.created.at', (new Date()).toISOString().split('T')[0] );
               localStorage.setItem('ams.config.subset', selectedSubset);
-              localStorage.setItem('ams.config.municipality', selectedMunicipality);
+              localStorage.setItem('ams.config.municipalitiesGroup', selectedMunicipalitiesGroup);
               ams.Utils.startApp(generalConfig);
               resolve();
             }else{
@@ -170,20 +168,20 @@ ams.Utils = {
           if(
               createdAt<nowDate ||
               localStorage.getItem('ams.config.subset') != selectedSubset ||
-              localStorage.getItem('ams.config.municipality') != selectedMunicipality
+              localStorage.getItem('ams.config.municipalitiesGroup') != selectedMunicipalitiesGroup
           ) {
             for (let p in ams.BiomeConfig) {
               if(ams.BiomeConfig.hasOwnProperty(p))
                 localStorage.removeItem('ams.biome.config.'+p);
             }
-            getConfigByBiome(selectedBiome, selectedSubset, selectedMunicipality);
+            getConfigByBiome(selectedBiome, selectedSubset, selectedMunicipalitiesGroup);
           }else{
             let biomeConfiguration=JSON.parse(localStorage.getItem('ams.biome.config.'+selectedBiome));
             ams.Utils.startApp(biomeConfiguration);
             resolve();
           }
         }else{
-          getConfigByBiome(selectedBiome, selectedSubset, selectedMunicipality);
+          getConfigByBiome(selectedBiome, selectedSubset, selectedMunicipalitiesGroup);
         }
 
       });// end of promise

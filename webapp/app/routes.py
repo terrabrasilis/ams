@@ -35,7 +35,7 @@ def get_biome_config(endpoint):
         args = request.args
         appBiome = args["targetbiome"]
         subset = args["subset"]
-        municipality = args["municipality"]
+        municipalities_group = args["municipalitiesGroup"]
         is_authenticated = args['isAuthenticated'] == "true"
     except KeyError as ke:
         # exception KeyError
@@ -48,18 +48,17 @@ def get_biome_config(endpoint):
         ctrl = AppConfigController(dburl)
 
         biomes = ctrl.read_biomes()  # all biomes
-        municipalities = ctrl.read_municipalities()  # all municipalities (group or municipality names)
 
         if subset == "Bioma":
             selected_biomes = json.dumps([appBiome])
-            municipality = "ALL"
+            municipalities_group = "ALL"
             sui_subset = ctrl.read_spatial_units_for_subset(subset=subset, biome=appBiome)
             cg = ctrl.read_class_groups(biomes=[appBiome])
         else:
             selected_biomes = json.dumps(["ALL"])
-            appBiome = ','.join(json.loads(selected_biomes))
+            appBiome = "ALL"
             sui_subset = ctrl.read_spatial_units_for_subset(subset=subset)
-            cg = ctrl.read_class_groups(biomes=json.loads(biomes))
+            cg = ctrl.read_class_groups(biomes=["ALL"])
 
         publish_date = (
             ctrl.read_publish_date(biomes=json.loads(selected_biomes)) if not is_authenticated else
@@ -83,10 +82,10 @@ def get_biome_config(endpoint):
             'land_uses': ldu,
             'spatial_units_info_for_subset': sui_subset,
             'biomes': biomes,
-            'municipalities': municipalities,
+            'municipalities_group': ctrl.read_municipalities(),
             'selected_subset': subset,
             'selected_biomes': selected_biomes,
-            'selected_municipality': municipality,
+            'selected_municipalities_group': municipalities_group,
             'publish_date': publish_date,
         }
 
@@ -100,7 +99,7 @@ def get_profile(endpoint):
     if endpoint != 'spatial_unit_profile':
         return "Bad endpoint", 404
 
-    args = request.args
+    args = request.args    
 
     try:
         params = json.loads(args.get('sData'))
@@ -115,7 +114,7 @@ def get_profile(endpoint):
         unit = params['unit']
         appBiome = params['targetbiome']
         riskThreshold = params['riskThreshold']
-        municipality = params["municipality"]
+        municipalities_group = params["municipalitiesGroup"]
 
     except KeyError as ke:
         # exception KeyError
@@ -184,7 +183,7 @@ def get_alerts():
             'tempUnit',
             'suName',
             'filenamePrefix',
-            'municipality',
+            'municipalitiesGroup',
         ]
     )
 
@@ -210,7 +209,7 @@ def get_alerts():
             custom='custom' in params,
             filename_prefix=params['filenamePrefix'],
             biomes=biome,
-            municipality=params['municipality'],
+            municipalities_group=params['municipalitiesGroup'],
         )
     except Exception as e:
         print(e)

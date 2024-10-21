@@ -20,11 +20,14 @@ class AppConfigController:
 			SELECT '{''name'':'''||dcg.name||''', ''title'':'''||dcg.title||'''' as c1,
 			dcg.orderby, '''classes'':[' || string_agg(''''||dc.name||'''', ',') || ']}' as c2
 			FROM public.class_group dcg, public.class dc
-			WHERE dcg.id=dc.group_id AND dc.biome IN (%s)
+			WHERE dcg.id=dc.group_id
+                        AND %s = 'ALL' OR dc.biome IN (%s)
                         GROUP BY 1,2 ORDER BY dcg.orderby
 		) as tb1"""
+        biomes = ",".join([f"'{_}'" for _ in biomes])
+        sql = sql % (biomes, biomes)
         cur = self._conn.cursor()
-        cur.execute(sql % ",".join([f"'{_}'" for _ in biomes]))
+        cur.execute(sql)
         results = cur.fetchall()
         return "["+results[0][0]+"]"
 
@@ -92,28 +95,6 @@ class AppConfigController:
         Gets the municipalities from database.
         """
         sql = "SELECT name from public.municipalities_group"
-        cur = self._conn.cursor()
-        cur.execute(sql)
-        results = [_[0] for _ in cur.fetchall()]
-        return json.dumps(results)
-
-    def read_municipality_biomes(self, municipality=None):
-        """
-        Gets the biomes from database.
-        """
-        sql = f"""
-           SELECT DISTINCT mb.biome
-           FROM public.municipalities_biome mb
-           WHERE geocode IN (
-              SELECT geocode
-              FROM public.municipalities_group_members mgm
-              WHERE mgm.group_id = (
-                 SELECT mg.id
-                 FROM public.municipalities_group mg
-                 WHERE mg.name='{municipality}'
-              )
-           )
-        """
         cur = self._conn.cursor()
         cur.execute(sql)
         results = [_[0] for _ in cur.fetchall()]
