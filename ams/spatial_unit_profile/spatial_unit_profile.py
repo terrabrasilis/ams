@@ -50,6 +50,8 @@ class SpatialUnitProfile():
         self._custom = 'custom' in params
 
         self._municipalities_group = params['municipalitiesGroup']
+
+        self._geocodes = params['geocodes']
             
         # default column to sum statistics
         self.default_column="area"
@@ -202,8 +204,7 @@ class SpatialUnitProfile():
     
         where_group = "" if(self._name=='*') else f"""b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}' AND"""
 
-        biomes = ",".join([f"'{_}'" for _ in self._appBiome.split(",")])
-        where_biome = f"('{self._appBiome}' = 'ALL' OR a.biome IN ({biomes}))"
+        where_biome = f"('{self._appBiome}' = 'ALL' OR a.biome = ANY ('{{{self._appBiome}}}'))"
         
         where_municipalities_group = f""" AND (
             '{self._municipalities_group}' = 'ALL' OR a.geocode =
@@ -215,7 +216,8 @@ class SpatialUnitProfile():
                     FROM public.municipalities_group mg
                     WHERE mg.name='{self._municipalities_group}'
                 )
-            )   
+            )
+            OR a.geocode = ANY('{{{self._geocodes}}}')
         ) """
 
         group_by_periods=f"""
@@ -254,7 +256,6 @@ class SpatialUnitProfile():
             ORDER BY
                 2 ASC
         """
-        # print(group_by_periods)
 
         return group_by_periods
 
@@ -284,8 +285,7 @@ class SpatialUnitProfile():
         where_risk="" if(self._classname!=self._risk_classname) else f" a.risk >= {self._risk_threshold} AND "
         where_spatial_unit="" if(self._name=='*') else f"""b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}' AND"""
 
-        biomes = ",".join([f"'{_}'" for _ in self._appBiome.split(",")])
-        where_biome = f"('{self._appBiome}' = 'ALL' OR a.biome IN ({biomes})) AND"
+        where_biome = f"('{self._appBiome}' = 'ALL' OR a.biome = ANY ('{{{self._appBiome}}}')) AND"
 
         where_municipalities_group = f"""(
             '{self._municipalities_group}' = 'ALL' OR a.geocode =
@@ -297,7 +297,8 @@ class SpatialUnitProfile():
                     FROM public.municipalities_group mg
                     WHERE mg.name='{self._municipalities_group}'
                 )
-            )   
+            )
+            OR a.geocode = ANY('{{{self._geocodes}}}')
         ) AND """
 
         where_filter=f"{where_biome} {where_municipalities_group} {where_risk} {where_spatial_unit}"
@@ -331,7 +332,6 @@ class SpatialUnitProfile():
             ORDER BY
                 a.priority ASC 
         """
-        # print(sql)
 
         df = self.resultset_as_dataframe(sql)
         df.columns = ['Categoria Fundiária', self.default_col_name]
@@ -353,7 +353,7 @@ class SpatialUnitProfile():
         last_date=self.format_date(self._start_date)
         
         if self._name == '*':
-            spatial_unit = 'para todo o bioma' if self._municipalities_group == 'ALL' else 'para os municípios de interesse'
+            spatial_unit = 'para todo o bioma' if self._municipalities_group == 'ALL' else 'dos municípios de interesse'
             spatial_description = f" ({self._appBiome})" if self._municipalities_group == 'ALL' else ""
         else:
             spatial_unit = f"com recorte na unidade espacial <b>{self._name}</b>"

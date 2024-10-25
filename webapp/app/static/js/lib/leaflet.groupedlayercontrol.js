@@ -574,6 +574,14 @@ L.Control.GroupedLayers = L.Control.extend({
         obj.name = select.value;
         obj.acronym = select.value;
         obj.subsetChanged = this._subsetChanged;
+
+        if (obj.name == "customizado") {
+            ams.App._getCustomizedMunicipalities().then(geocodes => {
+                obj.customized = geocodes;
+                this._map.fire('changectrl', obj);
+            });
+            return;
+        }
     }
 
     // dispache event to update layers using selected filters
@@ -581,12 +589,8 @@ L.Control.GroupedLayers = L.Control.extend({
   },
 
   _onSelectChange: function (e) {
-    console.log(e);
-    let radioName = e.target.name.replace("-select", "-radio");
-    console.log(radioName);
-
+    var radioName = e.target.name.replace("-select", "-radio");
     var radio = document.querySelector('input[type="radio"][data-user-defined="' + radioName + '"]');
-    console.log(radio);
 
     this._subsetChanged = false;
 

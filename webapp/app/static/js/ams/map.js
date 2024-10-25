@@ -31,6 +31,7 @@ ams.Map = {
                     + ";risk:" + this.risk_threshold
                     + ";biomes:" + ams.App._biomes
                     + ";municipality_group_name:" + ams.App._municipalitiesGroup
+                    + ";geocodes:" + ams.App._geocodes.join('\\,')
         };
 
         this.updateDates = function(dateControll) {
@@ -163,8 +164,9 @@ ams.Map = {
                 + ";landuse:" + ams.App._landUseList.join('%5C,')
                 + ";risk:" + viewParams.risk_threshold
                 + ";limit:1"
-                + ";biomes:" + ams.App._biomes.join('\\,')
-                + ";municipality_group_name:" + ams.App._municipalitiesGroup;
+                + ";biomes:" + ams.App._biomes.join('%5C,')
+                + ";municipality_group_name:" + ams.App._municipalitiesGroup
+                + ";geocodes:" + ams.App._geocodes.join('%5C,')
 
             let res;
             $.ajax({
@@ -201,7 +203,7 @@ ams.Map = {
             "&outputFormat=json" +
             "&viewparams=classname:" + classname +
             ";landuse:" + ams.App._landUseList.join('%5C,') +
-            ";biomes:" + ams.App._biomes.join('\\,');
+            ";biomes:" + ams.App._biomes.join('%5C,');
             let res;
             $.ajax({
             dataType: "json",
@@ -273,8 +275,9 @@ ams.Map = {
                         + ";landuse:" + ams.App._landUseList.join('%5C,')
                         + ";risk:" + viewParams.risk_threshold
                         + ";limit:ALL"
-                        + ";biomes:" + ams.App._biomes.join('\\,')
-                        + ";municipality_group_name:" + ams.App._municipalitiesGroup;
+                        + ";biomes:" + ams.App._biomes.join('%5C,')
+                        + ";municipality_group_name:" + ams.App._municipalitiesGroup
+                        + ";geocodes:" + ams.App._geocodes.join('%5C,');
 
             console.log(wfsUrl);
 

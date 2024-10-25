@@ -779,6 +779,31 @@ min-width:500px !important;
     max-width: 400px;
 }
 
+/* modal-municipalities-search */
+.modal-dialog.modal-municipalities-search {
+    min-width: auto !important;
+    min-height: auto !important;
+    font-size: 13px;
+}
+
+.modal-municipalities-footer .btn {
+    padding: 6px 12px;
+}
+
+.modal-municipalities-search.form-group {
+    margin-bottom: 15px;
+}
+
+#select-municipalities {
+    height: 150px;
+    font-size: 12px;
+}
+
+#search-municipalities {
+    font-size: 12px;
+    padding: 5px;
+}
+
 /* indicadores do carousel */
 .sobre .carousel-indicators {
 left: 0;

@@ -37,6 +37,7 @@ def get_biome_config(endpoint):
         subset = args["subset"]
         municipalities_group = args["municipalitiesGroup"]
         is_authenticated = args['isAuthenticated'] == "true"
+        geocodes = args["geocodes"]
     except KeyError as ke:
         # exception KeyError
         # Raised when a mapping (dictionary) key is not found in the set of existing keys.
@@ -75,6 +76,8 @@ def get_biome_config(endpoint):
                 break
         cg = json.dumps(cg)
 
+        municipalities = ctrl.read_municipalities(biomes=json.loads(biomes))
+
         res = {
             'geoserver_url': Config.GEOSERVER_URL,
             'appBiome': appBiome,
@@ -82,11 +85,13 @@ def get_biome_config(endpoint):
             'land_uses': ldu,
             'spatial_units_info_for_subset': sui_subset,
             'biomes': biomes,
-            'municipalities_group': ctrl.read_municipalities(),
+            'municipalities_group': ctrl.read_municipalities_group(),
             'selected_subset': subset,
             'selected_biomes': selected_biomes,
             'selected_municipalities_group': municipalities_group,
             'publish_date': publish_date,
+            'selected_geocodes': json.dumps(geocodes.split(",")),
+            'municipalities': municipalities
         }
 
         return json.dumps(res)
@@ -115,6 +120,7 @@ def get_profile(endpoint):
         appBiome = params['targetbiome']
         riskThreshold = params['riskThreshold']
         municipalities_group = params["municipalitiesGroup"]
+        geocodes = params["geocodes"]
 
     except KeyError as ke:
         # exception KeyError
@@ -184,6 +190,7 @@ def get_alerts():
             'suName',
             'filenamePrefix',
             'municipalitiesGroup',
+            'geocodes',
         ]
     )
 
@@ -210,6 +217,7 @@ def get_alerts():
             filename_prefix=params['filenamePrefix'],
             biomes=biome,
             municipalities_group=params['municipalitiesGroup'],
+            geocodes=params['geocodes'],
         )
     except Exception as e:
         print(e)

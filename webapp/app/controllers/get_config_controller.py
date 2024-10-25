@@ -90,14 +90,14 @@ class AppConfigController:
         results = [_[0] for _ in cur.fetchall()]
         return json.dumps(results)
 
-    def read_municipalities(self):
+    def read_municipalities_group(self):
         """
-        Gets the municipalities from database.
+        Gets the municipalities group from database.
         """
         sql = "SELECT name from public.municipalities_group"
         cur = self._conn.cursor()
         cur.execute(sql)
-        results = [_[0] for _ in cur.fetchall()]
+        results = ["customizado"] + [_[0] for _ in cur.fetchall()]
         return json.dumps(results)
 
     def read_publish_date(self, biomes):
@@ -114,3 +114,31 @@ class AppConfigController:
         cur = self._conn.cursor()
         cur.execute(sql % (biomes, biomes))
         return cur.fetchone()[0].strftime("%Y-%m-%d")
+
+
+    def read_municipalities(self, biomes):
+        """
+        Gets the municipalities from database.
+        """
+        sql = """
+            WITH municipalities_agg AS (
+                SELECT REPLACE(CONCAT(mun.name, ' - ', mun.state_acr), '''', ' ') as name, mun.geocode
+	        FROM public.municipalities mun, public.municipalities_biome mub
+	        WHERE
+                    mun.geocode = mub.geocode
+		    AND mub.biome = ANY('{%s}')
+	        ORDER BY name
+            )
+            SELECT string_agg(
+	        '{''name'':''' || ma.name ||
+                ''',''geocode'':''' || ma.geocode ||
+                '''}',
+	        ','
+           )
+           FROM municipalities_agg ma;
+        """
+        sql = sql % (",".join([f"{_}" for _ in biomes]))
+        cur = self._conn.cursor()
+        cur.execute(sql)
+        results = cur.fetchall()
+        return "["+results[0][0]+"]"

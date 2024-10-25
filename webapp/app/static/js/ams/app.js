@@ -26,6 +26,7 @@ ams.App = {
     _biomes: [],
     _subset: null,
     _municipalitiesGroup: null,
+    _geocodes: null,
 
     run: function(geoserverUrl, spatialUnits, appClassGroups) {
 
@@ -37,6 +38,7 @@ ams.App = {
         this._biomes=ams.Config.appSelectedBiomes;
         this._subset=ams.Config.appSelectedSubset;
         this._municipalitiesGroup=ams.Config.appSelectedMunicipalitiesGroup;
+        this._geocodes=ams.Config.appSelectedGeocodes;
 
     	// REMOVE ME (Debug Purposes)
         // /*
@@ -122,7 +124,8 @@ ams.App = {
             "viewparams": (
                 "landuse:" + ams.App._landUseList.join('\\,') + ";" +
                 "biomes:" + ams.App._biomes.join('\\,') + ";" +
-                "municipality_group_name:" + ams.App._municipalitiesGroup
+                "municipality_group_name:" + ams.App._municipalitiesGroup + ";" +
+                "geocodes:" + ams.App._geocodes.join('\\,')
             )
         };
         ams.App._addWmsOptionsBase(tbDeterAlertsWmsOptions);
@@ -133,7 +136,8 @@ ams.App = {
             "viewparams": (
                 "landuse:" + ams.App._landUseList.join('\\,')  + ";" +
                 "biomes:" + ams.App._biomes.join('\\,') + ";" +
-                "municipality_group_name:" + ams.App._municipalitiesGroup
+                "municipality_group_name:" + ams.App._municipalitiesGroup + ";" +
+                "geocodes:" + ams.App._geocodes.join('\\,')
             )
         };
         ams.App._addWmsOptionsBase(AFWmsOptions);
@@ -144,7 +148,8 @@ ams.App = {
             "viewparams": (
                 "landuse:" + ams.App._landUseList.join('\\,') +  ";" +
                 "biomes:" + ams.App._biomes.join('\\,') + ";" +
-                "municipality_group_name:" + ams.App._municipalitiesGroup
+                "municipality_group_name:" + ams.App._municipalitiesGroup + ";" +
+                "geocodes:" + ams.App._geocodes.join('\\,')
             )
         };
         ams.App._addWmsOptionsBase(RKWmsOptions);
@@ -185,7 +190,8 @@ ams.App = {
             identify: false,
             "viewparams": (
                 "biomes:" + ams.App._biomes.join('\\,') + ";" +
-                    "municipality_group_name:" + ams.App._municipalitiesGroup
+                "municipality_group_name:" + ams.App._municipalitiesGroup + ";" +
+                "geocodes:" + ams.App._geocodes.join('\\,')
             )
         }; // set this to disable GetFeatureInfo
         ams.App._addWmsOptionsBase(onlyWmsBase);
@@ -337,6 +343,7 @@ ams.App = {
                             ams.App._updateSpatialUnitLayer();
                         }
                     );
+
                 } else if(e.group.name =='MUNIC\xcdPIOS DE INTERESSE'){
                     if(ams.App._landUseList.length!=ams.Config.landUses.length){
                         $('.toast').toast('show');
@@ -348,12 +355,15 @@ ams.App = {
                     ams.App._suViewParams=null;
                     ams.App._priorViewParams=null;
                     ams.App._diffOn = ( (ams.Config.defaultFilters.diffClassify=="onPeriod")?(false):(true) );
-                    // write on local storage
 
-                    // localStorage.setItem('ams.previous.biome.setting.selection', e.acronym);
+                    var geocodes = "";
+                    if (e.name == "customizado") {
+                        geocodes = e.customized.join(',');
+                    }
 
-                    needUpdateSuLayers=false; // disable the call at the end because the call is inside the Promise callback below
-                    ams.Utils.biomeChanges("all", e.subset, e.name).then(
+                    // disable the call at the end because the call is inside the Promise callback below
+                    needUpdateSuLayers=false;
+                    ams.Utils.biomeChanges("all", e.subset, e.name, geocodes).then(
                         ()=>{
                             ams.App._updateSpatialUnitLayer();
                         }
@@ -601,6 +611,24 @@ ams.App = {
             }
         );
 
+        $('#search-municipalities').on('input', function() {
+            const query = $(this).val().toLowerCase();
+            $('#select-municipalities option').show();
+
+            if (query.length < 2) {
+                return;
+            }
+
+            $('#select-municipalities option').each(function() {
+                const optionText = $(this).text().toLowerCase();
+                if (optionText.includes(query)) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        });
+
         $(function() {
             if(localStorage.getItem('ams.config.general.area.changeunit')!==null){
                 ams.Config.general.area.changeunit=localStorage.getItem('ams.config.general.area.changeunit');
@@ -614,8 +642,46 @@ ams.App = {
             if (localStorage.getItem('ams.config.modal.notshowcredits') == null) {
                 $("#modal-container-credits").modal();
             }
+
+            ams.App._populateMunicipalities();
         });
+
     },// end of run method
+
+    _populateMunicipalities: function() {
+        const $selectMunicipalities = $('#select-municipalities');
+    
+        $selectMunicipalities.empty();
+
+        $.each(ams.Config.appAllMunicipalities, function(index, municipality) {
+            const option = $('<option></option>')
+                .val(municipality.geocode)
+                .text(municipality.name);
+            $selectMunicipalities.append(option);
+        });
+    },
+
+    _getCustomizedMunicipalities: function() {
+        const modal = $("#modal-container-municipalities");
+
+        return new Promise((resolve) => {
+            modal.modal('show');
+
+            $('#municipalities-search-ok').off('click').on('click', function() {
+                const geocodes = $('#select-municipalities option:selected').map(function() {
+                    return $(this).val();
+                }).get();
+
+                modal.modal('hide');
+            
+                resolve(geocodes);
+            });
+
+            $('#municipalities-search-cancel').off('click').on('click', function() {
+                resolve([]);
+            });
+        });
+    },
 
     /**
     * Update the reference data layer by change CQL filter params
@@ -632,7 +698,8 @@ ams.App = {
             cqlobj["viewparams"] = (
                 "landuse:" + ams.App._landUseList.join('\\,') + ";" +
                 "biomes:" + ams.App._biomes.join('\\,') + ";" +
-                "municipality_group_name:" + ams.App._municipalitiesGroup
+                "municipality_group_name:" + ams.App._municipalitiesGroup + ";" +
+                "geocodes:" + ams.App._geocodes.join('\\,')
             );
             this._addWmsOptionsBase(cqlobj);
 
@@ -913,7 +980,8 @@ ams.App = {
             jsConfig["unit"]=ams.Map.PopupControl._unit;
             jsConfig["targetbiome"]=ams.Config.biome;
             jsConfig["riskThreshold"]=ams.App._suViewParams.risk_threshold;
-            jsConfig["municipalitiesGroup"]=ams.App._municipalitiesGroup
+            jsConfig["municipalitiesGroup"]=ams.App._municipalitiesGroup;
+            jsConfig["geocodes"]=ams.App._geocodes.join(',');
 
             let jsConfigStr = JSON.stringify(jsConfig);
             let response = await fetch("callback/spatial_unit_profile?sData=" + jsConfigStr).catch(
