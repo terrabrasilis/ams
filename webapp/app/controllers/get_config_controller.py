@@ -61,7 +61,7 @@ class AppConfigController:
             )
             AND ('%s' = 'ALL' OR pd.biome = '%s')
             GROUP BY su.id
-            ORDER BY su.id ASC
+            ORDER BY su.dataname ASC
         )
         SELECT string_agg(
             '{''dataname'':''' || da.dataname ||
@@ -75,6 +75,7 @@ class AppConfigController:
         FROM date_agg da;
         """
         sql = sql % (subset, biome, biome)
+
         cur = self._conn.cursor()
         cur.execute(sql)
         results = cur.fetchall()
