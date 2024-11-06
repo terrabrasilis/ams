@@ -291,7 +291,35 @@
 				    </div>
 				  </div>
 				</div>
-                                <!-- END modal logo -->
+                                <!-- END modal credits -->
+
+                                <!-- modal window for municipalities search -->
+                                <div class="modal fade" id="modal-container-municipalities" role="dialog">
+                                  <div class="modal-dialog modal-municipalities-search">
+                                    <div class="modal-content modalinf">
+                                      <div class="modal-header fechar">
+                                        <h5 class="modal-title boxtitletable">Buscar municípios:</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="material-icons">clear</i></button>
+                                      </div>
+                                      <div class="modal-body">
+                                        <div class="form-group">
+                                          <input type="text" id="search-municipalities" class="form-control" placeholder="digite o nome do município para pesquisa">
+                                        </div>
+                                        <div class="form-group">
+                                          <label for="select-municipalities">Selecione os municípios:</label>
+                                          <select id="select-municipalities" class="form-control" multiple>
+                                          </select>
+                                        </div>
+                                      </div>
+                                      <div class="modal-footer modal-municipalities-footer">
+                                        <button type="button" class="btn btn-secondary" id="municipalities-search-cancel" data-dismiss="modal">Cancelar</button>
+                                        <button type="button" class="btn btn-primary" id="municipalities-search-ok">OK</button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                                <!-- END modal window for municipalities search -->
+
 
 				<!--chart panel -->
                 <div class="modal fade" id="modal-container-general-info"  role="dialog" aria-labelledby="general-info" aria-hidden="true">

@@ -41,11 +41,9 @@ ams.App = {
         this._geocodes=ams.Config.appSelectedGeocodes;
 
     	// REMOVE ME (Debug Purposes)
-        // /*
         // if(ams.Auth.isAuthenticated()==false) {
-        geoserverUrl = "http://127.0.0.1/geoserver";
+        // geoserverUrl = "http://127.0.0.1/geoserver";
         // }
-        // */
 
         this._wfs = new ams.Map.WFS(geoserverUrl);
         var ldLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.lastDate;
@@ -185,7 +183,7 @@ ams.App = {
         ams.Config.defaultFilters.spatialUnit=this._spatialUnits.getDefault().dataname;// update the default for later use in filter change in control.
         this._addSpatialUnitLayer(this._getLayerPrefix(),this._propertyName);
 
-        var tbBorderLayerName = (this._subset == "Bioma") ? ams.Config.defaultLayers.biomeBorder : ams.Config.defaultLayers.municipalitiesBorder;
+        var tbBorderLayerName = ams.Auth.getWorkspace() + ":" + ((this._subset == "Bioma") ? ams.Config.defaultLayers.biomeBorder : ams.Config.defaultLayers.municipalitiesBorder);
         var onlyWmsBase = {
             identify: false,
             "viewparams": (
