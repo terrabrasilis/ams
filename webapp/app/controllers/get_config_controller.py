@@ -17,12 +17,13 @@ class AppConfigController:
         """
         sql = """SELECT string_agg( c1 || ',' || c2, ', ' )
 		FROM (
-			SELECT '{''name'':'''||dcg.name||''', ''title'':'''||dcg.title||'''' as c1,
-			dcg.orderby, '''classes'':[' || string_agg(''''||dc.name||'''', ',') || ']}' as c2
-			FROM public.class_group dcg, public.class dc
-			WHERE dcg.id=dc.group_id
-                        AND %s = 'ALL' OR dc.biome IN (%s)
-                        GROUP BY 1,2 ORDER BY dcg.orderby
+			SELECT '{''name'':'''||cg.name||''', ''title'':'''||cg.title||'''' as c1,
+			cg.orderby, '''classes'':[' || string_agg(''''||c.name||'''', ',') || ']}' as c2
+			FROM public.class_group cg
+                        JOIN public.class c
+                        ON cg.id=c.group_id
+                        WHERE (%s = 'ALL' OR c.biome IN (%s))
+                        GROUP BY 1,2 ORDER BY cg.orderby
 		) as tb1"""
         biomes = ",".join([f"'{_}'" for _ in biomes])
         sql = sql % (biomes, biomes)
@@ -123,7 +124,7 @@ class AppConfigController:
         """
         sql = """
             WITH municipalities_agg AS (
-                SELECT REPLACE(CONCAT(mun.name, ' - ', mun.state_acr), '''', ' ') as name, mun.geocode
+                SELECT DISTINCT REPLACE(CONCAT(mun.name, ' - ', mun.state_acr), '''', ' ') as name, mun.geocode
 	        FROM public.municipalities mun, public.municipalities_biome mub
 	        WHERE
                     mun.geocode = mub.geocode
