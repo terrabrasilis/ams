@@ -47,10 +47,15 @@ class AppConfigController:
         results = cur.fetchall()
         return "["+results[0][0]+"]"
 
-    def read_spatial_units_for_subset(self, subset, biome="ALL"):
+    def read_spatial_units_for_subset(self, subset, biome="ALL", exclude=[]):
         """
         Gets the spatial units from database for the given subset.
         """
+        exclude_filter = ""
+        if exclude:
+            cols = ",".join([f"'{_}'" for _ in exclude])
+            exclude_filter = f"AND su.dataname NOT IN ({cols})"  
+
         sql = """
         WITH date_agg AS (
             SELECT su.id as spatial_unit_id, su.dataname, su.description, su.center_lat, su.center_lng, MAX(pd.date) AS last_date
@@ -60,6 +65,7 @@ class AppConfigController:
                 FROM public.spatial_units_subsets
                 WHERE subset = '%s'
             )
+            %s
             AND ('%s' = 'ALL' OR pd.biome = '%s')
             GROUP BY su.id
             ORDER BY su.dataname ASC
@@ -75,7 +81,7 @@ class AppConfigController:
         ) AS c1
         FROM date_agg da;
         """
-        sql = sql % (subset, biome, biome)
+        sql = sql % (subset, exclude_filter, biome, biome)
 
         cur = self._conn.cursor()
         cur.execute(sql)
@@ -117,14 +123,13 @@ class AppConfigController:
         cur.execute(sql % (biomes, biomes))
         return cur.fetchone()[0].strftime("%Y-%m-%d")
 
-
     def read_municipalities(self, biomes):
         """
         Gets the municipalities from database.
         """
         sql = """
             WITH municipalities_agg AS (
-                SELECT DISTINCT REPLACE(CONCAT(mun.name, ' - ', mun.state_acr), '''', ' ') as name, mun.geocode
+                SELECT DISTINCT REPLACE(CONCAT(mun.name, ' - ', mun.state_acr, ' - geoc\xf3digo: ', mun.geocode), '''', ' ') as name, mun.geocode
 	        FROM public.municipalities mun, public.municipalities_biome mub
 	        WHERE
                     mun.geocode = mub.geocode
@@ -144,3 +149,92 @@ class AppConfigController:
         cur.execute(sql)
         results = cur.fetchall()
         return "["+results[0][0]+"]"
+
+    def read_municipality_name(self, geocode):
+        """
+        Gets the municipalities from database.
+        """
+        sql = f"""
+            SELECT DISTINCT REPLACE(CONCAT(mun.name, ' - ', mun.state_acr), '''', ' ') as name, mun.geocode
+	    FROM public.municipalities mun
+	    WHERE mun.geocode = '{geocode}';
+        """
+        cur = self._conn.cursor()
+        cur.execute(sql)
+        results = cur.fetchone()
+
+        if len(results):
+            return results[0]
+
+        return None
+
+    def read_municipality_geocode(self, su_id):
+        """
+        Gets the municipality geocode from database.
+        """
+        sql = f"""
+           SELECT mun.geocode FROM public.municipalities mun
+           WHERE mun.suid='{su_id}'
+        """
+        cur = self._conn.cursor()
+        cur.execute(sql)
+        results = cur.fetchone()
+
+        if results:
+            return results[0]
+
+        return None
+
+    def read_bbox(self, subset, biome, municipalities_group, geocodes):
+        """
+        Gets the layer bounding box.
+        """
+        sql = ""
+        if subset == "Bioma":
+            sql = f"""
+                SELECT
+                    ST_XMin(ST_Extent(geom)) AS xmin,
+                    ST_XMax(ST_Extent(geom)) AS xmax,
+                    ST_YMin(ST_Extent(geom)) AS ymin,
+                    ST_YMax(ST_Extent(geom)) AS ymax
+                FROM public.biome_border
+                WHERE biome='{biome}';
+            """
+        else:
+            sql = f"""
+                SELECT
+                    ST_XMin(ST_Extent(mun.geometry)) AS xmin,
+                    ST_XMax(ST_Extent(mun.geometry)) AS xmax,
+                    ST_YMin(ST_Extent(mun.geometry)) AS ymin,
+                    ST_YMax(ST_Extent(mun.geometry)) AS ymax
+                FROM public.municipalities mun
+                WHERE mun.geocode = ANY(
+                    SELECT geocode
+                    FROM public.municipalities_group_members mgm
+                    WHERE mgm.group_id = (
+                        SELECT mg.id
+                        FROM public.municipalities_group mg
+                        WHERE mg.name='{municipalities_group}'
+                    )
+                ) OR mun.geocode = ANY('{{{geocodes}}}');
+            """
+
+        cur = self._conn.cursor()
+        cur.execute(sql)
+        results = cur.fetchone()
+
+        return json.dumps(results)
+
+    def geocode_is_valid(self, geocode):
+        """
+        Check if the geocode is valid.
+        """
+        sql = f"""
+           SELECT mun.geocode FROM public.municipalities mun
+           WHERE mun.geocode='{geocode}'
+        """
+        cur = self._conn.cursor()
+        cur.execute(sql)
+        results = cur.fetchone()
+
+        return results is not None

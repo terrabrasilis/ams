@@ -49,7 +49,10 @@
 			<a class="navbar-brand" href="http://terrabrasilis.dpi.inpe.br/"><span class="amarelo">Terra</span><span class="verde">Brasilis</span></a>
 			<div class="collapse navbar-collapse justify-content-between">
 				<div class="navbar-nav">
-					<a class="nav-item nav-link" href="#" id="header-panel">| Sala de Situação</a>
+				  <a class="nav-item nav-link" href="#" id="header-panel">
+                                    <span id="header-panel-title">Sala de Situação</span>
+                                    <span id="header-panel-info"></span>
+                                  </a>
 				</div>
 				<ul id="navigationBarUL" class="navbar-nav navbar-right analises">
 					<li class="nav-item dropdown">
@@ -301,7 +304,7 @@
                                     <div class="modal-content modalinf">
                                       <div class="modal-header fechar">
                                         <h5 class="modal-title boxtitletable">Buscar municípios:</h5>
-                                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="material-icons">clear</i></button>
+                                        <button id="municipalities-search-close" type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="material-icons">clear</i></button>
                                       </div>
                                       <div class="modal-body">
                                         <div class="form-group">
@@ -315,7 +318,8 @@
                                       </div>
                                       <div class="modal-footer modal-municipalities-footer">
                                         <button type="button" class="btn btn-secondary" id="municipalities-search-cancel" data-dismiss="modal">Cancelar</button>
-                                        <button type="button" class="btn btn-primary" id="municipalities-search-ok">OK</button>
+                                        <button type="button" class="btn btn-primary" id="municipalities-search-ok" disabled="true">OK</button>
+                                        <button type="button" class="btn btn-primary" id="municipalities-search-panel" disabled="true">Sala de Situa&ccedil;&atilde;o Municipal</button>
                                       </div>
                                     </div>
                                   </div>

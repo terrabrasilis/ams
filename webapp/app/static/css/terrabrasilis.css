@@ -565,6 +565,8 @@ color:#fff; line-height: 15px; text-align: center;}
 
 #header-menu{margin-top:-9px;}
 
+#header-panel-info{font-size:16px; font-weight:600; color:#ffff00};
+
 #sidebar ul.components {
 padding: 0px 0;
 border-bottom: 1px solid #47748b;
@@ -788,6 +790,7 @@ min-width:500px !important;
 
 .modal-municipalities-footer .btn {
     padding: 6px 12px;
+    font-size: 14px;
 }
 
 .modal-municipalities-search.form-group {

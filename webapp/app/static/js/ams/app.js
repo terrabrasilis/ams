@@ -70,7 +70,16 @@ ams.App = {
         // improve control positions for Leaflet
         ams.LeafletControlPosition.addNewPositions(map);
 
-        map.setView([this._spatialUnits.getDefault().center_lat, this._spatialUnits.getDefault().center_lng], 5);
+        // bounding
+        map.fitBounds(
+            [[ams.Config.bbox[2], ams.Config.bbox[0]], [ams.Config.bbox[3], ams.Config.bbox[1]]],
+            {
+                padding: [
+                    (this._geocodes.length == 1 && this._geocodes[0].length > 0) * 100,
+                    (this._geocodes.length == 1 && this._geocodes[0].length > 0) * 100
+                ]
+            }
+        );
 
         // crs: L.CRS.EPSG4326,
         this._baseLayers["osm"] = new L.TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -336,7 +345,7 @@ ams.App = {
                     localStorage.setItem('ams.previous.biome.setting.selection', e.acronym);
 
                     needUpdateSuLayers=false;// disable the call at the end because the call is inside the Promise callback below
-                    ams.Utils.biomeChanges(e.acronym, e.subset).then(
+                    ams.Utils.updateMap(e.acronym, e.subset).then(
                         ()=>{
                             ams.App._updateSpatialUnitLayer();
                         }
@@ -361,7 +370,7 @@ ams.App = {
 
                     // disable the call at the end because the call is inside the Promise callback below
                     needUpdateSuLayers=false;
-                    ams.Utils.biomeChanges("all", e.subset, e.name, geocodes).then(
+                    ams.Utils.updateMap("all", e.subset, e.name, geocodes).then(
                         ()=>{
                             ams.App._updateSpatialUnitLayer();
                         }
@@ -473,6 +482,15 @@ ams.App = {
             );
         });
 
+        // municipality panel
+        function setMunicipalityPanelMode() {
+            $(".hide-in-municipality-panel").css("display", "none")
+            $("#header-panel-title").text("Sala de Situação Municipal | " + ams.Config.appSelectedMunicipality);
+        }
+        if (ams.Config.appMunicipalityPanelMode) {
+            setMunicipalityPanelMode();
+        }
+
         function updatePriorization() {
             let limit = document.getElementById("prioritization-input").value;
             ams.App._priorViewParams.limit = limit;
@@ -490,6 +508,17 @@ ams.App = {
             updatePriorization();    
             return false;
         });
+
+        // error message
+        function showErrorMsg(msg) {
+            let emsg = "HTTP-Error: " + msg;
+            $('.toast').toast('show');
+            $('.toast-body').html("Encontrou um erro na solicitação ao servidor.<br />"+emsg);
+        }
+        if ($('meta[name="error-msg"]').length) {
+            showErrorMsg($('meta[name="error-msg"]').attr('content'));
+            $('meta[name="error-msg"]').remove();
+        }
         
         let profileClick=function() {
             let conf={};
@@ -627,6 +656,12 @@ ams.App = {
             });
         });
 
+        $('#select-municipalities').on('change', function() {
+            var count = $(this).find('option:selected').length;
+            $('#municipalities-search-ok').prop('disabled', count==0);
+            $('#municipalities-search-panel').prop('disabled', count!=1);
+        });
+
         $(function() {
             if(localStorage.getItem('ams.config.general.area.changeunit')!==null){
                 ams.Config.general.area.changeunit=localStorage.getItem('ams.config.general.area.changeunit');
@@ -662,6 +697,15 @@ ams.App = {
     _getCustomizedMunicipalities: function() {
         const modal = $("#modal-container-municipalities");
 
+        function _closeCustomizedMunicipalities() {
+            modal.modal('hide');
+            $('#search-municipalities').val("");
+            $('#select-municipalities option').show();
+            $('#select-municipalities option').prop('selected', false);     
+            $('#municipalities-search-ok').prop('disabled', true);
+            $('#municipalities-search-panel').prop('disabled', true);
+        }
+
         return new Promise((resolve) => {
             modal.modal('show');
 
@@ -669,15 +713,29 @@ ams.App = {
                 const geocodes = $('#select-municipalities option:selected').map(function() {
                     return $(this).val();
                 }).get();
-
-                modal.modal('hide');
-            
+                _closeCustomizedMunicipalities();            
                 resolve(geocodes);
             });
 
+            $('#municipalities-search-panel').off('click').on('click', function() {
+                const geocodes = $('#select-municipalities option:selected').map(function() {
+                    return $(this).val();
+                }).get();
+                _closeCustomizedMunicipalities();
+                resolve([]);                
+                ams.App.startMunicipalityPanel("geocode", geocodes[0]);
+            });
+
             $('#municipalities-search-cancel').off('click').on('click', function() {
+                _closeCustomizedMunicipalities();
                 resolve([]);
             });
+            
+            $('#municipalities-search-close').off('click').on('click', function() {
+                _closeCustomizedMunicipalities();
+                resolve([]);
+            });
+
         });
     },
 
@@ -1094,6 +1152,38 @@ ams.App = {
         }
         
         _saveAlerts(jsConfig);
+    },
+
+    startMunicipalityPanel: function (name, value) {
+        async function _startMunicipalityPanel (name, value) {
+            let response = await fetch("panel?"+name+"="+value).catch(
+                ()=>{
+                    console.log("The backend service may be offline or your internet connection has been interrupted.");
+                }
+            );
+
+            if (response && response.ok) {
+                const html = await response.text();
+
+                const newWindow = window.open('', '_blank');
+                if (!newWindow) {
+                    window.alert('Não foi possível abrir a nova janela. Verifique o bloqueador de pop-ups.');
+                    return;
+                }
+                newWindow.document.write(html);
+                newWindow.document.close();
+
+            } else {
+                let emsg = "";
+                if(response) emsg = "HTTP-Error: " + response.status;
+                else emsg="O servidor está indisponível ou sua internet está desligada.";
+                console.log(emsg);
+                $('.toast').toast('show');
+                $('.toast-body').html("Encontrou um erro na solicitação ao servidor.<br />"+emsg);
+            }
+        }
+
+        _startMunicipalityPanel(name, value);
     }
 
 };

@@ -199,3 +199,18 @@
 .risk-status-label {
   font-size: 12px;
 }
+
+.button-container {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.button-container button {
+    flex: 1 1 48%;
+    box-sizing: border-box;
+}
+
+.button-container button:nth-child(3) {
+    flex: 1 1 100%;
+}

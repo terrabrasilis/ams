@@ -13,10 +13,13 @@ from .controllers import AppConfigController
 
 
 @app.route('/', methods=['GET'])
-def get_config():
+def index():
+    return _render_template()
+
+def _render_template(params: dict={}):
     try:
         isDevelopmentEnv = os.getenv("FLASK_ENV", "production")
-        params = Config.get_params_to_frontend()
+        params.update(Config.get_params_to_frontend())
         return (
             render_template('index_dev.html', params=params) if (isDevelopmentEnv == "development") else
             render_template('index.html', params=params)
@@ -26,77 +29,153 @@ def get_config():
         return "Template configurations are missing: {0}".format(str(e)), 412
 
 
+def _validate_params(json_str, required_params):
+    params = json.loads(json_str)
+
+    for name in required_params:
+        if not name in params:
+            # exception KeyError
+            # Raised when a mapping (dictionary) key is not found in the set of existing keys.
+            # HTTP 412: Precondition Failed
+            return False, (f"Input parameters are missing: {name}.", 412)
+    return True, params
+
+
+def _get_config(
+    biome: str,
+    subset: str,
+    municipalities_group: str,
+    geocodes: str,
+    is_authenticated: bool,
+    municipality_panel_mode: bool,
+):
+    dburl = Config.DB_URL
+    ctrl = AppConfigController(dburl)
+
+    biomes = ctrl.read_biomes()  # all biomes
+
+    selected_geocodes = geocodes.split(",")
+
+    if subset == "Bioma":
+        selected_biomes = json.dumps([biome])
+        municipalities_group = "ALL"
+        sui_subset = ctrl.read_spatial_units_for_subset(subset=subset, biome=biome)
+        cg = ctrl.read_class_groups(biomes=[biome])
+    else:
+        selected_biomes = json.dumps(["ALL"])
+        biome = "ALL"
+        sui_subset = ctrl.read_spatial_units_for_subset(
+            subset="Munic\xedpios",
+            exclude=(
+                ["cs_150km", "municipalities",]
+                if municipality_panel_mode or (municipalities_group == "customizado" and len(selected_geocodes) < 2)
+                else ""
+            )
+        )
+        cg = ctrl.read_class_groups(biomes=["ALL"])
+        
+    publish_date = (
+        ctrl.read_publish_date(biomes=json.loads(selected_biomes)) if not is_authenticated else
+        datetime.now().strftime("%Y-%m-%d")
+    )
+
+    ldu = ctrl.read_land_uses()
+
+    # incluing thresholds in the layer names
+    cg = json.loads(cg.replace("'", '"'))
+    for _ in cg:
+        if _['name'] == 'RK':
+            _['title'] += f" (>= {Config.RISK_THRESHOLD:.2f})"
+            break
+    cg = json.dumps(cg)
+
+    bbox = ctrl.read_bbox(
+        subset=subset, biome=biome, municipalities_group=municipalities_group, geocodes=geocodes
+    )
+
+    return {
+        'geoserver_url': Config.GEOSERVER_URL,
+        'appBiome': biome,
+        'deter_class_groups': cg,
+        'land_uses': ldu,
+        'spatial_units_info_for_subset': sui_subset,
+        'biomes': biomes,
+        'bbox': bbox,
+        'municipalities_group': ctrl.read_municipalities_group(),
+        'selected_subset': subset,
+        'selected_biomes': selected_biomes,
+        'selected_municipalities_group': municipalities_group,
+        'publish_date': publish_date,
+        'selected_geocodes': json.dumps(selected_geocodes),
+        'all_municipalities': ctrl.read_municipalities(biomes=json.loads(biomes)),
+        'municipality_panel_mode': json.dumps(municipality_panel_mode),
+        'selected_municipality': (
+            ctrl.read_municipality_name(geocode=selected_geocodes[0])
+            if geocodes.strip() and len(selected_geocodes)==1 else ""
+        ),
+    }
+
+
 @app.route('/biome/<endpoint>', methods=['GET'])
-def get_biome_config(endpoint):
+def get_config(endpoint):
     if endpoint != 'config':
         return "Bad endpoint", 404
+    
+    status, params_or_error = _validate_params(
+        json_str = json.dumps(dict(request.args)),
+        required_params=[
+            "targetbiome",
+            "subset",
+            "municipalitiesGroup",
+            "isAuthenticated",
+            "geocodes",
+            "municipalityPanelMode"
+        ]
+    )
+
+    if not status:
+        return params_or_error
 
     try:
-        args = request.args
-        appBiome = args["targetbiome"]
-        subset = args["subset"]
-        municipalities_group = args["municipalitiesGroup"]
-        is_authenticated = args['isAuthenticated'] == "true"
-        geocodes = args["geocodes"]
-    except KeyError as ke:
-        # exception KeyError
-        # Raised when a mapping (dictionary) key is not found in the set of existing keys.
-        # HTTP 412: Precondition Failed
-        return "Input parameters are missing: {0}".format(str(ke)), 412
+        params = params_or_error
 
-    try:
-        dburl = Config.DB_URL
-        ctrl = AppConfigController(dburl)
-
-        biomes = ctrl.read_biomes()  # all biomes
-
-        if subset == "Bioma":
-            selected_biomes = json.dumps([appBiome])
-            municipalities_group = "ALL"
-            sui_subset = ctrl.read_spatial_units_for_subset(subset=subset, biome=appBiome)
-            cg = ctrl.read_class_groups(biomes=[appBiome])
-        else:
-            selected_biomes = json.dumps(["ALL"])
-            appBiome = "ALL"
-            sui_subset = ctrl.read_spatial_units_for_subset(subset='Munic\xedpios')
-            cg = ctrl.read_class_groups(biomes=["ALL"])
-
-        publish_date = (
-            ctrl.read_publish_date(biomes=json.loads(selected_biomes)) if not is_authenticated else
-            datetime.now().strftime("%Y-%m-%d")
+        conf = _get_config(
+            biome=params["targetbiome"],
+            subset=params["subset"],
+            municipalities_group=params["municipalitiesGroup"],
+            geocodes=params["geocodes"],
+            is_authenticated=params['isAuthenticated'].lower() == "true",
+            municipality_panel_mode=params["municipalityPanelMode"].lower() == "true",
         )
 
-        ldu = ctrl.read_land_uses()
+        return json.dumps(conf)
 
-        # incluing thresholds in the layer names
-        cg = json.loads(cg.replace("'", '"'))
-        for _ in cg:
-            if _['name'] == 'RK':
-                _['title'] += f" (>= {Config.RISK_THRESHOLD:.2f})"
-                break
-        cg = json.dumps(cg)
-
-        municipalities = ctrl.read_municipalities(biomes=json.loads(biomes))
-
-        res = {
-            'geoserver_url': Config.GEOSERVER_URL,
-            'appBiome': appBiome,
-            'deter_class_groups': cg,
-            'land_uses': ldu,
-            'spatial_units_info_for_subset': sui_subset,
-            'biomes': biomes,
-            'municipalities_group': ctrl.read_municipalities_group(),
-            'selected_subset': subset,
-            'selected_biomes': selected_biomes,
-            'selected_municipalities_group': municipalities_group,
-            'publish_date': publish_date,
-            'selected_geocodes': json.dumps(geocodes.split(",")),
-            'municipalities': municipalities
-        }
-
-        return json.dumps(res)
     except Exception as e:
         return "Something is wrong on the server. Please, send this error to our support service: terrabrasilis@inpe.br", 500
+
+
+@app.route('/panel', methods=['GET'])
+def set_municipality_panel_mode():
+    params = request.args
+    if not len(set(params) & {"id", "geocode"}):
+        return _render_template(
+            params={"error-msg": "Invalid URL parameter. Expected values are 'id' or 'geocode'."}
+        )
+
+    dburl = Config.DB_URL
+    ctrl = AppConfigController(dburl)
+
+    if "id" in params:
+        geocode = ctrl.read_municipality_geocode(su_id=params["id"])
+    else:
+        geocode = params["geocode"]
+
+    if not ctrl.geocode_is_valid(geocode=geocode):
+        return _render_template(
+            params={"error-msg": f"Geocode {geocode} not found."}
+        )
+
+    return _render_template(params={"municipality-panel": "true", "geocode": geocode})
 
 
 @app.route('/callback/<endpoint>', methods=['GET'])
@@ -160,19 +239,7 @@ def get_profile(endpoint):
     except Exception as e:
         print(e)
         return "Something is wrong on the server. Please, send this error to our support service: terrabrasilis@inpe.br", 500
-
-
-def _validate_params(json_str, required_params):
-    params = json.loads(json_str)
-
-    for name in required_params:
-        if not name in params:
-            # exception KeyError
-            # Raised when a mapping (dictionary) key is not found in the set of existing keys.
-            # HTTP 412: Precondition Failed
-            return False, (f"Input parameters are missing: {name}.", 412)
-    return True, params
-
+ 
 
 @app.route('/alerts', methods=['GET'])
 def get_alerts():

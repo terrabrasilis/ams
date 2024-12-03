@@ -22,6 +22,7 @@ L.Control.GroupedLayers = L.Control.extend({
     this._domGroups = [];
     this._selectCtrls = {};
     this._subsetChanged = true;
+    this._lastSelected = "";
 
     for (i in controlGroups) {  // group
         type = controlGroups[i]["type"];
@@ -279,6 +280,11 @@ L.Control.GroupedLayers = L.Control.extend({
       container;
 
     var checked = obj.acronym == obj.name;
+
+    if (checked) {
+        this._lastSelected = obj.name;
+    }
+
     var groupRadioName = 'leaflet-exclusive-group-layer-' + obj.group.id;
 
     var name = document.createElement('span');
@@ -321,8 +327,19 @@ L.Control.GroupedLayers = L.Control.extend({
 
       // Create the group container if it doesn't exist
       if (!groupContainer) {
+        profileContainer = document.createElement('div');
+        profileBt = this._createProfileBiomeButton(obj.name);
+        profileContainer.appendChild(profileBt);
+
+        container.appendChild(profileContainer);
+
         groupContainer = document.createElement('div');
         groupContainer.className = 'leaflet-control-layers-group';
+
+        if (obj.group.name === "RECORTE") {
+            groupContainer.className += ' hide-in-municipality-panel';
+        }
+
         groupContainer.id = 'leaflet-control-layers-group-' + obj.group.id;
         groupContainer.title = this._getTitleByGroup(obj.group.name);
 
@@ -335,9 +352,6 @@ L.Control.GroupedLayers = L.Control.extend({
         groupName.innerHTML = obj.group.name;
         groupLabel.appendChild(groupName);
         groupContainer.appendChild(groupLabel);
-
-        profileBt = this._createProfileBiomeButton(obj.name);
-        groupContainer.appendChild(profileBt);
 
         container.appendChild(groupContainer);
 
@@ -577,6 +591,12 @@ L.Control.GroupedLayers = L.Control.extend({
 
         if (obj.name == "customizado") {
             ams.App._getCustomizedMunicipalities().then(geocodes => {
+                if (!geocodes.length) {
+                    var radioName = this._lastSelected + "-subset-radio";
+                    var radio = document.querySelector('input[type="radio"][data-user-defined="' + radioName + '"]');
+                    radio.checked = true;
+                    return;
+                }
                 obj.customized = geocodes;
                 this._map.fire('changectrl', obj);
             });
