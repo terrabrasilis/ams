@@ -145,7 +145,7 @@ ams.LeafletWms = {
             conf["suName"]=n;
             conf["landUse"]=ams.App._landUseList.join(',');
             conf["targetbiome"]=ams.Config.biome;
-            conf["municipalitiesGroup"]=ams.App._municipalitiesGroup
+            conf["municipalitiesGroup"]=encodeURIComponent(ams.App._municipalitiesGroup);
             conf["geocodes"]=ams.App._geocodes.join(',');
 
             return conf;
