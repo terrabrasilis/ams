@@ -327,7 +327,7 @@ ams.App = {
                 let layerToAdd,needUpdateSuLayers=true;
                 
                 if(e.group.name=='BIOMA'){
-                    if(e.acronym==ams.Config.biome && e.subsetChanged==false){
+                    if(e.acronym==ams.Config.biome && e.subsetChanged===false){
                         return;
                     }
                     if(ams.App._landUseList.length!=ams.Config.landUses.length){
@@ -1060,22 +1060,6 @@ ams.App = {
 
                 document.getElementById("txt3a").innerHTML = profileJson['FormTitle'];
                 $('#modal-container-general-info').modal();
-                // for adding tooltip on pie chart legend
-                let leg=$('g.legend');
-                leg.attr('data-html','true');
-                leg.attr('title', 'Descrição das categorias fundiárias.<br />'+
-                '-----------------------------------------------------------------------<br />'+
-                'TI: Terras Indígenas;<br />'+
-                'UC: Unidades de Conservação;<br />'+
-                'Assentamentos: Projetos de assentamentos de todos os tipos;<br />'+
-                'APA: Área de Proteção Ambiental;<br />'+
-                'CAR: Cadastro Ambiental Rural;<br />'+
-                'FPND: Florestas Públicas Não Destinadas;<br />'+
-                'Indefinida: Todas as demais áreas');
-                leg.mouseover(function(){
-                    let l=$('g.legend');
-                    l.tooltip('show');
-                });
             }else{
                 let emsg="";
                 if(response) emsg="HTTP-Error: " + response.status + " on spatial_unit_profile";
