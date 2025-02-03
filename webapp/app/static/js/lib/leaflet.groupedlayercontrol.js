@@ -574,34 +574,40 @@ L.Control.GroupedLayers = L.Control.extend({
   },
 
   _onInputClick: function (e) {
+    var itype = this._getControlById(e.target.ctrlId).type;
+
+    if (itype !== "selectControl") {
+	    var obj = this._getControlById(e.target.ctrlId);
+	    obj.inputtype = e.target.type;
+	    obj.checked = e.target.checked;
+	    this._map.fire('changectrl', obj);
+	    return;
+    }
+
     var obj = JSON.parse(JSON.stringify(this._getControlById(e.target.ctrlId)));
+    var selectCtrl = this._selectCtrls[obj.name];
+    var select = selectCtrl.querySelector('select');
 
-    obj["inputtype"]=e.target.type;
-    obj["checked"]=e.target.checked;
+    obj.inputtype = e.target.type;
+    obj.checked = e.target.checked;
+    obj.group.name = obj.name.toUpperCase();
+    obj.subset = obj.name;
+    obj.name = select.value;
+    obj.acronym = select.value;
+    obj.subsetChanged = this._subsetChanged;
 
-    if (obj.type === "selectControl") {
-        var selectCtrl = this._selectCtrls[obj.name];
-        var select = selectCtrl.querySelector('select');
-
-        obj.group.name = obj.name.toUpperCase();
-        obj.subset = obj.name;
-        obj.name = select.value;
-        obj.acronym = select.value;
-        obj.subsetChanged = this._subsetChanged;
-
-        if (obj.name == "customizado") {
-            ams.App._getCustomizedMunicipalities().then(geocodes => {
-                if (!geocodes.length) {
-                    var radioName = this._lastSelected + "-subset-radio";
-                    var radio = document.querySelector('input[type="radio"][data-user-defined="' + radioName + '"]');
-                    radio.checked = true;
-                    return;
-                }
-                obj.customized = geocodes;
-                this._map.fire('changectrl', obj);
-            });
-            return;
+    if (obj.name == "customizado") {
+      ams.App._getCustomizedMunicipalities().then(geocodes => {
+        if (!geocodes.length) {
+          var radioName = this._lastSelected + "-subset-radio";
+          var radio = document.querySelector('input[type="radio"][data-user-defined="' + radioName + '"]');
+          radio.checked = true;
+          return;
         }
+        obj.customized = geocodes;
+        this._map.fire('changectrl', obj);
+      });
+      return;
     }
 
     // dispache event to update layers using selected filters
