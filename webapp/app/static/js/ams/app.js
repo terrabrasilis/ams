@@ -62,6 +62,7 @@ ams.App = {
 
         if (startDate && ams.Date.isAfter(lastDateDynamic, startDate) && tempUnit !== "custom") {
             setPeriod(startDate, endDate, tempUnit);
+            this._currentTemporalAggregate = tempUnit;
         } else {            
             setPeriod(lastDateDynamic, "", this._currentTemporalAggregate);
         }
