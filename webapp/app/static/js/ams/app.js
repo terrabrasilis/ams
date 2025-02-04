@@ -47,14 +47,25 @@ ams.App = {
 
         this._wfs = new ams.Map.WFS(geoserverUrl);
         var ldLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.lastDate;
+
         var temporalUnits = new ams.Map.TemporalUnits();
         this._dateControl = new ams.Date.DateController();
         let lastDateDynamic = this._wfs.getLastDate(ldLayerName);
         lastDateDynamic = lastDateDynamic?lastDateDynamic:this._spatialUnits.getDefault().last_date;
         lastDateDynamic = ams.Date.getMin(ams.Config.publishDate, lastDateDynamic);
 
+        let startDate = ams.Config.startDate;
+        let endDate = ams.Config.endDate;
+        let tempUnit = ams.Config.tempUnit;
+
         this._currentTemporalAggregate = temporalUnits.getAggregates()[0].key;
-        this._dateControl.setPeriod(lastDateDynamic, this._currentTemporalAggregate);
+
+        if (startDate && ams.Date.isAfter(lastDateDynamic, startDate) && tempUnit !== "custom") {
+            setPeriod(startDate, endDate, tempUnit);
+        } else {            
+            setPeriod(lastDateDynamic, "", this._currentTemporalAggregate);
+        }
+
         this._baseURL = geoserverUrl + "/wms";
         this._propertyName = ( (ams.Config.defaultFilters.indicator=='AF')?(ams.Config.propertyName.af):(ams.Config.propertyName.deter) );
         this._referenceLayerName = ams.Auth.getWorkspace()+":"+( (ams.Config.defaultFilters.indicator=='AF')?(ams.Config.defaultLayers.activeFire):(ams.Config.defaultLayers.deter) );
@@ -325,7 +336,11 @@ ams.App = {
                 }
 
                 let layerToAdd,needUpdateSuLayers=true;
-                
+
+                var startDate = ams.App._dateControl.startdate;
+                var endDate = ams.App._dateControl.enddate;
+                var tempUnit = ams.App._dateControl.period;
+               
                 if(e.group.name=='BIOMA'){
                     if(e.acronym==ams.Config.biome && e.subsetChanged===false){
                         return;
@@ -345,7 +360,7 @@ ams.App = {
                     localStorage.setItem('ams.previous.biome.setting.selection', e.acronym);
 
                     needUpdateSuLayers=false;// disable the call at the end because the call is inside the Promise callback below
-                    ams.Utils.updateMap(e.acronym, e.subset).then(
+                    ams.Utils.updateMap(e.acronym, e.subset, undefined, undefined, startDate, endDate, tempUnit).then(
                         ()=>{
                             ams.App._updateSpatialUnitLayer();
                         }
@@ -370,7 +385,7 @@ ams.App = {
 
                     // disable the call at the end because the call is inside the Promise callback below
                     needUpdateSuLayers=false;
-                    ams.Utils.updateMap("all", e.subset, e.name, geocodes).then(
+                    ams.Utils.updateMap("all", e.subset, e.name, geocodes, startDate, endDate, tempUnit).then(
                         ()=>{
                             ams.App._updateSpatialUnitLayer();
                         }
@@ -414,7 +429,15 @@ ams.App = {
                         // try update the last date for new classname
                         let lastDateDynamic = ams.App._wfs.getLastDate(ldLayerName);
                         lastDateDynamic = lastDateDynamic?lastDateDynamic:ams.App._spatialUnits.getDefault().last_date;
-                        ams.App._dateControl.setPeriod(lastDateDynamic, ams.App._currentTemporalAggregate);
+                        let startDate = ams.App._dateControl.startdate;
+                        let endDate = ams.App._dateControl.enddate;
+                        let tempUnit = ams.App._dateControl.period;
+
+                        if (ams.Date.isAfter(lastDateDynamic, startDate) && tempUnit !== "custom") {
+                            setPeriod(startDate, endDate, tempUnit);
+                        } else {            
+                            setPeriod(lastDateDynamic, "", ams.App._currentTemporalAggregate);
+                        }
                         ams.PeriodHandler.changeDate(ams.App._dateControl.startdate);
                         needUpdateSuLayers=false; //no need because the changeDate Internally invokes layer update
                     }
@@ -481,6 +504,10 @@ ams.App = {
                 },500
             );
         });
+
+        function setPeriod(startDate, endDate, tempUnit) {
+            ams.App._dateControl.setPeriod(startDate, tempUnit);
+        }
 
         // municipality panel
         function setMunicipalityPanelMode() {
@@ -1025,8 +1052,8 @@ ams.App = {
                 else if(this._map.hasLayer(lm)) this._map.removeLayer(lm);
             }
         }
-    },    
-
+    },
+    
     _onWindowResize: function () {
         ams.groupControl._onWindowResize();
     },
@@ -1140,7 +1167,15 @@ ams.App = {
 
     startMunicipalityPanel: function (name, value) {
         async function _startMunicipalityPanel (name, value) {
-            let response = await fetch("panel?"+name+"="+value).catch(
+            let startDate = ams.App._dateControl.startdate;
+            let endDate = ams.App._dateControl.enddate;
+            let tempUnit = ams.App._dateControl.period;
+            let response = await fetch(
+                "panel?"+name+"="+value +
+                "&startDate=" + ((startDate !== undefined)? startDate : "") +
+                "&endDate=" + ((endDate !== undefined)? endDate : "") +
+	            "&tempUnit=" + ((tempUnit !== undefined)? tempUnit : "")
+            ).catch(
                 ()=>{
                     console.log("The backend service may be offline or your internet connection has been interrupted.");
                 }

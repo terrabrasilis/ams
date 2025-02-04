@@ -61,6 +61,10 @@ ams.Utils = {
       ams.Config.appMunicipalityPanelMode = JSON.parse(generalConfig.municipality_panel_mode);
       ams.Config.appSelectedMunicipality = generalConfig.selected_municipality;
 
+      ams.Config.startDate = generalConfig.start_date;
+      ams.Config.endDate = generalConfig.end_date;
+      ams.Config.tempUnit = generalConfig.temp_unit;	
+
       var spatialUnits = JSON.parse(generalConfig.spatial_units_info_for_subset.replace(/'/g,"\""));
       var spatialUnitsSubset = new ams.Map.SpatialUnits(spatialUnits, spatialUnits[0]["dataname"]);
 
@@ -106,8 +110,12 @@ ams.Utils = {
         selectedBiome,
         selectedSubset,
         selectedMunicipalitiesGroup,
-        selectedGeocodes
+        selectedGeocodes,
+	      startDate,
+        endDate,
+	      tempUnit
     ) {
+
       if (selectedSubset === undefined) {
           selectedSubset = ams.defaultSubset;
       }
@@ -124,9 +132,12 @@ ams.Utils = {
       if (ams.Utils.getServerConfigParam('municipality-panel') !== undefined) {
           municipalityPanelMode = true;
           selectedBiome = "ALL";
-          selectedSubset = "Municípios de Interesse";
+          selectedSubset = "MunicÃ­pios de Interesse";
           selectedMunicipalitiesGroup = "customizado";
           selectedGeocodes=ams.Utils.getServerConfigParam('geocode');
+          startDate=ams.Utils.getServerConfigParam('start_date');
+          endDate=ams.Utils.getServerConfigParam('end_date');
+          tempUnit=ams.Utils.getServerConfigParam('temp_unit');
       }
 
       const loadConfig = new Promise((resolve, reject) => {
@@ -144,7 +155,10 @@ ams.Utils = {
               "&municipalitiesGroup=" + selectedMunicipalitiesGroup +
               "&isAuthenticated=" + ams.Auth.isAuthenticated() +
               "&geocodes=" + selectedGeocodes +
-              "&municipalityPanelMode=" + municipalityPanelMode
+              "&municipalityPanelMode=" + municipalityPanelMode +
+	            "&startDate=" + ((startDate !== undefined)? startDate : "") +
+              "&endDate=" + ((endDate !== undefined)? endDate : "") +
+	            "&tempUnit=" + ((tempUnit !== undefined)? tempUnit : "")
           );
           if (response&&response.ok) {
             let generalConfig = await response.json();

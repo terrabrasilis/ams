@@ -139,7 +139,7 @@ ams.Date = {
             let prevdate = enddate;
             prevdate.setUTCDate(prevdate.getUTCDate() - this.customDays);
             this.prevdate = this.toUTCDate(prevdate);
-        }        
+        }
 
         this.disableCustomPeriod = function() {
             this.period = null;
@@ -186,6 +186,13 @@ ams.Date = {
         var minDate = date1 < date2 ? date1 : date2;
 
         return minDate.toISOString().slice(0, 10);
+    },
+
+    isAfter: function (dateStr1, dateStr2) {
+        var date1 = new Date(dateStr1);
+        var date2 = new Date(dateStr2);
+
+	    return date1 >= date2;
     }
 
 };

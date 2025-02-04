@@ -48,6 +48,9 @@ def _get_config(
     geocodes: str,
     is_authenticated: bool,
     municipality_panel_mode: bool,
+    start_date: str="",
+    end_date: str="",
+    temp_unit: str=""
 ):
     dburl = Config.DB_URL
     ctrl = AppConfigController(dburl)
@@ -113,6 +116,9 @@ def _get_config(
             ctrl.read_municipality_name(geocode=selected_geocodes[0])
             if geocodes.strip() and len(selected_geocodes)==1 else ""
         ),
+        'start_date': start_date,
+        'end_date': end_date,
+        'temp_unit': temp_unit,
     }
 
 
@@ -120,7 +126,7 @@ def _get_config(
 def get_config(endpoint):
     if endpoint != 'config':
         return "Bad endpoint", 404
-    
+
     status, params_or_error = _validate_params(
         json_str = json.dumps(dict(request.args)),
         required_params=[
@@ -146,6 +152,9 @@ def get_config(endpoint):
             geocodes=params["geocodes"],
             is_authenticated=params['isAuthenticated'].lower() == "true",
             municipality_panel_mode=params["municipalityPanelMode"].lower() == "true",
+            start_date=params["startDate"],
+            end_date=params["endDate"],
+            temp_unit=params["tempUnit"],
         )
 
         return json.dumps(conf)
@@ -157,6 +166,7 @@ def get_config(endpoint):
 @app.route('/panel', methods=['GET'])
 def set_municipality_panel_mode():
     params = request.args
+
     if not len(set(params) & {"id", "geocode"}):
         return _render_template(
             params={"error-msg": "Invalid URL parameter. Expected values are 'id' or 'geocode'."}
@@ -174,16 +184,25 @@ def set_municipality_panel_mode():
         return _render_template(
             params={"error-msg": f"Geocode {geocode} not found."}
         )
-
-    return _render_template(params={"municipality-panel": "true", "geocode": geocode})
-
+    
+    params = {
+        "municipality-panel": "true",
+        "geocode": geocode,
+        "start_date": params["startDate"] if "startDate" in params else "",
+        "end_date": params["endDate"] if "endDate" in params else "",
+        "temp_unit": params["tempUnit"] if "tempUnit" in params else "",
+    }
+    
+    return _render_template(
+        params=params
+    )
 
 @app.route('/callback/<endpoint>', methods=['GET'])
 def get_profile(endpoint):
     if endpoint != 'spatial_unit_profile':
         return "Bad endpoint", 404
 
-    args = request.args    
+    args = request.args
 
     try:
         params = json.loads(args.get('sData'))
