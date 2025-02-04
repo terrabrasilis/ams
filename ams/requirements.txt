@@ -3,7 +3,7 @@ sqlalchemy-utils
 psycopg2-binary
 geoalchemy2
 geopandas
-plotly
+plotly==5.19.0
 alive-progress
 rasterio
 aioftp
