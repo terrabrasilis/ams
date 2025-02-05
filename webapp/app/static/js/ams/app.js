@@ -47,7 +47,6 @@ ams.App = {
 
         this._wfs = new ams.Map.WFS(geoserverUrl);
         var ldLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.lastDate;
-
         var temporalUnits = new ams.Map.TemporalUnits();
         this._dateControl = new ams.Date.DateController();
         let lastDateDynamic = this._wfs.getLastDate(ldLayerName);
@@ -55,16 +54,14 @@ ams.App = {
         lastDateDynamic = ams.Date.getMin(ams.Config.publishDate, lastDateDynamic);
 
         let startDate = ams.Config.startDate;
-        let endDate = ams.Config.endDate;
         let tempUnit = ams.Config.tempUnit;
-
         this._currentTemporalAggregate = temporalUnits.getAggregates()[0].key;
 
         if (startDate && ams.Date.isAfter(lastDateDynamic, startDate) && tempUnit !== "custom") {
-            setPeriod(startDate, endDate, tempUnit);
+            ams.App._dateControl.setPeriod(startDate, tempUnit);
             this._currentTemporalAggregate = tempUnit;
         } else {            
-            setPeriod(lastDateDynamic, "", this._currentTemporalAggregate);
+            ams.App._dateControl.setPeriod(lastDateDynamic, this._currentTemporalAggregate);
         }
 
         this._baseURL = geoserverUrl + "/wms";
@@ -430,15 +427,10 @@ ams.App = {
                         // try update the last date for new classname
                         let lastDateDynamic = ams.App._wfs.getLastDate(ldLayerName);
                         lastDateDynamic = lastDateDynamic?lastDateDynamic:ams.App._spatialUnits.getDefault().last_date;
-                        let startDate = ams.App._dateControl.startdate;
-                        let endDate = ams.App._dateControl.enddate;
-                        let tempUnit = ams.App._dateControl.period;
-
-                        if (ams.Date.isAfter(lastDateDynamic, startDate) && tempUnit !== "custom") {
-                            setPeriod(startDate, endDate, tempUnit);
-                        } else {            
-                            setPeriod(lastDateDynamic, "", ams.App._currentTemporalAggregate);
+                        if (e.acronym !== "RK") {
+                            lastDateDynamic = ams.Date.getMin(ams.App._dateControl.startdate, lastDateDynamic);
                         }
+			            ams.App._dateControl.setPeriod(lastDateDynamic, ams.App._currentTemporalAggregate);
                         ams.PeriodHandler.changeDate(ams.App._dateControl.startdate);
                         needUpdateSuLayers=false; //no need because the changeDate Internally invokes layer update
                     }
@@ -505,10 +497,6 @@ ams.App = {
                 },500
             );
         });
-
-        function setPeriod(startDate, endDate, tempUnit) {
-            ams.App._dateControl.setPeriod(startDate, tempUnit);
-        }
 
         // municipality panel
         function setMunicipalityPanelMode() {
