@@ -23,7 +23,7 @@
         {% for key, value in params.items() %}
         <meta name="{{ key }}" content="{{ value }}">
         {% endfor %}
-	
+
 	<link rel="shortcut icon" href="{{ url_for('static', filename='imgs/favicon.ico') }}" type="image/x-icon">
 	<link rel="icon" href="{{ url_for('static', filename='imgs/favicon.ico') }}" type="image/x-icon">
 
@@ -49,7 +49,10 @@
 			<a class="navbar-brand" href="http://terrabrasilis.dpi.inpe.br/"><span class="amarelo">Terra</span><span class="verde">Brasilis</span></a>
 			<div class="collapse navbar-collapse justify-content-between">
 				<div class="navbar-nav">
-					<a class="nav-item nav-link" href="#" id="header-panel">| Sala de Situação</a>
+				  <a class="nav-item nav-link" href="#" id="header-panel">
+                                    <span id="header-panel-title">Sala de Situação</span>
+                                    <span id="header-panel-info"></span>
+                                  </a>
 				</div>
 				<ul id="navigationBarUL" class="navbar-nav navbar-right analises">
 					<li class="nav-item dropdown">
@@ -294,6 +297,35 @@
 				</div>
                                 <!-- END modal credits -->
 
+
+                                <!-- modal window for municipalities search -->
+                                <div class="modal fade" id="modal-container-municipalities" role="dialog">
+                                  <div class="modal-dialog modal-municipalities-search">
+                                    <div class="modal-content modalinf">
+                                      <div class="modal-header fechar">
+                                        <h5 class="modal-title boxtitletable">Buscar municípios:</h5>
+                                        <button id="municipalities-search-close" type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="material-icons">clear</i></button>
+                                      </div>
+                                      <div class="modal-body">
+                                        <div class="form-group">
+                                          <input type="text" id="search-municipalities" class="form-control" placeholder="digite o nome do município para pesquisa">
+                                        </div>
+                                        <div class="form-group">
+                                          <label for="select-municipalities">Selecione os municípios:</label>
+                                          <select id="select-municipalities" class="form-control" multiple>
+                                          </select>
+                                        </div>
+                                      </div>
+                                      <div class="modal-footer modal-municipalities-footer">
+                                        <button type="button" class="btn btn-secondary" id="municipalities-search-cancel" data-dismiss="modal">Cancelar</button>
+                                        <button type="button" class="btn btn-primary" id="municipalities-search-ok" disabled="true">OK</button>
+                                        <button type="button" class="btn btn-primary" id="municipalities-search-panel" disabled="true">Sala de Situa&ccedil;&atilde;o Municipal</button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                                <!-- END modal window for municipalities search -->
+
 				<!--chart panel -->
                 <div class="modal fade" id="modal-container-general-info"  role="dialog" aria-labelledby="general-info" aria-hidden="true">
 					<div class="modal-dialog modal-lg" role="document">
@@ -365,11 +397,11 @@
 	<!-- jQuery Custom Scroller -->
 	<script type="text/javascript" src="{{url_for('static', filename='js/lib/jquery/plugin/jquery.mCustomScrollbar.concat.min.js')}}"></script>
 	<script type="text/javascript">
-        let randomNumber = Math.floor((Math.random() * 1000000) + 1);
-        let base_url=document.location.protocol+'//'+document.location.hostname;
-        let oauthURL = base_url+"/oauth-api/getoauthjs?"+randomNumber;
-        document.writeln("<script type='text/javascript' src='"+oauthURL+"'><\/script>");
-    </script>
+          let randomNumber = Math.floor((Math.random() * 1000000) + 1);
+          let base_url=document.location.protocol+'//'+document.location.hostname;
+          let oauthURL = base_url+"/oauth-api/getoauthjs?"+randomNumber;
+          document.writeln("<script type='text/javascript' src='"+oauthURL+"'><\/script>");
+        </script>
 	<!-- Global site tag (gtag.js) - Google Analytics -->
 	<script type="text/javascript" async src="https://www.googletagmanager.com/gtag/js?id=G-VF4139FH8F"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/terrabrasilis-start.js')}}"></script>

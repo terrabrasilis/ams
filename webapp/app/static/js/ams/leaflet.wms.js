@@ -22,6 +22,7 @@ ams.LeafletWms = {
                 return;
             }
             let featureInfo = JSON.parse(jsonTxt);
+
             let htmlInfo="",name="",type="";
             if(featureInfo.numberReturned>=1){
                 if (this._isDeterInfo()) {
@@ -112,17 +113,14 @@ ams.LeafletWms = {
                 "area": 0,
                 "counts": 0,
                 "percentage": 0,
-                "area_unit": "km²"
+                "area_unit": "km²",
+                "suid": ""
             };
             this._updateResults(result, featureInfo);
-            let sButton = "";
-            if(result.area!=0){
-                sButton = this._createGraphicButton(result.name);
-                if (["DS", "DG", "CS", "MN"].includes(result.classname)) {
-                    sButton += this._createSaveButton(result.name);
-                }
-            }
-            return this._createSpatialUnitInfoTable(result) + sButton;
+
+            let buttons = this._createButtons(result);
+
+            return this._createSpatialUnitInfoTable(result) + buttons;
         },
 
         '_formatClassName': function (acronym) {
@@ -146,29 +144,52 @@ ams.LeafletWms = {
             
             conf["suName"]=n;
             conf["landUse"]=ams.App._landUseList.join(',');
+            conf["targetbiome"]=ams.Config.biome;
+            conf["municipalitiesGroup"]=encodeURIComponent(ams.App._municipalitiesGroup);
+            conf["geocodes"]=ams.App._geocodes.join(',');
+
             return conf;
         },
 
-        '_createGraphicButton': function (suName) {
-            let viewConfig=this._getViewConfig(suName);
-            let sButton=
-                  '<div style="display:inline-flex;justify-content:space-between;">'
-                + '<button class="btn btn-primary-p btn-success" style="margin:1px" onclick=ams.App.displayGraph('  // see app.js
-                + JSON.stringify(viewConfig)
-                + ')>Perfil</button>'
-                + '</div>';
-            return sButton;
+        '_createButtons': function (result) {
+            let suName = result.name;
+            let suId = result.suid;
+            let area = result.area;
+            let classname = result.classname;
+            let viewConfig = this._getViewConfig(suName);
+
+            let buttons = '<div class="button-container">';
+
+            if (area!=0) {
+                buttons +=
+                    '<button class="btn btn-primary-p btn-success" style="margin:1px" onclick=ams.App.displayGraph('  // see app.js
+                    + JSON.stringify(viewConfig)
+                    + ')>Perfil</button>';
+
+                if (["DS", "DG", "CS", "MN"].includes(classname)) {
+                    buttons +=
+                        '<button class="btn btn-primary-p btn-success" style="margin:1px" onclick=ams.App.saveAlerts('  // see app.js
+                        + JSON.stringify(viewConfig)
+                        + ')>Salvar alertas</button>';
+                }
+            }
+
+            if (
+                ams.App._currentSULayerName.includes("municipalities") &&
+                ams.Utils.getServerConfigParam('municipality-panel') === undefined
+            ) {
+                buttons +=
+                    '<button class="btn btn-primary-p btn-success" style="margin:1px" onclick=ams.App.startMunicipalityPanel('
+                    + '"id",'
+                    + suId
+                    + ')>Sala de Situa&ccedil;&atilde;o Municipal</button>';
+            }
+
+            buttons += '</div>'
+
+            return buttons;
         },
-        '_createSaveButton': function (suName) {
-            let viewConfig=this._getViewConfig(suName);
-            let sButton=
-                '<div style="display:inline-flex;justify-content:space-between;">'
-                + '<button class="btn btn-primary-p btn-success" style="margin:1px" onclick=ams.App.saveAlerts('  // see app.js
-                + JSON.stringify(viewConfig)
-                + ')>Salvar alertas</button>'
-                + '</div>';
-            return sButton;
-        },
+
         '_createSpatialUnitInfoTable': function (result) {
             let risk=focus=deter="";
             if(result["classname"]=="AF"){
@@ -288,17 +309,9 @@ ams.LeafletWms = {
                 "areatotalkm": 0,
                 "areauckm": 0,
                 "municipality": "",
-                "ncar_ids": null,
                 "uc": null,
                 "uf": "",
-                "car_imovel": null,
-                "continuo": "",
-                "deltad": 0,
-                "dominio": "",
-                "est_fund": "",
-                "ncar_ids": null,
-                "tp_dominio": "",
-                "velocidade": 0
+                "biome": "",
             };
             this._updateResults(result, featureInfo);
             return this._createDeterInfoTable(result);

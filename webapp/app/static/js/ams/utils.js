@@ -4,7 +4,7 @@ ams.Utils = {
   tid:null,
 
   isHomologationEnvironment: function(){
-    return window.location.pathname.includes("homologation") || window.location.hostname=='127.0.0.1';
+    return  window.location.pathname.includes("homologation") || window.location.hostname=='127.0.0.1';
   },
 
   setMapHeight: function(){
@@ -31,21 +31,53 @@ ams.Utils = {
     if(typeof generalConfig=='undefined'){
       // use the previous selection or default biome (see config.js)
       let b=localStorage.getItem('ams.previous.biome.setting.selection');
-      ams.Utils.biomeChanges( ((b!==null)?(b):(ams.defaultBiome)) );
+      ams.Utils.updateMap( ((b!==null)?(b):(ams.defaultBiome)) );
     }else{
       // evaluate the user area_profile on start app
       ams.Auth.evaluate();
+
       // set map div to available height
       ams.Utils.setMapHeight();
-      var sus = JSON.parse(generalConfig.spatial_units_info.replace(/'/g,"\""));
-      ams.Config = ams.BiomeConfig[generalConfig.appBiome];
-      ams.Config.biome=generalConfig.appBiome;
-      ams.Config.landUses=JSON.parse(generalConfig.land_uses.replace(/'/g,"\""));
-      var spatialUnits = new ams.Map.SpatialUnits(sus, ams.Config.defaultFilters.spatialUnit);
-      var appClassGroups = new ams.Map.AppClassGroups(JSON.parse(generalConfig.deter_class_groups.replace(/'/g,"\"")));
+
+      // config
+      var biome = generalConfig.appBiome.split(",")[0];
+
+      ams.Config = ams.BiomeConfig[biome];
+
+      ams.Config.allBiomes = JSON.parse(generalConfig.biomes.replace(/'/g,"\""));
+      ams.Config.allMunicipalitiesGroup = JSON.parse(generalConfig.municipalities_group.replace(/'/g,"\""));
+      ams.Config.landUses = JSON.parse(generalConfig.land_uses.replace(/'/g,"\""));
+
+      ams.Config.biome = generalConfig.appBiome;
+      ams.Config.appSelectedSubset = generalConfig.selected_subset;
+      ams.Config.appSelectedBiomes = JSON.parse(generalConfig.selected_biomes.replace(/'/g,"\""));
+      ams.Config.appSelectedMunicipalitiesGroup = generalConfig.selected_municipalities_group;
+      ams.Config.publishDate = generalConfig.publish_date;
+      ams.Config.bbox = JSON.parse(generalConfig.bbox);
+
+      ams.Config.appSelectedGeocodes = JSON.parse(generalConfig.selected_geocodes);
+      ams.Config.appAllMunicipalities = JSON.parse(generalConfig.all_municipalities.replace(/'/g,"\""));
+
+      ams.Config.appMunicipalityPanelMode = JSON.parse(generalConfig.municipality_panel_mode);
+      ams.Config.appSelectedMunicipality = generalConfig.selected_municipality;
+
+      ams.Config.startDate = generalConfig.start_date;
+      ams.Config.endDate = generalConfig.end_date;
+      ams.Config.tempUnit = generalConfig.temp_unit;	
+
+      var spatialUnits = JSON.parse(generalConfig.spatial_units_info_for_subset.replace(/'/g,"\""));
+      var spatialUnitsSubset = new ams.Map.SpatialUnits(spatialUnits, spatialUnits[0]["dataname"]);
+
+      // class groups
+      var appClassGroups = new ams.Map.AppClassGroups(
+          JSON.parse(generalConfig.deter_class_groups.replace(/'/g,"\""))
+      );
+
+      // geoserver
       var geoserverUrl = generalConfig.geoserver_url;
+
       try {
-        ams.App.run(geoserverUrl, spatialUnits, appClassGroups);
+        ams.App.run(geoserverUrl, spatialUnitsSubset, appClassGroups);
       } catch (error) {
         console.log(error);
         // if any error occurs, clear the local storage to try again
@@ -71,10 +103,42 @@ ams.Utils = {
     ams.Utils.startApp();
   },
 
-    /**
-   * Used when selected biome changes
-   */
-    biomeChanges: function(selectedBiome){
+   /**
+    * Used when selected biome changes
+    */
+    updateMap: function(
+        selectedBiome,
+        selectedSubset,
+        selectedMunicipalitiesGroup,
+        selectedGeocodes,
+	      startDate,
+        endDate,
+	      tempUnit
+    ) {
+
+      if (selectedSubset === undefined) {
+          selectedSubset = ams.defaultSubset;
+      }
+
+      if (selectedMunicipalitiesGroup === undefined) {
+          selectedMunicipalitiesGroup = ams.defaultMunicipalitiesGroup;
+      }
+
+      if (selectedGeocodes === undefined) {
+          selectedGeocodes = "";
+      }
+
+      var municipalityPanelMode = false;
+      if (ams.Utils.getServerConfigParam('municipality-panel') !== undefined) {
+          municipalityPanelMode = true;
+          selectedBiome = "ALL";
+          selectedSubset = "Municípios de Interesse";
+          selectedMunicipalitiesGroup = "customizado";
+          selectedGeocodes=ams.Utils.getServerConfigParam('geocode');
+          startDate=ams.Utils.getServerConfigParam('start_date');
+          endDate=ams.Utils.getServerConfigParam('end_date');
+          tempUnit=ams.Utils.getServerConfigParam('temp_unit');
+      }
 
       const loadConfig = new Promise((resolve, reject) => {
 
@@ -82,14 +146,31 @@ ams.Utils = {
          * If we need read configurations from server by a selected biome.
          * @param {string} selectedBiome The name of selected biome.
          */
-        async function getConfigByBiome( selectedBiome ) {
-          let response = await fetch("biome/config?targetbiome=" + selectedBiome);
+        async function getConfig(
+            selectedBiome, selectedSubset, selectedMunicipalitiesGroup, selectedGeocodes, municipalityPanelMode
+        ) {
+          let response = await fetch(
+              "biome/config?targetbiome=" + selectedBiome +
+              "&subset=" + selectedSubset +
+              "&municipalitiesGroup=" + selectedMunicipalitiesGroup +
+              "&isAuthenticated=" + ams.Auth.isAuthenticated() +
+              "&geocodes=" + selectedGeocodes +
+              "&municipalityPanelMode=" + municipalityPanelMode +
+	            "&startDate=" + ((startDate !== undefined)? startDate : "") +
+              "&endDate=" + ((endDate !== undefined)? endDate : "") +
+	            "&tempUnit=" + ((tempUnit !== undefined)? tempUnit : "")
+          );
           if (response&&response.ok) {
             let generalConfig = await response.json();
+
             if (generalConfig.appBiome) {
               // write on local storage
               localStorage.setItem('ams.biome.config.'+selectedBiome, JSON.stringify(generalConfig));
               localStorage.setItem('ams.config.created.at', (new Date()).toISOString().split('T')[0] );
+              localStorage.setItem('ams.config.subset', selectedSubset);
+              localStorage.setItem('ams.config.municipalitiesGroup', selectedMunicipalitiesGroup);
+              localStorage.setItem('ams.config.geocodes', selectedGeocodes);
+              localStorage.setItem('ams.config.municipalityPanelMode', municipalityPanelMode);
               ams.Utils.startApp(generalConfig);
               resolve();
             }else{
@@ -127,19 +208,29 @@ ams.Utils = {
           // the local storage expiration date 
           let createdAt=new Date(localStorage.getItem('ams.config.created.at')+'T03:00:00.000Z');
           let nowDate=new Date((new Date()).toISOString().split('T')[0]+'T03:00:00.000Z');
-          if(createdAt<nowDate){
+          if(
+              createdAt<nowDate ||
+              localStorage.getItem('ams.config.subset') != selectedSubset ||
+              localStorage.getItem('ams.config.municipalitiesGroup') != selectedMunicipalitiesGroup ||
+              localStorage.getItem('ams.config.selectedGeocodes') != selectedGeocodes ||
+              localStorage.getItem('ams.config.municipalityPanelMode') != municipalityPanelMode
+          ) {
             for (let p in ams.BiomeConfig) {
               if(ams.BiomeConfig.hasOwnProperty(p))
                 localStorage.removeItem('ams.biome.config.'+p);
             }
-            getConfigByBiome(selectedBiome);
+            getConfig(
+                selectedBiome, selectedSubset, selectedMunicipalitiesGroup, selectedGeocodes, municipalityPanelMode
+            );
           }else{
             let biomeConfiguration=JSON.parse(localStorage.getItem('ams.biome.config.'+selectedBiome));
             ams.Utils.startApp(biomeConfiguration);
             resolve();
           }
         }else{
-          getConfigByBiome(selectedBiome);
+          getConfig(
+              selectedBiome, selectedSubset, selectedMunicipalitiesGroup, selectedGeocodes, municipalityPanelMode
+          );
         }
 
       });// end of promise

@@ -565,6 +565,8 @@ color:#fff; line-height: 15px; text-align: center;}
 
 #header-menu{margin-top:-9px;}
 
+#header-panel-info{font-size:16px; font-weight:600; color:#ffff00};
+
 #sidebar ul.components {
 padding: 0px 0;
 border-bottom: 1px solid #47748b;
@@ -777,6 +779,32 @@ min-width:500px !important;
 
 .logo img.maxw-400 {
     max-width: 400px;
+}
+
+/* modal-municipalities-search */
+.modal-dialog.modal-municipalities-search {
+    min-width: auto !important;
+    min-height: auto !important;
+    font-size: 13px;
+}
+
+.modal-municipalities-footer .btn {
+    padding: 6px 12px;
+    font-size: 14px;
+}
+
+.modal-municipalities-search.form-group {
+    margin-bottom: 15px;
+}
+
+#select-municipalities {
+    height: 150px;
+    font-size: 12px;
+}
+
+#search-municipalities {
+    font-size: 12px;
+    padding: 5px;
 }
 
 /* indicadores do carousel */

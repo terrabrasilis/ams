@@ -19,6 +19,7 @@ ams.Map = {
         this.propertyName = propertyName;
         this.limit = limit;
         this.risk_threshold = ( (typeof risk_threshold=='undefined')?(0.0):(risk_threshold) );
+
         this.toWmsFormat = function() {
             return "classname:" + this.classname
                     + ";startdate:" + this.startdate
@@ -27,7 +28,10 @@ ams.Map = {
                     + ";orderby:" + this.propertyName
                     + ";landuse:" + ams.App._landUseList.join('\\,')
                     + ";limit:" + this.limit
-                    + ";risk:" + this.risk_threshold;
+                    + ";risk:" + this.risk_threshold
+                    + ";biomes:" + ams.App._biomes
+                    + ";municipality_group_name:" + ams.App._municipalitiesGroup
+                    + ";geocodes:" + ams.App._geocodes.join('\\,')
         };
 
         this.updateDates = function(dateControll) {
@@ -159,7 +163,11 @@ ams.Map = {
                 + ";orderby:" + propertyName
                 + ";landuse:" + ams.App._landUseList.join('%5C,')
                 + ";risk:" + viewParams.risk_threshold
-                + ";limit:1";
+                + ";limit:1"
+                + ";biomes:" + ams.App._biomes.join('%5C,')
+                + ";municipality_group_name:" + ams.App._municipalitiesGroup
+                + ";geocodes:" + ams.App._geocodes.join('%5C,')
+
             let res;
             $.ajax({
                 dataType: "json",
@@ -194,7 +202,8 @@ ams.Map = {
             "&propertyName=" + propertyName +
             "&outputFormat=json" +
             "&viewparams=classname:" + classname +
-            ";landuse:" + ams.App._landUseList.join('%5C,');
+            ";landuse:" + ams.App._landUseList.join('%5C,') +
+            ";biomes:" + ams.App._biomes.join('%5C,');
             let res;
             $.ajax({
             dataType: "json",
@@ -238,7 +247,7 @@ ams.Map = {
             dataName = (dataName)?(dataName):(viewParams.classname);
             dataName=dataName.replaceAll(" ", "_");
 
-            let filename = ams.Config.biome
+            let filename = ams.Config.biome.replaceAll(",", "_")
                 + "_"    
                 + suName
                 + "_"
@@ -265,7 +274,12 @@ ams.Map = {
                         + ";orderby:" + propertyName
                         + ";landuse:" + ams.App._landUseList.join('%5C,')
                         + ";risk:" + viewParams.risk_threshold
-                        + ";limit:ALL";
+                        + ";limit:ALL"
+                        + ";biomes:" + ams.App._biomes.join('%5C,')
+                        + ";municipality_group_name:" + ams.App._municipalitiesGroup
+                        + ";geocodes:" + ams.App._geocodes.join('%5C,');
+
+            console.log(wfsUrl);
 
             let ftype = (extension == 'csv')? "text/csv" : "application/zip";
 

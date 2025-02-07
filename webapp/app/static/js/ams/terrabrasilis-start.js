@@ -31,7 +31,7 @@ $(document).ready(function () {
     localStorage.setItem('ams.appVersion', appVersion );
     versionDiv.append('<a href="https://github.com/terrabrasilis/ams/releases/tag/'+appVersion+'" target="_blank" title="Veja este release no GitHub">'+appVersion+'</a>');
     if(ams.Utils.isHomologationEnvironment()){
-      $('#header-panel').append("<span style='font-size:18px;font-weight:600;color:#ffff00;'> (Versão de homologação)</span>");
+        $('#header-panel-info').append(" (Versão de homologação)");
     }
   }
 
@@ -61,8 +61,9 @@ $(document).ready(function () {
 
   /** Launch the app when loading the page for the first time */
   if (ams.Utils.getServerConfigParam('reset_local_storage') === "True") {
-    ams.Utils.resetlocalStorage();
-  }    
+      ams.Utils.resetlocalStorage();
+  }
+
   ams.Utils.startApp();
 
   /** config google analytics */

@@ -2,6 +2,8 @@
 from dataclasses import replace
 from unicodedata import category
 from plotly.graph_objs import layout
+import plotly.graph_objs as go
+from plotly.subplots import make_subplots
 from psycopg2 import connect
 import pandas as pd
 import plotly
@@ -39,17 +41,24 @@ class SpatialUnitProfile():
         self._fire_classname = "AF"
 
         self._config = config
+
+        self._dburl = self._config.DB_URL
+
         self._appBiome = params['targetbiome']
-        self._dburl = self._config.DB_CERRADO_URL if (self._appBiome=='Cerrado') else self._config.DB_AMAZON_URL
         self._query_limit = 20
         self._classname = params['className']
         self._risk_threshold = 0
 
         self._custom = 'custom' in params
+
+        self._municipalities_group = params['municipalitiesGroup']
+
+        self._geocodes = params['geocodes']
             
         # default column to sum statistics
         self.default_column="area"
         self.default_col_name="Área (km²)"
+
         if(self._classname==self._fire_classname):
             self.default_column="counts"
             self.default_col_name="Unidades"
@@ -66,7 +75,7 @@ class SpatialUnitProfile():
 
         self._spatial_unit = params['spatialUnit']
         if(self._spatial_unit==self._appBiome):
-            self._spatial_unit = 'cer_states' if (self._appBiome=='Cerrado') else 'amz_states'
+            self._spatial_unit = 'states'
 
         self._start_date = params['startDate']
         self._temporal_unit = params['tempUnit']
@@ -86,9 +95,10 @@ class SpatialUnitProfile():
             self.data_unit=unit
 
         sql="""
-        SELECT string_agg('"'||dataname||'":{"description":"'||description||'", "key":"'||as_attribute_name||'"}', ', ')
-        FROM public.spatial_units
+            SELECT string_agg('"'||dataname||'":{"description":"'||description||'", "key":"'||as_attribute_name||'"}', ', ')
+            FROM public.spatial_units
         """
+
         suinfo = self.execute_sql(sql=sql)
         suinfo = suinfo if suinfo is not None else "error:'failure on get infos from database'"
         self._tableinfo = json.loads("{"+suinfo+"}")
@@ -104,6 +114,7 @@ class SpatialUnitProfile():
             "1m": "Agregado 30 dias",
             "3m": "Agregado 90 dias",
             "1y": "Agregado 365 dias"}
+
         self._temporal_unit_sql = {
             7:'''select TO_CHAR(date, 'YYYY/WW') as period,classname,sum(a.'''+self.default_column+''') as 
             resultsum from "{0}_land_use" a inner join "{0}" b on a.suid = b.suid where {1} 
@@ -182,41 +193,74 @@ class SpatialUnitProfile():
         
         interval_val,period_unit,period_series=self.__get_period_settings()
         calendar=f"""
-        SELECT ((ld::date - interval '{interval_val} {period_unit}') + interval '1 day')::date as fd,
-        ld::date as ld
-        FROM generate_series(('{self._start_date}'::date - interval '{period_series} {period_unit}')::date,
-        date '{self._start_date}', interval '{interval_val} {period_unit}') as t(ld)
-        ORDER BY 1 DESC LIMIT {self._query_limit}"""
+            SELECT
+                ((ld::date - interval '{interval_val} {period_unit}') + interval '1 day')::date as fd,
+                ld::date as ld
+            FROM generate_series(
+                ('{self._start_date}'::date - interval '{period_series} {period_unit}')::date,
+                date '{self._start_date}',
+                interval '{interval_val} {period_unit}'
+            ) AS t(ld)
+            ORDER BY 1 DESC
+            LIMIT {self._query_limit}
+        """
+    
+        where_group = "" if(self._name=='*') else f"""b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}' AND"""
 
-        where_group="" if(self._name=='*') else f"""b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}' AND"""
+        where_biome = f"('{self._appBiome}' = 'ALL' OR a.biome = ANY ('{{{self._appBiome}}}'))"
+        
+        where_municipalities_group = f""" AND (
+            '{self._municipalities_group}' = 'ALL' OR a.geocode =
+            ANY(
+                SELECT geocode
+                FROM public.municipalities_group_members mgm
+                WHERE mgm.group_id = (
+                    SELECT mg.id
+                    FROM public.municipalities_group mg
+                    WHERE mg.name='{self._municipalities_group}'
+                )
+            )
+            OR a.geocode = ANY('{{{self._geocodes}}}')
+        ) """
+
         group_by_periods=f"""
-        WITH calendar AS ({calendar}),
-        bar_chart AS (
-            SELECT (calendar.fd || '/' || calendar.ld) as period, ROUND(sum(a.{self.default_column})::numeric,{round_factor}) as resultsum
-            FROM calendar, "{self._spatial_unit}_land_use" a inner join "{self._spatial_unit}" b on a.suid = b.suid
-            WHERE {where_group} classname = '{self._classname}'
-            AND date >= calendar.fd
-            AND date <= calendar.ld
-            AND a.land_use_id = ANY (array[{self.land_use}])
-            GROUP BY period
-            ORDER BY period DESC LIMIT {self._query_limit}
-        )
-        SELECT TO_CHAR(cd.fd::date, 'dd/mm/yyyy')|| '-' ||TO_CHAR(cd.ld::date, 'dd/mm/yyyy') as period,
-        cd.fd as firstday, COALESCE(bc.resultsum,0) as resultsum
-        FROM calendar cd left join bar_chart bc on (cd.fd || '/' || cd.ld)=bc.period
-        ORDER BY 2 ASC"""
+            WITH calendar AS (
+                {calendar}
+            ),
+            bar_chart AS (
+                SELECT
+                    (calendar.fd || '/' || calendar.ld) as period,
+                    ROUND(sum(a.{self.default_column})::numeric,{round_factor}) as resultsum
+                FROM
+                    calendar,
+                    "{self._spatial_unit}_land_use" a
+                    INNER JOIN "{self._spatial_unit}" b
+                        ON a.suid = b.suid
+                WHERE
+                    {where_group}
+                    {where_biome}
+                    {where_municipalities_group}
+                    AND classname = '{self._classname}'
+                    AND date >= calendar.fd
+                    AND date <= calendar.ld
+                    AND a.land_use_id = ANY (array[{self.land_use}])
+                GROUP BY
+                    period
+                ORDER BY
+                    period DESC
+                LIMIT {self._query_limit}
+            )
+            SELECT
+                TO_CHAR(cd.fd::date, 'dd/mm/yyyy')|| '-' ||TO_CHAR(cd.ld::date, 'dd/mm/yyyy') as period,
+                cd.fd as firstday, COALESCE(bc.resultsum,0) as resultsum
+            FROM
+                calendar cd LEFT JOIN bar_chart bc
+                    ON (cd.fd || '/' || cd.ld)=bc.period
+            ORDER BY
+                2 ASC
+        """
 
         return group_by_periods
-
-    def get_temporal_unit_sql(self):
-        delta = datetime.strptime(self._start_date, '%Y-%m-%d') - datetime.strptime(self._start_period_date, '%Y-%m-%d')
-        for key, value in self._temporal_unit_sql.items():
-            if delta.days <= key:
-                where_if="" if(self._name=='*') else f"""b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}' AND"""
-                where = f"{where_if} " \
-                        f"classname = '{self._classname}' " \
-                        f"and date <= '{self._start_date}'"
-                return f"select * from ({value.format(self._spatial_unit,where)}) a order by 1"
 
     def execute_sql(self, sql):
         curr = None
@@ -240,26 +284,109 @@ class SpatialUnitProfile():
         df.columns = ['Período', 'Data de referência', self.default_col_name]
         return df
 
-    def area_per_land_use(self):
-
+    def classname_area_per_land_use(self):
         where_risk="" if(self._classname!=self._risk_classname) else f" a.risk >= {self._risk_threshold} AND "
         where_spatial_unit="" if(self._name=='*') else f"""b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{self._name}' AND"""
-        where_filter=f"{where_risk} {where_spatial_unit}"
 
-        df = self.resultset_as_dataframe(
-            f"select a.name,coalesce(resultsum, 0) as resultsum from land_use a "
-            f"left join "
-            f"(select a.land_use_id, sum(a.{self.default_column}) as resultsum from \"{self._spatial_unit}_land_use\" a "
-            f"inner join \"{self._spatial_unit}\" b on a.suid = b.suid "
-            f"where {where_filter} "
-            f"a.date > '{self._start_period_date}' and a.date <= '{self._start_date}' "
-            f"and a.classname = '{self._classname}' "
-            f"and a.land_use_id = ANY (array[{self.land_use}]) "
-            f"group by a.land_use_id) b on a.id = b.land_use_id "
-            f"WHERE a.id = ANY (array[{self.land_use}]) "
-            f"ORDER BY a.priority ASC "
-        )
-        df.columns = ['Categoria Fundiária', self.default_col_name]
+        where_biome = f"('{self._appBiome}' = 'ALL' OR a.biome = ANY ('{{{self._appBiome}}}')) AND"
+
+        where_municipalities_group = f"""(
+            '{self._municipalities_group}' = 'ALL' OR a.geocode =
+            ANY(
+                SELECT geocode
+                FROM public.municipalities_group_members mgm
+                WHERE mgm.group_id = (
+                    SELECT mg.id
+                    FROM public.municipalities_group mg
+                    WHERE mg.name='{self._municipalities_group}'
+                )
+            )
+            OR a.geocode = ANY('{{{self._geocodes}}}')
+        ) AND """
+
+        where_filter=f"{where_biome} {where_municipalities_group} {where_risk} {where_spatial_unit}"
+
+        sql = f"""
+            SELECT
+                a.name,
+                COALESCE(resultsum, 0) AS resultsum,
+                SUM(COALESCE(resultsum, 0)) OVER () AS resultsum_total
+            FROM land_use a 
+            LEFT JOIN (
+                SELECT
+                    a.land_use_id,
+                    SUM(a.{self.default_column}) AS resultsum
+                FROM
+                    \"{self._spatial_unit}_land_use\" a 
+                INNER JOIN
+                    \"{self._spatial_unit}\" b on a.suid = b.suid 
+                WHERE
+                    {where_filter}
+                    a.date > '{self._start_period_date}'
+                    AND a.date <= '{self._start_date}' 
+                    AND a.classname = '{self._classname}' 
+                    AND a.land_use_id = ANY (ARRAY[{self.land_use}]) 
+                GROUP BY
+                    a.land_use_id
+            ) b
+            ON
+                a.id = b.land_use_id 
+            WHERE
+                a.id = ANY (array[{self.land_use}]) 
+            ORDER BY
+                a.priority ASC 
+        """
+
+        df = self.resultset_as_dataframe(sql)
+
+        df.columns = ['Categoria Fundiária', self.default_col_name, 'Total (km²)']
+        return df
+    
+    def area_per_land_use(self):
+        su_col_id = self._tableinfo[self._spatial_unit]['key']
+
+        where_spatial_unit="" if(self._name=='*') else f"""su.\"{su_col_id}\" = '{self._name}' AND"""
+
+        where_biome = f"('{self._appBiome}' = 'ALL' OR lua.biome = ANY ('{{{self._appBiome}}}')) AND"
+
+        where_municipalities_group = f"""(
+            '{self._municipalities_group}' = 'ALL' OR lua.geocode =
+            ANY(
+                SELECT geocode
+                FROM public.municipalities_group_members mgm
+                WHERE mgm.group_id = (
+                    SELECT mg.id
+                    FROM public.municipalities_group mg
+                    WHERE mg.name='{self._municipalities_group}'
+                )
+            )
+            OR lua.geocode = ANY('{{{self._geocodes}}}')
+        ) AND """
+
+        where_filter=f"{where_biome} {where_municipalities_group} {where_spatial_unit}"
+
+        sql = f"""
+            SELECT
+                lu.name,
+	            COALESCE(SUM(lua.area), 0) AS land_use_area,
+	            SUM(SUM(lua.area)) OVER () AS land_use_total_area
+            FROM
+	            public.{self._spatial_unit}_land_use_area lua
+            INNER JOIN
+	            public.land_use lu ON lu.id=lua.land_use_id
+            INNER JOIN
+	            public.{self._spatial_unit} su ON su.suid=lua.suid
+            WHERE
+                {where_filter}
+                lua.land_use_id = ANY (ARRAY[{self.land_use}]) 
+            GROUP BY
+	            lua.land_use_id, lu.name
+            ORDER BY
+	            lua.land_use_id ASC;
+        """
+
+        df = self.resultset_as_dataframe(sql)
+        df.columns = ['Categoria Fundiária', 'Área da Categoria (km²)', 'Área da Unidade Espacial (km²)']
         return df
 
     def risk_expiration_date(self):        
@@ -275,88 +402,167 @@ class SpatialUnitProfile():
         """
         indicador=self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
         last_date=self.format_date(self._start_date)
-        spatial_unit='para todo o bioma' if(self._name=='*') else f"""com recorte na unidade espacial <b>{self._name}</b>"""
-        spatial_description=self._appBiome if(self._name=='*') else self._tableinfo[self._spatial_unit]['description']
+        
+        if self._name == '*':
+            spatial_unit = 'para todo o bioma' if self._municipalities_group == 'ALL' else 'dos municípios de interesse'
+            spatial_description = f" ({self._appBiome})" if self._municipalities_group == 'ALL' else ""
+        else:
+            spatial_unit = f"com recorte na unidade espacial <b>{self._name}</b>"
+            spatial_description = f" ({self._tableinfo[self._spatial_unit]['description']})"
+
         temporal_unit=self._temporal_units[self._temporal_unit]
 
         datasource="do DETER"
         if(self._classname==self._fire_classname):
             title=f"""Usando dados de <b>{indicador}</b> de Queimadas até <b>{last_date}</b>,
-            {spatial_unit} ({spatial_description}), para as categorias fundiárias selecionadas
+            {spatial_unit}{spatial_description}, para as categorias fundiárias selecionadas
             e unidade temporal <b>{temporal_unit}</b>.
             """
 
         elif self._classname == self._risk_classname:
             expiration_date = self.risk_expiration_date()
             expiration_date = expiration_date if expiration_date is not None else "falhou ao obter a data"
-            title = f"""Usando dados de Risco de desmatamento (IBAMA), {spatial_unit} ({spatial_description}),
+            title = f"""Usando dados de Risco de desmatamento (IBAMA), {spatial_unit}{spatial_description},
             para as categorias fundiárias selecionadas, valor maior ou igual a <b>{self._risk_threshold}</b> e validade até <b>{expiration_date}</b>."""
         else:
             title=f"""Usando dados de <b>{indicador}</b> {datasource} até <b>{last_date}</b>,
-            {spatial_unit} ({spatial_description}), para as categorias fundiárias selecionadas
+            {spatial_unit}{spatial_description}, para as categorias fundiárias selecionadas
             e unidade temporal <b>{temporal_unit}</b>.
             """
 
         return title
 
     def fig_area_per_land_use(self):
-        """
-        Pie chart structs to construct chart in frontend with plotly
-        """
-        df = self.area_per_land_use()
-        indicador=self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
-        unid_temp=self._temporal_units[self._temporal_unit]
-        total_area = df[self.default_col_name].sum()
+        label = "Categoria Fundiária"
+        km2 = "km²"
+        ha = "ha"
+        default_col_name = self.default_col_name
 
-        if(self._classname!=self._fire_classname and self.data_unit=="ha"):
-            df["Área (ha)"]=df[self.default_col_name]*100
-            self.default_col_name="Área (ha)"
-            total_area = df[self.default_col_name].sum()
-            self.round_factor=1
-        
-        # area values rounded off only after treating the appropriate scale unit
-        df[self.default_col_name] = df[self.default_col_name].round(self.round_factor)
+        # loading and mergin data
+        df1 = self.classname_area_per_land_use()
+        df2 = self.area_per_land_use()
 
-        # default column to sum statistics
-        abstract_data=f"Área total: {total_area.round(self.round_factor)} {self.data_unit}"
-        chart_title = ""
-        if(self._classname==self._fire_classname):
-            abstract_data=f"Contagem de focos: {total_area.round(self.round_factor)} "
-            chart_title=f"""Porcentagem de <b>{indicador}</b> por categoria fundiária<br>"""
-            chart_title=f"""{chart_title}no último período do <b>{unid_temp}. {abstract_data}</b>"""
-        elif(self._classname==self._risk_classname):
-            abstract_data=f"Total: {total_area.round(self.round_factor)}"
-            chart_title=f"""Contagem de pontos de risco distribuidos por categoria fundiária. {abstract_data}"""
-        else:
-            chart_title=f"""Porcentagem de <b>{indicador}</b> por categoria fundiária<br>"""
-            chart_title=f"""{chart_title}no último período do <b>{unid_temp}. {abstract_data}</b>"""
+        # validation
+        land_uses = df1[df1[default_col_name] > 0][label].tolist()
+        for _ in land_uses:
+            assert _ in df2[label].tolist()
 
-        fig = px.pie(df, values=self.default_col_name, names='Categoria Fundiária', template='plotly',
-                     color_discrete_sequence=px.colors.sequential.RdBu,
-                     title=chart_title )
- 
-        # sort=False is used to keep legend order like ordered in dataset
+        df = pd.merge(df1, df2, on=label, how='outer') 
+
+        df.update(df.select_dtypes(include=['float']).fillna(0.0))
+        df = df.round({col: 0 if col=="Unidades" else 2 for col in df.select_dtypes(include=['float']).columns})
+
+        # converting to ha
+        if self.data_unit == ha:
+            columns = {col: col.replace(km2, ha) for col in df.columns if km2 in col}
+            df.rename(columns=columns, inplace=True)
+            default_col_name = default_col_name.replace(km2, ha)
+            for _, col in columns.items():
+                df[col] = df[col] * 100
+
+        indicator = self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
+        unid_temp = self._temporal_units[self._temporal_unit]
+        total = df[default_col_name].sum()
+
+        fire_or_risk = self._classname in [self._fire_classname, self._risk_classname]
+
+        # generating the graphics
+        graph_label = "<b>%{label}</b>"
+        graph_value = "%{value}"
+        graph_unit =  "" if fire_or_risk else f" {self.data_unit}"
+        graph_area_unit = km2 if self.data_unit != ha else ha
+        graph_percent = "%{percent:.2%}"
+        graph_custom_data = "%{customdata:.2%}"
+        _ = {self._risk_classname: "pontos de risco", self._fire_classname: "focos"}
+        graph_indicator = _[self._classname] if self._classname in _  else "alertas"
+        graph_total = (
+            f"Contagem de {graph_indicator}: {total}" if self._classname in [self._fire_classname, self._risk_classname] else
+            f"Área total: {total:.2f} {graph_area_unit}"
+        )
+        graph_colors = ["#658faa", "#8c8185", "#53606e", "#998e8f", "#90c0c9", "#d7d9d5", "#ccddee", "#f8edd3", "#efeae1"]
+
+        graph_spatial_unit = "a Unidade Espacial"
+        if self._name == '*':
+            graph_spatial_unit = 'o Bioma' if self._municipalities_group == 'ALL' else 'os Municípios de Interesse'        
+
+        title1 = f'<i>Informação fundiária de referência</i><br><b>Percentual da Área da Categoria<br>n{graph_spatial_unit}</b>'
+        title2 = f'<i>Informação dinâmina</i><br><b>Percentual de {graph_indicator.title()}<br>em Relação ao Total de {graph_indicator.title()}</b>'
+
+        fig = make_subplots(
+            rows=2, cols=1,
+            specs=[[{'type':'domain'}], [{'type':'domain'},]], 
+            subplot_titles=[title2, title1],
+        )
+
+        # graph 1
+        template1 = f"{graph_percent} da área total d{graph_spatial_unit.lower()} {graph_value} {graph_area_unit},<br>é {graph_label}"
+        fig.add_trace(
+            go.Pie(
+                labels=df[label],
+                values=df[f'Área da Categoria ({graph_area_unit})'],
+                hole=0.4,
+                name=title1,
+                hovertemplate=template1,                
+            ),
+            row=2, col=1
+        )
+
+        # graph 2
+        custom_data = (
+            None if self._classname in [self._fire_classname, self._risk_classname] else 
+            df[f'Área ({graph_area_unit})'] / df[f'Área da Categoria ({graph_area_unit})']
+        )
+
+        template2 = f"Do total de {graph_indicator}, {graph_value}{graph_unit}, o que corresponde a {graph_percent},<br>estão em {graph_label}. "
+        template2 += (
+            "" if fire_or_risk else
+            f"Os {graph_value}{graph_unit} representam {graph_custom_data}<br>da área total dessa categoria "
+            f"n{graph_spatial_unit}."
+        )
+        fig.add_trace(
+            go.Pie(
+                labels=df[label],
+                values=df[default_col_name],
+                hole=0.4,
+                name=title2,
+                customdata=custom_data,
+                hovertemplate=template2,
+            ),
+            row=1, col=1
+        )
+
+        title = f"<b>{indicator}</b> por categoria fundiária<br>"
+        title += f"no último período do <b>{unid_temp}. <b>{graph_total}</b>"
+
         fig.update_traces(
             sort=False,
             textposition='inside',
-            textfont_size=14,
-            marker=dict(colors=px.colors.sequential.RdBu, line=dict(color='#C0C0C0', width=1))
+            textfont_size=12,
+            marker=dict(colors=graph_colors, line=dict(color='#c0c0c0', width=1))
         )
         fig.update_layout(
+            title_text=title,
+            title_x=0.5,
+            title_y=0.95,
             paper_bgcolor='#f3f9f8',
-            height=300,
+            height=600,
             width=700,
             uniformtext_minsize=10,
             uniformtext_mode='hide',
-            legend=dict(font=dict(size=12)),
+            legend=dict(
+                font=dict(size=12),
+                y=0.5,
+                yanchor="middle",
+            ),
             margin=dict(
                 l=0,
                 r=0,
-                b=20,
-                t=105,
-                pad=10
+                b=10,
+                t=140,
+                pad=1
             )
-        )
+        )        
+
         graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         return graphJSON
 

@@ -25,21 +25,22 @@ ams.Auth = {
 	 * for authenticated users uses "_auth" by convention.
 	 */
 	evaluate: function() {
-		this.gsAuthSuffix=( (this.isAuthenticated())?("_auth"):("") );
-		// set the appropriate workspace name if it is homologation environment
-		this.gsHomologationSuffix=( (ams.Utils.isHomologationEnvironment())?('h'):('') );
+	    this.gsAuthSuffix=( (this.isAuthenticated())?("_auth"):("") );
+	    // set the appropriate workspace name if it is homologation environment
+	    this.gsHomologationSuffix=( (ams.Utils.isHomologationEnvironment())?('h'):('') );
 	},
 
   /**
    * Check if the user is authenticated.
    */
   isAuthenticated: function() {
-    return ( (typeof Authentication!="undefined" && Authentication.hasToken())?(true):(false) );
+      return ( (typeof Authentication!="undefined" && Authentication.hasToken())?(true):(false) );
   },
 
   getAuthSuffix: function() {
-    return this.gsAuthSuffix;
+      return this.gsAuthSuffix;
   },
+
   getOAuthProxyUrl: function(url)
   {
 	return Authentication.getOAuthProxyUrl(url, AuthenticationService.getOAuthClientId(), AuthenticationService.getOAuthResouceRole());
@@ -51,13 +52,13 @@ ams.Auth = {
    * Must have a homologation workspace on the geoserver
    */
   getWorkspace: function() {
-	if(!this.gsWorkspace){
-		this.gsWorkspace=ams.Config.defaultWorkspace;
-	}
-    return this.gsWorkspace+this.gsHomologationSuffix+this.gsAuthSuffix;
+      if(!this.gsWorkspace){
+	  this.gsWorkspace=ams.Config.defaultWorkspace;
+      }
+      return this.gsWorkspace+this.gsHomologationSuffix+this.gsAuthSuffix;
   },
 
   resetWorkspace: function(){
-	this.gsWorkspace=null;
+      this.gsWorkspace=null;
   }
 };

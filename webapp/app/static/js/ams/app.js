@@ -6,7 +6,7 @@ ams.App = {
     _layerControl: null,
     _baseLayers: [],
     _addedLayers: [],
-    _biomeLayer: null,
+    _borderLayer: null,
     _appClassGroups: null,
     _suViewParams: null,
     _priorViewParams: null,
@@ -23,6 +23,10 @@ ams.App = {
     _currentClassify: null,
     _spatialUnits: null,
     _landUseList: [],
+    _biomes: [],
+    _subset: null,
+    _municipalitiesGroup: null,
+    _geocodes: null,
 
     run: function(geoserverUrl, spatialUnits, appClassGroups) {
 
@@ -31,20 +35,35 @@ ams.App = {
         // start land use list with default itens to use in viewparams at start App
         this._landUseList=ams.Config.landUses.map((lu)=>{return(lu.id);});
 
+        this._biomes=ams.Config.appSelectedBiomes;
+        this._subset=ams.Config.appSelectedSubset;
+        this._municipalitiesGroup=ams.Config.appSelectedMunicipalitiesGroup;
+        this._geocodes=ams.Config.appSelectedGeocodes;
+
     	// REMOVE ME (Debug Purposes)
-	// if(ams.Auth.isAuthenticated()==false) {
-        // geoserverUrl = "http://localhost/geoserver";
+        // if(ams.Auth.isAuthenticated()==false) {
+        // geoserverUrl = "http://127.0.0.1/geoserver";
         // }
 
         this._wfs = new ams.Map.WFS(geoserverUrl);
         var ldLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.lastDate;
-
         var temporalUnits = new ams.Map.TemporalUnits();
         this._dateControl = new ams.Date.DateController();
         let lastDateDynamic = this._wfs.getLastDate(ldLayerName);
-        lastDateDynamic = lastDateDynamic?lastDateDynamic:this._spatialUnits.getDefault().last_date;        
+        lastDateDynamic = lastDateDynamic?lastDateDynamic:this._spatialUnits.getDefault().last_date;
+        lastDateDynamic = ams.Date.getMin(ams.Config.publishDate, lastDateDynamic);
+
+        let startDate = ams.Config.startDate;
+        let tempUnit = ams.Config.tempUnit;
         this._currentTemporalAggregate = temporalUnits.getAggregates()[0].key;
-        this._dateControl.setPeriod(lastDateDynamic, this._currentTemporalAggregate);
+
+        if (startDate && ams.Date.isAfter(lastDateDynamic, startDate) && tempUnit !== "custom") {
+            ams.App._dateControl.setPeriod(startDate, tempUnit);
+            this._currentTemporalAggregate = tempUnit;
+        } else {            
+            ams.App._dateControl.setPeriod(lastDateDynamic, this._currentTemporalAggregate);
+        }
+
         this._baseURL = geoserverUrl + "/wms";
         this._propertyName = ( (ams.Config.defaultFilters.indicator=='AF')?(ams.Config.propertyName.af):(ams.Config.propertyName.deter) );
         this._referenceLayerName = ams.Auth.getWorkspace()+":"+( (ams.Config.defaultFilters.indicator=='AF')?(ams.Config.defaultLayers.activeFire):(ams.Config.defaultLayers.deter) );
@@ -60,7 +79,16 @@ ams.App = {
         // improve control positions for Leaflet
         ams.LeafletControlPosition.addNewPositions(map);
 
-        map.setView([this._spatialUnits.getDefault().center_lat, this._spatialUnits.getDefault().center_lng], 5);
+        // bounding
+        map.fitBounds(
+            [[ams.Config.bbox[2], ams.Config.bbox[0]], [ams.Config.bbox[3], ams.Config.bbox[1]]],
+            {
+                padding: [
+                    (this._geocodes.length == 1 && this._geocodes[0].length > 0) * 100,
+                    (this._geocodes.length == 1 && this._geocodes[0].length > 0) * 100
+                ]
+            }
+        );
 
         // crs: L.CRS.EPSG4326,
         this._baseLayers["osm"] = new L.TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -107,21 +135,38 @@ ams.App = {
 
         // Adding reference layers
         var tbDeterAlertsLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.deter;
-        var AFLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.activeFire;
-        var RKLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.ibamaRisk;
         var tbDeterAlertsWmsOptions = {
             "cql_filter": appClassGroups.getCqlFilter(this._suViewParams, true),
-            "viewparams": "landuse:" + ams.App._landUseList.join('\\,')
+            "viewparams": (
+                "landuse:" + ams.App._landUseList.join('\\,') + ";" +
+                "biomes:" + ams.App._biomes.join('\\,') + ";" +
+                "municipality_group_name:" + ams.App._municipalitiesGroup + ";" +
+                "geocodes:" + ams.App._geocodes.join('\\,')
+            )
         };
         ams.App._addWmsOptionsBase(tbDeterAlertsWmsOptions);
+
+        var AFLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.activeFire;
         var AFWmsOptions = {
             "cql_filter": appClassGroups.getCqlFilter(this._suViewParams, false),
-            "viewparams": "landuse:" + ams.App._landUseList.join('\\,')
+            "viewparams": (
+                "landuse:" + ams.App._landUseList.join('\\,')  + ";" +
+                "biomes:" + ams.App._biomes.join('\\,') + ";" +
+                "municipality_group_name:" + ams.App._municipalitiesGroup + ";" +
+                "geocodes:" + ams.App._geocodes.join('\\,')
+            )
         };
         ams.App._addWmsOptionsBase(AFWmsOptions);
+
+        var RKLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.ibamaRisk;
         var RKWmsOptions = {
             "cql_filter": "(risk >= " + ams.Config.defaultRiskFilter.threshold + ")",
-            "viewparams": "landuse:" + ams.App._landUseList.join('\\,')
+            "viewparams": (
+                "landuse:" + ams.App._landUseList.join('\\,') +  ";" +
+                "biomes:" + ams.App._biomes.join('\\,') + ";" +
+                "municipality_group_name:" + ams.App._municipalitiesGroup + ";" +
+                "geocodes:" + ams.App._geocodes.join('\\,')
+            )
         };
         ams.App._addWmsOptionsBase(RKWmsOptions);
 
@@ -137,9 +182,11 @@ ams.App = {
         }else if(this._referenceLayerName==AFLayerName){
             AFLayer.addTo(map);
             AFLayer.bringToBack();
-        }else{
+        }else if(this._referenceLayerName==RKLayerName){
             RKLayer.addTo(map);
             RKLayer.bringToBack();
+        } else {
+            ams.Utils.assert(false, "invalid layer name");
         }
         // Store layers to handler after controls change
         this._addedLayers[tbDeterAlertsLayerName]=tbDeterAlertsLayer;
@@ -154,42 +201,62 @@ ams.App = {
         ams.Config.defaultFilters.spatialUnit=this._spatialUnits.getDefault().dataname;// update the default for later use in filter change in control.
         this._addSpatialUnitLayer(this._getLayerPrefix(),this._propertyName);
 
-        // Fixed biome border layer
-        var tbBiomeLayerName = ams.Config.defaultLayers.biomeBorder;
-        var onlyWmsBase = {identify:false};// set this to disable GetFeatureInfo
+        var tbBorderLayerName = ams.Auth.getWorkspace() + ":" + ((this._subset == "Bioma") ? ams.Config.defaultLayers.biomeBorder : ams.Config.defaultLayers.municipalitiesBorder);
+        var onlyWmsBase = {
+            identify: false,
+            "viewparams": (
+                "biomes:" + ams.App._biomes.join('\\,') + ";" +
+                "municipality_group_name:" + ams.App._municipalitiesGroup + ";" +
+                "geocodes:" + ams.App._geocodes.join('\\,')
+            )
+        }; // set this to disable GetFeatureInfo
         ams.App._addWmsOptionsBase(onlyWmsBase);
-        var tbBiomeSource = new ams.LeafletWms.Source(this._baseURL, onlyWmsBase, this._appClassGroups);
-        ams.App._biomeLayer = tbBiomeSource.getLayer(tbBiomeLayerName);
-        ams.App._biomeLayer.addTo(map).bringToBack();
+        
+        var tbBorderSource = new ams.LeafletWms.Source(this._baseURL, onlyWmsBase, this._appClassGroups);
+        ams.App._borderLayer = tbBorderSource.getLayer(tbBorderLayerName);
+        ams.App._borderLayer.addTo(map).bringToBack();
 
         // ---------------------------------------------------------------------------------
         // this structure is used into leaflet.groupedlayercontrol.js to create controls for filters panel...
         var controlGroups = {
-            "BIOMA":{
-                defaultFilter:ams.Config.biome
+            "RECORTE BIOMA": {
+                type: "selectControl",
+                defaultFilter: ams.Config.appSelectedBiomes[0],
+                defaultSubset: ams.Config.appSelectedSubset,
+                group: "RECORTE",
+                name: "Bioma",
+                values: ams.Config.allBiomes,
+            },
+            "RECORTE MUNICIPIOS": {
+                type: "selectControl",
+                defaultFilter: ams.Config.appSelectedMunicipalitiesGroup,
+                defaultSubset: ams.Config.appSelectedSubset,
+                group: "RECORTE",
+                name: "Municípios de Interesse",
+                values: ams.Config.allMunicipalitiesGroup,
             },
             "INDICADOR": {
                 defaultFilter:ams.Config.defaultFilters.indicator,
-                propertyName:this._propertyName
+                propertyName:this._propertyName,
+                type: "simpleControl"
             },
             "CATEGORIA FUNDIÁRIA":{
-                defaultFilter: ''
+                defaultFilter: '',
+                type: "simpleControl"
             },
             "UNIDADE ESPACIAL": {
-                defaultFilter: ams.Config.defaultFilters.spatialUnit
+                defaultFilter: ams.Config.defaultFilters.spatialUnit,
+                type: "simpleControl"
             },
             "UNIDADE TEMPORAL": {
-                defaultFilter:ams.Config.defaultFilters.temporalUnit
+                defaultFilter:ams.Config.defaultFilters.temporalUnit,
+                type: "simpleControl"
             },
             "CLASSIFICAÇÃO DO MAPA": {
-                defaultFilter:ams.Config.defaultFilters.diffClassify
+                defaultFilter:ams.Config.defaultFilters.diffClassify,
+                type: "simpleControl"
             },
         };
-
-        for (let p in ams.BiomeConfig) {
-            if(ams.BiomeConfig.hasOwnProperty(p))
-                controlGroups["BIOMA"][p] = p;
-        }
 
         for (let p in ams.Config.landUses) {
             if(ams.Config.landUses.hasOwnProperty(p)&&ams.Config.landUses[p]){
@@ -220,16 +287,18 @@ ams.App = {
         }
         // ---------------------------------------------------------------------------------
 
-        var groupControl = L.control.groupedLayers(controlGroups, {
-            exclusiveGroups: [
-                "UNIDADE ESPACIAL", 
-                "INDICADOR", 
-                "UNIDADE TEMPORAL", 
-                "CLASSIFICAÇÃO DO MAPA",
-            ],
-            collapsed: false,
-            position: "topleft",
-        }).addTo(map);
+        var groupControl = L.control.groupedLayers(
+            controlGroups, {
+                exclusiveGroups: [
+                    "UNIDADE ESPACIAL", 
+                    "INDICADOR", 
+                    "UNIDADE TEMPORAL", 
+                    "CLASSIFICAÇÃO DO MAPA",
+                ],
+                collapsed: false,
+                position: "topleft",
+            }
+        ).addTo(map);
 
         // to apply new heigth for groupControl UI component when window is resized
         ams.groupControl=groupControl;
@@ -265,9 +334,13 @@ ams.App = {
                 }
 
                 let layerToAdd,needUpdateSuLayers=true;
-                
+
+                var startDate = ams.App._dateControl.startdate;
+                var endDate = ams.App._dateControl.enddate;
+                var tempUnit = ams.App._dateControl.period;
+               
                 if(e.group.name=='BIOMA'){
-                    if(e.acronym==ams.Config.biome){
+                    if(e.acronym==ams.Config.biome && e.subsetChanged===false){
                         return;
                     }
                     if(ams.App._landUseList.length!=ams.Config.landUses.length){
@@ -281,15 +354,42 @@ ams.App = {
                     ams.App._priorViewParams=null;
                     ams.App._diffOn = ( (ams.Config.defaultFilters.diffClassify=="onPeriod")?(false):(true) );
                     // write on local storage
+
                     localStorage.setItem('ams.previous.biome.setting.selection', e.acronym);
+
                     needUpdateSuLayers=false;// disable the call at the end because the call is inside the Promise callback below
-                    ams.Utils.biomeChanges(e.acronym).then(
+                    ams.Utils.updateMap(e.acronym, e.subset, undefined, undefined, startDate, endDate, tempUnit).then(
                         ()=>{
                             ams.App._updateSpatialUnitLayer();
                         }
                     );
 
-                }else if(e.group.name=='INDICADOR'){// change reference layer (deter, fires or risk)?
+                } else if(e.group.name =='MUNIC\xcdPIOS DE INTERESSE'){
+                    if(ams.App._landUseList.length!=ams.Config.landUses.length){
+                        $('.toast').toast('show');
+                        $('.toast-body').html("O filtro por categorias fundiárias foi restaurado ao padrão.");
+                        // to avoid the toast msg at _updateSpatialUnitLayer
+                        ams.App._landUseList=ams.Config.landUses.map((lu)=>{return(lu.id);});
+                    }
+                    // reset some data to avoid getting wrong data
+                    ams.App._suViewParams=null;
+                    ams.App._priorViewParams=null;
+                    ams.App._diffOn = ( (ams.Config.defaultFilters.diffClassify=="onPeriod")?(false):(true) );
+
+                    var geocodes = "";
+                    if (e.name == "customizado") {
+                        geocodes = e.customized.join(',');
+                    }
+
+                    // disable the call at the end because the call is inside the Promise callback below
+                    needUpdateSuLayers=false;
+                    ams.Utils.updateMap("all", e.subset, e.name, geocodes, startDate, endDate, tempUnit).then(
+                        ()=>{
+                            ams.App._updateSpatialUnitLayer();
+                        }
+                    );
+
+                } else if(e.group.name=='INDICADOR'){// change reference layer (deter, fires or risk)?
                     ams.App._riskThreshold=0; // reset the risk limit so as not to interfere with the min max query
                     if(e.acronym=='RK'){
                         layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.ibamaRisk;
@@ -327,7 +427,10 @@ ams.App = {
                         // try update the last date for new classname
                         let lastDateDynamic = ams.App._wfs.getLastDate(ldLayerName);
                         lastDateDynamic = lastDateDynamic?lastDateDynamic:ams.App._spatialUnits.getDefault().last_date;
-                        ams.App._dateControl.setPeriod(lastDateDynamic, ams.App._currentTemporalAggregate);
+                        if (e.acronym !== "RK") {
+                            lastDateDynamic = ams.Date.getMin(ams.App._dateControl.startdate, lastDateDynamic);
+                        }
+			            ams.App._dateControl.setPeriod(lastDateDynamic, ams.App._currentTemporalAggregate);
                         ams.PeriodHandler.changeDate(ams.App._dateControl.startdate);
                         needUpdateSuLayers=false; //no need because the changeDate Internally invokes layer update
                     }
@@ -395,6 +498,15 @@ ams.App = {
             );
         });
 
+        // municipality panel
+        function setMunicipalityPanelMode() {
+            $(".hide-in-municipality-panel").css("display", "none")
+            $("#header-panel-title").text("Sala de Situação Municipal | " + ams.Config.appSelectedMunicipality);
+        }
+        if (ams.Config.appMunicipalityPanelMode) {
+            setMunicipalityPanelMode();
+        }
+
         function updatePriorization() {
             let limit = document.getElementById("prioritization-input").value;
             ams.App._priorViewParams.limit = limit;
@@ -412,9 +524,21 @@ ams.App = {
             updatePriorization();    
             return false;
         });
+
+        // error message
+        function showErrorMsg(msg) {
+            let emsg = "HTTP-Error: " + msg;
+            $('.toast').toast('show');
+            $('.toast-body').html("Encontrou um erro na solicitação ao servidor.<br />"+emsg);
+        }
+        if ($('meta[name="error-msg"]').length) {
+            showErrorMsg($('meta[name="error-msg"]').attr('content'));
+            $('meta[name="error-msg"]').remove();
+        }
         
-        let profileBiomeClick=function() {
+        let profileClick=function() {
             let conf={};
+
             conf["className"]=ams.App._suViewParams.classname;
             conf["spatialUnit"]=ams.Config.biome;
             conf["startDate"]=ams.App._dateControl.startdate;
@@ -427,12 +551,13 @@ ams.App = {
             
             conf["suName"]=ams.Config.biome;
             conf["landUse"]=ams.App._landUseList.join(',');
+
             ams.App.displayGraph(conf);
+
             return false;
         };
 
-        $("#profile-"+ams.BiomeConfig["Amazônia"].defaultWorkspace+"-button").click(profileBiomeClick);
-        $("#profile-"+ams.BiomeConfig["Cerrado"].defaultWorkspace+"-button").click(profileBiomeClick);
+        $("#profile-button").click(profileClick);
 
         let landUseFilterClick=function(evn) {
             $("#loading_data_info").css('display','block');
@@ -529,6 +654,30 @@ ams.App = {
             }
         );
 
+        $('#search-municipalities').on('input', function() {
+            const query = $(this).val().toLowerCase();
+            $('#select-municipalities option').show();
+
+            if (query.length < 2) {
+                return;
+            }
+
+            $('#select-municipalities option').each(function() {
+                const optionText = $(this).text().toLowerCase();
+                if (optionText.includes(query)) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        });
+
+        $('#select-municipalities').on('change', function() {
+            var count = $(this).find('option:selected').length;
+            $('#municipalities-search-ok').prop('disabled', count==0);
+            $('#municipalities-search-panel').prop('disabled', count!=1);
+        });
+
         $(function() {
             if(localStorage.getItem('ams.config.general.area.changeunit')!==null){
                 ams.Config.general.area.changeunit=localStorage.getItem('ams.config.general.area.changeunit');
@@ -542,8 +691,69 @@ ams.App = {
             if (localStorage.getItem('ams.config.modal.notshowcredits') == null) {
                 $("#modal-container-credits").modal();
             }
+
+            ams.App._populateMunicipalities();
         });
+
     },// end of run method
+
+    _populateMunicipalities: function() {
+        const $selectMunicipalities = $('#select-municipalities');
+    
+        $selectMunicipalities.empty();
+
+        $.each(ams.Config.appAllMunicipalities, function(index, municipality) {
+            const option = $('<option></option>')
+                .val(municipality.geocode)
+                .text(municipality.name);
+            $selectMunicipalities.append(option);
+        });
+    },
+
+    _getCustomizedMunicipalities: function() {
+        const modal = $("#modal-container-municipalities");
+
+        function _closeCustomizedMunicipalities() {
+            modal.modal('hide');
+            $('#search-municipalities').val("");
+            $('#select-municipalities option').show();
+            $('#select-municipalities option').prop('selected', false);     
+            $('#municipalities-search-ok').prop('disabled', true);
+            $('#municipalities-search-panel').prop('disabled', true);
+        }
+
+        return new Promise((resolve) => {
+            modal.modal('show');
+
+            $('#municipalities-search-ok').off('click').on('click', function() {
+                const geocodes = $('#select-municipalities option:selected').map(function() {
+                    return $(this).val();
+                }).get();
+                _closeCustomizedMunicipalities();            
+                resolve(geocodes);
+            });
+
+            $('#municipalities-search-panel').off('click').on('click', function() {
+                const geocodes = $('#select-municipalities option:selected').map(function() {
+                    return $(this).val();
+                }).get();
+                _closeCustomizedMunicipalities();
+                resolve([]);                
+                ams.App.startMunicipalityPanel("geocode", geocodes[0]);
+            });
+
+            $('#municipalities-search-cancel').off('click').on('click', function() {
+                _closeCustomizedMunicipalities();
+                resolve([]);
+            });
+            
+            $('#municipalities-search-close').off('click').on('click', function() {
+                _closeCustomizedMunicipalities();
+                resolve([]);
+            });
+
+        });
+    },
 
     /**
     * Update the reference data layer by change CQL filter params
@@ -557,7 +767,12 @@ ams.App = {
                 l._source.options["cql_filter"] = cql;
                 cqlobj = {"cql_filter": cql};
             }
-            cqlobj["viewparams"] = "landuse:" + ams.App._landUseList.join('\\,');
+            cqlobj["viewparams"] = (
+                "landuse:" + ams.App._landUseList.join('\\,') + ";" +
+                "biomes:" + ams.App._biomes.join('\\,') + ";" +
+                "municipality_group_name:" + ams.App._municipalitiesGroup + ";" +
+                "geocodes:" + ams.App._geocodes.join('\\,')
+            );
             this._addWmsOptionsBase(cqlobj);
 
             l._source._overlay.setParams(cqlobj);
@@ -643,8 +858,8 @@ ams.App = {
                 if(lname!==false) ol[lname]=ams.App._addedLayers[ll];
             }
         }
-        if(ams.App._biomeLayer) {
-            ol[ams.Config.biome]=ams.App._biomeLayer;
+        if(ams.App._borderLayer) {
+            ol[ams.Config.biome]=ams.App._borderLayer;
         }
         ams.App._layerControl=L.control.layers(bs,ol).addTo(ams.App._map);
     },
@@ -739,6 +954,14 @@ ams.App = {
     _getLayerPrefix: function(){
         return this._currentSULayerName + ( (this._currentClassify=="onPeriod")?("_view"):("_diff_view") );
     },
+    
+    hasSpatialUnitLayer: function () {
+        return this._addedLayers.hasOwnProperty(ams.App._getLayerPrefix());
+    },
+
+    addSpatialUnitLayer: function() {
+        this._addSpatialUnitLayer(this._getLayerPrefix(),this._propertyName);
+    },
 
     _getMinMax: function(layerName, propertyName){
         let min=( (ams.App._diffOn)?(ams.App._wfs.getMin(layerName, propertyName, ams.App._suViewParams)):(0) );
@@ -758,9 +981,10 @@ ams.App = {
             return false;
         }
         let l=ams.App._getLayerByName(ams.App._getLayerPrefix());
-        if(l && !ams.App._map.hasLayer(l)){
+        if(l && !ams.App._map.hasLayer(l)) {
             ams.App._addSpatialUnitLayer(ams.App._getLayerPrefix(),ams.App._propertyName);
         }
+
         return mm;
     },
 
@@ -817,8 +1041,8 @@ ams.App = {
                 else if(this._map.hasLayer(lm)) this._map.removeLayer(lm);
             }
         }
-    },    
-
+    },
+    
     _onWindowResize: function () {
         ams.groupControl._onWindowResize();
     },
@@ -828,6 +1052,9 @@ ams.App = {
             jsConfig["unit"]=ams.Map.PopupControl._unit;
             jsConfig["targetbiome"]=ams.Config.biome;
             jsConfig["riskThreshold"]=ams.App._suViewParams.risk_threshold;
+            jsConfig["municipalitiesGroup"]=ams.App._municipalitiesGroup;
+            jsConfig["geocodes"]=ams.App._geocodes.join(',');
+
             let jsConfigStr = JSON.stringify(jsConfig);
             let response = await fetch("callback/spatial_unit_profile?sData=" + jsConfigStr).catch(
                 ()=>{
@@ -849,22 +1076,6 @@ ams.App = {
 
                 document.getElementById("txt3a").innerHTML = profileJson['FormTitle'];
                 $('#modal-container-general-info').modal();
-                // for adding tooltip on pie chart legend
-                let leg=$('g.legend');
-                leg.attr('data-html','true');
-                leg.attr('title', 'Descrição das categorias fundiárias.<br />'+
-                '-----------------------------------------------------------------------<br />'+
-                'TI: Terras Indígenas;<br />'+
-                'UC: Unidades de Conservação;<br />'+
-                'Assentamentos: Projetos de assentamentos de todos os tipos;<br />'+
-                'APA: Área de Proteção Ambiental;<br />'+
-                'CAR: Cadastro Ambiental Rural;<br />'+
-                'FPND: Florestas Públicas Não Destinadas;<br />'+
-                'Indefinida: Todas as demais áreas');
-                leg.mouseover(function(){
-                    let l=$('g.legend');
-                    l.tooltip('show');
-                });
             }else{
                 let emsg="";
                 if(response) emsg="HTTP-Error: " + response.status + " on spatial_unit_profile";
@@ -941,6 +1152,46 @@ ams.App = {
         }
         
         _saveAlerts(jsConfig);
+    },
+
+    startMunicipalityPanel: function (name, value) {
+        async function _startMunicipalityPanel (name, value) {
+            let startDate = ams.App._dateControl.startdate;
+            let endDate = ams.App._dateControl.enddate;
+            let tempUnit = ams.App._dateControl.period;
+            let response = await fetch(
+                "panel?"+name+"="+value +
+                "&startDate=" + ((startDate !== undefined)? startDate : "") +
+                "&endDate=" + ((endDate !== undefined)? endDate : "") +
+	            "&tempUnit=" + ((tempUnit !== undefined)? tempUnit : "")
+            ).catch(
+                ()=>{
+                    console.log("The backend service may be offline or your internet connection has been interrupted.");
+                }
+            );
+
+            if (response && response.ok) {
+                const html = await response.text();
+
+                const newWindow = window.open('', '_blank');
+                if (!newWindow) {
+                    window.alert('Não foi possível abrir a nova janela. Verifique o bloqueador de pop-ups.');
+                    return;
+                }
+                newWindow.document.write(html);
+                newWindow.document.close();
+
+            } else {
+                let emsg = "";
+                if(response) emsg = "HTTP-Error: " + response.status;
+                else emsg="O servidor está indisponível ou sua internet está desligada.";
+                console.log(emsg);
+                $('.toast').toast('show');
+                $('.toast-body').html("Encontrou um erro na solicitação ao servidor.<br />"+emsg);
+            }
+        }
+
+        _startMunicipalityPanel(name, value);
     }
 
 };
