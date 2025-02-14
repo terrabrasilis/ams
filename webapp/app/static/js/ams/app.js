@@ -527,9 +527,9 @@ ams.App = {
 
         // error message
         function showErrorMsg(msg) {
-            let emsg = "HTTP-Error: " + msg;
+	    $('.toast').toast({delay: 7000});
+	    $('.toast-body').html(msg);
             $('.toast').toast('show');
-            $('.toast-body').html("Encontrou um erro na solicitação ao servidor.<br />"+emsg);
         }
         if ($('meta[name="error-msg"]').length) {
             showErrorMsg($('meta[name="error-msg"]').attr('content'));

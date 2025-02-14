@@ -182,7 +182,7 @@ def set_municipality_panel_mode():
 
     if not ctrl.geocode_is_valid(geocode=geocode):
         return _render_template(
-            params={"error-msg": f"Geocode {geocode} not found."}
+            params={"error-msg": f"Geocódigo {geocode} não encontrado. Verifique se o valor informado está correto."}
         )
     
     params = {
