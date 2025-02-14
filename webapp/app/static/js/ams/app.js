@@ -1163,7 +1163,8 @@ ams.App = {
                 "panel?"+name+"="+value +
                 "&startDate=" + ((startDate !== undefined)? startDate : "") +
                 "&endDate=" + ((endDate !== undefined)? endDate : "") +
-	            "&tempUnit=" + ((tempUnit !== undefined)? tempUnit : "")
+	            "&tempUnit=" + ((tempUnit !== undefined)? tempUnit : "") +
+                "&classname=" + ams.App._suViewParams.classname
             ).catch(
                 ()=>{
                     console.log("The backend service may be offline or your internet connection has been interrupted.");

@@ -50,7 +50,8 @@ def _get_config(
     municipality_panel_mode: bool,
     start_date: str="",
     end_date: str="",
-    temp_unit: str=""
+    temp_unit: str="",
+    classname: str="",
 ):
     dburl = Config.DB_URL
     ctrl = AppConfigController(dburl)
@@ -119,6 +120,7 @@ def _get_config(
         'start_date': start_date,
         'end_date': end_date,
         'temp_unit': temp_unit,
+        'classname': classname,
     }
 
 
@@ -155,6 +157,7 @@ def get_config(endpoint):
             start_date=params["startDate"],
             end_date=params["endDate"],
             temp_unit=params["tempUnit"],
+            classname=params["classname"],
         )
 
         return json.dumps(conf)
@@ -188,11 +191,12 @@ def set_municipality_panel_mode():
     params = {
         "municipality-panel": "true",
         "geocode": geocode,
-        "start_date": params["startDate"] if "startDate" in params else "",
-        "end_date": params["endDate"] if "endDate" in params else "",
-        "temp_unit": params["tempUnit"] if "tempUnit" in params else "",
+        "start_date": params.get("startDate", ""),
+        "end_date": params.get("endDate", ""),
+        "temp_unit": params.get("tempUnit", ""),
+        "classname": params.get("classname", ""),
     }
-    
+
     return _render_template(
         params=params
     )
