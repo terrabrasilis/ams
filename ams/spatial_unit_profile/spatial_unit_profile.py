@@ -486,7 +486,7 @@ class SpatialUnitProfile():
             f"Contagem de {graph_indicator}: {total}" if self._classname in [self._fire_classname, self._risk_classname] else
             f"Área total: {total:.2f} {graph_area_unit}"
         )
-        graph_colors = ["#658faa", "#8c8185", "#53606e", "#998e8f", "#90c0c9", "#d7d9d5", "#ccddee", "#f8edd3", "#efeae1"]
+        graph_colors = ["#658faa", "#535585", "#53886e", "#998e8f", "#90c0c9", "#d7babe", "#c5c8ce", "#f8edd3", "#d7d0b3"]
 
         graph_spatial_unit = "a Unidade Espacial"
         if self._name == '*':
