@@ -27,7 +27,6 @@ ams.Utils = {
   },
 
   startApp: function(generalConfig){
-
     if(typeof generalConfig=='undefined'){
       // use the previous selection or default biome (see config.js)
       let b=localStorage.getItem('ams.previous.biome.setting.selection');
@@ -63,7 +62,11 @@ ams.Utils = {
 
       ams.Config.startDate = generalConfig.start_date;
       ams.Config.endDate = generalConfig.end_date;
-      ams.Config.tempUnit = generalConfig.temp_unit;	
+      ams.Config.tempUnit = generalConfig.temp_unit;
+
+      if (generalConfig.classname) {
+        ams.Config.defaultFilters.indicator	= generalConfig.classname;
+      }
 
       var spatialUnits = JSON.parse(generalConfig.spatial_units_info_for_subset.replace(/'/g,"\""));
       var spatialUnitsSubset = new ams.Map.SpatialUnits(spatialUnits, spatialUnits[0]["dataname"]);
@@ -128,7 +131,8 @@ ams.Utils = {
           selectedGeocodes = "";
       }
 
-      var municipalityPanelMode = false;
+      var municipalityPanelMode = false,
+        classname = "";      
       if (ams.Utils.getServerConfigParam('municipality-panel') !== undefined) {
           municipalityPanelMode = true;
           selectedBiome = "ALL";
@@ -138,6 +142,7 @@ ams.Utils = {
           startDate=ams.Utils.getServerConfigParam('start_date');
           endDate=ams.Utils.getServerConfigParam('end_date');
           tempUnit=ams.Utils.getServerConfigParam('temp_unit');
+          classname=ams.Utils.getServerConfigParam('classname');
       }
 
       const loadConfig = new Promise((resolve, reject) => {
@@ -158,7 +163,8 @@ ams.Utils = {
               "&municipalityPanelMode=" + municipalityPanelMode +
 	            "&startDate=" + ((startDate !== undefined)? startDate : "") +
               "&endDate=" + ((endDate !== undefined)? endDate : "") +
-	            "&tempUnit=" + ((tempUnit !== undefined)? tempUnit : "")
+	            "&tempUnit=" + ((tempUnit !== undefined)? tempUnit : "") +
+              "&classname=" + classname
           );
           if (response&&response.ok) {
             let generalConfig = await response.json();
