@@ -5,6 +5,7 @@ ams.PeriodHandler = {
     _enddate: null,// used to display date information
     _previousdate: null,// used to display date information
     _control: null,
+    _maxdate: null,
 
     init: function(map){
         this._updatePeriodInfo();// gets start date from App configuration and injects here
@@ -41,6 +42,10 @@ ams.PeriodHandler = {
         this._enddate.setUTCDate(this._enddate.getUTCDate()+1);
         this._previousdate=new Date(ams.App._dateControl.prevdate+'T00:00:00');
         this._previousdate.setUTCDate(this._previousdate.getUTCDate()+1);
+
+        if (this._maxdate === null) {
+            this._maxdate = this._startdate;
+        }
     },
 
     changeDate: function(date, datetype){
@@ -64,6 +69,12 @@ ams.PeriodHandler = {
         }else{
             $('#next-period').css('visibility','hidden');
         }
+    },
+
+    setMaxDate: function(maxdate) {
+        ams.Utils.assert(typeof(maxdate) === "string");
+        this._maxdate = ams.Date.fromString(maxdate);
+        $("#datepicker-start").datepicker("option", "maxDate", this._maxdate);
     },
 
     previousPeriod: function(){

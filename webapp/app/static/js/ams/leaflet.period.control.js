@@ -122,12 +122,11 @@ L.Control.PeriodHandler = L.Control.extend({
             );
         }
 
-
         $('#datepicker-start').datepicker({
             showButtonPanel: true,
             defaultDate: this.options.startDate,
             minDate: new Date("2017-01-01T00:00:00"),
-            maxDate: startDate,
+            maxDate: ams.PeriodHandler._maxdate,
             changeMonth: true,
             changeYear: true,    
             todayBtn: "linked",    

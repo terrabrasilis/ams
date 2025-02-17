@@ -52,6 +52,7 @@ ams.App = {
         let lastDateDynamic = this._wfs.getLastDate(ldLayerName);
         lastDateDynamic = lastDateDynamic?lastDateDynamic:this._spatialUnits.getDefault().last_date;
         lastDateDynamic = ams.Date.getMin(ams.Config.publishDate, lastDateDynamic);
+        ams.PeriodHandler.setMaxDate(lastDateDynamic);
 
         let startDate = ams.Config.startDate;
         let tempUnit = ams.Config.tempUnit;
@@ -426,11 +427,14 @@ ams.App = {
                         ams.App._priorViewParams.updateRiskThreshold(ams.App._riskThreshold);
                         // try update the last date for new classname
                         let lastDateDynamic = ams.App._wfs.getLastDate(ldLayerName);
-                        lastDateDynamic = lastDateDynamic?lastDateDynamic:ams.App._spatialUnits.getDefault().last_date;
+                        lastDateDynamic = lastDateDynamic? lastDateDynamic : ams.App._spatialUnits.getDefault().last_date;
+                        ams.PeriodHandler.setMaxDate(lastDateDynamic);
+
                         if (e.acronym !== "RK") {
                             lastDateDynamic = ams.Date.getMin(ams.App._dateControl.startdate, lastDateDynamic);
                         }
-			            ams.App._dateControl.setPeriod(lastDateDynamic, ams.App._currentTemporalAggregate);
+
+                        ams.App._dateControl.setPeriod(lastDateDynamic, ams.App._currentTemporalAggregate);
                         ams.PeriodHandler.changeDate(ams.App._dateControl.startdate);
                         needUpdateSuLayers=false; //no need because the changeDate Internally invokes layer update
                     }
