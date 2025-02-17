@@ -7,7 +7,7 @@ ams.defaultMunicipalitiesGroup="customizado";
 
 var defaultConfig = {
   terrabrasilisURL:"http://terrabrasilis.dpi.inpe.br",
-  DETERMetadataURL: "/geonetwork/srv/eng/catalog.search#/metadata/f9b7e1d3-0d4e-4cb1-b3cf-c2b8906126be",
+  DETERMetadataURL: "/geonetwork/srv/eng/catalog.search#/metadata/f2153c4a-915b-48a6-8658-963bdce7366c",
   AFMetadataURL: "/geonetwork/srv/eng/catalog.search#/metadata/c4b6504f-5d54-4b61-a745-4123fae873ec",
   spatialUnitLayers:[],// populated on App load: ams.App.run(...)
   floatDecimals: 2,// change this number to change the number of decimals to float numbers
