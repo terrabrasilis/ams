@@ -51,7 +51,6 @@ ams.App = {
         this._dateControl = new ams.Date.DateController();
         let lastDateDynamic = this._wfs.getLastDate(ldLayerName);
         lastDateDynamic = lastDateDynamic?lastDateDynamic:this._spatialUnits.getDefault().last_date;
-        lastDateDynamic = ams.Date.getMin(ams.Config.publishDate, lastDateDynamic);
         ams.PeriodHandler.setMaxDate(lastDateDynamic);
 
         let startDate = ams.Config.startDate;
