@@ -32,16 +32,20 @@ class AppConfigController:
         results = cur.fetchall()
         return "["+results[0][0]+"]"
 
-    def read_land_uses(self):
+    def read_land_uses(self, land_use_type):
         """
         Gets the land use ids and names.
         To use on the frontend to display filters by land uses.
         """
+        land_use_type_suffix = "" if land_use_type == "ams" else f"_{land_use_type}"
+
         sql = """SELECT string_agg( lu , ', ' )
 		FROM (
 			SELECT '{''id'':'||id||', ''name'':'''||name||'''}' as lu
-			FROM public.land_use ORDER BY priority
+			FROM public.land_use%s ORDER BY priority
 		) as tb1"""
+        sql = sql % land_use_type_suffix
+        
         cur = self._conn.cursor()
         cur.execute(sql)
         results = cur.fetchall()

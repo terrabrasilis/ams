@@ -1076,6 +1076,10 @@ ams.App = {
                 if (profileJson['AreaPerLandUse'] && ams.App._landUseList.length>1) {
                     Plotly.react('AreaPerLandUse', JSON.parse(profileJson['AreaPerLandUse']), {});
                 }
+                Plotly.purge('AreaPerLandUsePpcdam');
+                if (profileJson['AreaPerLandUsePpcdam'] && ams.App._landUseList.length>1) {
+                    Plotly.react('AreaPerLandUsePpcdam', JSON.parse(profileJson['AreaPerLandUsePpcdam']), {});
+                }
 
                 document.getElementById("txt3a").innerHTML = profileJson['FormTitle'];
                 $('#modal-container-general-info').modal();
