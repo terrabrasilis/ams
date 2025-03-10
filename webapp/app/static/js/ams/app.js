@@ -505,6 +505,7 @@ ams.App = {
         function setMunicipalityPanelMode() {
             $(".hide-in-municipality-panel").css("display", "none")
             $("#header-panel-title").text("Sala de Situação Municipal | " + ams.Config.appSelectedMunicipality);
+            window.history.pushState({}, '', "/panel?geocode="+ams.Config.appSelectedGeocodes[0]);
         }
         if (ams.Config.appMunicipalityPanelMode) {
             setMunicipalityPanelMode();
