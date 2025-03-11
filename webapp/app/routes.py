@@ -75,7 +75,10 @@ def _get_config(
                 else ""
             )
         )
-        cg = ctrl.read_class_groups(biomes=["ALL"])
+        mbiomes = ctrl.read_municipalities_biome(geocodes=
+            selected_geocodes if municipalities_group == "customizado" else ctrl.read_municipalities_geocode(municipality_group=municipalities_group)
+        )
+        cg = ctrl.read_class_groups(biomes=mbiomes)
 
     publish_date = (
         ctrl.read_publish_date(biomes=json.loads(selected_biomes)) if not is_authenticated else

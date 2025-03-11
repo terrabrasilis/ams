@@ -22,11 +22,14 @@ class AppConfigController:
 			FROM public.class_group cg
                         JOIN public.class c
                         ON cg.id=c.group_id
-                        WHERE (%s = 'ALL' OR c.biome IN (%s))
+                        WHERE ('%s' = 'ALL' OR c.biome = ANY('{%s}'))
                         GROUP BY 1,2 ORDER BY cg.orderby
 		) as tb1"""
-        biomes = ",".join([f"'{_}'" for _ in biomes])
+
+        biomes = ",".join(biomes)
+       
         sql = sql % (biomes, biomes)
+
         cur = self._conn.cursor()
         cur.execute(sql)
         results = cur.fetchall()
@@ -111,6 +114,39 @@ class AppConfigController:
         cur.execute(sql)
         results = ["customizado"] + [_[0] for _ in cur.fetchall()]
         return json.dumps(results)
+
+    def read_municipalities_geocode(self, municipality_group):
+        """
+        Gets the municipalities geocode from database.
+        """
+        sql = """
+            SELECT geocode
+            FROM public.municipalities_group_members mgm
+            INNER JOIN public.municipalities_group mg ON mg.id = mgm.group_id
+            WHERE mg.name='%s';
+        """
+        sql = sql % municipality_group
+
+        cur = self._conn.cursor()
+        cur.execute(sql)
+        results = [_[0] for _ in cur.fetchall()]
+        return results
+
+    def read_municipalities_biome(self, geocodes):
+        """
+        Gets the municipalities biome from database.
+        """
+        sql = """
+            SELECT DISTINCT biome
+            FROM public.municipalities_biome mb
+            INNER JOIN public.municipalities mu ON mu.geocode=mb.geocode
+            WHERE mu.geocode = ANY('{%s}');            
+        """
+        sql = sql % ','.join(geocodes)
+        cur = self._conn.cursor()
+        cur.execute(sql)
+        results = [_[0] for _ in cur.fetchall()]
+        return results
 
     def read_publish_date(self, biomes):
         """
