@@ -771,6 +771,9 @@ class SpatialUnitProfile():
         apt = "percentage by group"
         st = "scaled"
         pe = "percentage"
+
+        if self.data_unit == ha:
+            default_col_name = default_col_name.replace(km2, ha)
     
         fire_or_risk = self._classname in [self._fire_classname, self._risk_classname]
         _ = {self._risk_classname: "pontos de risco", self._fire_classname: "focos"}
