@@ -607,11 +607,11 @@ class SpatialUnitProfile():
         df = self.__area_by_period(land_use_type=land_use_type)
         
         # set bar colors
-        color_discrete_sequence = ['#1e9789'] * len(df)
+        color_discrete_sequence = ['#71a68c'] * len(df)
         # highlight the bars
         color_change_items = getIndexes(df)
         for i in color_change_items:
-            color_discrete_sequence[i] = '#909090'
+            color_discrete_sequence[i] = '#b7acad'
 
         indicador=self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
         unid_temp=self._temporal_units[self._temporal_unit]
@@ -807,9 +807,9 @@ class SpatialUnitProfile():
         )
         custom_data = np.array([custom_values, custom_labels, custom_percentages]).T
     
-        df.loc[df[gr] == ccar, "color"] = "#909090"
-        df.loc[df[gr] == scar, "color"] = "#1e9789"
-        colors = ["#fff", "#00796b", "#727272"] + df["color"].tolist()
+        df.loc[df[gr] == ccar, "color"] = "#b7acad"
+        df.loc[df[gr] == scar, "color"] = "#71a68c"
+        colors = ["#fff", "#53886e", "#998e8f"] + df["color"].tolist()
     
         # assert len(values) == len(labels) == len(parents) == len(custom_values) == len(custom_labels) == len(colors)
     
