@@ -537,11 +537,11 @@ class SpatialUnitProfile():
         )
 
         template2 = f"Do total de {graph_indicator}, {graph_value}{graph_unit}, o que corresponde a {graph_percent},<br>estão em {graph_label}. "
-        template2 += (
-            "" if fire_or_risk else
-            f"Os {graph_value}{graph_unit} representam {graph_custom_data}<br>da área total dessa categoria "
-            f"n{graph_spatial_unit}."
-        )
+        # template2 += (
+        #    "" if fire_or_risk else
+        #    f"Os {graph_value}{graph_unit} representam {graph_custom_data}<br>da área total dessa categoria "
+        #    f"n{graph_spatial_unit}."
+        # )
         fig.add_trace(
             go.Pie(
                 labels=df[label],
