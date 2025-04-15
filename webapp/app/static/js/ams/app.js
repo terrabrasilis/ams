@@ -505,6 +505,8 @@ ams.App = {
         function setMunicipalityPanelMode() {
             $(".hide-in-municipality-panel").css("display", "none")
             $("#header-panel-title").text("Sala de Situação Municipal | " + ams.Config.appSelectedMunicipality);
+            const url = window.location.pathname.replace(/\/$/, '') + "/panel?geocode="+ams.Config.appSelectedGeocodes[0];
+            window.history.pushState({}, '', url);
         }
         if (ams.Config.appMunicipalityPanelMode) {
             setMunicipalityPanelMode();
@@ -1075,6 +1077,10 @@ ams.App = {
                 Plotly.purge('AreaPerLandUse');
                 if (profileJson['AreaPerLandUse'] && ams.App._landUseList.length>1) {
                     Plotly.react('AreaPerLandUse', JSON.parse(profileJson['AreaPerLandUse']), {});
+                }
+                Plotly.purge('AreaPerLandUsePpcdam');
+                if (profileJson['AreaPerLandUsePpcdam'] && ams.App._landUseList.length>1) {
+                    Plotly.react('AreaPerLandUsePpcdam', JSON.parse(profileJson['AreaPerLandUsePpcdam']), {});
                 }
 
                 document.getElementById("txt3a").innerHTML = profileJson['FormTitle'];

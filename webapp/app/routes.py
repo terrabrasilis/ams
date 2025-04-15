@@ -57,7 +57,6 @@ def _get_config(
     ctrl = AppConfigController(dburl)
 
     biomes = ctrl.read_biomes()  # all biomes
-
     selected_geocodes = geocodes.split(",")
 
     if subset == "Bioma":
@@ -76,14 +75,17 @@ def _get_config(
                 else ""
             )
         )
-        cg = ctrl.read_class_groups(biomes=["ALL"])
-        
+        mbiomes = ctrl.read_municipalities_biome(geocodes=
+            selected_geocodes if municipalities_group == "customizado" else ctrl.read_municipalities_geocode(municipality_group=municipalities_group)
+        )
+        cg = ctrl.read_class_groups(biomes=mbiomes)
+
     publish_date = (
         ctrl.read_publish_date(biomes=json.loads(selected_biomes)) if not is_authenticated else
         datetime.now().strftime("%Y-%m-%d")
     )
 
-    ldu = ctrl.read_land_uses()
+    ldu = ctrl.read_land_uses(land_use_type="ams")
 
     # incluing thresholds in the layer names
     cg = json.loads(cg.replace("'", '"'))
@@ -248,12 +250,14 @@ def get_profile(endpoint):
                 return json.dumps(
                     {'FormTitle': spatial_unit_profile.form_title(),
                      'AreaPerLandUse': spatial_unit_profile.fig_area_per_land_use(),
-                     'AreaPerYearTableClass': spatial_unit_profile.fig_area_by_period()}
+                     'AreaPerYearTableClass': spatial_unit_profile.fig_area_by_period(),
+                     'AreaPerLandUsePpcdam': spatial_unit_profile.fig_area_per_land_use_ppcdam()}
                 )
         elif (onlyOneLandUse >= 2 and spatial_unit_profile._classname == 'RK'):
             return json.dumps(
                 {'FormTitle': spatial_unit_profile.form_title(),
-                 'AreaPerLandUse': spatial_unit_profile.fig_area_per_land_use()}
+                 'AreaPerLandUse': spatial_unit_profile.fig_area_per_land_use(),
+                 'AreaPerLandUsePpcdam': spatial_unit_profile.fig_area_per_land_use_ppcdam()}
             )
         else:
             return json.dumps(

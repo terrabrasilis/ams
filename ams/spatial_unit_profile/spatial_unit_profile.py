@@ -12,6 +12,7 @@ from datetime import datetime
 import json
 import re
 from dateutil.relativedelta import relativedelta
+import numpy as np
 
 
 class SpatialUnitProfile():
@@ -186,7 +187,7 @@ class SpatialUnitProfile():
         elif self._temporal_unit == '3m': return 90,'day',self._query_limit*90
         elif self._temporal_unit == '1y': return 365,'day',self._query_limit*365
 
-    def __get_temporal_unit_sql(self):
+    def __get_temporal_unit_sql(self, land_use_type):
         # local round factor used into SQL to read data from database
         round_factor=4
         if(self._classname==self._fire_classname):
@@ -205,6 +206,8 @@ class SpatialUnitProfile():
             ORDER BY 1 DESC
             LIMIT {self._query_limit}
         """
+
+        land_use_type_suffix = "" if land_use_type == "ams" else f"_{land_use_type}"
 
         name_escaped = self._name.replace("'", "''")
 
@@ -236,7 +239,7 @@ class SpatialUnitProfile():
                     ROUND(sum(a.{self.default_column})::numeric,{round_factor}) as resultsum
                 FROM
                     calendar,
-                    "{self._spatial_unit}_land_use" a
+                    "{self._spatial_unit}_land_use{land_use_type_suffix}" a
                     INNER JOIN "{self._spatial_unit}" b
                         ON a.suid = b.suid
                 WHERE
@@ -282,12 +285,19 @@ class SpatialUnitProfile():
     def resultset_as_dataframe(self, sql):
         return pd.read_sql(sql, self._dburl)
 
-    def __area_by_period(self):
-        df = self.resultset_as_dataframe(self.__get_temporal_unit_sql())
+    def __area_by_period(self, land_use_type: str):
+        df = self.resultset_as_dataframe(self.__get_temporal_unit_sql(land_use_type=land_use_type))
         df.columns = ['Período', 'Data de referência', self.default_col_name]
         return df
+    
+    def read_land_uses(self, land_use_type):
+        sql = "SELECT name FROM public.land_use_%s ORDER BY priority"
+        sql = sql % land_use_type
+        return self.resultset_as_dataframe(sql=sql)
 
-    def classname_area_per_land_use(self):
+    
+    def classname_area_per_land_use(self, land_use_type):
+        land_use_type_suffix = "" if land_use_type == "ams" else f"_{land_use_type}"
         name_escaped = self._name.replace("'", "''")
 
         where_risk="" if(self._classname!=self._risk_classname) else f" a.risk >= {self._risk_threshold} AND "
@@ -311,18 +321,23 @@ class SpatialUnitProfile():
 
         where_filter=f"{where_biome} {where_municipalities_group} {where_risk} {where_spatial_unit}"
 
+        # AND a.land_use_id = ANY (ARRAY[{self.land_use}]) 
+        where_landuse1 = f"AND a.land_use_id = ANY (ARRAY[{self.land_use}])" if land_use_type == "ams" else ""
+        # WHERE a.id = ANY (array[{self.land_use}]) 
+        where_landuse2 = f"WHERE a.id = ANY (ARRAY[{self.land_use}])" if land_use_type == "ams" else ""
+
         sql = f"""
             SELECT
                 a.name,
                 COALESCE(resultsum, 0) AS resultsum,
                 SUM(COALESCE(resultsum, 0)) OVER () AS resultsum_total
-            FROM land_use a 
+            FROM land_use{land_use_type_suffix} a 
             LEFT JOIN (
                 SELECT
                     a.land_use_id,
                     SUM(a.{self.default_column}) AS resultsum
                 FROM
-                    \"{self._spatial_unit}_land_use\" a 
+                    \"{self._spatial_unit}_land_use{land_use_type_suffix}\" a 
                 INNER JOIN
                     \"{self._spatial_unit}\" b on a.suid = b.suid 
                 WHERE
@@ -330,14 +345,13 @@ class SpatialUnitProfile():
                     a.date > '{self._start_period_date}'
                     AND a.date <= '{self._start_date}' 
                     AND a.classname = '{self._classname}' 
-                    AND a.land_use_id = ANY (ARRAY[{self.land_use}]) 
+                    {where_landuse1}
                 GROUP BY
                     a.land_use_id
             ) b
             ON
                 a.id = b.land_use_id 
-            WHERE
-                a.id = ANY (array[{self.land_use}]) 
+            {where_landuse2}
             ORDER BY
                 a.priority ASC 
         """
@@ -347,7 +361,8 @@ class SpatialUnitProfile():
         df.columns = ['Categoria Fundiária', self.default_col_name, 'Total (km²)']
         return df
     
-    def area_per_land_use(self):
+    def area_per_land_use(self, land_use_type):
+        land_use_type_suffix = "" if land_use_type == "ams" else f"_{land_use_type}"
         su_col_id = self._tableinfo[self._spatial_unit]['key']
         
         name_escaped = self._name.replace("'", "''")
@@ -378,9 +393,9 @@ class SpatialUnitProfile():
 	            COALESCE(SUM(lua.area), 0) AS land_use_area,
 	            SUM(SUM(lua.area)) OVER () AS land_use_total_area
             FROM
-	            public.{self._spatial_unit}_land_use_area lua
+	            public.{self._spatial_unit}_land_use_area{land_use_type_suffix} lua
             INNER JOIN
-	            public.land_use lu ON lu.id=lua.land_use_id
+	            public.land_use{land_use_type_suffix} lu ON lu.id=lua.land_use_id
             INNER JOIN
 	            public.{self._spatial_unit} su ON su.{su_col_id}=lua.su_id
             WHERE
@@ -444,10 +459,11 @@ class SpatialUnitProfile():
         km2 = "km²"
         ha = "ha"
         default_col_name = self.default_col_name
+        land_use_type = "ams"
 
         # loading and mergin data
-        df1 = self.classname_area_per_land_use()
-        df2 = self.area_per_land_use()
+        df1 = self.classname_area_per_land_use(land_use_type=land_use_type)
+        df2 = self.area_per_land_use(land_use_type=land_use_type)
 
         # validation
         # land_uses = df1[df1[default_col_name] > 0][label].tolist()
@@ -586,13 +602,16 @@ class SpatialUnitProfile():
                     prev=self.get_previous_date(ref_date=df['Data de referência'][i])
             return index
 
-        df = self.__area_by_period()
+        land_use_type = "ams"
+
+        df = self.__area_by_period(land_use_type=land_use_type)
+        
         # set bar colors
-        color_discrete_sequence = ['#609cd4'] * len(df)
+        color_discrete_sequence = ['#71a68c'] * len(df)
         # highlight the bars
         color_change_items = getIndexes(df)
         for i in color_change_items:
-            color_discrete_sequence[i] = '#ec7c34'
+            color_discrete_sequence[i] = '#b7acad'
 
         indicador=self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
         unid_temp=self._temporal_units[self._temporal_unit]
@@ -661,4 +680,173 @@ class SpatialUnitProfile():
             ticks='outside'
         )
         graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+        return graphJSON
+
+    def classname_area_per_land_use_ppcdam(self):
+        # column names and constants
+        default_col_name = self.default_col_name
+        land_use_type = "ppcdam"
+        km2 = "km²"
+        ha = "ha"
+        car = "CAR"
+        ccar = "com CAR"
+        scar = "sem CAR"
+        cf = "Categoria Fundiária"
+        gr = "group"
+        tt = "total"
+        tg = "total by group"
+        igp = "in-group percentage"
+        pg = "percentage by group"
+        sc = "scaled"
+        pe = "percentage"
+
+        # formating the dataframe
+        all_categories = self.read_land_uses(land_use_type=land_use_type)["name"].tolist()
+
+        df = self.classname_area_per_land_use(land_use_type=land_use_type)
+
+        if self.data_unit == ha:
+            columns = {col: col.replace(km2, ha) for col in df.columns if km2 in col}
+            df.rename(columns=columns, inplace=True)
+            default_col_name = default_col_name.replace(km2, ha)
+            for _, col in columns.items():
+                df[col] = df[col] * 100
+
+        # including all categories
+        df = df.set_index(cf)
+        df = df.reindex(all_categories, fill_value=0).reset_index()
+
+        # total and percentage
+        df[tt] = df[default_col_name].sum()
+        df[pe] = df[default_col_name] / df[tt] * 100.
+
+        # com CAR and sem CAR groups
+        df[gr] = df[cf].apply(lambda col: ccar if car in col else scar)    
+        sum_ccar = df.loc[df[gr] == ccar, default_col_name].sum()
+        sum_scar = df.loc[df[gr] == scar, default_col_name].sum()
+        df.loc[df[gr] == ccar, tg] = sum_ccar
+        df.loc[df[gr] == scar, tg] = sum_scar
+
+        # total per group
+        df[igp] = df[default_col_name] / df[tg] * 100.
+        df[pg] = df[tg] / df[tt] * 100
+
+        # scaled total
+        df[sc] = df[igp]
+        if sum_ccar and sum_scar:
+            df[sc] = df[igp] / 100 * 50
+        df.fillna(0., inplace=True)
+
+        return df
+
+    def fig_area_per_land_use_ppcdam(self):
+        label_abbr = {
+            'Terra indígena': 'TI',
+            'Unidade de conservação': 'UC',
+            'Território quilombola': 'TQ',
+            'Assentamento rural': 'Assentamento',
+            'Área de proteção ambiental': 'APA',
+            'Floresta pública não destinada': 'FPND',
+            'CAR sobreposto em terra indígena': 'sobreposto em TI',
+            'CAR sobreposto em unidade de conservação': 'sobreposto em UC',
+            'CAR sobreposto em território quilombola': 'sobreposto em TQ',
+            'CAR sobreposto em assentamento rural': 'sobreposto em AR',
+            'CAR sobreposto em área de proteção ambiental': 'sobreposto em APA',
+            'CAR sobreposto em floresta pública não destinada': 'sobreposto em FPND',
+            'Propriedade privada (Dados do CAR)': 'CAR sem sobreposição',
+            'Área sem registro fundiário': 'sem registro fundiário'
+        }
+        _text_abbr = lambda lbls: [label_abbr.get(_, _) for _ in lbls]
+    
+        # column names and constants
+        default_col_name = self.default_col_name
+        uso = "Total"
+        km2 = "km²"
+        ha = "ha"
+        ccar = "com CAR"
+        scar = "sem CAR"
+        cf = "Categoria Fundiária"
+        gr = "group"
+        tt = "total"
+        apt = "percentage by group"
+        st = "scaled"
+        pe = "percentage"
+
+        if self.data_unit == ha:
+            default_col_name = default_col_name.replace(km2, ha)
+    
+        fire_or_risk = self._classname in [self._fire_classname, self._risk_classname]
+        _ = {self._risk_classname: "pontos de risco", self._fire_classname: "focos"}
+        graph_unit = _[self._classname] if fire_or_risk else (km2 if self.data_unit != ha else ha)
+        graph_indicator = _[self._classname] if self._classname in _  else "alertas"
+    
+        df = self.classname_area_per_land_use_ppcdam()
+    
+        labels = [uso] + df[gr].unique().tolist() + df[cf].tolist()
+        labels = _text_abbr(labels)
+    
+        parents = [""]  + [uso] * len(df[gr].unique()) + df[gr].tolist()
+        parents = _text_abbr(parents)
+    
+        values = (
+            [100]
+            + df.groupby([gr])[st].sum().reindex(df[gr].unique().tolist()).tolist()
+            + df[st].tolist()
+        )
+        custom_values = (
+            [df[tt].tolist()[0]]
+            + df.groupby([gr])[default_col_name].sum().reindex(df[gr].unique().tolist()).tolist()
+            + df[default_col_name].tolist()
+        )
+        custom_values = [round(_, 0 if fire_or_risk else 2) for _ in custom_values]
+        custom_values = [f"{_} {graph_unit}" for _ in custom_values]
+        custom_percentages = (
+            [100]
+            + df.drop_duplicates(subset=[gr])[apt].tolist()
+            + df[pe].tolist()
+        )
+        custom_labels = (
+            [uso, scar, ccar] + df[cf].tolist()
+        )
+        custom_data = np.array([custom_values, custom_labels, custom_percentages]).T
+    
+        df.loc[df[gr] == ccar, "color"] = "#b7acad"
+        df.loc[df[gr] == scar, "color"] = "#71a68c"
+        colors = ["#fff", "#53886e", "#998e8f"] + df["color"].tolist()
+    
+        # assert len(values) == len(labels) == len(parents) == len(custom_values) == len(custom_labels) == len(colors)
+    
+        title = "<b>Análise da distribuição do indicador<br>no período em relação ao CAR</b><br>"
+        title += "<i>CAR refere-se às propriedades privadas autodeclaradas no Cadastro Ambiental Rural</i>"
+    
+        graph_custom_data0 = "%{customdata[0]}"
+        graph_custom_data1 = "%{customdata[1]}"
+        graph_custom_data2 = "%{customdata[2]:.2f}%"
+        template = f"{graph_custom_data1}: {graph_custom_data2} do total de {graph_indicator} - {graph_custom_data0}<extra></extra>"
+    
+        fig = go.Figure(go.Sunburst(
+            labels=labels,
+            parents=parents,
+            values=values,
+            customdata=custom_data,
+            branchvalues="total",
+            texttemplate="%{label}",
+            hovertemplate=template,
+            marker=dict(colors=colors, line=dict(color='#fff', width=1.5)),
+            insidetextorientation="horizontal", 
+        ))
+        fig.update_layout(
+            title_text=title,
+            title_x=0.5,
+            title_y=0.95,
+            paper_bgcolor='#f3f9f8',
+            width=700,
+            height=450,
+            uniformtext=dict(minsize=10, ),
+        )
+        fig.update_traces(
+            textfont=dict(size=16, color="white"),
+        )
+
+        graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)        
         return graphJSON
