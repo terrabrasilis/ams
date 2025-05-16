@@ -42,7 +42,7 @@ ams.App = {
 
     	// REMOVE ME (Debug Purposes)
         // if(ams.Auth.isAuthenticated()==false) {
-        // geoserverUrl = "http://127.0.0.1/geoserver";
+        geoserverUrl = "http://127.0.0.1/geoserver";
         // }
 
         this._wfs = new ams.Map.WFS(geoserverUrl);
@@ -158,7 +158,8 @@ ams.App = {
         };
         ams.App._addWmsOptionsBase(AFWmsOptions);
 
-        var RKLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.ibamaRisk;
+        var riskLayer = ams.Config.defaultRiskFilter.source === "inpe"? ams.Config.defaultLayers.inpeRisk : ams.Config.defaultLayers.ibamaRisk;
+        var RKLayerName = ams.Auth.getWorkspace() + ":" + riskLayer;
         var RKWmsOptions = {
             "cql_filter": "(risk >= " + ams.Config.defaultRiskFilter.threshold + ")",
             "viewparams": (
@@ -390,12 +391,19 @@ ams.App = {
                     );
 
                 } else if(e.group.name=='INDICADOR'){// change reference layer (deter, fires or risk)?
-                    ams.App._riskThreshold=0; // reset the risk limit so as not to interfere with the min max query
+                    ams.App._riskThreshold=0.0; // reset the risk limit so as not to interfere with the min max query
                     if(e.acronym=='RK'){
                         layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.ibamaRisk;
                         ams.App._propertyName=ams.Config.propertyName.rk;
                         ams.App._riskThreshold=ams.Config.defaultRiskFilter.threshold;
                         ams.App._hasClassFilter=false;
+                        ams.App._diffOn = false;
+                        ams.App._currentClassify = "onPeriod";
+                    }else if(e.acronym=='RI'){
+                        layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.inpeRisk;
+                        ams.App._propertyName=ams.Config.propertyName.ri;
+                        ams.App._riskThreshold=ams.Config.defaultRiskFilter.threshold;
+                        ams.App._hasClassFilter = false;
                         ams.App._diffOn = false;
                         ams.App._currentClassify = "onPeriod";
                     }else if(e.acronym=='AF'){
@@ -409,6 +417,7 @@ ams.App = {
                         ams.App._propertyName=ams.Config.propertyName.deter;
                         ams.App._hasClassFilter=true;
                     }
+
                     // reference layer was changes, so propertyName changes too
                     if(ams.App._referenceLayerName!=layerToAdd){
                         ams.App._exchangeReferenceLayer(ams.App._referenceLayerName, layerToAdd);
@@ -429,7 +438,7 @@ ams.App = {
                         lastDateDynamic = lastDateDynamic? lastDateDynamic : ams.App._spatialUnits.getDefault().last_date;
                         ams.PeriodHandler.setMaxDate(lastDateDynamic);
 
-                        if (e.acronym !== "RK") {
+                        if (e.acronym !== "RK" && e.acronym !== "RI") {
                             lastDateDynamic = ams.Date.getMin(ams.App._dateControl.startdate, lastDateDynamic);
                         }
 
@@ -767,7 +776,8 @@ ams.App = {
         let l=this._getLayerByName(this._referenceLayerName);
         if(l) {
             let cqlobj = {};
-            if(!this._referenceLayerName.includes(ams.Config.defaultLayers.ibamaRisk)){
+            if(!this._referenceLayerName.includes(ams.Config.defaultLayers.ibamaRisk) &&
+               !this._referenceLayerName.includes(ams.Config.defaultLayers.inpeRisk)) {
                 let cql = ams.App._appClassGroups.getCqlFilter(ams.App._suViewParams, this._hasClassFilter);
                 l._source.options["cql_filter"] = cql;
                 cqlobj = {"cql_filter": cql};
@@ -858,7 +868,7 @@ ams.App = {
         };
         let ol={};
         for (let ll in ams.App._addedLayers) {
-            let lname=( (ll.includes('deter'))?("DETER"):( (ll.includes('fire'))?("Focos"):( (ll.includes('ibama'))?("Risco (IBAMA)"):(false) ) ) );
+            let lname=( (ll.includes('deter'))?("DETER"):( (ll.includes('fire'))?("Focos"):( (ll.includes('ibama'))?("Risco (IBAMA)"):( (ll.includes('inpe'))?("Risco (INPE)"):(false) ) ) ) );
             if(ams.App._map.hasLayer(ams.App._addedLayers[ll])){
                 if(lname!==false) ol[lname]=ams.App._addedLayers[ll];
             }
@@ -878,10 +888,12 @@ ams.App = {
     _exchangeReferenceLayer: function(layerToDel, layerToAdd){
         ams.App._removeLayer(layerToDel);
         this._referenceLayerName=layerToAdd;
+
         let layer = this._getLayerByName(layerToAdd);
         let cqlobj={};
         if(layer) {
-            if(!layerToAdd.includes(ams.Config.defaultLayers.ibamaRisk)){
+            if(!layerToAdd.includes(ams.Config.defaultLayers.ibamaRisk) &&
+               !layerToAdd.includes(ams.Config.defaultLayers.inpeRisk)) {
                 let cql = this._appClassGroups.getCqlFilter(this._suViewParams, this._hasClassFilter);
                 layer._source.options["cql_filter"] = cql;
                 cqlobj = {"cql_filter": cql,"viewparams": "landuse:" + ams.App._landUseList.join('\\,')};

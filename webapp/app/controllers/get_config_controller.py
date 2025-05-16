@@ -172,9 +172,9 @@ class AppConfigController:
                 SELECT DISTINCT REPLACE(CONCAT(mun.name, ' - ', mun.state_acr, ' - geoc\xf3digo: ', mun.geocode), '''', ' ') as name, mun.geocode
 	        FROM public.municipalities mun, public.municipalities_biome mub
 	        WHERE
-                    mun.geocode = mub.geocode
-		    AND mub.biome = ANY('{%s}')
-	        ORDER BY name
+                mun.geocode = mub.geocode
+		        AND mub.biome = ANY('{%s}')
+	            ORDER BY name
             )
             SELECT string_agg(
 	        '{''name'':''' || ma.name ||

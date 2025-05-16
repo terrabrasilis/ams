@@ -33,10 +33,14 @@ ams.LeafletWms = {
                     name="Queimadas";
                     type="af";// used to controls
                     htmlInfo=this._formatAFPopup(featureInfo);
-                } else if (this._isRKInfo()) {
+                } else if (this._isIbamaRKInfo()) {
                     name = "Risco de Desmatamento";
                     type = "risk";
-                    htmlInfo = this._formatRiskPopup(featureInfo);
+                    htmlInfo = this._formatIbamaRiskPopup(featureInfo);
+                } else if (this._isInpeRKInfo()) {
+                    name = "Risco de Desmatamento";
+                    type = "risk";
+                    htmlInfo = this._formatInpeRiskPopup(featureInfo);
                 } else {
                     name="Unidade Espacial";
                     type="su";// used to controls
@@ -88,9 +92,20 @@ ams.LeafletWms = {
         '_isAFInfo': function () {
             return this._overlay.wmsParams.layers.includes(ams.Config.defaultLayers.activeFire);
         },  
-        '_isRKInfo': function () {
-            return this._overlay.wmsParams.layers.includes(ams.Config.defaultLayers.ibamaRisk);
-        },  
+        '_isIbamaRKInfo': function () {
+            if (ams.Config.defaultRiskFilter.source === "inpe") {
+                return false;
+            }            
+            var rkLayer = ams.Config.defaultLayers.ibamaRisk;
+            return this._overlay.wmsParams.layers.includes(rkLayer);
+        },
+        '_isInpeRKInfo': function () {
+            if (ams.Config.defaultRiskFilter.source !== "inpe") {
+                return false;
+            }
+            var rkLayer = ams.Config.defaultLayers.inpeRisk;
+            return this._overlay.wmsParams.layers.includes(rkLayer);
+        },
         '_updateResults': function(result, featureInfo) {
             let fProperties=featureInfo.features[0].properties;
             for (let i in fProperties) {
@@ -101,6 +116,11 @@ ams.LeafletWms = {
                         v=v*100;
                         result["area_unit"]=ams.Map.PopupControl._unit;
                     }
+
+                    if (i=="score") {
+                        v = v / ams.Config.defaultRiskFilter.scaleFactor;
+                    }
+
                     result[i] = isNaN(v) ? v : ams.Utils.numberFormat(v);
                 }
             }
@@ -114,7 +134,8 @@ ams.LeafletWms = {
                 "counts": 0,
                 "percentage": 0,
                 "area_unit": "km²",
-                "suid": ""
+                "suid": "",
+                "score": 0
             };
             this._updateResults(result, featureInfo);
 
@@ -206,6 +227,13 @@ ams.LeafletWms = {
                 + "<td>" + result["counts"] + "</td>"
                 + "</tr>";    
             }
+            else if(result["classname"]=="RI"){
+                risk=""
+                + "<tr>"
+                + "<td>Risco (intensidade) </td>"
+                + "<td>" + result["score"] + "</td>"
+                + "</tr>";    
+            }
             else {
                 deter=""
                 + "<tr>"
@@ -236,11 +264,22 @@ ams.LeafletWms = {
             +"</table>";
         },
 
-        '_formatRiskPopup': function(featureInfo) {
+        '_formatIbamaRiskPopup': function(featureInfo) {
             let result = {
                 "id": 0,
                 "risk": 0,
                 "risk_date": "",
+            }
+            this._updateResults(result, featureInfo);
+            return this._createRiskInfoTable(result);
+        },
+
+        '_formatInpeRiskPopup': function(featureInfo) {
+            let result = {
+                "id": 0,
+                "risk": 0,
+                "risk_date": "",
+                "score": 10,
             }
             this._updateResults(result, featureInfo);
             return this._createRiskInfoTable(result);
