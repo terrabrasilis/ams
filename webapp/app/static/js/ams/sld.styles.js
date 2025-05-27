@@ -22,6 +22,10 @@ ams.SLDStyles = {
 			unit = "risco";
 		}
 
+		if (ams.App._suViewParams.classname == "RI") {
+			unit = "score";
+		}
+
 		this.stroke = "";
 		this.fillOpacity = 1;
 		this.maxValue = maxValue;
@@ -54,6 +58,9 @@ ams.SLDStyles = {
 					text = "pontos de risco";
 					prefix = "Contagem: ";
 					break;
+				case "score":
+					text = "0 (sem risco) e 1 (maior risco)"
+					prefix = "Intensidade de risco: "
 			}
 
 			if (text !== "") {
@@ -98,7 +105,7 @@ ams.SLDStyles = {
 				this.colorRange = ["#f0f0f0", "#ff3838"];
 				this.colorDomain = [this.minValue, this.maxValue];
 				let tt=Math.ceil(this.maxValue);
-				this._numberOfTicks = ( (tt<10)?(tt==1?2:tt):(10) );//10; 
+				this._numberOfTicks = this._unit == "score"? 10: ( (tt<10)?(tt==1?2:tt):(10) );
 			}
 		}
 
@@ -257,7 +264,7 @@ ams.SLDStyles = {
 			let lastRule = "";
 
 			if(!isPriorization) {
-				let fixedValue = ( (this._propertyName=='area')?(1):(0) );
+				let fixedValue = ( (this._propertyName=='area' || this._propertyName=='score')?(1):(0) );
 				for (let t in ticks) {
 					ticks[t] = +(ticks[t].toFixed(fixedValue));
 				}

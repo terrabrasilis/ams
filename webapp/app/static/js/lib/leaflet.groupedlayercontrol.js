@@ -68,6 +68,14 @@ L.Control.GroupedLayers = L.Control.extend({
     }
   },
 
+  _getControlByName: function (name) {
+    for (var i = 0; i < this._ctrls.length; i++) {
+      if (this._ctrls[i] && this._ctrls[i].acronym.includes(name)) {
+        return this._ctrls[i];
+      }
+    }
+  },
+
   _initLayout: function (map) {
     var className = 'leaflet-control-layers',
     container = this._container = L.DomUtil.create('div', className);
@@ -192,8 +200,11 @@ L.Control.GroupedLayers = L.Control.extend({
   },
 
   // IE7 bugs out if you create a radio dynamically, so you have to do it this hacky way (see http://bit.ly/PqYLBe)
-  _createInputElement: function (name, type, checked, userDefined) {
+  _createInputElement: function (name, type, checked, userDefined, objId) {
     var inputHtml = '<input type="'+type+'" class="leaflet-control-layers-selector" name="' + name + '"';
+    if (objId) {
+      inputHtml += 'id="ctrl' + objId + '"';
+    }
     if (checked) {
       inputHtml += ' checked="checked"';
     }
@@ -262,15 +273,34 @@ L.Control.GroupedLayers = L.Control.extend({
       return option;
   },
 
+  _handleRiskSpatialUnit(hide) {
+    const obj = this._getControlByName("cs_5km");
+    if (!obj) return;
+
+    var $label = $(`#ctrl${obj.ctrlId}`).parent();
+
+    if ($label.length) {
+      $label.toggle(!hide);
+    }
+
+    if (hide && obj.checked) {
+      const obj = this._getControlByName("cs_25km");
+      if (!obj) return;
+      $(`#ctrl${obj.ctrlId}`).click();
+    }
+  },
+
   handleRiskSelection: function (classificationMapGroupId, obj) {
     if (obj.name.toLowerCase().includes('risco') && obj.checked) {
       var mapClassificationElement = document.querySelector('[id="leaflet-control-layers-group-' + classificationMapGroupId + '"]');
       mapClassificationElement.style.display = 'none';
       ams.PeriodHandler.remove(this._map);
+      this._handleRiskSpatialUnit(true);
     } else {
       var mapClassificationElement = document.querySelector('[id="leaflet-control-layers-group-' + classificationMapGroupId + '"]');
       mapClassificationElement.style.display = 'block';
       ams.PeriodHandler.init(this._map);
+      this._handleRiskSpatialUnit(false);
     }
   },
 
@@ -290,7 +320,7 @@ L.Control.GroupedLayers = L.Control.extend({
     var name = document.createElement('span');
     name.innerHTML = ' ' + obj.name;
 
-    var input = this._createInputElement(groupRadioName, 'radio', checked, obj.name + "-subset-radio")
+    var input = this._createInputElement(groupRadioName, 'radio', checked, obj.name + "-subset-radio");
     L.DomEvent.on(input, 'click', this._onInputClick, this);
 
     input.ctrlId = obj.ctrlId;
@@ -381,7 +411,7 @@ L.Control.GroupedLayers = L.Control.extend({
       type=(obj.group.name=="CATEGORIA FUNDIÁRIA")?('checkbox'):('radio');
 
     groupRadioName = 'leaflet-exclusive-group-layer-' + obj.group.id; // leaflet-exclusive-group-layer-0
-    input = this._createInputElement(groupRadioName, type, checked);
+    input = this._createInputElement(groupRadioName, type, checked, undefined, obj.ctrlId);
 
     input.ctrlId = obj.ctrlId;
     input.groupID = obj.group.id;
