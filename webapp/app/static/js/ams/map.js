@@ -79,8 +79,8 @@ ams.Map = {
         this._setNames = function(groups) {
             let risk_index=null;
             for(var i = 0; i < groups.length; i++) {
-                // verify if risk data should be displayed. Use the group name 'RK' that need be defined into database.
-                if(groups[i].name=='RK' && !ams.Auth.isAuthenticated()) risk_index=i;
+                // verify if risk data should be displayed. Use the group name 'RK' or 'RI' that need be defined into database.
+                if((groups[i].name=='RK' || groups[i].name=='RI') && !ams.Auth.isAuthenticated()) risk_index=i;
                 groups[i].acronym = groups[i].name;
                 this._groupNamesMap[groups[i].name] = groups[i].title;
                 groups[i].name = groups[i].title;

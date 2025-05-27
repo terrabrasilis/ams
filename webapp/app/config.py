@@ -11,11 +11,9 @@ class Config:
         'DB_URL') or 'postgresql://postgres:postgres@150.163.17.75:5444/AMS4'
     if os.path.exists(DB_URL):
         DB_URL = open(DB_URL, 'r').read()
-    RISK_INPE = os.environ.get('RISK_INPE', "true") == "true"
+    RISK_INPE = os.environ.get('RISK_INPE', "true").lower() == "true"
     RISK_THRESHOLD = 0. if RISK_INPE else float(os.environ.get("RISK_THRESHOLD", "0.90"))
-    RESET_LOCAL_STORAGE = (
-        os.environ.get('RESET_LOCAL_STORAGE').lower() == "true" if os.environ.get('RESET_LOCAL_STORAGE') else False
-    )
+    RESET_LOCAL_STORAGE = os.environ.get('RESET_LOCAL_STORAGE', "false").lower() == "true"
     INPE_RISK_SCALE_FACTOR = 1
 
     @staticmethod
