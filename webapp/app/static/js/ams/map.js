@@ -366,7 +366,6 @@ ams.Map = {
         this._url;
         this.baseURL = baseURL;
         this._map = map;
-        this._disabled = false;
 
         this.setUrl = function(layerName, layerStyle) {
             this._url = this.getURL()
@@ -387,13 +386,6 @@ ams.Map = {
 		}
 
         this.init = function(layerName, layerStyle) {
-            var disabled = false; // ams.App._referenceLayerName.includes(ams.Config.defaultLayers.inpeRisk);
-
-            if (disabled) {
-                this.disable();
-                return;
-            }
-
             this._setStaticLegends();// for default layers defined in config.js
             this._setWMSControl(layerName, layerStyle);
             this._map.addControl(this._wmsLegendControl);
@@ -404,13 +396,6 @@ ams.Map = {
         }
 
         this.update = function(layerName, layerStyle) {
-            var disabled = false; // ams.App._referenceLayerName.includes(ams.Config.defaultLayers.inpeRisk);
-            
-            if (disabled) {
-                this.disable();
-                return;
-            }
-
             this._setStaticLegends();
             this._setWMSControl(layerName, layerStyle);
             this._map.removeControl(this._wmsLegendControl);
