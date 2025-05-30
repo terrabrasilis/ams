@@ -536,14 +536,6 @@ L.Control.GroupedLayers = L.Control.extend({
         title='Permite selecionar categorias fundiárias para restringir a apresentação dos dados.';
         break;
       case "CATEGORIA FUNDIÁRIA_info":
-        title='Descrição das categorias fundiárias.\n\n'+
-        'TI: Terras Indígenas;\n'+
-        'UC: Unidades de Conservação;\n'+
-        'Assentamentos: Projetos de assentamentos de todos os tipos;\n'+
-        'APA: Área de Proteção Ambiental;\n'+
-        'CAR: Cadastro Ambiental Rural;\n'+
-        'FPND: Florestas Públicas Não Destinadas;\n'+
-        'Indefinida: Todas as demais áreas';
         break;
       case "CLASSIFICAÇÃO DO MAPA":
         title='A opção "No Período" destaca as unidades espaciais por intervalos de valor, com destaque para os maiores valores absolutos.\n\n';
