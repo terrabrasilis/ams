@@ -65,10 +65,8 @@ ams.App = {
         }
 
         this._baseURL = geoserverUrl + "/wms";
-        this._propertyName = ( (ams.Config.defaultFilters.indicator=='AF')?(ams.Config.propertyName.af):(ams.Config.propertyName.deter) );
-        this._referenceLayerName = ams.Auth.getWorkspace()+":"+( (ams.Config.defaultFilters.indicator=='AF')?(ams.Config.defaultLayers.activeFire):(ams.Config.defaultLayers.deter) );
-        this._hasClassFilter = ( (ams.Config.defaultFilters.indicator=='AF')?(false):(true) );
-        this._currentClassify=ams.Config.defaultFilters.diffClassify;
+        
+        this._setIndicator(ams.Config.defaultFilters.indicator);
 
         var map = new L.Map("map", {
             zoomControl: false,
@@ -521,6 +519,11 @@ ams.App = {
             setMunicipalityPanelMode();
         }
 
+        if (ams.Config.defaultFilters.indicator == 'RI') {
+            let obj = ams.groupControl._getControlByName("RI");
+            $("#ctrl" + obj.ctrlId).click();  // forcing to start risk environment
+        }
+
         function updatePriorization() {
             let limit = document.getElementById("prioritization-input").value;
             ams.App._priorViewParams.limit = limit;
@@ -709,7 +712,36 @@ ams.App = {
             ams.App._populateMunicipalities();
         });
 
-    },// end of run method
+    }, // end of run method
+
+    _setIndicator: function (indicator) {
+        console.log("setting indicator " + indicator);
+
+        if (ams.Config.defaultFilters.indicator == 'AF') {
+            ams.App._propertyName =  ams.Config.propertyName.af;
+            ams.App._referenceLayerName = ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.activeFire;
+            ams.App._hasClassFilter=false;
+
+        } else if (ams.Config.defaultFilters.indicator == 'RK') {
+            ams.App._propertyName = ams.Config.propertyName.rk;
+            ams.App._referenceLayerName = ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.ibamaRisk;
+            ams.App._hasClassFilter=false;
+            ams.App._diffOn = false;
+
+        } else if (ams.Config.defaultFilters.indicator == 'RI') {
+            ams.App._propertyName = ams.Config.propertyName.ri;
+            ams.App._referenceLayerName = ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.inpeRisk;
+            ams.App._hasClassFilter=false;
+            ams.App._diffOn = false;
+
+        } else {
+            ams.App._propertyName = ams.Config.propertyName.deter;
+            ams.App._referenceLayerName = ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.deter;                
+            ams.App._hasClassFilter=true;
+        }
+        
+        ams.App._currentClassify = ams.Config.defaultFilters.diffClassify;
+    },
 
     _populateMunicipalities: function() {
         const $selectMunicipalities = $('#select-municipalities');
