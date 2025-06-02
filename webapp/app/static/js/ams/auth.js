@@ -33,8 +33,8 @@ ams.Auth = {
   /**
    * Check if the user is authenticated.
    */
-  isAuthenticated: function() {
-      return ( (typeof Authentication!="undefined" && Authentication.hasToken())?(true):(false) );
+  isAuthenticated: function () {
+	return Authentication !== undefined && Authentication.hasToken() && Authentication.validateToken(Authentication.getToken());
   },
 
   getAuthSuffix: function() {

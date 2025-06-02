@@ -26,82 +26,94 @@ ams.Utils = {
       return $('meta[name="' + param + '"]').attr('content');
   },
 
-  startApp: function(generalConfig){
-    if(typeof generalConfig=='undefined'){
-      // use the previous selection or default biome (see config.js)
-      let b=localStorage.getItem('ams.previous.biome.setting.selection');
-      ams.Utils.updateMap( ((b!==null)?(b):(ams.defaultBiome)) );
-    }else{
-      // evaluate the user area_profile on start app
-      ams.Auth.evaluate();
+  getGeneralConfig: function () {
+    let generalConfig = localStorage.getItem('ams.session.generalConfig');
 
-      // set map div to available height
-      ams.Utils.setMapHeight();
-
-      // config
-      var biome = generalConfig.appBiome.split(",")[0];
-
-      ams.Config = ams.BiomeConfig[biome];
-
-      ams.Config.allBiomes = JSON.parse(generalConfig.biomes.replace(/'/g,"\""));
-      ams.Config.allMunicipalitiesGroup = JSON.parse(generalConfig.municipalities_group.replace(/'/g,"\""));
-      ams.Config.landUses = JSON.parse(generalConfig.land_uses.replace(/'/g,"\""));
-
-      ams.Config.biome = generalConfig.appBiome;
-      ams.Config.appSelectedSubset = generalConfig.selected_subset;
-      ams.Config.appSelectedBiomes = JSON.parse(generalConfig.selected_biomes.replace(/'/g,"\""));
-      ams.Config.appSelectedMunicipalitiesGroup = generalConfig.selected_municipalities_group;
-      ams.Config.publishDate = generalConfig.publish_date;
-      ams.Config.bbox = JSON.parse(generalConfig.bbox);
-
-      ams.Config.appSelectedGeocodes = JSON.parse(generalConfig.selected_geocodes);
-      ams.Config.appAllMunicipalities = JSON.parse(generalConfig.all_municipalities.replace(/'/g,"\""));
-
-      ams.Config.appMunicipalityPanelMode = JSON.parse(generalConfig.municipality_panel_mode);
-      ams.Config.appSelectedMunicipality = generalConfig.selected_municipality;
-
-      ams.Config.startDate = generalConfig.start_date;
-      ams.Config.endDate = generalConfig.end_date;
-      ams.Config.tempUnit = generalConfig.temp_unit;
-
-      if (generalConfig.classname) {
-        ams.Config.defaultFilters.indicator	= generalConfig.classname;
-      }
-
-      var spatialUnits = JSON.parse(generalConfig.spatial_units_info_for_subset.replace(/'/g,"\""));
-      var spatialUnitsSubset = new ams.Map.SpatialUnits(spatialUnits, spatialUnits[0]["dataname"]);
-
-      // class groups
-      var appClassGroups = new ams.Map.AppClassGroups(
-          JSON.parse(generalConfig.deter_class_groups.replace(/'/g,"\""))
-      );
-
-      // geoserver
-      var geoserverUrl = generalConfig.geoserver_url;
-
-      try {
-        ams.App.run(geoserverUrl, spatialUnitsSubset, appClassGroups);
-      } catch (error) {
-        console.log(error);
-        // if any error occurs, clear the local storage to try again
-        ams.Utils.resetlocalStorage();
-      }
+    if (generalConfig !== null) {
+      return JSON.parse(generalConfig);
     }
+
+    return undefined;
+  },
+
+  startApp: function(generalConfig){
+    if (generalConfig === undefined) {
+      ams.Utils.updateMap();
+      return;
+    }
+
+    // evaluate the user area_profile on start app
+    ams.Auth.evaluate();
+
+    // set map div to available height
+    ams.Utils.setMapHeight();
+
+    // config
+    var biome = generalConfig.appBiome.split(",")[0];
+
+    ams.Config = ams.BiomeConfig[biome];
+
+    ams.Config.allBiomes = JSON.parse(generalConfig.biomes.replace(/'/g,"\""));
+    ams.Config.allMunicipalitiesGroup = JSON.parse(generalConfig.municipalities_group.replace(/'/g,"\""));
+    ams.Config.landUses = JSON.parse(generalConfig.land_uses.replace(/'/g,"\""));
+
+    ams.Config.biome = generalConfig.appBiome;
+    ams.Config.appSelectedSubset = generalConfig.selected_subset;
+    ams.Config.appSelectedBiomes = JSON.parse(generalConfig.selected_biomes.replace(/'/g,"\""));
+    ams.Config.appSelectedMunicipalitiesGroup = generalConfig.selected_municipalities_group;
+    ams.Config.publishDate = generalConfig.publish_date;
+    ams.Config.bbox = JSON.parse(generalConfig.bbox);
+
+    ams.Config.appSelectedGeocodes = JSON.parse(generalConfig.selected_geocodes);
+    ams.Config.appAllMunicipalities = JSON.parse(generalConfig.all_municipalities.replace(/'/g,"\""));
+
+    ams.Config.appMunicipalityPanelMode = JSON.parse(generalConfig.municipality_panel_mode);
+    ams.Config.appSelectedMunicipality = generalConfig.selected_municipality;
+
+    ams.Config.startDate = generalConfig.start_date;
+    ams.Config.endDate = generalConfig.end_date;
+    ams.Config.tempUnit = generalConfig.temp_unit;
+
+    if (generalConfig.classname) {
+      ams.Config.defaultFilters.indicator	= generalConfig.classname;
+    }
+
+    var spatialUnits = JSON.parse(generalConfig.spatial_units_info_for_subset.replace(/'/g,"\""));
+    var spatialUnitsSubset = new ams.Map.SpatialUnits(spatialUnits, spatialUnits[0]["dataname"]);
+
+    var appClassGroups = new ams.Map.AppClassGroups(
+      JSON.parse(generalConfig.deter_class_groups.replace(/'/g,"\""))
+    );
+
+    var geoserverUrl = generalConfig.geoserver_url;
+
+    try {
+      ams.App.run(geoserverUrl, spatialUnitsSubset, appClassGroups);
+
+    } catch (error) {
+      console.log(error);
+      // if any error occurs, clear the local storage to try again
+      ams.Utils.resetlocalStorage();
+    }
+
   },
 
   /**
    * Used when autentication changes
    */
-  restartApp: function(){
+  restartApp: function(resetMap=false) {
+    if (!resetMap && ams.Auth.isAuthenticated()) {
+      return;
+    }
 
     Authentication.eraseCookie(Authentication.tokenKey);
-
+      
     var mapDiv=$('#map');
     if(mapDiv) {
       mapDiv.remove();
       $('#panel_container').append("<div id='map'>");
     }
-    // set map div to available height
+
     ams.Utils.setMapHeight();
     ams.Utils.startApp();
   },
@@ -118,6 +130,10 @@ ams.Utils = {
         endDate,
 	      tempUnit
     ) {
+
+      if (selectedBiome === undefined) {
+        selectedBiome = ams.defaultBiome;
+      }
 
       if (selectedSubset === undefined) {
           selectedSubset = ams.defaultSubset;
@@ -145,6 +161,18 @@ ams.Utils = {
           classname=ams.Utils.getServerConfigParam('classname');
       }
 
+      if (startDate === undefined) {
+        startDate = "";
+      }
+
+      if (endDate === undefined) {
+        endDate = "";
+      }
+
+      if (tempUnit === undefined) {
+        tempUnit = "";
+      }
+
       const loadConfig = new Promise((resolve, reject) => {
 
         /**
@@ -166,29 +194,28 @@ ams.Utils = {
 	            "&tempUnit=" + ((tempUnit !== undefined)? tempUnit : "") +
               "&classname=" + classname
           );
+
           if (response&&response.ok) {
             let generalConfig = await response.json();
 
             if (generalConfig.appBiome) {
-              // write on local storage
-              localStorage.setItem('ams.biome.config.'+selectedBiome, JSON.stringify(generalConfig));
-              localStorage.setItem('ams.config.created.at', (new Date()).toISOString().split('T')[0] );
-              localStorage.setItem('ams.config.subset', selectedSubset);
-              localStorage.setItem('ams.config.municipalitiesGroup', selectedMunicipalitiesGroup);
-              localStorage.setItem('ams.config.geocodes', selectedGeocodes);
-              localStorage.setItem('ams.config.municipalityPanelMode', municipalityPanelMode);
               ams.Utils.startApp(generalConfig);
+
               resolve();
-            }else{
+
+            } else {
               console.log("HTTP-Error: " + response.status + " on biome changes");
               $('.toast').toast('show');
               $('.toast-body').html("Encontrou um erro na solicitação ao servidor.");
+
               reject("HTTP-Error: " + response.status + " on biome changes");
             }
-          }else{
-            if(response) console.log("HTTP-Error: " + response.status + " on biome changes");
+          } else {
+            if (response) console.log("HTTP-Error: " + response.status + " on biome changes");
+
             $('.toast').toast('show');
             $('.toast-body').html("Encontrou um erro na solicitação ao servidor.");
+
             reject("HTTP-Error: " + response.status + " on biome changes");
           }
         };
@@ -202,42 +229,12 @@ ams.Utils = {
           mapDiv.remove();
           $('#panel_container').append("<div id='map'>");
         }
-        // set map div to available height
         ams.Utils.setMapHeight();
-        //reset workspace
         ams.Auth.resetWorkspace();
-
-        // Used to load from local storage
-        if(localStorage.getItem('ams.biome.config.'+selectedBiome)!==null
-            && localStorage.getItem('ams.config.created.at')!==null){
-          
-          // the local storage expiration date 
-          let createdAt=new Date(localStorage.getItem('ams.config.created.at')+'T03:00:00.000Z');
-          let nowDate=new Date((new Date()).toISOString().split('T')[0]+'T03:00:00.000Z');
-          if(
-              createdAt<nowDate ||
-              localStorage.getItem('ams.config.subset') != selectedSubset ||
-              localStorage.getItem('ams.config.municipalitiesGroup') != selectedMunicipalitiesGroup ||
-              localStorage.getItem('ams.config.selectedGeocodes') != selectedGeocodes ||
-              localStorage.getItem('ams.config.municipalityPanelMode') != municipalityPanelMode
-          ) {
-            for (let p in ams.BiomeConfig) {
-              if(ams.BiomeConfig.hasOwnProperty(p))
-                localStorage.removeItem('ams.biome.config.'+p);
-            }
-            getConfig(
-                selectedBiome, selectedSubset, selectedMunicipalitiesGroup, selectedGeocodes, municipalityPanelMode
-            );
-          }else{
-            let biomeConfiguration=JSON.parse(localStorage.getItem('ams.biome.config.'+selectedBiome));
-            ams.Utils.startApp(biomeConfiguration);
-            resolve();
-          }
-        }else{
-          getConfig(
-              selectedBiome, selectedSubset, selectedMunicipalitiesGroup, selectedGeocodes, municipalityPanelMode
-          );
-        }
+       
+        getConfig(
+          selectedBiome, selectedSubset, selectedMunicipalitiesGroup, selectedGeocodes, municipalityPanelMode
+        );
 
       });// end of promise
 
