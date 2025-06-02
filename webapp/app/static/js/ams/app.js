@@ -657,9 +657,9 @@ ams.App = {
         $("#modal-credits-check").click(
             function() {
                 if ($("#modal-credits-check").prop('checked')) {
-                    localStorage.setItem("ams.config.modal.notshowcredits", true);
+                    localStorage.setItem("ams.config.modal.noshowcredits", true);
                 } else {
-                    localStorage.removeItem("ams.config.modal.notshowcredits");
+                    localStorage.removeItem("ams.config.modal.noshowcredits");
                 }
                 return true;
             }
@@ -705,7 +705,7 @@ ams.App = {
             $("#threshold").val(ams.Config.general.area.threshold);
             $("#changeunit")[0].checked=ams.Config.general.area.changeunit=="auto";
 
-            if (localStorage.getItem('ams.config.modal.notshowcredits') == null) {
+            if (localStorage.getItem('ams.config.modal.noshowcredits') == null) {
                 $("#modal-container-credits").modal();
             }
 
