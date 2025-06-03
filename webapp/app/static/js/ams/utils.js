@@ -95,17 +95,27 @@ ams.Utils = {
       // if any error occurs, clear the local storage to try again
       ams.Utils.resetlocalStorage();
     }
+  },
 
+  checkRisk: function() {
+    var hasRisk = false;
+    $('#leaflet-control-layers-group-1 label span').each(function() {
+      if ($(this).text().toLowerCase().indexOf('risco') !== -1) {
+        hasRisk = true;
+        return false;
+      }
+    });    
+    return hasRisk;
   },
 
   /**
    * Used when autentication changes
    */
   restartApp: function(resetMap=false) {
-    if (!resetMap && ams.Auth.isAuthenticated()) {
+    if (!resetMap && ams.Auth.isAuthenticated() && ams.Utils.checkRisk()) {
       return;
-    }
-
+    }    
+    
     Authentication.eraseCookie(Authentication.tokenKey);
       
     var mapDiv=$('#map');

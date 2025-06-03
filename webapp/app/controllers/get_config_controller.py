@@ -9,13 +9,16 @@ class AppConfigController:
     def __init__(self, db_url: str):
         self._conn = connect(db_url)
 
-    def read_class_groups(self, biomes, inpe_risk=True):
+    def read_class_groups(self, biomes, is_authenticated=False, inpe_risk=True):
         """
         Gets the class names grouped by class groups.
         Including class titles and a required order to use on the frontend
         to display filters by classes.
         """
-        risk_classname_to_ignore = 'RK' if inpe_risk else 'RI'
+        if is_authenticated:
+            risk_classname_to_ignore = "('RK')" if inpe_risk else "('RI')"
+        else:
+            risk_classname_to_ignore = "('RK','RI')"
 
         sql = """SELECT string_agg( c1 || ',' || c2, ', ' )
 		FROM (
@@ -25,7 +28,7 @@ class AppConfigController:
                         JOIN public.class c
                         ON cg.id=c.group_id
                         WHERE ('%s' = 'ALL' OR c.biome = ANY('{%s}'))
-                              AND cg.name != '%s'
+                              AND cg.name NOT IN %s
                         GROUP BY 1,2 ORDER BY cg.orderby            
 		) as tb1"""
 
