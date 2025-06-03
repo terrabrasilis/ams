@@ -77,16 +77,11 @@ ams.Map = {
     AppClassGroups: function(groups) {
         this._groupNamesMap = {};
         this._setNames = function(groups) {
-            let risk_index=null;
             for(var i = 0; i < groups.length; i++) {
-                // verify if risk data should be displayed. Use the group name 'RK' or 'RI' that need be defined into database.
-                if((groups[i].name=='RK' || groups[i].name=='RI') && !ams.Auth.isAuthenticated()) risk_index=i;
                 groups[i].acronym = groups[i].name;
                 this._groupNamesMap[groups[i].name] = groups[i].title;
                 groups[i].name = groups[i].title;
             }
-            // remove the risk option if needed
-            if(risk_index!==null) groups.splice(risk_index,1);
             this.groups = groups;
         }
 
