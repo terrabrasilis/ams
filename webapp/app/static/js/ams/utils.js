@@ -37,6 +37,8 @@ ams.Utils = {
   },
 
   startApp: function(generalConfig){
+    localStorage.setItem('ams.session.status', ams.Auth.isAuthenticated());
+
     if (generalConfig === undefined) {
       ams.Utils.updateMap();
       return;
@@ -97,27 +99,34 @@ ams.Utils = {
     }
   },
 
-  checkRisk: function() {
-    var hasRisk = false;
+  handleRiskIndicator: function() {
+    var show = ams.Auth.isAuthenticated();
+
     $('#leaflet-control-layers-group-1 label span').each(function() {
       if ($(this).text().toLowerCase().indexOf('risco') !== -1) {
-        hasRisk = true;
+        if (show) {
+          $(this).closest('label').show();
+        } else {
+          $(this).closest('label').hide();
+        }
         return false;
       }
-    });    
-    return hasRisk;
+    });
   },
 
   /**
    * Used when autentication changes
    */
   restartApp: function(resetMap=false) {
-    if (!resetMap && ams.Auth.isAuthenticated() && ams.Utils.checkRisk()) {
+    ams.Utils.handleRiskIndicator();
+
+    var status = localStorage.getItem('ams.session.status');
+    if (!resetMap && ams.Auth.isAuthenticated() && (status != null && status.toLowerCase() == "true")) {
       return;
-    }    
-    
+    }
+
     Authentication.eraseCookie(Authentication.tokenKey);
-      
+
     var mapDiv=$('#map');
     if(mapDiv) {
       mapDiv.remove();
@@ -140,7 +149,6 @@ ams.Utils = {
         endDate,
 	      tempUnit
     ) {
-
       if (selectedBiome === undefined) {
         selectedBiome = ams.defaultBiome;
       }
@@ -203,12 +211,14 @@ ams.Utils = {
               "&endDate=" + ((endDate !== undefined)? endDate : "") +
 	            "&tempUnit=" + ((tempUnit !== undefined)? tempUnit : "") +
               "&classname=" + classname
-          );
+          );          
 
           if (response&&response.ok) {
             let generalConfig = await response.json();
 
             if (generalConfig.appBiome) {
+              localStorage.setItem('ams.session.generalConfig', JSON.stringify(generalConfig));
+
               ams.Utils.startApp(generalConfig);
 
               resolve();
