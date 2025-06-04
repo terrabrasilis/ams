@@ -63,7 +63,7 @@ def _get_config(
         selected_biomes = json.dumps([biome])
         municipalities_group = "ALL"
         sui_subset = ctrl.read_spatial_units_for_subset(subset=subset, biome=biome)
-        cg = ctrl.read_class_groups(biomes=[biome], is_authenticated=is_authenticated)
+        cg = ctrl.read_class_groups(biomes=[biome])
     else:
         selected_biomes = json.dumps(["ALL"])
         biome = "ALL"
@@ -78,7 +78,7 @@ def _get_config(
         mbiomes = ctrl.read_municipalities_biome(geocodes=
             selected_geocodes if municipalities_group == "customizado" else ctrl.read_municipalities_geocode(municipality_group=municipalities_group)
         )
-        cg = ctrl.read_class_groups(biomes=mbiomes, is_authenticated=is_authenticated)
+        cg = ctrl.read_class_groups(biomes=mbiomes)
 
     publish_date = (
         ctrl.read_publish_date(biomes=json.loads(selected_biomes)) if not is_authenticated else

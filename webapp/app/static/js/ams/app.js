@@ -301,7 +301,7 @@ ams.App = {
 
         // to apply new heigth for groupControl UI component when window is resized
         ams.groupControl=groupControl;
-        
+
         L.control.coordinates({
             position: "bottomright",
             decimals: 2,
@@ -312,6 +312,9 @@ ams.App = {
             labelTemplateLat: "Latitude: {y}",
             labelTemplateLng: "Longitude: {x}"
         }).addTo(map);
+
+        // Enable/disable risk
+        ams.Utils.handleRiskIndicator();
 
         // Adding period control over map
         ams.PeriodHandler.init(map);
@@ -512,7 +515,9 @@ ams.App = {
         function setMunicipalityPanelMode() {
             $(".hide-in-municipality-panel").css("display", "none")
             $("#header-panel-title").text("Sala de Situação Municipal | " + ams.Config.appSelectedMunicipality);
-            const url = window.location.pathname.replace(/\/$/, '') + "/panel?geocode="+ams.Config.appSelectedGeocodes[0];
+
+            let param = window.location.pathname.includes("panel")? "?geocode=" : "/panel?geocode=";
+            const url = window.location.pathname.replace(/\/$/, '') + param + ams.Config.appSelectedGeocodes[0];
             window.history.pushState({}, '', url);
         }
         if (ams.Config.appMunicipalityPanelMode) {
