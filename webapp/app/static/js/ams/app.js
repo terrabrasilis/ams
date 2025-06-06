@@ -13,6 +13,7 @@ ams.App = {
     _wfs: null,
     _dateControl: null,
     _baseURL: null,
+    _indicator: null,
     _propertyName: null,
     _riskThreshold: 0.0,
     _referenceLayerName: null,
@@ -393,6 +394,7 @@ ams.App = {
 
                 } else if(e.group.name=='INDICADOR'){// change reference layer (deter, fires or risk)?
                     ams.App._riskThreshold=0.0; // reset the risk limit so as not to interfere with the min max query
+                    ams.App._indicator = e.acronym;
                     if(e.acronym=='RK'){
                         layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.ibamaRisk;
                         ams.App._propertyName=ams.Config.propertyName.rk;
@@ -722,18 +724,20 @@ ams.App = {
     _setIndicator: function (indicator) {
         console.log("setting indicator " + indicator);
 
-        if (ams.Config.defaultFilters.indicator == 'AF') {
+        ams.App._indicator = indicator;
+
+        if (indicator == 'AF') {
             ams.App._propertyName =  ams.Config.propertyName.af;
             ams.App._referenceLayerName = ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.activeFire;
             ams.App._hasClassFilter=false;
 
-        } else if (ams.Config.defaultFilters.indicator == 'RK') {
+        } else if (indicator == 'RK') {
             ams.App._propertyName = ams.Config.propertyName.rk;
             ams.App._referenceLayerName = ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.ibamaRisk;
             ams.App._hasClassFilter=false;
             ams.App._diffOn = false;
 
-        } else if (ams.Config.defaultFilters.indicator == 'RI') {
+        } else if (indicator == 'RI') {
             ams.App._propertyName = ams.Config.propertyName.ri;
             ams.App._referenceLayerName = ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.inpeRisk;
             ams.App._hasClassFilter=false;
@@ -1028,7 +1032,8 @@ ams.App = {
             let landUse="";
             if(ams.App._landUseList.length==0)
                 landUse="<br /><br /><b>Atenção</b>: Deve selecionar ao menos um item no filtro por categorias fundiárias.";
-            this._resetMap("Não existem dados para o período selecionado."+landUse);
+            let msg = ams.App._indicator.includes('RI')? "Não existem dados de risco." : "Não existem dados para o período selecionado."+landUse;
+            this._resetMap(msg);
             return false;
         }else if(ams.App._diffOn && mm.suLayerMin>=0) {
             this._resetMap("Não há redução de valores para o período selecionado.");
