@@ -13,6 +13,7 @@ import json
 import re
 from dateutil.relativedelta import relativedelta
 import numpy as np
+import locale
 
 
 class SpatialUnitProfile():
@@ -427,8 +428,8 @@ class SpatialUnitProfile():
         return self.execute_sql(sql=sql)
     
 
-    def inpe_risk_expiration_date(self):        
-        sql = """SELECT TO_CHAR(expiration_date, 'DD/MM/YYYY') as expdate
+    def get_inpe_risk_date(self):        
+        sql = """SELECT risk_date
         FROM risk.risk_image_date
         WHERE source='inpe'
         ORDER BY id DESC
@@ -466,10 +467,11 @@ class SpatialUnitProfile():
             para as categorias fundiárias selecionadas, valor maior ou igual a <b>{self._risk_threshold}</b> e validade até <b>{expiration_date}</b>."""
 
         elif self._classname == self._inpe_risk_classname:
-            expiration_date = self.inpe_risk_expiration_date()
-            expiration_date = expiration_date if expiration_date is not None else "falhou ao obter a data"
-            title = f"""Usando dados de Risco de desmatamento (INPE), {spatial_unit}{spatial_description},
-            para as categorias fundiárias selecionadas, intensidade de 0 (sem risco) a 1 (maior risco) e validade até <b>{expiration_date}</b>."""
+            risk_date = self.get_inpe_risk_date()
+            locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
+            fortnight = f"{('primeira' if risk_date.day < 15 else 'segunda')} quinzena de {risk_date.strftime('%B')} de {risk_date.year}"
+            title = f"""Usando dados de Risco de desmatamento da <b>{fortnight}</b>, {spatial_unit}{spatial_description},
+            para as categorias fundiárias selecionadas, intensidade de 0 (sem risco) a 1 (maior risco)."""
 
         else:
             title=f"""Usando dados de <b>{indicador}</b> {datasource} até <b>{last_date}</b>,
@@ -510,6 +512,9 @@ class SpatialUnitProfile():
         indicator = self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
         unid_temp = self._temporal_units[self._temporal_unit]
         total = df[default_col_name].sum()
+
+        if total == 0.:
+            return None
 
         fire_or_risk = self._classname in [self._fire_classname, self._risk_classname, self._inpe_risk_classname]
 
@@ -813,6 +818,9 @@ class SpatialUnitProfile():
         graph_indicator = _[self._classname] if self._classname in _  else "alertas"
     
         df = self.classname_area_per_land_use_ppcdam()
+
+        if df["total"][0] == 0.:
+            return None
 
         labels = [uso] + df[gr].unique().tolist() + df[cf].tolist()
         labels = _text_abbr(labels)
