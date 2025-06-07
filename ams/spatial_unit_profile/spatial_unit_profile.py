@@ -13,6 +13,7 @@ import json
 import re
 from dateutil.relativedelta import relativedelta
 import numpy as np
+from babel.dates import format_datetime
 import locale
 
 
@@ -468,8 +469,7 @@ class SpatialUnitProfile():
 
         elif self._classname == self._inpe_risk_classname:
             risk_date = self.get_inpe_risk_date()
-            locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
-            fortnight = f"{('primeira' if risk_date.day < 15 else 'segunda')} quinzena de {risk_date.strftime('%B')} de {risk_date.year}"
+            fortnight = f"{('primeira' if risk_date.day < 15 else 'segunda')} quinzena de {format_datetime(risk_date, 'MMMM', locale='pt_BR')} de {risk_date.year}"
             title = f"""Usando dados de Risco de desmatamento da <b>{fortnight}</b>, {spatial_unit}{spatial_description},
             para as categorias fundiárias selecionadas, intensidade de 0 (sem risco) a 1 (maior risco)."""
 
