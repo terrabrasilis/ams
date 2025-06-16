@@ -828,18 +828,16 @@ class SpatialUnitProfile():
 
         labels = [uso] + df[gr].unique().tolist() + df[cf].tolist()
         labels = _text_abbr(labels)
-        print(labels)
     
         parents = [""]  + [uso] * len(df[gr].unique()) + df[gr].tolist()
         parents = _text_abbr(parents)
-        print(parents)
     
         values = (
             [100]
             + df.groupby([gr])[sc].sum().reindex(df[gr].unique().tolist()).tolist()
             + df[sc].tolist()
         )
-        print(values)
+
         custom_values = (
             [df[tt].tolist()[0]]
             + df.groupby([gr])[default_col_name].sum().reindex(df[gr].unique().tolist()).tolist()
