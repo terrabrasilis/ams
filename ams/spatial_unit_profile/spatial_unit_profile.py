@@ -769,9 +769,13 @@ class SpatialUnitProfile():
         df[pg] = df[tg] / df[tt] * 100
 
         # scaled total
-        df[sc] = df[igp]
-        if sum_ccar and sum_scar:
-            df[sc] = df[igp] / 100 * 50
+        if self._config.SCALE_PPCDAM_GRAPH:
+            df[sc] = df[igp]
+            if sum_ccar and sum_scar:
+                df[sc] = df[igp] / 100 * 50
+        else:
+            df[sc] = df[pe]
+
         df.fillna(0., inplace=True)
 
         return df
@@ -805,8 +809,8 @@ class SpatialUnitProfile():
         cf = "Categoria Fundiária"
         gr = "group"
         tt = "total"
-        apt = "percentage by group"
-        st = "scaled"
+        pg = "percentage by group"
+        sc = "scaled"
         pe = "percentage"
 
         if self.data_unit == ha:
@@ -830,9 +834,10 @@ class SpatialUnitProfile():
     
         values = (
             [100]
-            + df.groupby([gr])[st].sum().reindex(df[gr].unique().tolist()).tolist()
-            + df[st].tolist()
+            + df.groupby([gr])[sc].sum().reindex(df[gr].unique().tolist()).tolist()
+            + df[sc].tolist()
         )
+
         custom_values = (
             [df[tt].tolist()[0]]
             + df.groupby([gr])[default_col_name].sum().reindex(df[gr].unique().tolist()).tolist()
@@ -842,7 +847,7 @@ class SpatialUnitProfile():
         custom_values = [f"{_} {graph_unit}" for _ in custom_values]
         custom_percentages = (
             [100]
-            + df.drop_duplicates(subset=[gr])[apt].tolist()
+            + df.drop_duplicates(subset=[gr])[pg].tolist()
             + df[pe].tolist()
         )
         custom_labels = (

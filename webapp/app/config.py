@@ -15,6 +15,7 @@ class Config:
     RISK_THRESHOLD = 0. if RISK_INPE else float(os.environ.get("RISK_THRESHOLD", "0.90"))
     RESET_LOCAL_STORAGE = os.environ.get('RESET_LOCAL_STORAGE', "false").lower() == "true"
     INPE_RISK_SCALE_FACTOR = 1
+    SCALE_PPCDAM_GRAPH = os.environ.get('SCALE_PPCDAM_GRAPH', "false").lower() == "true"
 
     @staticmethod
     def get_params_to_frontend():

@@ -103,7 +103,7 @@ ams.SLDStyles = {
 			}
 			else {
 				this.colorRange = ["#f0f0f0", "#ff3838"];
-				this.colorDomain = [this.minValue, this.maxValue];
+				this.colorDomain = this._unit == "score"? [0, 1] : [this.minValue, this.maxValue];
 				let tt=Math.ceil(this.maxValue);
 				this._numberOfTicks = this._unit == "score"? 10: ( (tt<10)?(tt==1?2:tt):(10) );
 			}
@@ -239,7 +239,7 @@ ams.SLDStyles = {
 			if(this.minValue == 0) {
 				let domain = legend.domain();
 				let tickStep = this._getTickStep(domain, this._numberOfTicks);
-				ticks = this._getTicks(domain, tickStep, this._numberOfTicks);				
+				ticks = this._getTicks(domain, tickStep, this._numberOfTicks);
 			}
 			else {
 				let legendN = d3.scaleLinear()
