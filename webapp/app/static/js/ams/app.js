@@ -430,6 +430,10 @@ ams.App = {
                     }
 
                     if(ams.App._suViewParams.classname != e.acronym){
+                        var keep_last_date = (
+                            !["RI", "RK", "AF"].includes(e.acronym) && !["RI", "RK", "AF"].includes(ams.App._suViewParams.classname)
+                        );
+
                         ams.App._suViewParams.classname = e.acronym;
                         ams.App._priorViewParams.classname = e.acronym;
                         ams.App._suViewParams.updatePropertyName(ams.App._propertyName);
@@ -441,7 +445,7 @@ ams.App = {
                         lastDateDynamic = lastDateDynamic? lastDateDynamic : ams.App._spatialUnits.getDefault().last_date;
                         ams.PeriodHandler.setMaxDate(lastDateDynamic);
 
-                        if (e.acronym !== "RK" && e.acronym !== "RI") {
+                        if (keep_last_date) {
                             lastDateDynamic = ams.Date.getMin(ams.App._dateControl.startdate, lastDateDynamic);
                         }
 
