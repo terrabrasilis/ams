@@ -292,6 +292,7 @@ L.Control.GroupedLayers = L.Control.extend({
 
   handleRiskSelection: function (classificationMapGroupId, obj) {
     if (obj.name.toLowerCase().includes('risco') && obj.checked) {
+      $("#ctrl"+this._getControlByName('onPeriod').ctrlId).click();  // force onPeriod
       var mapClassificationElement = document.querySelector('[id="leaflet-control-layers-group-' + classificationMapGroupId + '"]');
       mapClassificationElement.style.display = 'none';
       ams.PeriodHandler.remove(this._map);

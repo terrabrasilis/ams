@@ -400,15 +400,11 @@ ams.App = {
                         ams.App._propertyName=ams.Config.propertyName.rk;
                         ams.App._riskThreshold=ams.Config.defaultRiskFilter.threshold;
                         ams.App._hasClassFilter=false;
-                        ams.App._diffOn = false;
-                        ams.App._currentClassify = "onPeriod";
                     }else if(e.acronym=='RI'){
                         layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.inpeRisk;
                         ams.App._propertyName=ams.Config.propertyName.ri;
                         ams.App._riskThreshold=ams.Config.defaultRiskFilter.threshold;
                         ams.App._hasClassFilter = false;
-                        ams.App._diffOn = false;
-                        ams.App._currentClassify = "onPeriod";
                     }else if(e.acronym=='AF'){
                         // the reference layer should be active-fires
                         layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.activeFire;
