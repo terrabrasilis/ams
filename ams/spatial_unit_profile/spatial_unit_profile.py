@@ -339,6 +339,7 @@ class SpatialUnitProfile():
         sql = f"""
             SELECT
                 a.name,
+                a.priority,
                 COALESCE(resultsum, 0) AS resultsum,
                 SUM(COALESCE(resultsum, 0)) OVER () AS resultsum_total
             FROM land_use{land_use_type_suffix} a 
@@ -368,7 +369,7 @@ class SpatialUnitProfile():
 
         df = self.resultset_as_dataframe(sql)
 
-        df.columns = ['Categoria Fundiária', self.default_col_name, 'Total (km²)']
+        df.columns = ['Categoria Fundiária', 'Prioridade', self.default_col_name, 'Total (km²)']
         return df
     
     def area_per_land_use(self, land_use_type):
@@ -414,7 +415,7 @@ class SpatialUnitProfile():
             GROUP BY
 	            lua.land_use_id, lu.name
             ORDER BY
-	            lua.land_use_id ASC;
+                lua.land_use_id ASC;
         """
 
         df = self.resultset_as_dataframe(sql)
@@ -500,7 +501,8 @@ class SpatialUnitProfile():
         df = pd.merge(df1, df2, on=label, how='outer') 
         df.update(df.select_dtypes(include=['float']).fillna(0.0))
         df = df.round({col: 0 if col=="Unidades" else 2 for col in df.select_dtypes(include=['float']).columns})
-
+        df = df.sort_values(by=['Prioridade'], ascending=True)
+       
         # converting to ha
         if self.data_unit == ha:
             columns = {col: col.replace(km2, ha) for col in df.columns if km2 in col}
