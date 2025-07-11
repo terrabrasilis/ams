@@ -103,9 +103,30 @@ ams.SLDStyles = {
 			}
 			else {
 				this.colorRange = ["#f0f0f0", "#ff3838"];
-				this.colorDomain = this._unit == "score"? [0, 1] : [this.minValue, this.maxValue];
-				let tt=Math.ceil(this.maxValue);
-				this._numberOfTicks = this._unit == "score"? 10: ( (tt<10)?(tt==1?2:tt):(10) );
+
+				if (this._unit == "score") {
+					let sf = 10;
+					this.minValue = Math.max(0, Math.floor(this.minValue*sf) / sf);
+					this.maxValue = Math.min(1, Math.ceil(this.maxValue*sf) / sf);
+					
+					this._numberOfTicks = (this.maxValue - this.minValue) * sf;
+
+					if (this._numberOfTicks < 3) {
+						this._numberOfTicks = 3;
+						if (this.maxValue + 1. / sf > 1) {
+							this.minValue = this.minValue - 1. / sf;
+						} else {
+							this.maxValue = this.maxValue + 1. / sf;
+						}
+					}
+
+					this.colorDomain = [this.minValue, this.maxValue];
+
+				} else {
+					this.colorDomain = [this.minValue, this.maxValue];
+					let tt=Math.ceil(this.maxValue);
+					this._numberOfTicks = ( (tt<10)?(tt==1?2:tt):(10) );
+				}
 			}
 		}
 
