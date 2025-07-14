@@ -30,7 +30,7 @@ var defaultConfig = {
 };
 
 ams.BiomeConfig["Amazônia"] = {
-  defaultWorkspace: 'ams1',
+  defaultWorkspace: 'ams2',
   defaultLayers:{
     biomeBorder:"biome_border",
     municipalitiesBorder:"municipalities_border",
@@ -57,7 +57,7 @@ ams.BiomeConfig["Amazônia"] = {
 };
 
 ams.BiomeConfig["Cerrado"] = {
-  defaultWorkspace: 'ams1',
+  defaultWorkspace: 'ams2',
   defaultLayers:{
     biomeBorder:"biome_border",
     municipalitiesBorder:"municipalities_border",
