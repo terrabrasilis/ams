@@ -9,12 +9,14 @@ class AppConfigController:
     def __init__(self, db_url: str):
         self._conn = connect(db_url)
 
-    def read_class_groups(self, biomes):
+    def read_class_groups(self, biomes, inpe_risk=True):
         """
         Gets the class names grouped by class groups.
         Including class titles and a required order to use on the frontend
         to display filters by classes.
         """
+        risk_classname_to_ignore = "('RK')" if inpe_risk else "('RI')"
+
         sql = """SELECT string_agg( c1 || ',' || c2, ', ' )
 		FROM (
 			SELECT '{''name'':'''||cg.name||''', ''title'':'''||cg.title||'''' as c1,
@@ -23,12 +25,13 @@ class AppConfigController:
                         JOIN public.class c
                         ON cg.id=c.group_id
                         WHERE ('%s' = 'ALL' OR c.biome = ANY('{%s}'))
-                        GROUP BY 1,2 ORDER BY cg.orderby
+                              AND cg.name NOT IN %s
+                        GROUP BY 1,2 ORDER BY cg.orderby            
 		) as tb1"""
 
         biomes = ",".join(biomes)
        
-        sql = sql % (biomes, biomes)
+        sql = sql % (biomes, biomes, risk_classname_to_ignore)
 
         cur = self._conn.cursor()
         cur.execute(sql)
@@ -172,9 +175,9 @@ class AppConfigController:
                 SELECT DISTINCT REPLACE(CONCAT(mun.name, ' - ', mun.state_acr, ' - geoc\xf3digo: ', mun.geocode), '''', ' ') as name, mun.geocode
 	        FROM public.municipalities mun, public.municipalities_biome mub
 	        WHERE
-                    mun.geocode = mub.geocode
-		    AND mub.biome = ANY('{%s}')
-	        ORDER BY name
+                mun.geocode = mub.geocode
+		        AND mub.biome = ANY('{%s}')
+	            ORDER BY name
             )
             SELECT string_agg(
 	        '{''name'':''' || ma.name ||

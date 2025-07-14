@@ -91,17 +91,6 @@ L.Control.PeriodHandler = L.Control.extend({
         }
 
         function _changeDate(val, datetype) {
-            if (ams.App._dateControl.getPeriod() === "custom" && !_validatePeriod()) {
-                $('.toast').toast('show');
-                $('.toast-body').html("Período inválido.");
-                if (datetype === "start") {
-                    $('#datepicker-start').val("");
-                } else {
-                    $('#datepicker-end').val("");
-                }
-                return;
-            }
-            
             // changes the reference date used to the max date for displayed data
             let selected = val.split("/");
             let date = ams.Date.fromString(selected[2] + "-" + selected[1] + "-" + selected[0]);
@@ -140,6 +129,11 @@ L.Control.PeriodHandler = L.Control.extend({
             }
         }).val(startDate.toLocaleDateString("pt-BR"));
 
+        $('#datepicker-start').on('blur', function() {
+            const value = $(this).val();
+            _changeDate(value, "start");
+        });
+
         $('#datepicker-end').datepicker({
             showButtonPanel: true,
             defaultDate: ams.PeriodHandler._enddate,
@@ -152,6 +146,11 @@ L.Control.PeriodHandler = L.Control.extend({
                 _changeDate($(this).val(), "end");
             },
         }).val(ams.PeriodHandler._enddate.toLocaleDateString("pt-BR"));
+
+        $('#datepicker-end').on('blur', function() {
+            const value = $(this).val();
+            _changeDate(value, "end");
+        });
         
         // about new period selector
         $('#numdays').on('change',(ev)=>{

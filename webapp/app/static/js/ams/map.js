@@ -45,7 +45,7 @@ ams.Map = {
         };
         // if risk, use the threshold value else use the 0.0
         this.updateRiskThreshold = function(risk_threshold) {
-            this.risk_threshold = (this.classname=='RK')?(risk_threshold):(0.0);
+            this.risk_threshold = (this.classname=='RK' || this.classname=='RI')?(risk_threshold):(0.0);
         };
     },
 
@@ -77,16 +77,11 @@ ams.Map = {
     AppClassGroups: function(groups) {
         this._groupNamesMap = {};
         this._setNames = function(groups) {
-            let risk_index=null;
             for(var i = 0; i < groups.length; i++) {
-                // verify if risk data should be displayed. Use the group name 'RK' that need be defined into database.
-                if(groups[i].name=='RK' && !ams.Auth.isAuthenticated()) risk_index=i;
                 groups[i].acronym = groups[i].name;
                 this._groupNamesMap[groups[i].name] = groups[i].title;
                 groups[i].name = groups[i].title;
             }
-            // remove the risk option if needed
-            if(risk_index!==null) groups.splice(risk_index,1);
             this.groups = groups;
         }
 
@@ -221,9 +216,7 @@ ams.Map = {
             }
             });
             return res;
-        };
-      
-      
+        };      
 
         this.getFile = function(layerName, viewParams, 
                                 outputFormat, extension,
@@ -278,8 +271,6 @@ ams.Map = {
                         + ";biomes:" + ams.App._biomes.join('%5C,')
                         + ";municipality_group_name:" + ams.App._municipalitiesGroup
                         + ";geocodes:" + ams.App._geocodes.join('%5C,');
-
-            console.log(wfsUrl);
 
             let ftype = (extension == 'csv')? "text/csv" : "application/zip";
 
@@ -389,7 +380,7 @@ ams.Map = {
 			return geoserverURL;
 		}
 
-        this.init = function(layerName, layerStyle)    {
+        this.init = function(layerName, layerStyle) {
             this._setStaticLegends();// for default layers defined in config.js
             this._setWMSControl(layerName, layerStyle);
             this._map.addControl(this._wmsLegendControl);
@@ -429,6 +420,7 @@ ams.Map = {
                 this._wmsLegendControl.options.static.deter.url = deterurl;
                 this._wmsLegendControl.options.static.af.url=null;
                 this._wmsLegendControl.options.static.risk.url=null;
+
             }else if(ams.App._referenceLayerName.includes(ams.Config.defaultLayers.activeFire)){
                 // here we force a different style to get the legend without 3 entries
                 let afurl = baseurl + "&LAYER=" + ams.App._referenceLayerName
@@ -437,13 +429,20 @@ ams.Map = {
                 this._wmsLegendControl.options.static.af.url = afurl;
                 this._wmsLegendControl.options.static.deter.url=null;
                 this._wmsLegendControl.options.static.risk.url=null;
-            }else{
+
+            }else if(ams.App._referenceLayerName.includes(ams.Config.defaultLayers.ibamaRisk)){
                 let rurl = baseurl + "&LAYER=" + ams.App._referenceLayerName
                     + "&STYLE=risk_legend"
                     + "&LEGEND_OPTIONS=forceLabels:on;";
                 this._wmsLegendControl.options.static.af.url = null;
                 this._wmsLegendControl.options.static.deter.url = null;
                 this._wmsLegendControl.options.static.risk.url = rurl;
+
+            } else {
+                this._wmsLegendControl.options.static.af.url = null;
+                this._wmsLegendControl.options.static.deter.url = null;
+                this._wmsLegendControl.options.static.risk.url = null;
+                this.disable();
             }
         }
     }

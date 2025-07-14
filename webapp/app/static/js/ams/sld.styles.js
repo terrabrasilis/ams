@@ -22,6 +22,10 @@ ams.SLDStyles = {
 			unit = "risco";
 		}
 
+		if (ams.App._suViewParams.classname == "RI") {
+			unit = "score";
+		}
+
 		this.stroke = "";
 		this.fillOpacity = 1;
 		this.maxValue = maxValue;
@@ -54,6 +58,9 @@ ams.SLDStyles = {
 					text = "pontos de risco";
 					prefix = "Contagem: ";
 					break;
+				case "score":
+					text = "0 (sem risco) e 1 (maior risco)"
+					prefix = "Intensidade de risco: "
 			}
 
 			if (text !== "") {
@@ -96,9 +103,30 @@ ams.SLDStyles = {
 			}
 			else {
 				this.colorRange = ["#f0f0f0", "#ff3838"];
-				this.colorDomain = [this.minValue, this.maxValue];
-				let tt=Math.ceil(this.maxValue);
-				this._numberOfTicks = ( (tt<10)?(tt==1?2:tt):(10) );//10; 
+
+				if (this._unit == "score") {
+					let sf = 10;
+					this.minValue = Math.max(0, Math.floor(this.minValue*sf) / sf);
+					this.maxValue = Math.min(1, Math.ceil(this.maxValue*sf) / sf);
+					
+					this._numberOfTicks = (this.maxValue - this.minValue) * sf;
+
+					if (this._numberOfTicks < 3) {
+						this._numberOfTicks = 3;
+						if (this.maxValue + 1. / sf > 1) {
+							this.minValue = this.minValue - 1. / sf;
+						} else {
+							this.maxValue = this.maxValue + 1. / sf;
+						}
+					}
+
+					this.colorDomain = [this.minValue, this.maxValue];
+
+				} else {
+					this.colorDomain = [this.minValue, this.maxValue];
+					let tt=Math.ceil(this.maxValue);
+					this._numberOfTicks = ( (tt<10)?(tt==1?2:tt):(10) );
+				}
 			}
 		}
 
@@ -232,7 +260,7 @@ ams.SLDStyles = {
 			if(this.minValue == 0) {
 				let domain = legend.domain();
 				let tickStep = this._getTickStep(domain, this._numberOfTicks);
-				ticks = this._getTicks(domain, tickStep, this._numberOfTicks);				
+				ticks = this._getTicks(domain, tickStep, this._numberOfTicks);
 			}
 			else {
 				let legendN = d3.scaleLinear()
@@ -257,7 +285,7 @@ ams.SLDStyles = {
 			let lastRule = "";
 
 			if(!isPriorization) {
-				let fixedValue = ( (this._propertyName=='area')?(1):(0) );
+				let fixedValue = ( (this._propertyName=='area' || this._propertyName=='score')?(1):(0) );
 				for (let t in ticks) {
 					ticks[t] = +(ticks[t].toFixed(fixedValue));
 				}

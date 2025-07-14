@@ -12,9 +12,10 @@ var defaultConfig = {
   spatialUnitLayers:[],// populated on App load: ams.App.run(...)
   floatDecimals: 2,// change this number to change the number of decimals to float numbers
   propertyName: {
-    deter:"area",// can be "area", if reference layer is DETER
-    af:"counts", // or "counts", if reference layer is AF - Active Fire (Focos de Queimadas)
-    rk:"counts" // and "counts" to risk too, because risk is trated as points as Active Fire
+    deter: "area",// can be "area", if reference layer is DETER
+    af: "counts", // or "counts", if reference layer is AF - Active Fire (Focos de Queimadas)
+    rk: "counts", // and "counts" to risk too, because risk is trated as points as Active Fire,
+    ri: "score"
   },
   risk:{
   },
@@ -36,10 +37,11 @@ ams.BiomeConfig["Amazônia"] = {
     deter:"deter-ams", // The layer name of DETER alerts from TerraBrasilis service. The workspace is dinamic and based on authentication state
     activeFire:"active-fire", // The layer name of Focos de Queimadas from TerraBrasilis service. The workspace is dinamic and based on authentication state
     ibamaRisk: "risk-ibama-weekly-data", // The layer name of weekly risk with the default prediction data of risk of deforestation from IBAMA.
+    inpeRisk: "risk-inpe-data",
     lastDate: "last_date" // The layer name to get the last update date of available data. The workspace is dinamic and based on authentication state
   },
   defaultFilters: {
-    indicator: 'DS',// can be group's name of DETER classnames, 'DS', 'DG', 'CS' and 'MN', or 'AF' to Queimadas or 'RK' to risk
+    indicator: 'DS',// can be group's name of DETER classnames, 'DS', 'DG', 'CS' and 'MN', or 'AF' to Queimadas, or 'RK' to IBAMA risk or 'RI' to INPE risk
     spatialUnit: 'cs_150km',
     temporalUnit: '7d',
     diffClassify: 'onPeriod',// can be 'onPeriod' or 'periodDiff'
@@ -47,8 +49,10 @@ ams.BiomeConfig["Amazônia"] = {
   },
   defaultRiskFilter:{
     // used to process counts, including points where the value is greater than this threshold
+    source: ams.Utils.getServerConfigParam('risk_inpe').toLowerCase() === "true"? "inpe" : "ibama",
     threshold: parseFloat(ams.Utils.getServerConfigParam('risk_threshold')),
-    expirationRisk: 7 // The number of days to set the risk forecast due date.
+    expirationRisk: 7, // The number of days to set the risk forecast due date.
+    scaleFactor: parseFloat(ams.Utils.getServerConfigParam('risk_scale_factor'))
   }
 };
 

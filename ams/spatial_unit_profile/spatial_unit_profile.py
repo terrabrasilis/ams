@@ -13,6 +13,8 @@ import json
 import re
 from dateutil.relativedelta import relativedelta
 import numpy as np
+from babel.dates import format_datetime
+import locale
 
 
 class SpatialUnitProfile():
@@ -38,6 +40,8 @@ class SpatialUnitProfile():
     def __init__(self, config, params):
         # The class name is fixed to 'RK' as is all code that checks the risk class name.
         self._risk_classname = "RK"
+        self._inpe_risk_classname = "RI"
+
         # The class name is fixed to 'AF' as is all code that checks the fire class name.
         self._fire_classname = "AF"
 
@@ -68,6 +72,11 @@ class SpatialUnitProfile():
             self._risk_threshold = params['riskThreshold']
             self.default_column="counts"
             self.default_col_name="Unidades"
+
+        if(self._classname==self._inpe_risk_classname):
+            self._risk_threshold = 0
+            self.default_column="score"
+            self.default_col_name="Score"
 
         # standard area rounding
         self.round_factor=2
@@ -105,9 +114,9 @@ class SpatialUnitProfile():
         self._tableinfo = json.loads("{"+suinfo+"}")
 
         self._classes = pd.DataFrame(
-            {'code': pd.Series(['DS','DG', 'CS', 'MN', self._fire_classname, self._risk_classname], dtype='str'),
+            {'code': pd.Series(['DS','DG', 'CS', 'MN', self._fire_classname, self._risk_classname, self._inpe_risk_classname], dtype='str'),
              'name': pd.Series(['Desmatamento','Degrada&#231;&#227;o',
-                      'Corte-Seletivo','Minera&#231;&#227;o', 'Focos', 'Índice'], dtype='str'),
+                      'Corte-Seletivo','Minera&#231;&#227;o', 'Focos', 'Índice', 'Índice'], dtype='str'),
              'color': pd.Series(['#0d0887', '#46039f', '#7201a8', '#9c179e'], dtype='str')})
         self._temporal_units = {
             "7d": "Agregado 7 dias",
@@ -300,7 +309,8 @@ class SpatialUnitProfile():
         land_use_type_suffix = "" if land_use_type == "ams" else f"_{land_use_type}"
         name_escaped = self._name.replace("'", "''")
 
-        where_risk="" if(self._classname!=self._risk_classname) else f" a.risk >= {self._risk_threshold} AND "
+        where_ibama_risk="" if(self._classname!=self._risk_classname) else f" a.risk >= {self._risk_threshold} AND "
+        where_inpe_risk="" if(self._classname!=self._inpe_risk_classname) else f" a.score >= {self._risk_threshold} AND "
         where_spatial_unit="" if(self._name=='*') else f"""b.\"{self._tableinfo[self._spatial_unit]['key']}\" = '{name_escaped}' AND"""
 
         where_biome = f"('{self._appBiome}' = 'ALL' OR a.biome = ANY ('{{{self._appBiome}}}')) AND"
@@ -319,7 +329,7 @@ class SpatialUnitProfile():
             OR a.geocode = ANY('{{{self._geocodes}}}')
         ) AND """
 
-        where_filter=f"{where_biome} {where_municipalities_group} {where_risk} {where_spatial_unit}"
+        where_filter=f"{where_biome} {where_municipalities_group} {where_ibama_risk} {where_inpe_risk} {where_spatial_unit}"
 
         # AND a.land_use_id = ANY (ARRAY[{self.land_use}]) 
         where_landuse1 = f"AND a.land_use_id = ANY (ARRAY[{self.land_use}])" if land_use_type == "ams" else ""
@@ -329,6 +339,7 @@ class SpatialUnitProfile():
         sql = f"""
             SELECT
                 a.name,
+                a.priority,
                 COALESCE(resultsum, 0) AS resultsum,
                 SUM(COALESCE(resultsum, 0)) OVER () AS resultsum_total
             FROM land_use{land_use_type_suffix} a 
@@ -358,7 +369,7 @@ class SpatialUnitProfile():
 
         df = self.resultset_as_dataframe(sql)
 
-        df.columns = ['Categoria Fundiária', self.default_col_name, 'Total (km²)']
+        df.columns = ['Categoria Fundiária', 'Prioridade', self.default_col_name, 'Total (km²)']
         return df
     
     def area_per_land_use(self, land_use_type):
@@ -404,19 +415,29 @@ class SpatialUnitProfile():
             GROUP BY
 	            lua.land_use_id, lu.name
             ORDER BY
-	            lua.land_use_id ASC;
+                lua.land_use_id ASC;
         """
 
         df = self.resultset_as_dataframe(sql)
         df.columns = ['Categoria Fundiária', 'Área da Categoria (km²)', 'Área da Unidade Espacial (km²)']
         return df
 
-    def risk_expiration_date(self):        
+    def risk_expiration_date(self):
         sql = """SELECT TO_CHAR(expiration_date, 'DD/MM/YYYY') as expdate
         FROM risk.risk_ibama_date
         ORDER BY id DESC
         LIMIT 1;"""
         return self.execute_sql(sql=sql)
+    
+
+    def get_inpe_risk_date(self):        
+        sql = """SELECT risk_date
+        FROM risk.risk_image_date
+        WHERE source='inpe'
+        ORDER BY id DESC
+        LIMIT 1;"""
+        return self.execute_sql(sql=sql)
+
 
     def form_title(self):
         """
@@ -446,6 +467,13 @@ class SpatialUnitProfile():
             expiration_date = expiration_date if expiration_date is not None else "falhou ao obter a data"
             title = f"""Usando dados de Risco de desmatamento (IBAMA), {spatial_unit}{spatial_description},
             para as categorias fundiárias selecionadas, valor maior ou igual a <b>{self._risk_threshold}</b> e validade até <b>{expiration_date}</b>."""
+
+        elif self._classname == self._inpe_risk_classname:
+            risk_date = self.get_inpe_risk_date()
+            fortnight = f"{('primeira' if risk_date.day < 15 else 'segunda')} quinzena de {format_datetime(risk_date, 'MMMM', locale='pt_BR')} de {risk_date.year}"
+            title = f"""Usando dados de Risco de desmatamento da <b>{fortnight}</b>, {spatial_unit}{spatial_description},
+            para as categorias fundiárias selecionadas, intensidade de 0 (sem risco) a 1 (maior risco)."""
+
         else:
             title=f"""Usando dados de <b>{indicador}</b> {datasource} até <b>{last_date}</b>,
             {spatial_unit}{spatial_description}, para as categorias fundiárias selecionadas
@@ -471,10 +499,10 @@ class SpatialUnitProfile():
         # assert _ in df2[label].tolist()
 
         df = pd.merge(df1, df2, on=label, how='outer') 
-
         df.update(df.select_dtypes(include=['float']).fillna(0.0))
         df = df.round({col: 0 if col=="Unidades" else 2 for col in df.select_dtypes(include=['float']).columns})
-
+        df = df.sort_values(by=['Prioridade'], ascending=True)
+       
         # converting to ha
         if self.data_unit == ha:
             columns = {col: col.replace(km2, ha) for col in df.columns if km2 in col}
@@ -487,21 +515,28 @@ class SpatialUnitProfile():
         unid_temp = self._temporal_units[self._temporal_unit]
         total = df[default_col_name].sum()
 
-        fire_or_risk = self._classname in [self._fire_classname, self._risk_classname]
+        if total == 0.:
+            return None
+
+        fire_or_risk = self._classname in [self._fire_classname, self._risk_classname, self._inpe_risk_classname]
 
         # generating the graphics
         graph_label = "<b>%{label}</b>"
         graph_value = "%{value}"
         graph_unit =  "" if fire_or_risk else f" {self.data_unit}"
         graph_area_unit = km2 if self.data_unit != ha else ha
+
         graph_percent = "%{percent:.2%}"
-        graph_custom_data = "%{customdata:.2%}"
-        _ = {self._risk_classname: "pontos de risco", self._fire_classname: "focos"}
+        _ = {self._risk_classname: "pontos de risco", self._fire_classname: "focos", self._inpe_risk_classname: "score de risco"}
         graph_indicator = _[self._classname] if self._classname in _  else "alertas"
-        graph_total = (
-            f"Contagem de {graph_indicator}: {total}" if self._classname in [self._fire_classname, self._risk_classname] else
-            f"Área total: {total:.2f} {graph_area_unit}"
-        )
+
+        if self._classname in [self._fire_classname, self._risk_classname]:
+            graph_total = f"Contagem de {graph_indicator}: {total}."
+        elif self._classname == self._inpe_risk_classname:
+            graph_total = f"Intensidade total de risco: {total:.2f}." if self._name != "*" else ""
+        else:
+            graph_total = f"Área total: {total:.2f} {graph_area_unit}."
+
         graph_colors = ["#658faa", "#535585", "#53886e", "#998e8f", "#90c0c9", "#d7babe", "#c5c8ce", "#f8edd3", "#d7d0b3"]
 
         graph_spatial_unit = "a Unidade Espacial"
@@ -509,7 +544,11 @@ class SpatialUnitProfile():
             graph_spatial_unit = 'o Bioma' if self._municipalities_group == 'ALL' else 'os Municípios de Interesse'        
 
         title1 = f'<i>Informação fundiária de referência</i><br><b>Percentual da Área da Categoria<br>n{graph_spatial_unit}</b>'
-        title2 = f'<i>Informação dinâmina</i><br><b>Percentual de {graph_indicator.title()}<br>em Relação ao Total de {graph_indicator.title()}</b>'
+
+        if self._classname != self._inpe_risk_classname:
+            title2 = f'<i>Informação dinâmina</i><br><b>Percentual de {graph_indicator.title()}<br>em Relação ao Total de {graph_indicator.title()}</b>'
+        else:
+            title2 = f'<i>Informação dinâmina</i><br><b>Percentual da Intensidade Total de Risco<br>por Categoria Fundiária</b>'
 
         fig = make_subplots(
             rows=2, cols=1,
@@ -518,7 +557,7 @@ class SpatialUnitProfile():
         )
 
         # graph 1
-        template1 = f"{graph_percent} da área total d{graph_spatial_unit.lower()} {graph_value} {graph_area_unit},<br>é {graph_label}"
+        template1 = f"{graph_percent} da área total d{graph_spatial_unit.lower()}, {graph_value} {graph_area_unit},<br>é {graph_label}."
         fig.add_trace(
             go.Pie(
                 labels=df[label],
@@ -531,17 +570,15 @@ class SpatialUnitProfile():
         )
 
         # graph 2
-        custom_data = (
-            None if self._classname in [self._fire_classname, self._risk_classname] else 
+        custom_data = None if self._classname in [self._fire_classname, self._risk_classname, self._inpe_risk_classname] else (
             df[f'Área ({graph_area_unit})'] / df[f'Área da Categoria ({graph_area_unit})']
         )
 
-        template2 = f"Do total de {graph_indicator}, {graph_value}{graph_unit}, o que corresponde a {graph_percent},<br>estão em {graph_label}. "
-        # template2 += (
-        #    "" if fire_or_risk else
-        #    f"Os {graph_value}{graph_unit} representam {graph_custom_data}<br>da área total dessa categoria "
-        #    f"n{graph_spatial_unit}."
-        # )
+        if self._classname != self._inpe_risk_classname:
+            template2 = f"Do total de {graph_indicator}, {graph_value}{graph_unit}, o que corresponde a {graph_percent},<br>estão em {graph_label}."
+        else:
+            template2 = f"Da intensidade total de risco, {graph_percent} estão em {graph_label}."
+
         fig.add_trace(
             go.Pie(
                 labels=df[label],
@@ -554,8 +591,10 @@ class SpatialUnitProfile():
             row=1, col=1
         )
 
-        title = f"<b>{indicator}</b> por categoria fundiária<br>"
-        title += f"no último período do <b>{unid_temp}. <b>{graph_total}</b>"
+        title = f"<b>{indicator}</b> por categoria fundiária"
+        if not self._classname in [self._risk_classname, self._inpe_risk_classname]:
+            title += f"<br>no último período do <b>{unid_temp}."
+        title += f". <b>{graph_total}</b>"
 
         fig.update_traces(
             sort=False,
@@ -732,9 +771,13 @@ class SpatialUnitProfile():
         df[pg] = df[tg] / df[tt] * 100
 
         # scaled total
-        df[sc] = df[igp]
-        if sum_ccar and sum_scar:
-            df[sc] = df[igp] / 100 * 50
+        if self._config.SCALE_PPCDAM_GRAPH:
+            df[sc] = df[igp]
+            if sum_ccar and sum_scar:
+                df[sc] = df[igp] / 100 * 50
+        else:
+            df[sc] = df[pe]
+
         df.fillna(0., inplace=True)
 
         return df
@@ -768,20 +811,23 @@ class SpatialUnitProfile():
         cf = "Categoria Fundiária"
         gr = "group"
         tt = "total"
-        apt = "percentage by group"
-        st = "scaled"
+        pg = "percentage by group"
+        sc = "scaled"
         pe = "percentage"
 
         if self.data_unit == ha:
             default_col_name = default_col_name.replace(km2, ha)
     
-        fire_or_risk = self._classname in [self._fire_classname, self._risk_classname]
-        _ = {self._risk_classname: "pontos de risco", self._fire_classname: "focos"}
+        fire_or_risk = self._classname in [self._fire_classname, self._risk_classname, self._inpe_risk_classname]
+        _ = {self._risk_classname: "pontos de risco", self._fire_classname: "focos", self._inpe_risk_classname: "intensidade de risco"}
         graph_unit = _[self._classname] if fire_or_risk else (km2 if self.data_unit != ha else ha)
         graph_indicator = _[self._classname] if self._classname in _  else "alertas"
     
         df = self.classname_area_per_land_use_ppcdam()
-    
+
+        if df["total"][0] == 0.:
+            return None
+
         labels = [uso] + df[gr].unique().tolist() + df[cf].tolist()
         labels = _text_abbr(labels)
     
@@ -790,9 +836,10 @@ class SpatialUnitProfile():
     
         values = (
             [100]
-            + df.groupby([gr])[st].sum().reindex(df[gr].unique().tolist()).tolist()
-            + df[st].tolist()
+            + df.groupby([gr])[sc].sum().reindex(df[gr].unique().tolist()).tolist()
+            + df[sc].tolist()
         )
+
         custom_values = (
             [df[tt].tolist()[0]]
             + df.groupby([gr])[default_col_name].sum().reindex(df[gr].unique().tolist()).tolist()
@@ -802,7 +849,7 @@ class SpatialUnitProfile():
         custom_values = [f"{_} {graph_unit}" for _ in custom_values]
         custom_percentages = (
             [100]
-            + df.drop_duplicates(subset=[gr])[apt].tolist()
+            + df.drop_duplicates(subset=[gr])[pg].tolist()
             + df[pe].tolist()
         )
         custom_labels = (
@@ -822,8 +869,12 @@ class SpatialUnitProfile():
         graph_custom_data0 = "%{customdata[0]}"
         graph_custom_data1 = "%{customdata[1]}"
         graph_custom_data2 = "%{customdata[2]:.2f}%"
-        template = f"{graph_custom_data1}: {graph_custom_data2} do total de {graph_indicator} - {graph_custom_data0}<extra></extra>"
-    
+
+        graph_total = f"do total de {graph_indicator}" if self._classname != self._inpe_risk_classname else "da intensidade total de risco"
+
+        template = f"{graph_custom_data1}: {graph_custom_data2} {graph_total}"
+        template += f" - {graph_custom_data0}<extra></extra>" if self._classname != self._inpe_risk_classname else ""
+
         fig = go.Figure(go.Sunburst(
             labels=labels,
             parents=parents,

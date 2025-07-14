@@ -145,10 +145,9 @@ def get_config(endpoint):
 
     if not status:
         return params_or_error
-
+    
     try:
         params = params_or_error
-
         conf = _get_config(
             biome=params["targetbiome"],
             subset=params["subset"],
@@ -161,7 +160,6 @@ def get_config(endpoint):
             temp_unit=params["tempUnit"],
             classname=params["classname"],
         )
-
         return json.dumps(conf)
 
     except Exception as e:
@@ -240,7 +238,7 @@ def get_profile(endpoint):
         onlyOneLandUse = len(count) if count[0] != '' else -1
 
         # to avoid unnecessary function call
-        if (spatial_unit_profile._classname != 'RK'):
+        if (spatial_unit_profile._classname != 'RK' and spatial_unit_profile._classname != 'RI'):
             if (onlyOneLandUse <= 1):
                 return json.dumps(
                     {'FormTitle': spatial_unit_profile.form_title(),
@@ -251,13 +249,15 @@ def get_profile(endpoint):
                     {'FormTitle': spatial_unit_profile.form_title(),
                      'AreaPerLandUse': spatial_unit_profile.fig_area_per_land_use(),
                      'AreaPerYearTableClass': spatial_unit_profile.fig_area_by_period(),
-                     'AreaPerLandUsePpcdam': spatial_unit_profile.fig_area_per_land_use_ppcdam()}
+                     'AreaPerLandUsePpcdam': spatial_unit_profile.fig_area_per_land_use_ppcdam()
+                     }
                 )
-        elif (onlyOneLandUse >= 2 and spatial_unit_profile._classname == 'RK'):
+        elif (onlyOneLandUse >= 2 and (spatial_unit_profile._classname == 'RK' or spatial_unit_profile._classname == 'RI')):
             return json.dumps(
                 {'FormTitle': spatial_unit_profile.form_title(),
                  'AreaPerLandUse': spatial_unit_profile.fig_area_per_land_use(),
-                 'AreaPerLandUsePpcdam': spatial_unit_profile.fig_area_per_land_use_ppcdam()}
+                 'AreaPerLandUsePpcdam': spatial_unit_profile.fig_area_per_land_use_ppcdam()
+                }
             )
         else:
             return json.dumps(

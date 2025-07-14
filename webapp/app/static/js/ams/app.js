@@ -13,6 +13,7 @@ ams.App = {
     _wfs: null,
     _dateControl: null,
     _baseURL: null,
+    _indicator: null,
     _propertyName: null,
     _riskThreshold: 0.0,
     _referenceLayerName: null,
@@ -65,10 +66,8 @@ ams.App = {
         }
 
         this._baseURL = geoserverUrl + "/wms";
-        this._propertyName = ( (ams.Config.defaultFilters.indicator=='AF')?(ams.Config.propertyName.af):(ams.Config.propertyName.deter) );
-        this._referenceLayerName = ams.Auth.getWorkspace()+":"+( (ams.Config.defaultFilters.indicator=='AF')?(ams.Config.defaultLayers.activeFire):(ams.Config.defaultLayers.deter) );
-        this._hasClassFilter = ( (ams.Config.defaultFilters.indicator=='AF')?(false):(true) );
-        this._currentClassify=ams.Config.defaultFilters.diffClassify;
+        
+        this._setIndicator(ams.Config.defaultFilters.indicator);
 
         var map = new L.Map("map", {
             zoomControl: false,
@@ -158,7 +157,8 @@ ams.App = {
         };
         ams.App._addWmsOptionsBase(AFWmsOptions);
 
-        var RKLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.ibamaRisk;
+        var riskLayer = ams.Config.defaultRiskFilter.source === "inpe"? ams.Config.defaultLayers.inpeRisk : ams.Config.defaultLayers.ibamaRisk;
+        var RKLayerName = ams.Auth.getWorkspace() + ":" + riskLayer;
         var RKWmsOptions = {
             "cql_filter": "(risk >= " + ams.Config.defaultRiskFilter.threshold + ")",
             "viewparams": (
@@ -302,7 +302,7 @@ ams.App = {
 
         // to apply new heigth for groupControl UI component when window is resized
         ams.groupControl=groupControl;
-        
+
         L.control.coordinates({
             position: "bottomright",
             decimals: 2,
@@ -313,6 +313,9 @@ ams.App = {
             labelTemplateLat: "Latitude: {y}",
             labelTemplateLng: "Longitude: {x}"
         }).addTo(map);
+
+        // Enable/disable risk
+        ams.Utils.handleRiskIndicator();
 
         // Adding period control over map
         ams.PeriodHandler.init(map);
@@ -390,14 +393,18 @@ ams.App = {
                     );
 
                 } else if(e.group.name=='INDICADOR'){// change reference layer (deter, fires or risk)?
-                    ams.App._riskThreshold=0; // reset the risk limit so as not to interfere with the min max query
+                    ams.App._riskThreshold=0.0; // reset the risk limit so as not to interfere with the min max query
+                    ams.App._indicator = e.acronym;
                     if(e.acronym=='RK'){
                         layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.ibamaRisk;
                         ams.App._propertyName=ams.Config.propertyName.rk;
                         ams.App._riskThreshold=ams.Config.defaultRiskFilter.threshold;
                         ams.App._hasClassFilter=false;
-                        ams.App._diffOn = false;
-                        ams.App._currentClassify = "onPeriod";
+                    }else if(e.acronym=='RI'){
+                        layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.inpeRisk;
+                        ams.App._propertyName=ams.Config.propertyName.ri;
+                        ams.App._riskThreshold=ams.Config.defaultRiskFilter.threshold;
+                        ams.App._hasClassFilter = false;
                     }else if(e.acronym=='AF'){
                         // the reference layer should be active-fires
                         layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.activeFire;
@@ -409,6 +416,7 @@ ams.App = {
                         ams.App._propertyName=ams.Config.propertyName.deter;
                         ams.App._hasClassFilter=true;
                     }
+
                     // reference layer was changes, so propertyName changes too
                     if(ams.App._referenceLayerName!=layerToAdd){
                         ams.App._exchangeReferenceLayer(ams.App._referenceLayerName, layerToAdd);
@@ -418,6 +426,10 @@ ams.App = {
                     }
 
                     if(ams.App._suViewParams.classname != e.acronym){
+                        var keep_last_date = (
+                            !["RI", "RK", "AF"].includes(e.acronym) && !["RI", "RK", "AF"].includes(ams.App._suViewParams.classname)
+                        );
+
                         ams.App._suViewParams.classname = e.acronym;
                         ams.App._priorViewParams.classname = e.acronym;
                         ams.App._suViewParams.updatePropertyName(ams.App._propertyName);
@@ -429,7 +441,7 @@ ams.App = {
                         lastDateDynamic = lastDateDynamic? lastDateDynamic : ams.App._spatialUnits.getDefault().last_date;
                         ams.PeriodHandler.setMaxDate(lastDateDynamic);
 
-                        if (e.acronym !== "RK") {
+                        if (keep_last_date) {
                             lastDateDynamic = ams.Date.getMin(ams.App._dateControl.startdate, lastDateDynamic);
                         }
 
@@ -505,11 +517,18 @@ ams.App = {
         function setMunicipalityPanelMode() {
             $(".hide-in-municipality-panel").css("display", "none")
             $("#header-panel-title").text("Sala de Situação Municipal | " + ams.Config.appSelectedMunicipality);
-            const url = window.location.pathname.replace(/\/$/, '') + "/panel?geocode="+ams.Config.appSelectedGeocodes[0];
+
+            let param = window.location.pathname.includes("panel")? "?geocode=" : "/panel?geocode=";
+            const url = window.location.pathname.replace(/\/$/, '') + param + ams.Config.appSelectedGeocodes[0];
             window.history.pushState({}, '', url);
         }
         if (ams.Config.appMunicipalityPanelMode) {
             setMunicipalityPanelMode();
+        }
+
+        if (ams.Config.defaultFilters.indicator == 'RI') {
+            let obj = ams.groupControl._getControlByName("RI");
+            $("#ctrl" + obj.ctrlId).click();  // forcing to start risk environment
         }
 
         function updatePriorization() {
@@ -645,9 +664,9 @@ ams.App = {
         $("#modal-credits-check").click(
             function() {
                 if ($("#modal-credits-check").prop('checked')) {
-                    localStorage.setItem("ams.config.modal.notshowcredits", true);
+                    localStorage.setItem("ams.config.modal.noshowcredits", true);
                 } else {
-                    localStorage.removeItem("ams.config.modal.notshowcredits");
+                    localStorage.removeItem("ams.config.modal.noshowcredits");
                 }
                 return true;
             }
@@ -693,14 +712,45 @@ ams.App = {
             $("#threshold").val(ams.Config.general.area.threshold);
             $("#changeunit")[0].checked=ams.Config.general.area.changeunit=="auto";
 
-            if (localStorage.getItem('ams.config.modal.notshowcredits') == null) {
+            if (localStorage.getItem('ams.config.modal.noshowcredits') == null) {
                 $("#modal-container-credits").modal();
             }
 
             ams.App._populateMunicipalities();
         });
 
-    },// end of run method
+    }, // end of run method
+
+    _setIndicator: function (indicator) {
+        console.log("setting indicator " + indicator);
+
+        ams.App._indicator = indicator;
+
+        if (indicator == 'AF') {
+            ams.App._propertyName =  ams.Config.propertyName.af;
+            ams.App._referenceLayerName = ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.activeFire;
+            ams.App._hasClassFilter=false;
+
+        } else if (indicator == 'RK') {
+            ams.App._propertyName = ams.Config.propertyName.rk;
+            ams.App._referenceLayerName = ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.ibamaRisk;
+            ams.App._hasClassFilter=false;
+            ams.App._diffOn = false;
+
+        } else if (indicator == 'RI') {
+            ams.App._propertyName = ams.Config.propertyName.ri;
+            ams.App._referenceLayerName = ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.inpeRisk;
+            ams.App._hasClassFilter=false;
+            ams.App._diffOn = false;
+
+        } else {
+            ams.App._propertyName = ams.Config.propertyName.deter;
+            ams.App._referenceLayerName = ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.deter;                
+            ams.App._hasClassFilter=true;
+        }
+        
+        ams.App._currentClassify = ams.Config.defaultFilters.diffClassify;
+    },
 
     _populateMunicipalities: function() {
         const $selectMunicipalities = $('#select-municipalities');
@@ -767,7 +817,8 @@ ams.App = {
         let l=this._getLayerByName(this._referenceLayerName);
         if(l) {
             let cqlobj = {};
-            if(!this._referenceLayerName.includes(ams.Config.defaultLayers.ibamaRisk)){
+            if(!this._referenceLayerName.includes(ams.Config.defaultLayers.ibamaRisk) &&
+               !this._referenceLayerName.includes(ams.Config.defaultLayers.inpeRisk)) {
                 let cql = ams.App._appClassGroups.getCqlFilter(ams.App._suViewParams, this._hasClassFilter);
                 l._source.options["cql_filter"] = cql;
                 cqlobj = {"cql_filter": cql};
@@ -858,7 +909,7 @@ ams.App = {
         };
         let ol={};
         for (let ll in ams.App._addedLayers) {
-            let lname=( (ll.includes('deter'))?("DETER"):( (ll.includes('fire'))?("Focos"):( (ll.includes('ibama'))?("Risco (IBAMA)"):(false) ) ) );
+            let lname=( (ll.includes('deter'))?("DETER"):( (ll.includes('fire'))?("Focos"):( (ll.includes('ibama'))?("Risco (IBAMA)"):( (ll.includes('inpe'))?("Risco (INPE)"):(false) ) ) ) );
             if(ams.App._map.hasLayer(ams.App._addedLayers[ll])){
                 if(lname!==false) ol[lname]=ams.App._addedLayers[ll];
             }
@@ -878,10 +929,12 @@ ams.App = {
     _exchangeReferenceLayer: function(layerToDel, layerToAdd){
         ams.App._removeLayer(layerToDel);
         this._referenceLayerName=layerToAdd;
+
         let layer = this._getLayerByName(layerToAdd);
         let cqlobj={};
         if(layer) {
-            if(!layerToAdd.includes(ams.Config.defaultLayers.ibamaRisk)){
+            if(!layerToAdd.includes(ams.Config.defaultLayers.ibamaRisk) &&
+               !layerToAdd.includes(ams.Config.defaultLayers.inpeRisk)) {
                 let cql = this._appClassGroups.getCqlFilter(this._suViewParams, this._hasClassFilter);
                 layer._source.options["cql_filter"] = cql;
                 cqlobj = {"cql_filter": cql,"viewparams": "landuse:" + ams.App._landUseList.join('\\,')};
@@ -979,7 +1032,8 @@ ams.App = {
             let landUse="";
             if(ams.App._landUseList.length==0)
                 landUse="<br /><br /><b>Atenção</b>: Deve selecionar ao menos um item no filtro por categorias fundiárias.";
-            this._resetMap("Não existem dados para o período selecionado."+landUse);
+            let msg = ams.App._indicator.includes('RI')? "Não existem dados de risco." : "Não existem dados para o período selecionado."+landUse;
+            this._resetMap(msg);
             return false;
         }else if(ams.App._diffOn && mm.suLayerMin>=0) {
             this._resetMap("Não há redução de valores para o período selecionado.");
