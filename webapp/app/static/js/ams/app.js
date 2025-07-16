@@ -680,26 +680,43 @@ ams.App = {
 
         $('#search-municipalities').on('input', function() {
             const query = $(this).val().toLowerCase();
-            $('#select-municipalities option').show();
+            const $options = $('#select-municipalities option');
 
             if (query.length < 2) {
-                return;
+                $options.each(function () {
+                    $(this).prop('disabled', false).show();
+                });
             }
 
-            $('#select-municipalities option').each(function() {
-                const optionText = $(this).text().toLowerCase();
-                if (optionText.includes(query)) {
-                    $(this).show();
+            $options.each(function () {
+                const $opt = $(this);
+                const match = $opt.text().toLowerCase().includes(query);
+
+                if (match) {
+                    $opt.prop('disabled', false).show();
                 } else {
-                    $(this).hide();
+                    $opt.prop({disabled: true}).hide();
                 }
             });
         });
 
         $('#select-municipalities').on('change', function() {
-            var count = $(this).find('option:selected').length;
+            const $select = $(this);
+            const selected = $select.find('option:selected');
+            const count = selected.length;
+            const maxMunicipalities = 50;
+
             $('#municipalities-search-ok').prop('disabled', count==0);
             $('#municipalities-search-panel').prop('disabled', count!=1);
+            
+            $('#select-municipalities-msg').text(count > 1? `${count} municípios.` : '');
+            if (count > maxMunicipalities) {
+                $('#select-municipalities-msg').text(`Você só pode selecionar até ${maxMunicipalities} municípios.`)
+                while($select.find('option:selected').length > maxMunicipalities) {
+                    const lastSelected = $select.find('option:selected').last();
+                    lastSelected.prop('selected', false);
+                }
+            }
         });
 
         $(function() {
@@ -775,6 +792,7 @@ ams.App = {
             $('#select-municipalities option').prop('selected', false);     
             $('#municipalities-search-ok').prop('disabled', true);
             $('#municipalities-search-panel').prop('disabled', true);
+            $('#select-municipalities-msg').text('');
         }
 
         return new Promise((resolve) => {
