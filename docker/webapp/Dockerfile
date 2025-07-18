@@ -14,6 +14,7 @@ ENV PYTHONUNBUFFERED 1
 
 #-------------Application Specific Stuff ----------------------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash \
     build-essential \
     gcc \
     libpq-dev \
@@ -71,4 +72,4 @@ EXPOSE 7000
 
 WORKDIR $INSTALL_PATH/webapp
 
-ENTRYPOINT ["/docker-entrypoint.sh"]
+ENTRYPOINT ["bash", "/docker-entrypoint.sh"]
