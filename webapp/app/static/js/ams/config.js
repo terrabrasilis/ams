@@ -2,8 +2,8 @@ var ams = ams || {};
 ams.BiomeConfig={};
 
 ams.defaultSubset="Bioma";
-ams.defaultBiome="Amazônia";
 ams.defaultMunicipalitiesGroup="customizado";
+ams.defaultBiome="Amazônia";
 
 var defaultConfig = {
   terrabrasilisURL:"http://terrabrasilis.dpi.inpe.br",
@@ -30,7 +30,7 @@ var defaultConfig = {
 };
 
 ams.BiomeConfig["Amazônia"] = {
-  defaultWorkspace: 'ams2',
+  defaultWorkspace: ams.Utils.isHomologationEnvironment()? "ams1" : "ams2",
   defaultLayers:{
     biomeBorder:"biome_border",
     municipalitiesBorder:"municipalities_border",
@@ -57,7 +57,7 @@ ams.BiomeConfig["Amazônia"] = {
 };
 
 ams.BiomeConfig["Cerrado"] = {
-  defaultWorkspace: 'ams2',
+  defaultWorkspace: ams.Utils.isHomologationEnvironment()? "ams1" : "ams2",
   defaultLayers:{
     biomeBorder:"biome_border",
     municipalitiesBorder:"municipalities_border",
