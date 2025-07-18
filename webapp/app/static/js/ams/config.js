@@ -2,8 +2,8 @@ var ams = ams || {};
 ams.BiomeConfig={};
 
 ams.defaultSubset="Bioma";
-ams.defaultBiome="Amazônia";
 ams.defaultMunicipalitiesGroup="customizado";
+ams.defaultBiome="Amazônia";
 
 var defaultConfig = {
   terrabrasilisURL:"http://terrabrasilis.dpi.inpe.br",
