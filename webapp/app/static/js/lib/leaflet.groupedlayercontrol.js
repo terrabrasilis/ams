@@ -22,7 +22,10 @@ L.Control.GroupedLayers = L.Control.extend({
     this._domGroups = [];
     this._selectCtrls = {};
     this._subsetChanged = true;
-    this._lastSelected = "";
+    this._optionClicked = false;
+    this._lastSelectedRadio = "";
+    this._lastSelect = undefined;
+    this._lastSelectedOption = "";
 
     for (i in controlGroups) {  // group
         type = controlGroups[i]["type"];
@@ -313,7 +316,7 @@ L.Control.GroupedLayers = L.Control.extend({
     var checked = obj.acronym == obj.name;
 
     if (checked) {
-        this._lastSelected = obj.name;
+        this._lastSelectedRadio = obj.name;
     }
 
     var groupRadioName = 'leaflet-exclusive-group-layer-' + obj.group.id;
@@ -346,6 +349,8 @@ L.Control.GroupedLayers = L.Control.extend({
 
     var select = selectCtrl.querySelector('select');
     L.DomEvent.on(select, 'change', this._onSelectChange, this);
+    L.DomEvent.on(select, 'click', this._onSelectChange, this);
+    L.DomEvent.on(select, 'focus', this._onSelectFocus, this);
 
     for (let p of obj.values) {
         select.appendChild(this._createSubsetSelectOption(p, p, p === obj.defaultFilter));
@@ -608,6 +613,12 @@ L.Control.GroupedLayers = L.Control.extend({
     }
 
     var obj = JSON.parse(JSON.stringify(this._getControlById(e.target.ctrlId)));
+
+    if (obj.name === this._lastSelectedRadio && !this._optionClicked) {
+      return;
+    }
+    this._optionClicked = false;
+
     var selectCtrl = this._selectCtrls[obj.name];
     var select = selectCtrl.querySelector('select');
 
@@ -622,9 +633,12 @@ L.Control.GroupedLayers = L.Control.extend({
     if (obj.name == "customizado") {
       ams.App._getCustomizedMunicipalities().then(geocodes => {
         if (!geocodes.length) {
-          var radioName = this._lastSelected + "-subset-radio";
+          var radioName = this._lastSelectedRadio + "-subset-radio";
           var radio = document.querySelector('input[type="radio"][data-user-defined="' + radioName + '"]');
           radio.checked = true;
+          if (this._lastSelect) {
+            this._lastSelect.val(this._lastSelectedOption);
+          }
           return;
         }
         obj.customized = geocodes;
@@ -637,11 +651,22 @@ L.Control.GroupedLayers = L.Control.extend({
     this._map.fire('changectrl', obj);
   },
 
+  _onSelectFocus: function (e) {
+    this._lastSelect = $(e.target).closest('select');
+    this._lastSelectedOption = $(e.target).val();
+  },
+
   _onSelectChange: function (e) {
-    var radioName = e.target.name.replace("-select", "-radio");
+    if (e.target.tagName.toLowerCase() !== "option") {
+      return false;
+    }
+
+    //var optionradioName = e.target.name.replace("-select", "-radio");
+    var radioName = $(e.target).closest('select').attr("name").replace("-select", "-radio");
     var radio = document.querySelector('input[type="radio"][data-user-defined="' + radioName + '"]');
 
     this._subsetChanged = false;
+    this._optionClicked = true;
 
     radio.click();
   },
