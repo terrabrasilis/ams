@@ -29,23 +29,47 @@ var defaultConfig = {
   }
 };
 
+// default definitions
+const defaultLayers = {
+  biomeBorder:"biome_border",
+  municipalitiesBorder:"municipalities_border",
+  // the layer name of DETER alerts from TerraBrasilis service
+  deter: "deter-ams",
+  // the layer name of Focos de Queimadas from TerraBrasilis service
+  activeFire:"active-fire",
+  // the layer name to get the last update date of available data
+  lastDate: "last_date"
+};
+
+const defaultFilters = {
+  spatialUnit: 'cs_150km',
+  temporalUnit: '7d',
+  // can be 'onPeriod' or 'periodDiff'
+  diffClassify: 'onPeriod',
+  priorityLimit: 10
+};
+
+const defaultRiskFilter = {
+  threshold: 0,
+  expirationRisk: 0
+};
+
+const defaultWorkspace = ams.Utils.isHomologationEnvironment()? "ams1" : "ams2";
+
+// configuration by biome
 ams.BiomeConfig["Amazônia"] = {
-  defaultWorkspace: ams.Utils.isHomologationEnvironment()? "ams1" : "ams2",
-  defaultLayers:{
-    biomeBorder:"biome_border",
-    municipalitiesBorder:"municipalities_border",
-    deter:"deter-ams", // The layer name of DETER alerts from TerraBrasilis service. The workspace is dinamic and based on authentication state
-    activeFire:"active-fire", // The layer name of Focos de Queimadas from TerraBrasilis service. The workspace is dinamic and based on authentication state
-    ibamaRisk: "risk-ibama-weekly-data", // The layer name of weekly risk with the default prediction data of risk of deforestation from IBAMA.
+  defaultWorkspace: defaultWorkspace,
+  defaultLayers: {
+    ...defaultLayers,
+    // the layer name of weekly risk with the default prediction data of risk of deforestation from IBAMA.
+    ibamaRisk: "risk-ibama-weekly-data",
+    // the layer name of risk from INPE.
     inpeRisk: "risk-inpe-data",
-    lastDate: "last_date" // The layer name to get the last update date of available data. The workspace is dinamic and based on authentication state
   },
   defaultFilters: {
-    indicator: 'DS',// can be group's name of DETER classnames, 'DS', 'DG', 'CS' and 'MN', or 'AF' to Queimadas, or 'RK' to IBAMA risk or 'RI' to INPE risk
-    spatialUnit: 'cs_150km',
-    temporalUnit: '7d',
-    diffClassify: 'onPeriod',// can be 'onPeriod' or 'periodDiff'
-    priorityLimit: 10
+    ...defaultFilters,
+    // can be group's name of DETER classnames, 'DS', 'DG', 'CS' and 'MN', or 'AF' to Queimadas, or 'RK' to IBAMA risk or 'RI' to INPE risk
+    indicator: 'DS',
   },
   defaultRiskFilter:{
     // used to process counts, including points where the value is greater than this threshold
@@ -56,28 +80,20 @@ ams.BiomeConfig["Amazônia"] = {
   }
 };
 
-ams.BiomeConfig["Cerrado"] = {
-  defaultWorkspace: ams.Utils.isHomologationEnvironment()? "ams1" : "ams2",
-  defaultLayers:{
-    biomeBorder:"biome_border",
-    municipalitiesBorder:"municipalities_border",
-    deter:"deter-ams", // The layer name of DETER alerts from TerraBrasilis service. The workspace is dinamic and based on authentication state
-    activeFire:"active-fire", // The layer name of Focos de Queimadas from TerraBrasilis service. The workspace is dinamic and based on authentication state
-    lastDate: "last_date" // The layer name to get the last update date of available data. The workspace is dinamic and based on authentication state
-  },
+const activeFiresLayerConfig = {
+  defaultWorkspace: defaultWorkspace,
+  defaultLayers: defaultLayers,
   defaultFilters: {
-    indicator: 'DS',// can be group's name of DETER classname 'DS' or 'AF' to Queimadas
-    spatialUnit: 'cs_150km',
-    temporalUnit: '7d',
-    diffClassify: 'onPeriod',// can be 'onPeriod' or 'periodDiff'
-    priorityLimit: 10
+    ...defaultFilters,
+    indicator: 'AF',
   },
-  defaultRiskFilter: {
-    threshold: 0,
-    expirationRisk: 0
-  }
+  defaultRiskFilter: defaultRiskFilter
 };
 
-ams.BiomeConfig["Cerrado"] = {...ams.BiomeConfig["Cerrado"], ...defaultConfig};
 ams.BiomeConfig["Amazônia"] = {...ams.BiomeConfig["Amazônia"], ...defaultConfig};
+ams.BiomeConfig["Cerrado"] = {...activeFiresLayerConfig, ...defaultConfig};
+ams.BiomeConfig["Pantanal"] = {...activeFiresLayerConfig, ...defaultConfig};
+ams.BiomeConfig["Caatinga"] = {...activeFiresLayerConfig, ...defaultConfig};
+ams.BiomeConfig["Pampa"] = {...activeFiresLayerConfig, ...defaultConfig};
+ams.BiomeConfig["Mata Atlântica"] = {...activeFiresLayerConfig, ...defaultConfig};
 ams.BiomeConfig["ALL"] = {...ams.BiomeConfig["Amazônia"], ...defaultConfig};

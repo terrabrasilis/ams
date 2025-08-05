@@ -57,6 +57,7 @@ def _get_config(
     ctrl = AppConfigController(dburl)
 
     biomes = ctrl.read_biomes()  # all biomes
+
     selected_geocodes = geocodes.split(",")
 
     if subset == "Bioma":
@@ -79,11 +80,6 @@ def _get_config(
             selected_geocodes if municipalities_group == "customizado" else ctrl.read_municipalities_geocode(municipality_group=municipalities_group)
         )
         cg = ctrl.read_class_groups(biomes=mbiomes)
-
-    publish_date = (
-        ctrl.read_publish_date(biomes=json.loads(selected_biomes)) if not is_authenticated else
-        datetime.now().strftime("%Y-%m-%d")
-    )
 
     ldu = ctrl.read_land_uses(land_use_type="ams")
 
@@ -111,7 +107,6 @@ def _get_config(
         'selected_subset': subset,
         'selected_biomes': selected_biomes,
         'selected_municipalities_group': municipalities_group,
-        'publish_date': publish_date,
         'selected_geocodes': json.dumps(selected_geocodes),
         'all_municipalities': ctrl.read_municipalities(biomes=json.loads(biomes)),
         'municipality_panel_mode': json.dumps(municipality_panel_mode),

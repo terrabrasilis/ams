@@ -63,7 +63,6 @@ ams.Utils = {
     ams.Config.appSelectedSubset = generalConfig.selected_subset;
     ams.Config.appSelectedBiomes = JSON.parse(generalConfig.selected_biomes.replace(/'/g,"\""));
     ams.Config.appSelectedMunicipalitiesGroup = generalConfig.selected_municipalities_group;
-    ams.Config.publishDate = generalConfig.publish_date;
     ams.Config.bbox = JSON.parse(generalConfig.bbox);
 
     ams.Config.appSelectedGeocodes = JSON.parse(generalConfig.selected_geocodes);
