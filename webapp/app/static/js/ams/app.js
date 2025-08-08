@@ -1177,8 +1177,8 @@ ams.App = {
         }
     },
 
-    saveAlerts: function (jsConfig) {
-        async function _saveAlerts (jsConfig) {
+    saveIndicators: function (jsConfig) {
+        async function _saveIndicators (jsConfig) {
             $("#loading_data_info").css('display','block');
 
             // defining filename prefix
@@ -1206,7 +1206,7 @@ ams.App = {
             jsConfig["filenamePrefix"] = filenamePrefix;
             
             let jsConfigStr = JSON.stringify(jsConfig);
-            let response = await fetch("alerts?sData=" + jsConfigStr).catch(
+            let response = await fetch("indicators?sData=" + jsConfigStr).catch(
                 ()=>{
                     console.log("The backend service may be offline or your internet connection has been interrupted.");
                 }
@@ -1232,7 +1232,7 @@ ams.App = {
             }
         }
         
-        _saveAlerts(jsConfig);
+        _saveIndicators(jsConfig);
     },
 
     startMunicipalityPanel: function (name, value) {

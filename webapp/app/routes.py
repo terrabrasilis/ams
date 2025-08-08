@@ -3,7 +3,7 @@ import os
 
 from datetime import datetime
 
-from ams.save_alerts import prepare_alerts_to_save
+from ams.save_indicators import prepare_indicators_to_save
 from ams.spatial_unit_profile import SpatialUnitProfile
 from flask import render_template, request, send_file
 
@@ -263,8 +263,8 @@ def get_profile(endpoint):
         return "Something is wrong on the server. Please, send this error to our support service: terrabrasilis@inpe.br", 500
  
 
-@app.route('/alerts', methods=['GET'])
-def get_alerts():
+@app.route('/indicators', methods=['GET'])
+def get_indicators():
     args = request.args
 
     status, params_or_error = _validate_params(
@@ -294,7 +294,7 @@ def get_alerts():
         if name == biome:
             name = '*'
 
-        zip_data = prepare_alerts_to_save(
+        zip_data = prepare_indicators_to_save(
             dburl = Config.DB_URL,
             is_authenticated=params['isAuthenticated'],
             spatial_unit=params['spatialUnit'],
@@ -312,4 +312,4 @@ def get_alerts():
         print(e)
         return "Something is wrong on the server. Please, send this error to our support service: terrabrasilis@inpe.br", 500
 
-    return send_file(zip_data, as_attachment=True, download_name="alerts.zip")
+    return send_file(zip_data, as_attachment=True, download_name="indicators.zip")
