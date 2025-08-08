@@ -349,7 +349,6 @@ L.Control.GroupedLayers = L.Control.extend({
 
     var select = selectCtrl.querySelector('select');
     L.DomEvent.on(select, 'change', this._onSelectChange, this);
-    L.DomEvent.on(select, 'click', this._onSelectChange, this);
     L.DomEvent.on(select, 'focus', this._onSelectFocus, this);
 
     for (let p of obj.values) {
@@ -657,11 +656,6 @@ L.Control.GroupedLayers = L.Control.extend({
   },
 
   _onSelectChange: function (e) {
-    if (e.target.tagName.toLowerCase() !== "option") {
-      return false;
-    }
-
-    //var optionradioName = e.target.name.replace("-select", "-radio");
     var radioName = $(e.target).closest('select').attr("name").replace("-select", "-radio");
     var radio = document.querySelector('input[type="radio"][data-user-defined="' + radioName + '"]');
 

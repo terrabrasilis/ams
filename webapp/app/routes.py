@@ -3,7 +3,7 @@ import os
 
 from datetime import datetime
 
-from ams.save_alerts import prepare_alerts_to_save
+from ams.save_indicators import prepare_indicators_to_save
 from ams.spatial_unit_profile import SpatialUnitProfile
 from flask import render_template, request, send_file
 
@@ -57,6 +57,7 @@ def _get_config(
     ctrl = AppConfigController(dburl)
 
     biomes = ctrl.read_biomes()  # all biomes
+
     selected_geocodes = geocodes.split(",")
 
     if subset == "Bioma":
@@ -79,11 +80,6 @@ def _get_config(
             selected_geocodes if municipalities_group == "customizado" else ctrl.read_municipalities_geocode(municipality_group=municipalities_group)
         )
         cg = ctrl.read_class_groups(biomes=mbiomes)
-
-    publish_date = (
-        ctrl.read_publish_date(biomes=json.loads(selected_biomes)) if not is_authenticated else
-        datetime.now().strftime("%Y-%m-%d")
-    )
 
     ldu = ctrl.read_land_uses(land_use_type="ams")
 
@@ -111,7 +107,6 @@ def _get_config(
         'selected_subset': subset,
         'selected_biomes': selected_biomes,
         'selected_municipalities_group': municipalities_group,
-        'publish_date': publish_date,
         'selected_geocodes': json.dumps(selected_geocodes),
         'all_municipalities': ctrl.read_municipalities(biomes=json.loads(biomes)),
         'municipality_panel_mode': json.dumps(municipality_panel_mode),
@@ -268,8 +263,8 @@ def get_profile(endpoint):
         return "Something is wrong on the server. Please, send this error to our support service: terrabrasilis@inpe.br", 500
  
 
-@app.route('/alerts', methods=['GET'])
-def get_alerts():
+@app.route('/indicators', methods=['GET'])
+def get_indicators():
     args = request.args
 
     status, params_or_error = _validate_params(
@@ -299,7 +294,7 @@ def get_alerts():
         if name == biome:
             name = '*'
 
-        zip_data = prepare_alerts_to_save(
+        zip_data = prepare_indicators_to_save(
             dburl = Config.DB_URL,
             is_authenticated=params['isAuthenticated'],
             spatial_unit=params['spatialUnit'],
@@ -317,4 +312,4 @@ def get_alerts():
         print(e)
         return "Something is wrong on the server. Please, send this error to our support service: terrabrasilis@inpe.br", 500
 
-    return send_file(zip_data, as_attachment=True, download_name="alerts.zip")
+    return send_file(zip_data, as_attachment=True, download_name="indicators.zip")
