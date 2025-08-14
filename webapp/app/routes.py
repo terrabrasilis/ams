@@ -103,7 +103,7 @@ def _get_config(
         'spatial_units_info_for_subset': sui_subset,
         'biomes': biomes,
         'bbox': bbox,
-        'municipalities_group': ctrl.read_municipalities_group(),
+        'municipalities_group': ctrl.read_municipalities_group(gtype="user-defined"),
         'selected_subset': subset,
         'selected_biomes': selected_biomes,
         'selected_municipalities_group': municipalities_group,

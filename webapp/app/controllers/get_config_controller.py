@@ -113,14 +113,23 @@ class AppConfigController:
 
         return json.dumps(results)
 
-    def read_municipalities_group(self):
+    def read_municipalities_group(self, gtype="user-defined", customized=True):
         """
         Gets the municipalities group from database.
         """
-        sql = "SELECT name from public.municipalities_group"
+        sql = """
+            SELECT name from public.municipalities_group
+            WHERE type='%s'
+            ORDER BY name ASC;
+        """
+        sql = sql % gtype
+       
         cur = self._conn.cursor()
         cur.execute(sql)
-        results = ["customizado"] + [_[0] for _ in cur.fetchall()]
+
+        results = ["customizado"] if customized else []
+        results =  results + [_[0] for _ in cur.fetchall()]
+
         return json.dumps(results)
 
     def read_municipalities_geocode(self, municipality_group):
