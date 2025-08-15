@@ -96,4 +96,4 @@ ams.BiomeConfig["Pantanal"] = {...activeFiresLayerConfig, ...defaultConfig};
 ams.BiomeConfig["Caatinga"] = {...activeFiresLayerConfig, ...defaultConfig};
 ams.BiomeConfig["Pampa"] = {...activeFiresLayerConfig, ...defaultConfig};
 ams.BiomeConfig["Mata Atlântica"] = {...activeFiresLayerConfig, ...defaultConfig};
-ams.BiomeConfig["ALL"] = {...ams.BiomeConfig["Amazônia"], ...defaultConfig};
+ams.BiomeConfig["ALL"] = {...activeFiresLayerConfig, ...defaultConfig};

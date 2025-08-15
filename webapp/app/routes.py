@@ -104,6 +104,7 @@ def _get_config(
         'biomes': biomes,
         'bbox': bbox,
         'municipalities_group': ctrl.read_municipalities_group(gtype="user-defined"),
+        'states_group': ctrl.read_municipalities_group(gtype="state", customized=False),
         'selected_subset': subset,
         'selected_biomes': selected_biomes,
         'selected_municipalities_group': municipalities_group,
@@ -155,6 +156,7 @@ def get_config(endpoint):
             temp_unit=params["tempUnit"],
             classname=params["classname"],
         )
+
         return json.dumps(conf)
 
     except Exception as e:

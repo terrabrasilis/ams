@@ -57,12 +57,14 @@ ams.Utils = {
 
     ams.Config.allBiomes = JSON.parse(generalConfig.biomes.replace(/'/g,"\""));
     ams.Config.allMunicipalitiesGroup = JSON.parse(generalConfig.municipalities_group.replace(/'/g,"\""));
+    ams.Config.allStates = JSON.parse(generalConfig.states_group.replace(/'/g,"\""));
     ams.Config.landUses = JSON.parse(generalConfig.land_uses.replace(/'/g,"\""));
 
     ams.Config.biome = generalConfig.appBiome;
     ams.Config.appSelectedSubset = generalConfig.selected_subset;
     ams.Config.appSelectedBiomes = JSON.parse(generalConfig.selected_biomes.replace(/'/g,"\""));
     ams.Config.appSelectedMunicipalitiesGroup = generalConfig.selected_municipalities_group;
+    ams.Config.appSelectedGroup = generalConfig.selected_municipalities_group;
     ams.Config.bbox = JSON.parse(generalConfig.bbox);
 
     ams.Config.appSelectedGeocodes = JSON.parse(generalConfig.selected_geocodes);
@@ -75,8 +77,12 @@ ams.Utils = {
     ams.Config.endDate = generalConfig.end_date;
     ams.Config.tempUnit = generalConfig.temp_unit;
 
+    var classGroups = JSON.parse(generalConfig.deter_class_groups.replace(/'/g,"\""));
+
     if (generalConfig.classname) {
       ams.Config.defaultFilters.indicator	= generalConfig.classname;
+    } else {
+      ams.Config.defaultFilters.indicator	= classGroups[0].name;
     }
 
     var spatialUnits = JSON.parse(generalConfig.spatial_units_info_for_subset.replace(/'/g,"\""));
