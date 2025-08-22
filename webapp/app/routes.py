@@ -46,7 +46,6 @@ def _get_config(
     subset: str,
     municipalities_group: str,
     geocodes: str,
-    is_authenticated: bool,
     municipality_panel_mode: bool,
     start_date: str="",
     end_date: str="",
@@ -54,7 +53,11 @@ def _get_config(
     classname: str="",
 ):
     dburl = Config.DB_URL
+
     ctrl = AppConfigController(dburl)
+
+    if not ctrl.is_connected():
+        return {}
 
     biomes = ctrl.read_biomes()  # all biomes
 
@@ -142,6 +145,8 @@ def get_config(endpoint):
     if not status:
         return params_or_error
     
+    error_msg = "Something is wrong on the server. Please, send this error to our support service: terrabrasilis@inpe.br", 500
+    
     try:
         params = params_or_error
         conf = _get_config(
@@ -149,7 +154,6 @@ def get_config(endpoint):
             subset=params["subset"],
             municipalities_group=params["municipalitiesGroup"],
             geocodes=params["geocodes"],
-            is_authenticated=params['isAuthenticated'].lower() == "true",
             municipality_panel_mode=params["municipalityPanelMode"].lower() == "true",
             start_date=params["startDate"],
             end_date=params["endDate"],
@@ -157,46 +161,68 @@ def get_config(endpoint):
             classname=params["classname"],
         )
 
+        if not conf:
+            return error_msg
+
         return json.dumps(conf)
 
     except Exception as e:
-        return "Something is wrong on the server. Please, send this error to our support service: terrabrasilis@inpe.br", 500
+        print(e)
+        return error_msg
 
 
 @app.route('/panel', methods=['GET'])
 def set_municipality_panel_mode():
-    params = request.args
+    try:
+        params = request.args
 
-    if not len(set(params) & {"id", "geocode"}):
+        if not len(set(params) & {"id", "geocode"}):
+            return _render_template(
+                 params={"error-msg": "O parâmetro informado na URL é inválido. Por favor, utilize 'id' ou 'geocode'."}
+            )
+
+        dburl = Config.DB_URL
+        ctrl = AppConfigController(dburl)
+
+        if not ctrl.is_connected():
+            return _render_template(
+                params={"error-msg": "Erro no servidor ao carregar a sala de situação municipal."}
+            )
+
+        if "id" in params:
+            geocode = ctrl.read_municipality_geocode(su_id=params["id"])
+        else:
+            geocode = params["geocode"]
+
+        geocode = ''.join(ch for ch in geocode if ch.isdigit())
+
+        if not ctrl.geocode_is_valid(geocode=geocode):
+            if "id" in params:
+                error_msg = f"Geocódigo inexistente para o ID {params['id']}. Valide o identificador informado."
+            else:
+                error_msg = f"Geocódigo '{geocode}' não foi encontrado. Por favor, verifique se o valor está correto e tente novamente."
+
+            return _render_template(params={"error-msg": error_msg})
+    
+        params = {
+            "municipality-panel": "true",
+            "geocode": geocode,
+            "start_date": params.get("startDate", ""),
+            "end_date": params.get("endDate", ""),
+            "temp_unit": params.get("tempUnit", ""),
+            "classname": params.get("classname", ""),
+        }
+
         return _render_template(
-            params={"error-msg": "Invalid URL parameter. Expected values are 'id' or 'geocode'."}
-        )
-
-    dburl = Config.DB_URL
-    ctrl = AppConfigController(dburl)
-
-    if "id" in params:
-        geocode = ctrl.read_municipality_geocode(su_id=params["id"])
-    else:
-        geocode = params["geocode"]
-
-    if not ctrl.geocode_is_valid(geocode=geocode):
-        return _render_template(
-            params={"error-msg": f"Geocódigo {geocode} não encontrado. Verifique se o valor informado está correto."}
+            params=params
         )
     
-    params = {
-        "municipality-panel": "true",
-        "geocode": geocode,
-        "start_date": params.get("startDate", ""),
-        "end_date": params.get("endDate", ""),
-        "temp_unit": params.get("tempUnit", ""),
-        "classname": params.get("classname", ""),
-    }
+    except Exception as e:
+        print(e)
+        return _render_template(
+            params={"error-msg": "Erro no servidor ao carregar a sala de situação municipal."}
+        )
 
-    return _render_template(
-        params=params
-    )
 
 @app.route('/callback/<endpoint>', methods=['GET'])
 def get_profile(endpoint):

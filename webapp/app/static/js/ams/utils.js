@@ -218,7 +218,7 @@ ams.Utils = {
               "&classname=" + classname
           );          
 
-          if (response&&response.ok) {
+          if (response && response.ok) {
             let generalConfig = await response.json();
 
             if (generalConfig.appBiome) {
@@ -229,20 +229,23 @@ ams.Utils = {
               resolve();
 
             } else {
-              console.log("HTTP-Error: " + response.status + " on biome changes");
-              $('.toast').toast('show');
-              $('.toast-body').html("Encontrou um erro na solicitação ao servidor.");
-
+              ams.Notifier.showErrorMsg(
+                msg=ams.Notifier.Errors.REQUEST_FAILED,
+                response=response,
+                desc="on biome changes"              
+              );
               reject("HTTP-Error: " + response.status + " on biome changes");
             }
+
           } else {
-            if (response) console.log("HTTP-Error: " + response.status + " on biome changes");
-
-            $('.toast').toast('show');
-            $('.toast-body').html("Encontrou um erro na solicitação ao servidor.");
-
+            ams.Notifier.showErrorMsg(
+              msg=ams.Notifier.Errors.REQUEST_FAILED,
+              response=response,
+              desc="on biome changes"              
+            );
             reject("HTTP-Error: " + response.status + " on biome changes");
           }
+
         };
 
         delete ams.Map.PopupControl._popupReference;
@@ -284,13 +287,48 @@ ams.Utils = {
     localStorage.clear();
   },
 
-    /**
-     * Assertion.
-     */
-    assert: function(condition, msg) {
-        if (!condition) {
-            throw new Error(msg || "assertion error");
-        }
-    },
+  /**
+   * Assertion.
+   */
+  assert: function(condition, msg) {
+      if (!condition) {
+          throw new Error(msg || "assertion error");
+      }
+  }
+
+};
+
+ams.Notifier = {
+  Errors: {
+    REQUEST_FAILED: "Encontrou um erro na solicitação ao servidor."
+  },
+
+  /**
+   * Error message.
+    */
+  showErrorMsg: function (msg, response, desc) {
+    error_msg = "";
+
+    if (response) {
+      console.log("HTTP-Error: " + response.status + " " + desc);
+    }
+    
+    $('.toast').toast({delay: 7000});
+	  $('.toast-body').html(msg);
+    $('.toast').toast('show');
+  },
+
+  showMsg: function (msg) {
+    $('.toast').toast({delay: 7000});
+	  $('.toast-body').html(msg);
+    $('.toast').toast('show');
+  },
+
+  showErrorIfExists: function () {
+    if ($('meta[name="error-msg"]').length) {
+      ams.Notifier.showErrorMsg($('meta[name="error-msg"]').attr('content'));
+      $('meta[name="error-msg"]').remove();
+    }
+  },
 
 };

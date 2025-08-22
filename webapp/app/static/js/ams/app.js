@@ -558,15 +558,7 @@ ams.App = {
         });
 
         // error message
-        function showErrorMsg(msg) {
-	    $('.toast').toast({delay: 7000});
-	    $('.toast-body').html(msg);
-            $('.toast').toast('show');
-        }
-        if ($('meta[name="error-msg"]').length) {
-            showErrorMsg($('meta[name="error-msg"]').attr('content'));
-            $('meta[name="error-msg"]').remove();
-        }
+        ams.Notifier.showErrorIfExists();
         
         let profileClick=function() {
             let conf={};

@@ -8,7 +8,14 @@ class AppConfigController:
     """AppConfigController"""
 
     def __init__(self, db_url: str):
-        self._conn = connect(db_url)
+        try:
+            self._conn = connect(db_url)
+        except Exception as e:
+            print("connection error", e)
+            self._conn = None
+
+    def is_connected(self):
+        return not self._conn is None
 
     def read_class_groups(self, biomes, inpe_risk=True):
         """
@@ -223,7 +230,7 @@ class AppConfigController:
         if len(results):
             return results[0]
 
-        return None
+        return ""
 
     def read_municipality_geocode(self, su_id):
         """
@@ -240,7 +247,7 @@ class AppConfigController:
         if results:
             return results[0]
 
-        return None
+        return ""
 
     def read_bbox(self, subset, biome, municipalities_group, geocodes):
         """
