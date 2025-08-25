@@ -252,6 +252,11 @@ def get_profile(endpoint):
         # Raised when a mapping (dictionary) key is not found in the set of existing keys.
         # HTTP 412: Precondition Failed
         return "Input parameters are missing: {0}".format(str(ke)), 412
+    
+    if temporal_unit == '0d':
+        return json.dumps(
+            {'FormTitle': 'Sem gráficos para exibir com a configuração atual.'}
+        )        
 
     try:
         spatial_unit_profile = SpatialUnitProfile(Config, params)
