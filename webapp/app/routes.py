@@ -5,11 +5,14 @@ from datetime import datetime
 
 from ams.save_indicators import prepare_indicators_to_save
 from ams.spatial_unit_profile import SpatialUnitProfile
-from flask import render_template, request, send_file
+from flask import render_template, request, send_file, g
 
 from . import bp as app
 from .config import Config
 from .controllers import AppConfigController
+
+import uuid
+import time
 
 
 @app.route('/', methods=['GET'])
@@ -346,3 +349,40 @@ def get_indicators():
         return "Something is wrong on the server. Please, send this error to our support service: terrabrasilis@inpe.br", 500
 
     return send_file(zip_data, as_attachment=True, download_name="indicators.zip")
+
+
+@app.before_request
+def request_start():
+    """Keep some request information for debugging."""
+    if not Config.DEBUG_MODE:
+        return
+    
+    g.request_id = str(uuid.uuid4())[:8] 
+    g.start_time = time.time()
+
+    request_debug_info = {
+        'url': request.url,
+        'method': request.method,
+        'path': request.path,
+        'query_params': request.args.to_dict(),
+        'form_data': request.form.to_dict() if request.form else {},
+        'remote_addr': request.remote_addr,
+        'user_agent': request.headers.get('User-Agent', 'Unknown')
+    }
+
+    print(
+        f"[{g.request_id}] START REQUEST: {request.method} {request.path} "
+        f"from {request.remote_addr} "
+        f"(info: {request_debug_info})"
+    )
+
+
+@app.after_request
+def request_finish(response):
+    """Calculate the duration of the request."""
+    if not Config.DEBUG_MODE:
+        return response
+    
+    duration = int(time.time() - g.start_time) * 1000
+    print(f"[{g.request_id}] END REQUEST ({duration} ms).")
+    return response
