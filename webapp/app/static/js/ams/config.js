@@ -54,7 +54,7 @@ const defaultRiskFilter = {
   expirationRisk: 0
 };
 
-const defaultWorkspace = ams.Utils.isHomologationEnvironment()? "ams1" : "ams2";
+const defaultWorkspace = ams.Utils.isHomologationEnvironment()? "ams1" : "ams1";
 
 // configuration by biome
 ams.BiomeConfig["Amazônia"] = {
