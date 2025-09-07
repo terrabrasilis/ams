@@ -437,7 +437,30 @@ class SpatialUnitProfile():
         ORDER BY id DESC
         LIMIT 1;"""
         return self.execute_sql(sql=sql)
+    
+    def _get_customized_description(self):
+        geocodes = [_ for _ in self._geocodes.split(",") if _]
 
+        if len(geocodes) > 0:
+            if len(geocodes) == 1:
+                sql = f"""
+                    SELECT name FROM public.municipalities WHERE geocode='{geocodes[0]}';
+                """
+                return f"para todo o município ({self.execute_sql(sql=sql)})"
+            return f"para os municípios selecionados"
+
+        assert self._municipalities_group != "ALL"
+
+        sql = f"""
+            SELECT type FROM public.municipalities_group WHERE name='{self._municipalities_group}';                
+        """
+
+        gtype = self.execute_sql(sql=sql)
+
+        if  gtype == "state":
+            return f"para todo o estado ({self._municipalities_group})"
+        
+        return f"para os municípios do grupo selecionado ({self._municipalities_group})"
 
     def form_title(self):
         """
@@ -445,9 +468,9 @@ class SpatialUnitProfile():
         """
         indicador=self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
         last_date=self.format_date(self._start_date)
-        
+
         if self._name == '*':
-            spatial_unit = 'para todo o bioma' if self._municipalities_group == 'ALL' else 'dos municípios de interesse'
+            spatial_unit = 'para todo o bioma' if self._municipalities_group == 'ALL' else self._get_customized_description()
             spatial_description = f" ({self._appBiome})" if self._municipalities_group == 'ALL' else ""
         else:
             spatial_unit = f"com recorte na unidade espacial <b>{self._name}</b>"

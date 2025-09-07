@@ -97,14 +97,19 @@ ams.Date = {
         this.setPeriod = function(date, period, datetype) {
             this.period = period;
 
-            if (period === "custom" && datetype !== undefined) {
-                // In the custom period mode the end date is defined by user. So, isn't necessary to compute
-                if (datetype == "start") {
-                    this.setCustomPeriod(date, this.enddate, 1);
-                } else {
-                    this.setCustomPeriod(this.startdate, date, 1);
+            if (period === "custom") {
+                if (datetype !== undefined) {
+                    // In the custom period mode the end date is defined by user. So, isn't necessary to compute
+                    if (datetype == "start") {
+                        if (date == this.startdate) return false;
+                        this.setCustomPeriod(date, this.enddate, 1);
+                    } else {
+                        if (date == this.enddate) return false;
+                        this.setCustomPeriod(this.startdate, date, 1);
+                    }
+                    return true;
                 }
-                return;
+                return false;
             }
             
             startdate = date;
@@ -121,6 +126,8 @@ ams.Date = {
             // set to display
             this.enddate = this.toUTCDate(enddate);
             this.prevdate = this.toUTCDate(prevdate);
+
+            return true;
         }
 
         this.setCustomPeriod = function(startdate, enddate, incDays=0) {

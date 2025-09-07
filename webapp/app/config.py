@@ -16,6 +16,7 @@ class Config:
     RESET_LOCAL_STORAGE = os.environ.get('RESET_LOCAL_STORAGE', "false").lower() == "true"
     INPE_RISK_SCALE_FACTOR = 1
     SCALE_PPCDAM_GRAPH = os.environ.get('SCALE_PPCDAM_GRAPH', "false").lower() == "true"
+    DEBUG_MODE = os.environ.get('AMS_DEBUG_MODE', 'true').lower() == 'true'
 
     @staticmethod
     def get_params_to_frontend():

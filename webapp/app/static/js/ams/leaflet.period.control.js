@@ -104,10 +104,17 @@ L.Control.PeriodHandler = L.Control.extend({
 
         function _updateCustomPeriod() {
             let startDate = $('#datepicker-start').val().split("/");
-            let endDate = $('#datepicker-end').val().split("/");
+            
+            let tmpDate = $('#datepicker-end').val().split("/");
+            let endDate = ams.Date.fromString(tmpDate[2] + "-" + tmpDate[1] + "-" + tmpDate[0]);
+
+            endDate.setDate(endDate.getDate() - 1);            
+
+            // In the custom period mode the end date is 
             ams.App._dateControl.setCustomPeriod(
                 startDate[2] + "-" + startDate[1] + "-" + startDate[0],
-                endDate[2] + "-" + endDate[1] + "-" + endDate[0],
+                endDate.toISOString().substr(0,10),
+                1
             );
         }
 

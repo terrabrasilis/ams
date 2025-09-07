@@ -235,6 +235,14 @@ ams.App = {
                 name: "Municípios de Interesse",
                 values: ams.Config.allMunicipalitiesGroup,
             },
+            "RECORTE ESTADO": {
+                type: "selectControl",
+                defaultFilter: ams.Config.appSelectedGroup,
+                defaultSubset: ams.Config.appSelectedSubset,
+                group: "RECORTE",
+                name: "Estado",
+                values: ams.Config.allStates,
+            },
             "INDICADOR": {
                 defaultFilter:ams.Config.defaultFilters.indicator,
                 propertyName:this._propertyName,
@@ -367,7 +375,7 @@ ams.App = {
                         }
                     );
 
-                } else if(e.group.name =='MUNIC\xcdPIOS DE INTERESSE'){
+                } else if(e.group.name =='MUNIC\xcdPIOS DE INTERESSE' || e.group.name == 'ESTADO') {
                     if(ams.App._landUseList.length!=ams.Config.landUses.length){
                         $('.toast').toast('show');
                         $('.toast-body').html("O filtro por categorias fundiárias foi restaurado ao padrão.");
@@ -550,15 +558,7 @@ ams.App = {
         });
 
         // error message
-        function showErrorMsg(msg) {
-	    $('.toast').toast({delay: 7000});
-	    $('.toast-body').html(msg);
-            $('.toast').toast('show');
-        }
-        if ($('meta[name="error-msg"]').length) {
-            showErrorMsg($('meta[name="error-msg"]').attr('content'));
-            $('meta[name="error-msg"]').remove();
-        }
+        ams.Notifier.showErrorIfExists();
         
         let profileClick=function() {
             let conf={};
@@ -1177,8 +1177,8 @@ ams.App = {
         }
     },
 
-    saveAlerts: function (jsConfig) {
-        async function _saveAlerts (jsConfig) {
+    saveIndicators: function (jsConfig) {
+        async function _saveIndicators (jsConfig) {
             $("#loading_data_info").css('display','block');
 
             // defining filename prefix
@@ -1206,7 +1206,7 @@ ams.App = {
             jsConfig["filenamePrefix"] = filenamePrefix;
             
             let jsConfigStr = JSON.stringify(jsConfig);
-            let response = await fetch("alerts?sData=" + jsConfigStr).catch(
+            let response = await fetch("indicators?sData=" + jsConfigStr).catch(
                 ()=>{
                     console.log("The backend service may be offline or your internet connection has been interrupted.");
                 }
@@ -1232,7 +1232,7 @@ ams.App = {
             }
         }
         
-        _saveAlerts(jsConfig);
+        _saveIndicators(jsConfig);
     },
 
     startMunicipalityPanel: function (name, value) {

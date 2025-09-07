@@ -1,4 +1,5 @@
 from psycopg2 import connect
+from datetime import datetime
 
 import json
 
@@ -7,7 +8,14 @@ class AppConfigController:
     """AppConfigController"""
 
     def __init__(self, db_url: str):
-        self._conn = connect(db_url)
+        try:
+            self._conn = connect(db_url)
+        except Exception as e:
+            print("connection error", e)
+            self._conn = None
+
+    def is_connected(self):
+        return not self._conn is None
 
     def read_class_groups(self, biomes, inpe_risk=True):
         """
@@ -20,7 +28,7 @@ class AppConfigController:
         sql = """SELECT string_agg( c1 || ',' || c2, ', ' )
 		FROM (
 			SELECT '{''name'':'''||cg.name||''', ''title'':'''||cg.title||'''' as c1,
-			cg.orderby, '''classes'':[' || string_agg(''''||c.name||'''', ',') || ']}' as c2
+			cg.orderby, '''classes'':[' || string_agg(DISTINCT ''''||c.name||'''', ',') || ']}' as c2
 			FROM public.class_group cg
                         JOIN public.class c
                         ON cg.id=c.group_id
@@ -66,9 +74,11 @@ class AppConfigController:
             cols = ",".join([f"'{_}'" for _ in exclude])
             exclude_filter = f"AND su.dataname NOT IN ({cols})"  
 
+        date = datetime.now().strftime("%Y-%m-%d")
+
         sql = """
         WITH date_agg AS (
-            SELECT su.id as spatial_unit_id, su.dataname, su.description, su.center_lat, su.center_lng, MAX(pd.date) AS last_date
+            SELECT su.id as spatial_unit_id, su.dataname, su.description, su.center_lat, su.center_lng, '%s'::date AS last_date
             FROM public.spatial_units su, deter.deter_publish_date pd
             WHERE su.id IN (
                 SELECT spatial_unit_id
@@ -76,7 +86,6 @@ class AppConfigController:
                 WHERE subset = '%s'
             )
             %s
-            AND ('%s' = 'ALL' OR pd.biome = '%s')
             GROUP BY su.id
             ORDER BY su.dataname ASC
         )
@@ -91,11 +100,13 @@ class AppConfigController:
         ) AS c1
         FROM date_agg da;
         """
-        sql = sql % (subset, exclude_filter, biome, biome)
+
+        sql = sql % (date, subset, exclude_filter)
 
         cur = self._conn.cursor()
         cur.execute(sql)
         results = cur.fetchall()
+
         return "["+results[0][0]+"]"
 
     def read_biomes(self):
@@ -106,16 +117,26 @@ class AppConfigController:
         cur = self._conn.cursor()
         cur.execute(sql)
         results = [_[0] for _ in cur.fetchall()]
+
         return json.dumps(results)
 
-    def read_municipalities_group(self):
+    def read_municipalities_group(self, gtype="user-defined", customized=True):
         """
         Gets the municipalities group from database.
         """
-        sql = "SELECT name from public.municipalities_group"
+        sql = """
+            SELECT name from public.municipalities_group
+            WHERE type='%s'
+            ORDER BY name ASC;
+        """
+        sql = sql % gtype
+       
         cur = self._conn.cursor()
         cur.execute(sql)
-        results = ["customizado"] + [_[0] for _ in cur.fetchall()]
+
+        results = ["customizado"] if customized else []
+        results =  results + [_[0] for _ in cur.fetchall()]
+
         return json.dumps(results)
 
     def read_municipalities_geocode(self, municipality_group):
@@ -209,7 +230,7 @@ class AppConfigController:
         if len(results):
             return results[0]
 
-        return None
+        return ""
 
     def read_municipality_geocode(self, su_id):
         """
@@ -226,7 +247,7 @@ class AppConfigController:
         if results:
             return results[0]
 
-        return None
+        return ""
 
     def read_bbox(self, subset, biome, municipalities_group, geocodes):
         """

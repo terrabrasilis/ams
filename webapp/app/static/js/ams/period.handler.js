@@ -49,8 +49,12 @@ ams.PeriodHandler = {
     },
 
     changeDate: function(date, datetype){
+        var needUpdateLayer = true;
         if(typeof date!='undefined')
-            ams.App._dateControl.setPeriod(date, ams.App._currentTemporalAggregate, datetype);
+            needUpdateLayer = ams.App._dateControl.setPeriod(date, ams.App._currentTemporalAggregate, datetype);
+
+        if (!needUpdateLayer) return;
+
         ams.App._suViewParams.updateDates(ams.App._dateControl);
         ams.App._priorViewParams.updateDates(ams.App._dateControl);
 

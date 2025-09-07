@@ -57,13 +57,14 @@ ams.Utils = {
 
     ams.Config.allBiomes = JSON.parse(generalConfig.biomes.replace(/'/g,"\""));
     ams.Config.allMunicipalitiesGroup = JSON.parse(generalConfig.municipalities_group.replace(/'/g,"\""));
+    ams.Config.allStates = JSON.parse(generalConfig.states_group.replace(/'/g,"\""));
     ams.Config.landUses = JSON.parse(generalConfig.land_uses.replace(/'/g,"\""));
 
     ams.Config.biome = generalConfig.appBiome;
     ams.Config.appSelectedSubset = generalConfig.selected_subset;
     ams.Config.appSelectedBiomes = JSON.parse(generalConfig.selected_biomes.replace(/'/g,"\""));
     ams.Config.appSelectedMunicipalitiesGroup = generalConfig.selected_municipalities_group;
-    ams.Config.publishDate = generalConfig.publish_date;
+    ams.Config.appSelectedGroup = generalConfig.selected_municipalities_group;
     ams.Config.bbox = JSON.parse(generalConfig.bbox);
 
     ams.Config.appSelectedGeocodes = JSON.parse(generalConfig.selected_geocodes);
@@ -76,8 +77,12 @@ ams.Utils = {
     ams.Config.endDate = generalConfig.end_date;
     ams.Config.tempUnit = generalConfig.temp_unit;
 
+    var classGroups = JSON.parse(generalConfig.deter_class_groups.replace(/'/g,"\""));
+
     if (generalConfig.classname) {
       ams.Config.defaultFilters.indicator	= generalConfig.classname;
+    } else {
+      ams.Config.defaultFilters.indicator	= classGroups[0].name;
     }
 
     var spatialUnits = JSON.parse(generalConfig.spatial_units_info_for_subset.replace(/'/g,"\""));
@@ -213,7 +218,7 @@ ams.Utils = {
               "&classname=" + classname
           );          
 
-          if (response&&response.ok) {
+          if (response && response.ok) {
             let generalConfig = await response.json();
 
             if (generalConfig.appBiome) {
@@ -224,20 +229,23 @@ ams.Utils = {
               resolve();
 
             } else {
-              console.log("HTTP-Error: " + response.status + " on biome changes");
-              $('.toast').toast('show');
-              $('.toast-body').html("Encontrou um erro na solicitação ao servidor.");
-
+              ams.Notifier.showErrorMsg(
+                msg=ams.Notifier.Errors.REQUEST_FAILED,
+                response=response,
+                desc="on biome changes"              
+              );
               reject("HTTP-Error: " + response.status + " on biome changes");
             }
+
           } else {
-            if (response) console.log("HTTP-Error: " + response.status + " on biome changes");
-
-            $('.toast').toast('show');
-            $('.toast-body').html("Encontrou um erro na solicitação ao servidor.");
-
+            ams.Notifier.showErrorMsg(
+              msg=ams.Notifier.Errors.REQUEST_FAILED,
+              response=response,
+              desc="on biome changes"              
+            );
             reject("HTTP-Error: " + response.status + " on biome changes");
           }
+
         };
 
         delete ams.Map.PopupControl._popupReference;
@@ -279,13 +287,48 @@ ams.Utils = {
     localStorage.clear();
   },
 
-    /**
-     * Assertion.
-     */
-    assert: function(condition, msg) {
-        if (!condition) {
-            throw new Error(msg || "assertion error");
-        }
-    },
+  /**
+   * Assertion.
+   */
+  assert: function(condition, msg) {
+      if (!condition) {
+          throw new Error(msg || "assertion error");
+      }
+  }
+
+};
+
+ams.Notifier = {
+  Errors: {
+    REQUEST_FAILED: "Encontrou um erro na solicitação ao servidor."
+  },
+
+  /**
+   * Error message.
+    */
+  showErrorMsg: function (msg, response, desc) {
+    error_msg = "";
+
+    if (response) {
+      console.log("HTTP-Error: " + response.status + " " + desc);
+    }
+    
+    $('.toast').toast({delay: 7000});
+	  $('.toast-body').html(msg);
+    $('.toast').toast('show');
+  },
+
+  showMsg: function (msg) {
+    $('.toast').toast({delay: 7000});
+	  $('.toast-body').html(msg);
+    $('.toast').toast('show');
+  },
+
+  showErrorIfExists: function () {
+    if ($('meta[name="error-msg"]').length) {
+      ams.Notifier.showErrorMsg($('meta[name="error-msg"]').attr('content'));
+      $('meta[name="error-msg"]').remove();
+    }
+  },
 
 };

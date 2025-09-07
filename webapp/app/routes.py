@@ -3,13 +3,16 @@ import os
 
 from datetime import datetime
 
-from ams.save_alerts import prepare_alerts_to_save
+from ams.save_indicators import prepare_indicators_to_save
 from ams.spatial_unit_profile import SpatialUnitProfile
-from flask import render_template, request, send_file
+from flask import render_template, request, send_file, g
 
 from . import bp as app
 from .config import Config
 from .controllers import AppConfigController
+
+import uuid
+import time
 
 
 @app.route('/', methods=['GET'])
@@ -46,7 +49,6 @@ def _get_config(
     subset: str,
     municipalities_group: str,
     geocodes: str,
-    is_authenticated: bool,
     municipality_panel_mode: bool,
     start_date: str="",
     end_date: str="",
@@ -54,9 +56,14 @@ def _get_config(
     classname: str="",
 ):
     dburl = Config.DB_URL
+
     ctrl = AppConfigController(dburl)
 
+    if not ctrl.is_connected():
+        return {}
+
     biomes = ctrl.read_biomes()  # all biomes
+
     selected_geocodes = geocodes.split(",")
 
     if subset == "Bioma":
@@ -80,11 +87,6 @@ def _get_config(
         )
         cg = ctrl.read_class_groups(biomes=mbiomes)
 
-    publish_date = (
-        ctrl.read_publish_date(biomes=json.loads(selected_biomes)) if not is_authenticated else
-        datetime.now().strftime("%Y-%m-%d")
-    )
-
     ldu = ctrl.read_land_uses(land_use_type="ams")
 
     # incluing thresholds in the layer names
@@ -107,11 +109,11 @@ def _get_config(
         'spatial_units_info_for_subset': sui_subset,
         'biomes': biomes,
         'bbox': bbox,
-        'municipalities_group': ctrl.read_municipalities_group(),
+        'municipalities_group': ctrl.read_municipalities_group(gtype="user-defined"),
+        'states_group': ctrl.read_municipalities_group(gtype="state", customized=False),
         'selected_subset': subset,
         'selected_biomes': selected_biomes,
         'selected_municipalities_group': municipalities_group,
-        'publish_date': publish_date,
         'selected_geocodes': json.dumps(selected_geocodes),
         'all_municipalities': ctrl.read_municipalities(biomes=json.loads(biomes)),
         'municipality_panel_mode': json.dumps(municipality_panel_mode),
@@ -146,6 +148,8 @@ def get_config(endpoint):
     if not status:
         return params_or_error
     
+    error_msg = "Something is wrong on the server. Please, send this error to our support service: terrabrasilis@inpe.br", 500
+    
     try:
         params = params_or_error
         conf = _get_config(
@@ -153,53 +157,75 @@ def get_config(endpoint):
             subset=params["subset"],
             municipalities_group=params["municipalitiesGroup"],
             geocodes=params["geocodes"],
-            is_authenticated=params['isAuthenticated'].lower() == "true",
             municipality_panel_mode=params["municipalityPanelMode"].lower() == "true",
             start_date=params["startDate"],
             end_date=params["endDate"],
             temp_unit=params["tempUnit"],
             classname=params["classname"],
         )
+
+        if not conf:
+            return error_msg
+
         return json.dumps(conf)
 
     except Exception as e:
-        return "Something is wrong on the server. Please, send this error to our support service: terrabrasilis@inpe.br", 500
+        print(e)
+        return error_msg
 
 
 @app.route('/panel', methods=['GET'])
 def set_municipality_panel_mode():
-    params = request.args
+    try:
+        params = request.args
 
-    if not len(set(params) & {"id", "geocode"}):
+        if not len(set(params) & {"id", "geocode"}):
+            return _render_template(
+                 params={"error-msg": "O parâmetro informado na URL é inválido. Por favor, utilize 'id' ou 'geocode'."}
+            )
+
+        dburl = Config.DB_URL
+        ctrl = AppConfigController(dburl)
+
+        if not ctrl.is_connected():
+            return _render_template(
+                params={"error-msg": "Erro no servidor ao carregar a sala de situação municipal."}
+            )
+
+        if "id" in params:
+            geocode = ctrl.read_municipality_geocode(su_id=params["id"])
+        else:
+            geocode = params["geocode"]
+
+        geocode = ''.join(ch for ch in geocode if ch.isdigit())
+
+        if not ctrl.geocode_is_valid(geocode=geocode):
+            if "id" in params:
+                error_msg = f"Geocódigo inexistente para o ID {params['id']}. Valide o identificador informado."
+            else:
+                error_msg = f"Geocódigo '{geocode}' não foi encontrado. Por favor, verifique se o valor está correto e tente novamente."
+
+            return _render_template(params={"error-msg": error_msg})
+    
+        params = {
+            "municipality-panel": "true",
+            "geocode": geocode,
+            "start_date": params.get("startDate", ""),
+            "end_date": params.get("endDate", ""),
+            "temp_unit": params.get("tempUnit", ""),
+            "classname": params.get("classname", ""),
+        }
+
         return _render_template(
-            params={"error-msg": "Invalid URL parameter. Expected values are 'id' or 'geocode'."}
-        )
-
-    dburl = Config.DB_URL
-    ctrl = AppConfigController(dburl)
-
-    if "id" in params:
-        geocode = ctrl.read_municipality_geocode(su_id=params["id"])
-    else:
-        geocode = params["geocode"]
-
-    if not ctrl.geocode_is_valid(geocode=geocode):
-        return _render_template(
-            params={"error-msg": f"Geocódigo {geocode} não encontrado. Verifique se o valor informado está correto."}
+            params=params
         )
     
-    params = {
-        "municipality-panel": "true",
-        "geocode": geocode,
-        "start_date": params.get("startDate", ""),
-        "end_date": params.get("endDate", ""),
-        "temp_unit": params.get("tempUnit", ""),
-        "classname": params.get("classname", ""),
-    }
+    except Exception as e:
+        print(e)
+        return _render_template(
+            params={"error-msg": "Erro no servidor ao carregar a sala de situação municipal."}
+        )
 
-    return _render_template(
-        params=params
-    )
 
 @app.route('/callback/<endpoint>', methods=['GET'])
 def get_profile(endpoint):
@@ -229,6 +255,11 @@ def get_profile(endpoint):
         # Raised when a mapping (dictionary) key is not found in the set of existing keys.
         # HTTP 412: Precondition Failed
         return "Input parameters are missing: {0}".format(str(ke)), 412
+    
+    if temporal_unit == '0d':
+        return json.dumps(
+            {'FormTitle': 'Sem gráficos para exibir com a configuração atual.'}
+        )        
 
     try:
         spatial_unit_profile = SpatialUnitProfile(Config, params)
@@ -268,8 +299,8 @@ def get_profile(endpoint):
         return "Something is wrong on the server. Please, send this error to our support service: terrabrasilis@inpe.br", 500
  
 
-@app.route('/alerts', methods=['GET'])
-def get_alerts():
+@app.route('/indicators', methods=['GET'])
+def get_indicators():
     args = request.args
 
     status, params_or_error = _validate_params(
@@ -299,7 +330,7 @@ def get_alerts():
         if name == biome:
             name = '*'
 
-        zip_data = prepare_alerts_to_save(
+        zip_data = prepare_indicators_to_save(
             dburl = Config.DB_URL,
             is_authenticated=params['isAuthenticated'],
             spatial_unit=params['spatialUnit'],
@@ -317,4 +348,41 @@ def get_alerts():
         print(e)
         return "Something is wrong on the server. Please, send this error to our support service: terrabrasilis@inpe.br", 500
 
-    return send_file(zip_data, as_attachment=True, download_name="alerts.zip")
+    return send_file(zip_data, as_attachment=True, download_name="indicators.zip")
+
+
+@app.before_request
+def request_start():
+    """Keep some request information for debugging."""
+    if not Config.DEBUG_MODE:
+        return
+    
+    g.request_id = str(uuid.uuid4())[:8] 
+    g.start_time = time.time()
+
+    request_debug_info = {
+        'url': request.url,
+        'method': request.method,
+        'path': request.path,
+        'query_params': request.args.to_dict(),
+        'form_data': request.form.to_dict() if request.form else {},
+        'remote_addr': request.remote_addr,
+        'user_agent': request.headers.get('User-Agent', 'Unknown')
+    }
+
+    print(
+        f"[{g.request_id}] START REQUEST: {request.method} {request.path} "
+        f"from {request.remote_addr} "
+        f"(info: {request_debug_info})"
+    )
+
+
+@app.after_request
+def request_finish(response):
+    """Calculate the duration of the request."""
+    if not Config.DEBUG_MODE:
+        return response
+    
+    duration = int(time.time() - g.start_time) * 1000
+    print(f"[{g.request_id}] END REQUEST ({duration} ms).")
+    return response
