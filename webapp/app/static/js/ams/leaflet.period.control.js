@@ -127,7 +127,9 @@ L.Control.PeriodHandler = L.Control.extend({
             changeYear: true,    
             todayBtn: "linked",    
             onSelect: function() {
-                _changeDate($(this).val(), "start")
+                const value = $(this).val();
+                if (!value.length) return;
+                _changeDate(value, "start");
             },
             beforeShow: function() {
                 setTimeout(function() {
@@ -138,6 +140,7 @@ L.Control.PeriodHandler = L.Control.extend({
 
         $('#datepicker-start').on('blur', function() {
             const value = $(this).val();
+            if (!value.length) return;
             _changeDate(value, "start");
         });
 
@@ -150,12 +153,15 @@ L.Control.PeriodHandler = L.Control.extend({
             changeYear: true,    
             todayBtn: "linked",
             onSelect:  function() {
-                _changeDate($(this).val(), "end");
+                const value = $(this).val();
+                if (!value.length) return;
+                _changeDate(value, "end");
             },
         }).val(ams.PeriodHandler._enddate.toLocaleDateString("pt-BR"));
 
         $('#datepicker-end').on('blur', function() {
             const value = $(this).val();
+            if (!value.length) return;
             _changeDate(value, "end");
         });
         
@@ -178,14 +184,16 @@ L.Control.PeriodHandler = L.Control.extend({
             
             $("#datepicker-end").attr("disabled", !custom);
 
-            let maxDate = custom? new Date(startDate - 1) : ams.PeriodHandler._enddate;
-            $('#datepicker-end').datepicker("option", "maxDate", maxDate);
-
             if (custom) {
                 let startDate = ams.Date.fromString($('#datepicker-start').val(), "dd/mm/yyyy");
+                let maxDate = new Date(startDate - 1);
+                $('#datepicker-end').datepicker("option", "maxDate", maxDate);                
                 let endDate = ams.Date.fromString($('#datepicker-end').val(), "dd/mm/yyyy");
                 numdays = ams.Date.differenceInDays(endDate, startDate);
                 _updateCustomPeriod();
+            } else {
+                let maxDate = ams.PeriodHandler._enddate;
+                $('#datepicker-end').datepicker("option", "maxDate", maxDate);
             }
             
             let obj={
