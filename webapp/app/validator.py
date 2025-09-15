@@ -24,7 +24,7 @@ def _load_valid_params_from_db():
             json.loads(controller.read_municipalities_group(gtype="user-defined")) +
             json.loads(controller.read_municipalities_group(gtype="state"))
         )
-        VALID_PARMS_FROM_DB["classname"] = json.loads(controller.read_classnames())
+        VALID_PARMS_FROM_DB["classname"] = [""] + json.loads(controller.read_classnames())
         VALID_PARMS_FROM_DB["spatialUnit"] = (
             ["ALL"] +
             json.loads(controller.read_biomes()) +
