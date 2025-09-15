@@ -616,7 +616,7 @@ class SpatialUnitProfile():
 
         title = f"<b>{indicator}</b> por categoria fundiária"
         if not self._classname in [self._risk_classname, self._inpe_risk_classname]:
-            title += f"<br>no último período do <b>{unid_temp}."
+            title += f"<br>no último período do <b>{unid_temp}"
         title += f". <b>{graph_total}</b>"
 
         fig.update_traces(

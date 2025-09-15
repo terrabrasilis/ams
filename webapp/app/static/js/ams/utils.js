@@ -171,7 +171,8 @@ ams.Utils = {
       }
 
       var municipalityPanelMode = false,
-        classname = "";      
+        classname = "";
+
       if (ams.Utils.getServerConfigParam('municipality-panel') !== undefined) {
           municipalityPanelMode = true;
           selectedBiome = "ALL";
@@ -192,8 +193,12 @@ ams.Utils = {
         endDate = "";
       }
 
-      if (tempUnit === undefined) {
-        tempUnit = "";
+      if (tempUnit === undefined || !tempUnit.length) {
+        tempUnit = ams.BiomeConfig[selectedBiome].defaultFilters.temporalUnit;
+      }
+
+      if (!classname.length) {
+        classname = ams.BiomeConfig[selectedBiome].defaultFilters.indicator;
       }
 
       const loadConfig = new Promise((resolve, reject) => {
@@ -216,7 +221,7 @@ ams.Utils = {
               "&endDate=" + ((endDate !== undefined)? endDate : "") +
 	            "&tempUnit=" + ((tempUnit !== undefined)? tempUnit : "") +
               "&classname=" + classname
-          );          
+          );
 
           if (response && response.ok) {
             let generalConfig = await response.json();
@@ -228,7 +233,7 @@ ams.Utils = {
 
               resolve();
 
-            } else {
+            } else {              
               ams.Notifier.showErrorMsg(
                 msg=ams.Notifier.Errors.REQUEST_FAILED,
                 response=response,
@@ -238,8 +243,13 @@ ams.Utils = {
             }
 
           } else {
+            let error_msg = ams.Notifier.Errors.REQUEST_FAILED;
+            let text = await response.text();
+
+            error_msg = error_msg + " " + text
+
             ams.Notifier.showErrorMsg(
-              msg=ams.Notifier.Errors.REQUEST_FAILED,
+              msg=error_msg,
               response=response,
               desc="on biome changes"              
             );

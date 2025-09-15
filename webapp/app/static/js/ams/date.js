@@ -103,13 +103,14 @@ ams.Date = {
                     if (datetype == "start") {
                         if (date == this.startdate) return false;
                         this.setCustomPeriod(date, this.enddate, 1);
+
                     } else {
                         if (date == this.enddate) return false;
                         this.setCustomPeriod(this.startdate, date, 1);
                     }
-                    return true;
                 }
-                return false;
+                this.enableCustomPeriod();
+                return true;
             }
             
             startdate = date;
@@ -136,6 +137,11 @@ ams.Date = {
 
             startdate = ams.Date.fromString(startdate);
             enddate = ams.Date.fromString(enddate);
+
+            if (enddate >= startdate) {
+                enddate = new Date(startdate);
+                enddate.setUTCDate(enddate.getUTCDate() - 2);
+            }
             
             this.period = "custom";
             this.customDays = ams.Date.differenceInDays(startdate, enddate) - incDays;
@@ -146,11 +152,18 @@ ams.Date = {
             let prevdate = enddate;
             prevdate.setUTCDate(prevdate.getUTCDate() - this.customDays);
             this.prevdate = this.toUTCDate(prevdate);
+
+            this.enableCustomPeriod();
+        }
+
+        this.enableCustomPeriod = function() {
+            $("#datepicker-end").attr("disabled", false);
         }
 
         this.disableCustomPeriod = function() {
             this.period = null;
             this.customDays = null;
+            $("#datepicker-end").attr("disabled", true);
         }
 
         this.getPeriod = function() {

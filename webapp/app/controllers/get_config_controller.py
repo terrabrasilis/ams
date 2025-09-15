@@ -302,3 +302,58 @@ class AppConfigController:
         results = cur.fetchone()
 
         return results is not None
+
+    def read_subsets(self):
+        """
+        Gets the subsets from database.
+        """
+        sql = "SELECT DISTINCT subset FROM public.spatial_units_subsets;"
+        cur = self._conn.cursor()
+        cur.execute(sql)
+        results = [_[0] for _ in cur.fetchall()]
+
+        return json.dumps(results)
+
+    def read_classnames(self):
+        """
+        Gets the classnames from database.
+        """
+        sql = "SELECT name FROM public.class_group;"
+        cur = self._conn.cursor()
+        cur.execute(sql)
+        results = [_[0] for _ in cur.fetchall()]
+
+        return json.dumps(results)
+
+
+    def read_spatial_units(self):
+        """
+        Gets the spatial units from database.
+        """
+        sql = "SELECT dataname FROM public.spatial_units;"
+        cur = self._conn.cursor()
+        cur.execute(sql)
+        results = [_[0] for _ in cur.fetchall()]
+
+        return json.dumps(results)
+    
+
+    def read_spatial_unit_names(self):
+        """
+        Gets the name of the spatial units from database.
+        """
+        spatial_units = json.loads(self.read_spatial_units())
+
+        sqls = [
+            f"SELECT name FROM public.{_}" for _ in spatial_units if not _.startswith("cs_")
+        ]
+
+        sql = " UNION ALL ".join(sqls) + ";"
+
+        cur = self._conn.cursor()
+        cur.execute(sql)
+        results = [_[0] for _ in cur.fetchall()]
+
+        return results
+
+

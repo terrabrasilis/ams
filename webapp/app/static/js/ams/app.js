@@ -453,7 +453,7 @@ ams.App = {
                             lastDateDynamic = ams.Date.getMin(ams.App._dateControl.startdate, lastDateDynamic);
                         }
 
-                        ams.App._dateControl.setPeriod(lastDateDynamic, ams.App._currentTemporalAggregate);
+                        ams.App._dateControl.setPeriod(lastDateDynamic, ams.App._currentTemporalAggregate, "start");
                         ams.PeriodHandler.changeDate(ams.App._dateControl.startdate);
                         needUpdateSuLayers=false; //no need because the changeDate Internally invokes layer update
                     }
@@ -1224,7 +1224,7 @@ ams.App = {
                 window.URL.revokeObjectURL(url);
             } else {
                 let emsg = "";
-                if(response) emsg = "HTTP-Error: " + response.status + " on spatial_unit_profile";
+                if(response) emsg = "HTTP-Error: " + response.status + " on save_indicators";
                 else emsg="O servidor está indisponível ou sua internet está desligada.";
                 console.log(emsg);
                 $('.toast').toast('show');

@@ -97,3 +97,4 @@ ams.BiomeConfig["Caatinga"] = {...activeFiresLayerConfig, ...defaultConfig};
 ams.BiomeConfig["Pampa"] = {...activeFiresLayerConfig, ...defaultConfig};
 ams.BiomeConfig["Mata Atlântica"] = {...activeFiresLayerConfig, ...defaultConfig};
 ams.BiomeConfig["ALL"] = {...activeFiresLayerConfig, ...defaultConfig};
+ams.BiomeConfig["all"] = {...activeFiresLayerConfig, ...defaultConfig};

@@ -3,3 +3,4 @@ flask-cors
 gunicorn
 plotly==5.19.0
 Flask-Caching
+marshmallow

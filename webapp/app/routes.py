@@ -1,15 +1,17 @@
 import json
 import os
 
-from datetime import datetime
+from marshmallow import ValidationError
 
 from ams.save_indicators import prepare_indicators_to_save
 from ams.spatial_unit_profile import SpatialUnitProfile
-from flask import render_template, request, send_file, g
+from flask import render_template, request, send_file, g, jsonify
 
 from . import bp as app
 from .config import Config
 from .controllers import AppConfigController
+
+from .validator import BiomeConfigSchema, PanelSchema, IndicatorsSchema, ProfileSchema, format_validation_error
 
 import uuid
 import time
@@ -18,6 +20,7 @@ import time
 @app.route('/', methods=['GET'])
 def index():
     return _render_template()
+
 
 def _render_template(params: dict={}):
     try:
@@ -30,18 +33,6 @@ def _render_template(params: dict={}):
     except Exception as e:
         # HTTP 500: Internal error
         return "Template configurations are missing: {0}".format(str(e)), 412
-
-
-def _validate_params(json_str, required_params):
-    params = json.loads(json_str)
-
-    for name in required_params:
-        if not name in params:
-            # exception KeyError
-            # Raised when a mapping (dictionary) key is not found in the set of existing keys.
-            # HTTP 412: Precondition Failed
-            return False, (f"Input parameters are missing: {name}.", 412)
-    return True, params
 
 
 def _get_config(
@@ -61,7 +52,7 @@ def _get_config(
 
     if not ctrl.is_connected():
         return {}
-
+    
     biomes = ctrl.read_biomes()  # all biomes
 
     selected_geocodes = geocodes.split(",")
@@ -131,27 +122,19 @@ def _get_config(
 @app.route('/biome/<endpoint>', methods=['GET'])
 def get_config(endpoint):
     if endpoint != 'config':
-        return "Bad endpoint", 404
-
-    status, params_or_error = _validate_params(
-        json_str = json.dumps(dict(request.args)),
-        required_params=[
-            "targetbiome",
-            "subset",
-            "municipalitiesGroup",
-            "isAuthenticated",
-            "geocodes",
-            "municipalityPanelMode"
-        ]
-    )
-
-    if not status:
-        return params_or_error
+        return "Bad endpoint.", 404
     
-    error_msg = "Something is wrong on the server. Please, send this error to our support service: terrabrasilis@inpe.br", 500
+    # print(f"/biome/config __\n{request.args}")
+    schema = BiomeConfigSchema()
     
     try:
-        params = params_or_error
+        schema.load(request.args)
+    except ValidationError as e:
+        print(e)
+        return format_validation_error(e.messages), 400
+    
+    try:
+        params = request.args
         conf = _get_config(
             biome=params["targetbiome"],
             subset=params["subset"],
@@ -165,48 +148,36 @@ def get_config(endpoint):
         )
 
         if not conf:
-            return error_msg
+            return "Erro no carregamento do config.", 500
 
         return json.dumps(conf)
 
     except Exception as e:
         print(e)
-        return error_msg
+        return "Erro no carregamento do config.", 500
 
 
 @app.route('/panel', methods=['GET'])
 def set_municipality_panel_mode():
+    # print(f"/panel __ \n {request.args}")
+    schema = PanelSchema()
+
     try:
+        schema.load(request.args)
+    except ValidationError as e:
+        print(e)
+        return _render_template(params={"error-msg": format_validation_error(e.messages)})
+
+    try:
+        ctrl = AppConfigController(db_url=Config.DB_URL)
+
         params = request.args
-
-        if not len(set(params) & {"id", "geocode"}):
-            return _render_template(
-                 params={"error-msg": "O parâmetro informado na URL é inválido. Por favor, utilize 'id' ou 'geocode'."}
-            )
-
-        dburl = Config.DB_URL
-        ctrl = AppConfigController(dburl)
-
-        if not ctrl.is_connected():
-            return _render_template(
-                params={"error-msg": "Erro no servidor ao carregar a sala de situação municipal."}
-            )
 
         if "id" in params:
             geocode = ctrl.read_municipality_geocode(su_id=params["id"])
         else:
             geocode = params["geocode"]
-
-        geocode = ''.join(ch for ch in geocode if ch.isdigit())
-
-        if not ctrl.geocode_is_valid(geocode=geocode):
-            if "id" in params:
-                error_msg = f"Geocódigo inexistente para o ID {params['id']}. Valide o identificador informado."
-            else:
-                error_msg = f"Geocódigo '{geocode}' não foi encontrado. Por favor, verifique se o valor está correto e tente novamente."
-
-            return _render_template(params={"error-msg": error_msg})
-    
+   
         params = {
             "municipality-panel": "true",
             "geocode": geocode,
@@ -223,49 +194,37 @@ def set_municipality_panel_mode():
     except Exception as e:
         print(e)
         return _render_template(
-            params={"error-msg": "Erro no servidor ao carregar a sala de situação municipal."}
+            params={"error-msg": "Ocorreu um erro no servidor ao carregar a sala de situação municipal."}
         )
 
 
 @app.route('/callback/<endpoint>', methods=['GET'])
 def get_profile(endpoint):
     if endpoint != 'spatial_unit_profile':
-        return "Bad endpoint", 404
-
-    args = request.args
-
-    try:
-        params = json.loads(args.get('sData'))
-        # validate if there are required input parameters
-        classname = params['className']
-        spatial_unit = params['spatialUnit']
-        start_date = params['startDate']
-        temporal_unit = params['tempUnit']
-        name = params['suName']
-        land_use = params['landUse']
-        # app unit measure
-        unit = params['unit']
-        appBiome = params['targetbiome']
-        riskThreshold = params['riskThreshold']
-        municipalities_group = params["municipalitiesGroup"]
-        geocodes = params["geocodes"]
-
-    except KeyError as ke:
-        # exception KeyError
-        # Raised when a mapping (dictionary) key is not found in the set of existing keys.
-        # HTTP 412: Precondition Failed
-        return "Input parameters are missing: {0}".format(str(ke)), 412
+        return "Bad endpoint.", 404
     
-    if temporal_unit == '0d':
-        return json.dumps(
-            {'FormTitle': 'Sem gráficos para exibir com a configuração atual.'}
-        )        
+    # print(f"spatial_unit_profile __\n {request.args}")
+    params = request.args.get('sData')
+    params = json.loads(params) if params else {}
+
+    schema = ProfileSchema()
 
     try:
+        schema.load(params)
+    except ValidationError as e:
+        print(e)
+        return format_validation_error(e.messages), 400
+
+    try:
+        if params['tempUnit'] == '0d':
+            return json.dumps(
+                {'FormTitle': 'Sem gráficos para exibir com a configuração atual.'}
+            )
+
         spatial_unit_profile = SpatialUnitProfile(Config, params)
 
         # onlyOneLandUse = (land_use).find(',')
-        count = land_use.split(',')
+        count = params['landUse'].split(',')
         onlyOneLandUse = len(count) if count[0] != '' else -1
 
         # to avoid unnecessary function call
@@ -301,49 +260,34 @@ def get_profile(endpoint):
 
 @app.route('/indicators', methods=['GET'])
 def get_indicators():
-    args = request.args
+    # print(f"/indicators__ \n {request.args}")
+    schema = IndicatorsSchema()
 
-    status, params_or_error = _validate_params(
-        json_str=args.get('sData'),
-        required_params=[
-            'targetbiome',
-            'isAuthenticated',
-            'className',
-            'spatialUnit',
-            'startDate',
-            'tempUnit',
-            'suName',
-            'filenamePrefix',
-            'municipalitiesGroup',
-            'geocodes',
-        ]
-    )
-
-    if not status:
-        return params_or_error
+    params = request.args.get('sData')
+    params = json.loads(params) if params else {}
 
     try:
-        params = params_or_error
+        schema.load(params)
+    except ValidationError as e:        
+        print(e)
+        return format_validation_error(e.messages), 400
 
-        biome = params['targetbiome']
-        name = params['suName'].replace('|', ' ')
-        if name == biome:
-            name = '*'
-
+    try:
         zip_data = prepare_indicators_to_save(
             dburl = Config.DB_URL,
-            is_authenticated=params['isAuthenticated'],
+            is_authenticated=bool(params['isAuthenticated']),
             spatial_unit=params['spatialUnit'],
             classname=params['className'],
             start_date=params['startDate'],
             temporal_unit=params['tempUnit'],
-            name=name,
+            name=params["suName"],
             custom='custom' in params,
             filename_prefix=params['filenamePrefix'],
-            biomes=biome,
+            biomes=params["targetbiome"],
             municipalities_group=params['municipalitiesGroup'],
             geocodes=params['geocodes'],
         )
+
     except Exception as e:
         print(e)
         return "Something is wrong on the server. Please, send this error to our support service: terrabrasilis@inpe.br", 500
