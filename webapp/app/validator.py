@@ -150,7 +150,7 @@ class PanelSchema(Schema):
     classname = fields.Str(required=False, validate=validate.OneOf(VALID_PARMS_FROM_DB["classname"]))
 
     @validates_schema
-    def _validate_geocode(self, data, **kwargs):
+    def _validate_others(self, data, **kwargs):
         _ = kwargs  # no warn
 
         controller = AppConfigController(db_url=Config.DB_URL)
@@ -170,6 +170,16 @@ class PanelSchema(Schema):
                  f"Geocódigo '{geocode}' não foi encontrado. Por favor, verifique se o valor está correto e tente novamente.",
                  "geocode"
             )
+        
+        if not "tempUnit" in data:
+            return
+        
+        value = data["tempUnit"]
+        if not (
+            value[:-1].isdigit() and value[-1] == "d" if "custom" in data else
+            value in ["7d", "15d", "1m", "3m", "1y"]
+        ):
+            raise ValidationError(f"tempUnit ({value})", "tempUnit")
 
 
 class IndicatorsSchema(Schema):
@@ -196,7 +206,6 @@ class IndicatorsSchema(Schema):
     )
     isAuthenticated = fields.Bool(required=False)
     filenamePrefix=fields.Str(required=True, validate=_validate_prefix)
-
 
     @validates_schema
     def _validate_others(self, data, **kwargs):
@@ -231,6 +240,17 @@ class ProfileSchema(Schema):
         required=True,
         validate=_validate_geocodes,
     )
-    unit = fields.Str(required=True, validate=validate.OneOf(["km²", "ha", "focos", "risco"]))
+    unit = fields.Str(required=True, validate=validate.OneOf(["km²", "ha", "focos", "risco", "score"]))
     riskThreshold = fields.Float(required=False)
     custom = fields.Bool(required=False)
+
+    @validates_schema
+    def _validate_others(self, data, **kwargs):
+        _ = kwargs  # no warn
+        # temptUnit
+        value = data["tempUnit"]
+        if not (
+            value[:-1].isdigit() and value[-1] == "d" if "custom" in data else
+            value in ["7d", "15d", "1m", "3m", "1y"]
+        ):
+            raise ValidationError(f"tempUnit ({value})", "tempUnit")
