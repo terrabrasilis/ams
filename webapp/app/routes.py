@@ -11,7 +11,7 @@ from . import bp as app
 from .config import Config
 from .controllers import AppConfigController
 
-from .validator import BiomeConfigSchema, PanelSchema, IndicatorsSchema, ProfileSchema, format_validation_error
+from .validator import BiomeConfigSchema, PanelSchema, IndicatorsSchema, ProfileSchema, format_validation_error, update_validators
 
 import uuid
 import time
@@ -19,6 +19,7 @@ import time
 
 @app.route('/', methods=['GET'])
 def index():
+    update_validators()
     return _render_template()
 
 

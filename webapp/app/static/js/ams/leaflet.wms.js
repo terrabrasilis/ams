@@ -345,12 +345,7 @@ ams.LeafletWms = {
             let result = {
                 "classname": "",
                 "view_date": "",
-                "areamunkm": 0,
-                "areatotalkm": 0,
-                "areauckm": 0,
-                "municipality": "",
-                "uc": null,
-                "uf": "",
+                "area_km": 0,
                 "biome": "",
             };
             this._updateResults(result, featureInfo);
