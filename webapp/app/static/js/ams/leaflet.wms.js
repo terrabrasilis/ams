@@ -308,13 +308,12 @@ ams.LeafletWms = {
 
         '_formatAFPopup': function(featureInfo) {
             let result = {
-                "diasemchuva": 0,
                 "estado": "",
                 "municipio": "",
-                "precipitacao": 0,
-                "riscofogo": 0,
                 "satelite": "",
-                "view_date": ""
+                "view_date": "",
+		"prodes_class": "",
+		"biome": ""
             };
             this._updateResults(result, featureInfo);
             return this._createAFInfoTable(result);

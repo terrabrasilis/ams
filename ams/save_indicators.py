@@ -119,7 +119,7 @@ def _get_active_fires_sql(
     columns = ",".join(
         [
             f"fires.{_}" for _ in [
-                "id", "uuid", "biome", "view_date as date", "satelite", "estado", "municipio", "geom", "geocode"
+                "id", "uuid", "biome", "view_date as date", "satelite", "estado", "municipio", "geom", "geocode", "prodes_class"
             ]
         ]
     )
