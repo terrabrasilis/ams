@@ -1144,6 +1144,7 @@ ams.App = {
 
                 Plotly.purge('AreaPerYearTableClass');
                 if (profileJson['AreaPerYearTableClass']) {
+                    $('.nav-tabs a[href="#tab-year-class"]').tab('show');
                     Plotly.react('AreaPerYearTableClass', JSON.parse(profileJson['AreaPerYearTableClass']), {});
                 }
                 Plotly.purge('AreaPerLandUse');
@@ -1153,6 +1154,14 @@ ams.App = {
                 Plotly.purge('AreaPerLandUsePpcdam');
                 if (profileJson['AreaPerLandUsePpcdam'] && ams.App._landUseList.length>1) {
                     Plotly.react('AreaPerLandUsePpcdam', JSON.parse(profileJson['AreaPerLandUsePpcdam']), {});
+                }
+                
+                Plotly.purge('AreaPerLandUseProdes');
+                if (profileJson['AreaPerLandUseProdes']) {
+                    $('.nav-tabs a[href="#tab-landuse-prodes"]').parent().show();
+                    Plotly.react('AreaPerLandUseProdes', JSON.parse(profileJson['AreaPerLandUseProdes']), {});
+                } else {
+                    $('.nav-tabs a[href="#tab-landuse-prodes"]').parent().hide();
                 }
 
                 document.getElementById("txt3a").innerHTML = profileJson['FormTitle'];

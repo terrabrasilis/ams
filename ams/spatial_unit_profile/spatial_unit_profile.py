@@ -305,7 +305,7 @@ class SpatialUnitProfile():
         return self.resultset_as_dataframe(sql=sql)
 
     
-    def classname_area_per_land_use(self, land_use_type):
+    def classname_area_per_land_use(self, land_use_type, columns=[]):
         land_use_type_suffix = "" if land_use_type == "ams" else f"_{land_use_type}"
         name_escaped = self._name.replace("'", "''")
 
@@ -369,7 +369,10 @@ class SpatialUnitProfile():
 
         df = self.resultset_as_dataframe(sql)
 
-        df.columns = ['Categoria Fundiária', 'Prioridade', self.default_col_name, 'Total (km²)']
+        if not columns:
+            columns = ['Categoria Fundiária', 'Prioridade', self.default_col_name, 'Total (km²)']
+
+        df.columns = columns
         return df
     
     def area_per_land_use(self, land_use_type):
@@ -421,14 +424,13 @@ class SpatialUnitProfile():
         df = self.resultset_as_dataframe(sql)
         df.columns = ['Categoria Fundiária', 'Área da Categoria (km²)', 'Área da Unidade Espacial (km²)']
         return df
-
+    
     def risk_expiration_date(self):
         sql = """SELECT TO_CHAR(expiration_date, 'DD/MM/YYYY') as expdate
         FROM risk.risk_ibama_date
         ORDER BY id DESC
         LIMIT 1;"""
         return self.execute_sql(sql=sql)
-    
 
     def get_inpe_risk_date(self):        
         sql = """SELECT risk_date
@@ -630,7 +632,7 @@ class SpatialUnitProfile():
             title_x=0.5,
             title_y=0.95,
             paper_bgcolor='#f3f9f8',
-            height=600,
+            height=700,
             width=700,
             uniformtext_minsize=10,
             uniformtext_mode='hide',
@@ -712,7 +714,7 @@ class SpatialUnitProfile():
         fig.update_layout(
             paper_bgcolor='#f3f9f8',
             plot_bgcolor='#f3f9f8',
-            height=300,
+            height=350,
             width=700,
             xaxis=layout.XAxis(
                 linecolor='#000',
@@ -915,7 +917,7 @@ class SpatialUnitProfile():
             title_y=0.95,
             paper_bgcolor='#f3f9f8',
             width=700,
-            height=450,
+            height=550,
             uniformtext=dict(minsize=10, ),
         )
         fig.update_traces(
@@ -923,4 +925,99 @@ class SpatialUnitProfile():
         )
 
         graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)        
+        return graphJSON
+
+    def fig_area_per_land_use_prodes(self):
+        label = "Classe PRODES"
+        default_col_name = self.default_col_name
+        land_use_type = "prodes"
+        
+        columns = [label, 'Prioridade', self.default_col_name, 'Total (km²)']
+
+        assert self.data_unit == "focos"
+
+        df = self.classname_area_per_land_use(land_use_type=land_use_type, columns=columns)
+        df.loc[df["Classe PRODES"] == "Vegetacao Nativa", "Classe PRODES"] = "Vegetação Nativa"
+        df = df.round(0)
+        df = df.sort_values(by=['Prioridade'], ascending=True)
+
+        indicator = self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
+        unid_temp = self._temporal_units[self._temporal_unit]
+        total = df[default_col_name].sum()
+
+        if total == 0.:
+            return None
+        
+        # generating the graphics
+        graph_label = "<b>%{label}</b>"
+        graph_value = "%{value}"
+        graph_unit =  ""
+
+        graph_percent = "%{percent:.2%}"
+        _ = {self._risk_classname: "pontos de risco", self._fire_classname: "focos", self._inpe_risk_classname: "score de risco"}
+        graph_indicator = _[self._classname]
+
+        graph_total = f"Contagem de {graph_indicator}: {total}."
+
+        graph_colors = ["#658faa", "#53886e", "#90c0c9", "#c5c8ce"]
+
+        title1 = f'<br><b>Percentual de {graph_indicator.title()}<br>em Relação ao Total de {graph_indicator.title()}</b>'
+
+        template = f"Do total de {graph_indicator}, {graph_value}{graph_unit}, o que corresponde a {graph_percent},<br>estão em {graph_label}."
+
+        fig = go.Figure(
+            go.Pie(
+                labels=df[label],
+                values=df[default_col_name],
+                hole=0.4,
+                hovertemplate=template,
+            )
+        )
+
+        fig.add_annotation(
+            x=0.5,
+            y=1.2,
+            xref="paper",
+            yref="paper",
+            showarrow=False,
+            text=title1,
+            font=dict(size=14),
+            align="center"
+        )
+
+        title = f"<b>{indicator}</b> por classe PRODES"
+        title += f"<br>no último período do <b>{unid_temp}"
+        title += f". <b>{graph_total}</b>"
+
+        fig.update_traces(
+            sort=False,
+            textposition='inside',
+            textfont_size=12,
+            marker=dict(colors=graph_colors, line=dict(color='#c0c0c0', width=1))
+        )
+
+        fig.update_layout(
+            title_text=title,
+            title_x=0.5,
+            title_y=0.95,
+            paper_bgcolor='#f3f9f8',
+            height=400,
+            width=700,
+            uniformtext_minsize=10,
+            uniformtext_mode='hide',
+            legend=dict(
+                font=dict(size=12),
+                y=0.5,
+                yanchor="middle",
+            ),
+            margin=dict(
+                l=0,
+                r=0,
+                b=10,
+                t=140,
+                pad=1
+            )
+        )
+
+        graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
         return graphJSON
