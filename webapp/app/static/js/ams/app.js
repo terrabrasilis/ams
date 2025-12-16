@@ -140,7 +140,9 @@ ams.App = {
                 "landuse:" + ams.App._landUseList.join('\\,') + ";" +
                 "biomes:" + ams.App._biomes.join('\\,') + ";" +
                 "municipality_group_name:" + ams.App._municipalitiesGroup + ";" +
-                "geocodes:" + ams.App._geocodes.join('\\,')
+                "geocodes:" + ams.App._geocodes.join('\\,') + ";" +
+                "view_start:" + this._suViewParams.enddate + ";" +
+                "view_end:" + this._suViewParams.startdate
             )
         };
         ams.App._addWmsOptionsBase(tbDeterAlertsWmsOptions);
@@ -152,7 +154,9 @@ ams.App = {
                 "landuse:" + ams.App._landUseList.join('\\,')  + ";" +
                 "biomes:" + ams.App._biomes.join('\\,') + ";" +
                 "municipality_group_name:" + ams.App._municipalitiesGroup + ";" +
-                "geocodes:" + ams.App._geocodes.join('\\,')
+                "geocodes:" + ams.App._geocodes.join('\\,') + ";" +
+                "view_start:" + this._suViewParams.enddate + ";" +
+                "view_end:" + this._suViewParams.startdate
             )
         };
         ams.App._addWmsOptionsBase(AFWmsOptions);
@@ -165,7 +169,9 @@ ams.App = {
                 "landuse:" + ams.App._landUseList.join('\\,') +  ";" +
                 "biomes:" + ams.App._biomes.join('\\,') + ";" +
                 "municipality_group_name:" + ams.App._municipalitiesGroup + ";" +
-                "geocodes:" + ams.App._geocodes.join('\\,')
+                "geocodes:" + ams.App._geocodes.join('\\,') + ";" +
+                "view_start:" + this._suViewParams.enddate + ";" +
+                "view_end:" + this._suViewParams.startdate
             )
         };
         ams.App._addWmsOptionsBase(RKWmsOptions);
@@ -845,7 +851,9 @@ ams.App = {
                 "landuse:" + ams.App._landUseList.join('\\,') + ";" +
                 "biomes:" + ams.App._biomes.join('\\,') + ";" +
                 "municipality_group_name:" + ams.App._municipalitiesGroup + ";" +
-                "geocodes:" + ams.App._geocodes.join('\\,')
+                "geocodes:" + ams.App._geocodes.join('\\,') + ";" +
+                "view_start:" + ams.App._suViewParams.enddate + ";" +
+                "view_end:" + ams.App._suViewParams.startdate
             );
             this._addWmsOptionsBase(cqlobj);
 
@@ -955,7 +963,17 @@ ams.App = {
                !layerToAdd.includes(ams.Config.defaultLayers.inpeRisk)) {
                 let cql = this._appClassGroups.getCqlFilter(this._suViewParams, this._hasClassFilter);
                 layer._source.options["cql_filter"] = cql;
-                cqlobj = {"cql_filter": cql,"viewparams": "landuse:" + ams.App._landUseList.join('\\,')};
+                cqlobj = {
+                    "cql_filter": cql,
+                    "viewparams": (
+                        "landuse:" + ams.App._landUseList.join('\\,') +  ";" +
+                        "biomes:" + ams.App._biomes.join('\\,') + ";" +
+                        "municipality_group_name:" + ams.App._municipalitiesGroup + ";" +
+                        "geocodes:" + ams.App._geocodes.join('\\,') + ";" +
+                        "view_start:" + ams.App._suViewParams.enddate + ";" +
+                        "view_end:" + ams.App._suViewParams.startdate
+                    )
+                };
                 this._addWmsOptionsBase(cqlobj);
             }
             layer._source._overlay.setParams(cqlobj);
