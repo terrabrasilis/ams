@@ -117,13 +117,9 @@ ams.Map = {
         }
 
         this.getCqlFilter = function(viewParams, useClass) {
-            useClass=(typeof useClass=='undefined')?(true):(useClass);
-            let classFilter=((useClass)?("AND ("+this._filterClasses(viewParams.classname)+")"):(""));
-            return "(view_date > " + viewParams.enddate
-                    + ") AND (view_date <= "
-                    + viewParams.startdate
-                    + ") "
-                    + classFilter;
+            useClass = (typeof useClass=='undefined')?(true):(useClass);
+            let classFilter=((useClass)?("("+this._filterClasses(viewParams.classname)+")"):(""));
+	        return classFilter;
         }
 
         this.getGroupName = function(acronym) {
@@ -413,10 +409,13 @@ ams.Map = {
             let baseurl = this.getURL()
             + "?REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20";
             if(ams.App._referenceLayerName.includes(ams.Config.defaultLayers.deter)){
-                let cql=ams.App._appClassGroups.getCqlFilter(ams.App._suViewParams, ams.App._hasClassFilter);
+		        let cql = ams.App._appClassGroups.getCqlFilter(ams.App._suViewParams, ams.App._hasClassFilter);
                 let deterurl = baseurl + "&LAYER=" + ams.App._referenceLayerName
-                + "&LEGEND_OPTIONS=hideEmptyRules:true;forceLabels:on;"
-                + "&CQL_FILTER=" + cql;
+                    + "&STYLE=deter-ams"
+                    + "&LEGEND_OPTIONS="
+                    + "hideEmptyRules:true;"
+                    + "forceLabels:on;"
+                    + "&CQL_FILTER=" + cql;
                 this._wmsLegendControl.options.static.deter.url = deterurl;
                 this._wmsLegendControl.options.static.af.url=null;
                 this._wmsLegendControl.options.static.risk.url=null;

@@ -16,9 +16,8 @@ ams.App = {
     _indicator: null,
     _propertyName: null,
     _riskThreshold: 0.0,
-    _referenceLayerName: null,
     _currentSULayerName: null,
-    _hasClassFilter: false,// if reference layer is DETER, so, has class filter.
+    _hasClassFilter: false, // if reference layer is DETER, so, has class filter.
     _diffOn: false,
     _currentTemporalAggregate: null,
     _currentClassify: null,
@@ -28,6 +27,9 @@ ams.App = {
     _subset: null,
     _municipalitiesGroup: null,
     _geocodes: null,
+    _referenceLayerName: null,
+    _borderLayer: null,
+    _borderLayerName: null,
 
     run: function(geoserverUrl, spatialUnits, appClassGroups) {
 
@@ -47,10 +49,13 @@ ams.App = {
         // }
 
         this._wfs = new ams.Map.WFS(geoserverUrl);
+	
         var ldLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.lastDate;
-        var temporalUnits = new ams.Map.TemporalUnits();
+
+	    var temporalUnits = new ams.Map.TemporalUnits();
         this._dateControl = new ams.Date.DateController();
-        let lastDateDynamic = this._wfs.getLastDate(ldLayerName);
+
+	    let lastDateDynamic = this._wfs.getLastDate(ldLayerName);
         lastDateDynamic = lastDateDynamic?lastDateDynamic:this._spatialUnits.getDefault().last_date;
         ams.PeriodHandler.setMaxDate(lastDateDynamic);
 
@@ -119,7 +124,7 @@ ams.App = {
 
         L.control.zoom({position: 'topright'}).addTo(map);
         L.control.scale({position: 'bottomright'}).addTo(map);
-    
+
         map.on('zoomend',function(e){
             let currZoom = map.getZoom();
             let l=ams.App._getLayerByName(ams.App._referenceLayerName);
@@ -133,71 +138,8 @@ ams.App = {
         this._priorViewParams = new ams.Map.ViewParams(ams.Config.defaultFilters.indicator, ams.App._dateControl, ams.App._propertyName, ams.Config.defaultFilters.priorityLimit);
 
         // Adding reference layers
-        var tbDeterAlertsLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.deter;
-        var tbDeterAlertsWmsOptions = {
-            "cql_filter": appClassGroups.getCqlFilter(this._suViewParams, true),
-            "viewparams": (
-                "landuse:" + ams.App._landUseList.join('\\,') + ";" +
-                "biomes:" + ams.App._biomes.join('\\,') + ";" +
-                "municipality_group_name:" + ams.App._municipalitiesGroup + ";" +
-                "geocodes:" + ams.App._geocodes.join('\\,') + ";" +
-                "view_start:" + this._suViewParams.enddate + ";" +
-                "view_end:" + this._suViewParams.startdate
-            )
-        };
-        ams.App._addWmsOptionsBase(tbDeterAlertsWmsOptions);
-
-        var AFLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.activeFire;
-        var AFWmsOptions = {
-            "cql_filter": appClassGroups.getCqlFilter(this._suViewParams, false),
-            "viewparams": (
-                "landuse:" + ams.App._landUseList.join('\\,')  + ";" +
-                "biomes:" + ams.App._biomes.join('\\,') + ";" +
-                "municipality_group_name:" + ams.App._municipalitiesGroup + ";" +
-                "geocodes:" + ams.App._geocodes.join('\\,') + ";" +
-                "view_start:" + this._suViewParams.enddate + ";" +
-                "view_end:" + this._suViewParams.startdate
-            )
-        };
-        ams.App._addWmsOptionsBase(AFWmsOptions);
-
-        var riskLayer = ams.Config.defaultRiskFilter.source === "inpe"? ams.Config.defaultLayers.inpeRisk : ams.Config.defaultLayers.ibamaRisk;
-        var RKLayerName = ams.Auth.getWorkspace() + ":" + riskLayer;
-        var RKWmsOptions = {
-            "cql_filter": "(risk >= " + ams.Config.defaultRiskFilter.threshold + ")",
-            "viewparams": (
-                "landuse:" + ams.App._landUseList.join('\\,') +  ";" +
-                "biomes:" + ams.App._biomes.join('\\,') + ";" +
-                "municipality_group_name:" + ams.App._municipalitiesGroup + ";" +
-                "geocodes:" + ams.App._geocodes.join('\\,') + ";" +
-                "view_start:" + this._suViewParams.enddate + ";" +
-                "view_end:" + this._suViewParams.startdate
-            )
-        };
-        ams.App._addWmsOptionsBase(RKWmsOptions);
-
-        var tbDeterAlertsSource = new ams.LeafletWms.Source(this._baseURL, tbDeterAlertsWmsOptions, appClassGroups);
-        var AFSource = new ams.LeafletWms.Source(this._baseURL, AFWmsOptions, appClassGroups);
-        var RKSource = new ams.LeafletWms.Source(this._baseURL, RKWmsOptions, appClassGroups);
-        var tbDeterAlertsLayer = tbDeterAlertsSource.getLayer(tbDeterAlertsLayerName);
-        let AFLayer = AFSource.getLayer(AFLayerName);
-        let RKLayer = RKSource.getLayer(RKLayerName);
-        if(this._referenceLayerName==tbDeterAlertsLayerName) {
-            tbDeterAlertsLayer.addTo(map);
-            tbDeterAlertsLayer.bringToBack();
-        }else if(this._referenceLayerName==AFLayerName){
-            AFLayer.addTo(map);
-            AFLayer.bringToBack();
-        }else if(this._referenceLayerName==RKLayerName){
-            RKLayer.addTo(map);
-            RKLayer.bringToBack();
-        } else {
-            ams.Utils.assert(false, "invalid layer name");
-        }
-        // Store layers to handler after controls change
-        this._addedLayers[tbDeterAlertsLayerName]=tbDeterAlertsLayer;
-        this._addedLayers[AFLayerName]=AFLayer;
-        this._addedLayers[RKLayerName]=RKLayer;
+	    this._buildReferenceLayers();
+	    this._loadReferenceLayer();
 
         // Start the legend control
         this._legendControl = new ams.Map.LegendController(map, this._baseURL);
@@ -207,21 +149,10 @@ ams.App = {
         ams.Config.defaultFilters.spatialUnit=this._spatialUnits.getDefault().dataname;// update the default for later use in filter change in control.
         this._addSpatialUnitLayer(this._getLayerPrefix(),this._propertyName);
 
-        var tbBorderLayerName = ams.Auth.getWorkspace() + ":" + ((this._subset == "Bioma") ? ams.Config.defaultLayers.biomeBorder : ams.Config.defaultLayers.municipalitiesBorder);
-        var onlyWmsBase = {
-            identify: false,
-            "viewparams": (
-                "biomes:" + ams.App._biomes.join('\\,') + ";" +
-                "municipality_group_name:" + ams.App._municipalitiesGroup + ";" +
-                "geocodes:" + ams.App._geocodes.join('\\,')
-            )
-        }; // set this to disable GetFeatureInfo
-        ams.App._addWmsOptionsBase(onlyWmsBase);
-        
-        var tbBorderSource = new ams.LeafletWms.Source(this._baseURL, onlyWmsBase, this._appClassGroups);
-        ams.App._borderLayer = tbBorderSource.getLayer(tbBorderLayerName);
-        ams.App._borderLayer.addTo(map).bringToBack();
-
+	    // Loading borderLayer
+	    this._borderLayerName = ams.Auth.getWorkspace() + ":" + ((this._subset == "Bioma") ? ams.Config.defaultLayers.biomeBorder : ams.Config.defaultLayers.municipalitiesBorder);
+	    this._loadBorderLayer();
+	
         // ---------------------------------------------------------------------------------
         // this structure is used into leaflet.groupedlayercontrol.js to create controls for filters panel...
         var controlGroups = {
@@ -744,31 +675,30 @@ ams.App = {
 
     }, // end of run method
 
-    _setIndicator: function (indicator) {
-        console.log("setting indicator " + indicator);
+    _isDeterLayer: function (layerName) {
+	    return layerName.includes(ams.Config.defaultLayers.deter);
+    },
 
+    _setIndicator: function (indicator) {
         ams.App._indicator = indicator;
 
         if (indicator == 'AF') {
             ams.App._propertyName =  ams.Config.propertyName.af;
-            ams.App._referenceLayerName = ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.activeFire;
-            ams.App._hasClassFilter=false;
+            this._setReferenceLayer(ams.App._referenceLayerName = ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.activeFire);
 
         } else if (indicator == 'RK') {
             ams.App._propertyName = ams.Config.propertyName.rk;
-            ams.App._referenceLayerName = ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.ibamaRisk;
-            ams.App._hasClassFilter=false;
+            this._setReferenceLayer(ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.ibamaRisk);
             ams.App._diffOn = false;
 
         } else if (indicator == 'RI') {
             ams.App._propertyName = ams.Config.propertyName.ri;
-            ams.App._referenceLayerName = ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.inpeRisk;
-            ams.App._hasClassFilter=false;
+            this._setReferenceLayer(ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.inpeRisk);
             ams.App._diffOn = false;
 
         } else {
             ams.App._propertyName = ams.Config.propertyName.deter;
-            ams.App._referenceLayerName = ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.deter;                
+            this._setReferenceLayer(ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.deter);
             ams.App._hasClassFilter=true;
         }
         
@@ -834,33 +764,131 @@ ams.App = {
         });
     },
 
-    /**
-    * Update the reference data layer by change CQL filter params
-    */
-    _updateReferenceLayer: function() {
-        let l=this._getLayerByName(this._referenceLayerName);
-        if(l) {
-            let cqlobj = {};
-            if(!this._referenceLayerName.includes(ams.Config.defaultLayers.ibamaRisk) &&
-               !this._referenceLayerName.includes(ams.Config.defaultLayers.inpeRisk)) {
-                let cql = ams.App._appClassGroups.getCqlFilter(ams.App._suViewParams, this._hasClassFilter);
-                l._source.options["cql_filter"] = cql;
-                cqlobj = {"cql_filter": cql};
-            }
-            cqlobj["viewparams"] = (
-                "landuse:" + ams.App._landUseList.join('\\,') + ";" +
-                "biomes:" + ams.App._biomes.join('\\,') + ";" +
-                "municipality_group_name:" + ams.App._municipalitiesGroup + ";" +
-                "geocodes:" + ams.App._geocodes.join('\\,') + ";" +
-                "view_start:" + ams.App._suViewParams.enddate + ";" +
-                "view_end:" + ams.App._suViewParams.startdate
-            );
-            this._addWmsOptionsBase(cqlobj);
+    _buildWmsOptions: function(cqlFilter) {
+	    var wmsOptions = {
+            "cql_filter": cqlFilter,
+            "viewparams": (
+		    "landuse:" + this._landUseList.join('\\,') + ";" +
+                "biomes:" + this._biomes.join('\\,') + ";" +
+                "municipality_group_name:" + this._municipalitiesGroup + ";" +
+                "geocodes:" + this._geocodes.join('\\,') + ";" +
+                "view_start:" + this._suViewParams.enddate + ";" +
+                "view_end:" + this._suViewParams.startdate
+            )
+	    }
+	    this._addWmsOptionsBase(wmsOptions);
 
-            l._source._overlay.setParams(cqlobj);
+	    return wmsOptions;
+    },
+
+    _setReferenceLayer: function (layerName) {
+	    this._referenceLayerName = layerName;
+	    this._hasClassFilter = this._isDeterLayer(layerName);
+    },
+
+    _buildDeterLayer: function () {
+        var layerName = ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.deter;
+        var wmsOptions = this._buildWmsOptions(
+	        cqlFilter=this._appClassGroups.getCqlFilter(this._suViewParams, true)
+	    );
+	    var source = new ams.LeafletWms.Source(this._baseURL, wmsOptions, this._appClassGroups);
+	    var layer = source.getLayer(layerName);
+
+	    this._addedLayers[layerName] = layer;
+    },
+
+    _buildAFLayer: function () {
+        var layerName = ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.activeFire;
+        var wmsOptions = this._buildWmsOptions(
+	        cqlFilter=this._appClassGroups.getCqlFilter(this._suViewParams, false)
+	    );
+	    var source = new ams.LeafletWms.Source(this._baseURL, wmsOptions, this._appClassGroups);
+	    var layer = source.getLayer(layerName);
+
+	    this._addedLayers[layerName] = layer;
+    },
+
+    _buildRiskLayer: function () {
+	    var riskLayer = ams.Config.defaultRiskFilter.source === "inpe"? ams.Config.defaultLayers.inpeRisk : ams.Config.defaultLayers.ibamaRisk;
+        var layerName = ams.Auth.getWorkspace() + ":" + riskLayer;
+        var wmsOptions = this._buildWmsOptions(
+	        cqlFilter= "(risk >= " + ams.Config.defaultRiskFilter.threshold + ")"
+	    );
+        var source = new ams.LeafletWms.Source(this._baseURL, wmsOptions, this._appClassGroups);
+	    var layer = source.getLayer(layerName);
+
+	    this._addedLayers[layerName] = layer;
+    },
+
+    _buildBorderLayer: function () {
+        var onlyWmsBase = {
+            identify: false,
+            "viewparams": (
+                "biomes:" + this._biomes.join('\\,') + ";" +
+                "municipality_group_name:" + this._municipalitiesGroup + ";" +
+                "geocodes:" + this._geocodes.join('\\,')
+            )
+        }; // set this to disable GetFeatureInfo
+        this._addWmsOptionsBase(onlyWmsBase);
+        var source = new ams.LeafletWms.Source(this._baseURL, onlyWmsBase, this._appClassGroups);
+        return source.getLayer(this._borderLayerName);
+    },
+
+    _loadBorderLayer: function () {
+	    var layer = this._buildBorderLayer();
+	    this._borderLayer = layer;
+	    this._loadLayer(layer);
+    },
+
+    _buildReferenceLayers: function () {
+	    if (this._referenceLayerName.includes(ams.Config.defaultLayers.deter)) {
+	        this._buildDeterLayer();
+	        return;
+	    }
+
+	    if (this._referenceLayerName.includes(ams.Config.defaultLayers.activeFire)) {
+	        this._buildAFLayer();
+	        return;
+	    }
+
+	    if (this._referenceLayerName.includes(ams.Config.defaultLayers.inpeRisk)) {
+	        this._buildRiskLayer();
+	        return;
+	    }
+    },
+
+    _loadReferenceLayer: function () {
+	    var layer = this._getLayerByName(this._referenceLayerName);
+	    this._loadLayer(layer);
+    },
+
+    _loadLayer: function (layer) {
+	    layer.addTo(this._map);
+	    layer.bringToBack();
+    },
+
+    /**
+     * Update the reference data layer by change CQL filter params
+     */
+    _updateReferenceLayer: function() {
+	    var layerName = this._referenceLayerName;
+
+        let l = this._getLayerByName(layerName);
+
+	    if(l) {
+	        let cqlFilter = ""
+	        if(!this._referenceLayerName.includes(ams.Config.defaultLayers.ibamaRisk) &&
+               !this._referenceLayerName.includes(ams.Config.defaultLayers.inpeRisk)) {
+		        cqlFilter = this._appClassGroups.getCqlFilter(this._suViewParams, this._isDeterLayer(layerName));
+	        } else {
+		        cqlFilter = "(risk >= " + ams.Config.defaultRiskFilter.threshold + ")"
+	        }
+	        var wmsOptions = this._buildWmsOptions(cqlFilter);
+	        l._source._overlay.setParams(wmsOptions);
             if(!this._map.hasLayer(l)) l.addTo(this._map);
             l.bringToBack();
         }
+	
         $("#dataname-to-download").text(ams.App._appClassGroups.getGroupName(ams.App._suViewParams.classname));
     },
 
@@ -952,35 +980,12 @@ ams.App = {
      * @param {*} layerToDel the name of the reference layer to be removed
      * @param {*} layerToAdd the name of the reference layer to be added
      */
-    _exchangeReferenceLayer: function(layerToDel, layerToAdd){
-        ams.App._removeLayer(layerToDel);
-        this._referenceLayerName=layerToAdd;
-
-        let layer = this._getLayerByName(layerToAdd);
-        let cqlobj={};
-        if(layer) {
-            if(!layerToAdd.includes(ams.Config.defaultLayers.ibamaRisk) &&
-               !layerToAdd.includes(ams.Config.defaultLayers.inpeRisk)) {
-                let cql = this._appClassGroups.getCqlFilter(this._suViewParams, this._hasClassFilter);
-                layer._source.options["cql_filter"] = cql;
-                cqlobj = {
-                    "cql_filter": cql,
-                    "viewparams": (
-                        "landuse:" + ams.App._landUseList.join('\\,') +  ";" +
-                        "biomes:" + ams.App._biomes.join('\\,') + ";" +
-                        "municipality_group_name:" + ams.App._municipalitiesGroup + ";" +
-                        "geocodes:" + ams.App._geocodes.join('\\,') + ";" +
-                        "view_start:" + ams.App._suViewParams.enddate + ";" +
-                        "view_end:" + ams.App._suViewParams.startdate
-                    )
-                };
-                this._addWmsOptionsBase(cqlobj);
-            }
-            layer._source._overlay.setParams(cqlobj);
-            layer.addTo(this._map);
-            layer.bringToBack();
-        }
-        this._addControlLayer();
+    _exchangeReferenceLayer: function(layerToDel, layerToAdd) {
+	    this._removeLayer(layerToDel);
+	    this._setReferenceLayer(layerToAdd);
+	    this._buildReferenceLayers();
+	    this._loadReferenceLayer();
+	    this._addControlLayer();
     },
 
     /**
@@ -1114,30 +1119,24 @@ ams.App = {
         ams.App._addSpatialUnitLayer(li, this._propertyName);
     },
 
-    _removeLayer: function(layerName){
-        let l=ams.App._getLayerByName(layerName);
-        if(l && this._map.hasLayer(l)){
-            // remove all sublayers for a layer
-            this._removeSubLayer(l);
-        }
-        this._map.closePopup();
+    _removeLayer: function(layerName) {
+	    let layer = ams.App._getLayerByName(layerName);
+
+	    if (this._addedLayers[layerName] !== undefined) {
+	        delete this._addedLayers[layerName];
+	    }
+
+	    if (layer && this._map.hasLayer(layer)) {
+            this._map.removeLayer(layer);
+	    }
+
+	    if (layerName == this._referenceLayerName) {
+	        this._referenceLayerName = null;
+	    }
+
+	    this._map.closePopup();
     },
 
-    _removeSubLayer: function(l){
-        let ll=[];
-        ll.push(l._leaflet_id);
-        ll.push(l._source._leaflet_id);
-        ll.push(l._source._overlay._leaflet_id);
-        while(ll.length){
-            let lid=ll.pop();
-            let lm=this._map._layers[lid];
-            if(lm){
-                if(typeof lm.onRemove=='undefined') delete this._map._layers[lid];
-                else if(this._map.hasLayer(lm)) this._map.removeLayer(lm);
-            }
-        }
-    },
-    
     _onWindowResize: function () {
         ams.groupControl._onWindowResize();
     },
