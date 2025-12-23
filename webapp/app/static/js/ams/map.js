@@ -116,15 +116,16 @@ ams.Map = {
             return res;
         }
 
+        this.getGroupName = function(acronym) {
+            return this._groupNamesMap[acronym];
+        } 
+
         this.getCqlFilter = function(viewParams, useClass) {
-            useClass = (typeof useClass=='undefined')?(true):(useClass);
+            useClass = (typeof useClass=='undefined')? (true): (useClass);
             let classFilter=((useClass)?("("+this._filterClasses(viewParams.classname)+")"):(""));
 	        return classFilter;
         }
 
-        this.getGroupName = function(acronym) {
-            return this._groupNamesMap[acronym];
-        } 
     },
 
     WFS: function(baseUrl) {
