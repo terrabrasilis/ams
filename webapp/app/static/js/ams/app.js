@@ -340,12 +340,7 @@ ams.App = {
                 } else if(e.group.name=='INDICADOR'){// change reference layer (deter, fires or risk)?
                     ams.App._riskThreshold=0.0; // reset the risk limit so as not to interfere with the min max query
                     ams.App._indicator = e.acronym;
-                    if(e.acronym=='RK'){
-                        layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.ibamaRisk;
-                        ams.App._propertyName=ams.Config.propertyName.rk;
-                        ams.App._riskThreshold=ams.Config.defaultRiskFilter.threshold;
-                        ams.App._hasClassFilter=false;
-                    }else if(e.acronym=='RI'){
+                    if(e.acronym=='RI') {
                         layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.inpeRisk;
                         ams.App._propertyName=ams.Config.propertyName.ri;
                         ams.App._riskThreshold=ams.Config.defaultRiskFilter.threshold;
@@ -684,12 +679,7 @@ ams.App = {
 
         if (indicator == 'AF') {
             ams.App._propertyName =  ams.Config.propertyName.af;
-            this._setReferenceLayer(ams.App._referenceLayerName = ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.activeFire);
-
-        } else if (indicator == 'RK') {
-            ams.App._propertyName = ams.Config.propertyName.rk;
-            this._setReferenceLayer(ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.ibamaRisk);
-            ams.App._diffOn = false;
+            this._setReferenceLayer(ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.activeFire);
 
         } else if (indicator == 'RI') {
             ams.App._propertyName = ams.Config.propertyName.ri;
@@ -809,7 +799,7 @@ ams.App = {
     },
 
     _buildRiskLayer: function () {
-	    var riskLayer = ams.Config.defaultRiskFilter.source === "inpe"? ams.Config.defaultLayers.inpeRisk : ams.Config.defaultLayers.ibamaRisk;
+	    var riskLayer = ams.Config.defaultLayers.inpeRisk;
         var layerName = ams.Auth.getWorkspace() + ":" + riskLayer;
         var wmsOptions = this._buildWmsOptions(
 	        cqlFilter= "(risk >= " + ams.Config.defaultRiskFilter.threshold + ")"
@@ -877,8 +867,7 @@ ams.App = {
 
 	    if(l) {
 	        let cqlFilter = ""
-	        if(!this._referenceLayerName.includes(ams.Config.defaultLayers.ibamaRisk) &&
-               !this._referenceLayerName.includes(ams.Config.defaultLayers.inpeRisk)) {
+	        if(!this._referenceLayerName.includes(ams.Config.defaultLayers.inpeRisk)) {
 		        cqlFilter = this._appClassGroups.getCqlFilter(this._suViewParams, this._isDeterLayer(layerName));
 	        } else {
 		        cqlFilter = "(risk >= " + ams.Config.defaultRiskFilter.threshold + ")"
@@ -963,7 +952,7 @@ ams.App = {
         };
         let ol={};
         for (let ll in ams.App._addedLayers) {
-            let lname=( (ll.includes('deter'))?("DETER"):( (ll.includes('fire'))?("Focos"):( (ll.includes('ibama'))?("Risco (IBAMA)"):( (ll.includes('inpe'))?("Risco (INPE)"):(false) ) ) ) );
+            let lname=( (ll.includes('deter'))?("DETER"):( (ll.includes('fire'))?("Focos"):((ll.includes('inpe'))?("Risco (INPE)"):(false) ) ) );
             if(ams.App._map.hasLayer(ams.App._addedLayers[ll])){
                 if(lname!==false) ol[lname]=ams.App._addedLayers[ll];
             }
@@ -1160,14 +1149,22 @@ ams.App = {
                 let profileJson = await response.json();
 
                 Plotly.purge('AreaPerYearTableClass');
-                if (profileJson['AreaPerYearTableClass']) {
+                if (profileJson['AreaPerYearTableClass'] && ams.App._indicator !== "RI") {
+                    $('.nav-tabs a[href="#tab-year-class"]').parent().show();
                     $('.nav-tabs a[href="#tab-year-class"]').tab('show');
                     Plotly.react('AreaPerYearTableClass', JSON.parse(profileJson['AreaPerYearTableClass']), {});
+                } else {
+                    $('.nav-tabs a[href="#tab-year-class"]').parent().hide();
                 }
+
                 Plotly.purge('AreaPerLandUse');
                 if (profileJson['AreaPerLandUse'] && ams.App._landUseList.length>1) {
                     Plotly.react('AreaPerLandUse', JSON.parse(profileJson['AreaPerLandUse']), {});
+                    if (ams.App._indicator == "RI") {
+                        $('.nav-tabs a[href="#tab-landuse"]').tab('show');
+                    }
                 }
+
                 Plotly.purge('AreaPerLandUsePpcdam');
                 if (profileJson['AreaPerLandUsePpcdam'] && ams.App._landUseList.length>1) {
                     Plotly.react('AreaPerLandUsePpcdam', JSON.parse(profileJson['AreaPerLandUsePpcdam']), {});
@@ -1183,6 +1180,7 @@ ams.App = {
 
                 document.getElementById("txt3a").innerHTML = profileJson['FormTitle'];
                 $('#modal-container-general-info').modal();
+
             }else{
                 let emsg="";
                 if(response) emsg="HTTP-Error: " + response.status + " on spatial_unit_profile";
