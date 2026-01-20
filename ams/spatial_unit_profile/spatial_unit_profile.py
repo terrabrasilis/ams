@@ -482,7 +482,7 @@ class SpatialUnitProfile():
 
         datasource="do DETER"
         if(self._classname==self._fire_classname):
-            title=f"""Usando dados de <b>{indicador}</b> de Queimadas até <b>{last_date}</b>,
+            title=f"""Análise dos dados de <b>{indicador}</b> de Queimadas até <b>{last_date}</b>,
             {spatial_unit}{spatial_description}, para as categorias fundiárias selecionadas
             e unidade temporal <b>{temporal_unit}</b>.
             """
@@ -490,17 +490,17 @@ class SpatialUnitProfile():
         elif self._classname == self._risk_classname:
             expiration_date = self.risk_expiration_date()
             expiration_date = expiration_date if expiration_date is not None else "falhou ao obter a data"
-            title = f"""Usando dados de Risco de desmatamento (IBAMA), {spatial_unit}{spatial_description},
+            title = f"""Análise dos dados de Risco de desmatamento (IBAMA), {spatial_unit}{spatial_description},
             para as categorias fundiárias selecionadas, valor maior ou igual a <b>{self._risk_threshold}</b> e validade até <b>{expiration_date}</b>."""
 
         elif self._classname == self._inpe_risk_classname:
             risk_date = self.get_inpe_risk_date()
             fortnight = f"{('primeira' if risk_date.day < 15 else 'segunda')} quinzena de {format_datetime(risk_date, 'MMMM', locale='pt_BR')} de {risk_date.year}"
-            title = f"""Usando dados de Risco de desmatamento da <b>{fortnight}</b>, {spatial_unit}{spatial_description},
+            title = f"""Análise dos dados de Risco de desmatamento da <b>{fortnight}</b>, {spatial_unit}{spatial_description},
             para as categorias fundiárias selecionadas, intensidade de 0 (sem risco) a 1 (maior risco)."""
 
         else:
-            title=f"""Usando dados de <b>{indicador}</b> {datasource} até <b>{last_date}</b>,
+            title=f"""Análise dos dados de <b>{indicador}</b> {datasource} até <b>{last_date}</b>,
             {spatial_unit}{spatial_description}, para as categorias fundiárias selecionadas
             e unidade temporal <b>{temporal_unit}</b>.
             """
