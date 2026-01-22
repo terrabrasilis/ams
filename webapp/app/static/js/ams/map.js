@@ -420,8 +420,9 @@ ams.Map = {
                 this._wmsLegendControl.options.static.deter.url = deterurl;
                 this._wmsLegendControl.options.static.af.url=null;
                 this._wmsLegendControl.options.static.risk.url=null;
+                this._wmsLegendControl.options.static.fs.url=null;
 
-            } else if(ams.App._referenceLayerName !== undefined && ams.App._referenceLayerName.includes(ams.Config.defaultLayers.activeFire)){
+            } else if (ams.App._referenceLayerName !== undefined && ams.App._referenceLayerName.includes(ams.Config.defaultLayers.activeFire)){
                 // here we force a different style to get the legend without 3 entries
                 let afurl = baseurl + "&LAYER=" + ams.App._referenceLayerName
                 + "&STYLE=active_fires_class_legend"
@@ -429,11 +430,23 @@ ams.Map = {
                 this._wmsLegendControl.options.static.af.url = afurl;
                 this._wmsLegendControl.options.static.deter.url=null;
                 this._wmsLegendControl.options.static.risk.url=null;
+                this._wmsLegendControl.options.static.fs.url=null;
+
+            } else if (ams.App._referenceLayerName !== undefined && ams.App._referenceLayerName.includes(ams.Config.defaultLayers.fireSpreadingRisk)) {
+                // here we force a different style to get the legend without 3 entries
+                let fsurl = baseurl + "&LAYER=" + ams.App._referenceLayerName
+                + "&STYLE=fire-spreading-risk-legend"
+                + "&LEGEND_OPTIONS=forceLabels:on;";
+                this._wmsLegendControl.options.static.fs.url = fsurl;
+                this._wmsLegendControl.options.static.deter.url=null;
+                this._wmsLegendControl.options.static.risk.url=null;
+                this._wmsLegendControl.options.static.af.url=null;
 
             } else {
                 this._wmsLegendControl.options.static.af.url = null;
                 this._wmsLegendControl.options.static.deter.url = null;
                 this._wmsLegendControl.options.static.risk.url = null;
+                this._wmsLegendControl.options.static.fs.url=null;
                 this.disable();
             }
         }

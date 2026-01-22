@@ -38,12 +38,10 @@ class SpatialUnitProfile():
     """
 
     def __init__(self, config, params):
-        # The class name is fixed to 'RK' as is all code that checks the risk class name.
         self._risk_classname = "RK"
         self._inpe_risk_classname = "RI"
-
-        # The class name is fixed to 'AF' as is all code that checks the fire class name.
         self._fire_classname = "AF"
+        self._fire_spreading_risk_classname = "FS"
 
         self._config = config
 
@@ -64,7 +62,7 @@ class SpatialUnitProfile():
         self.default_column="area"
         self.default_col_name="Área (km²)"
 
-        if(self._classname==self._fire_classname):
+        if self._classname in [self._fire_classname, self._fire_spreading_risk_classname]:
             self.default_column="counts"
             self.default_col_name="Unidades"
 
@@ -114,9 +112,20 @@ class SpatialUnitProfile():
         self._tableinfo = json.loads("{"+suinfo+"}")
 
         self._classes = pd.DataFrame(
-            {'code': pd.Series(['DS','DG', 'CS', 'MN', self._fire_classname, self._risk_classname, self._inpe_risk_classname], dtype='str'),
-             'name': pd.Series(['Desmatamento','Degrada&#231;&#227;o',
-                      'Corte-Seletivo','Minera&#231;&#227;o', 'Focos', 'Índice', 'Índice'], dtype='str'),
+            {'code': pd.Series(
+                [
+                    'DS','DG', 'CS', 'MN',
+                    self._fire_classname,
+                    self._risk_classname,
+                    self._inpe_risk_classname,
+                    self._fire_spreading_risk_classname
+                ],
+                dtype='str'
+            ),
+            'name': pd.Series(
+                ['Desmatamento','Degrada&#231;&#227;o',
+                'Corte-Seletivo','Minera&#231;&#227;o', 'Focos', 'Índice', 'Índice'],
+                dtype='str'),
              'color': pd.Series(['#0d0887', '#46039f', '#7201a8', '#9c179e'], dtype='str')})
         self._temporal_units = {
             "7d": "Agregado 7 dias",

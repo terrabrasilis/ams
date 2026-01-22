@@ -105,10 +105,10 @@ ams.Utils = {
   },
 
   handleRiskIndicator: function() {
-    var show = ams.Auth.isAuthenticated();
+    var show = true; // ams.Auth.isAuthenticated();
 
     $('#leaflet-control-layers-group-1 label span').each(function() {
-      if ($(this).text().toLowerCase().indexOf('risco') !== -1) {
+      if ($(this).text().toLowerCase().indexOf('risco de des') !== -1) {
         if (show) {
           $(this).closest('label').show();
         } else {

@@ -3,7 +3,7 @@ ams.BiomeConfig={};
 
 ams.defaultSubset="Bioma";
 ams.defaultMunicipalitiesGroup="customizado";
-ams.defaultBiome="Amazônia";
+ams.defaultBiome="Cerrado";
 
 var defaultConfig = {
   terrabrasilisURL:"http://terrabrasilis.dpi.inpe.br",
@@ -15,7 +15,8 @@ var defaultConfig = {
     deter: "area",// can be "area", if reference layer is DETER
     af: "counts", // or "counts", if reference layer is AF - Active Fire (Focos de Queimadas)
     rk: "counts", // and "counts" to risk too, because risk is trated as points as Active Fire,
-    ri: "score"
+    ri: "score",
+    fs: "counts",
   },
   risk:{
   },
@@ -40,7 +41,9 @@ const defaultLayers = {
   // the layer name to get the last update date of available data
   lastDate: "last_date",
   // the layer name of risk from INPE.
-  inpeRisk: "risk-inpe-data"
+  inpeRisk: "risk-inpe-data",
+  // fire spreading risk layer
+  fireSpreadingRisk: "fire-spreading-risk"
 };
 
 const defaultFilters = {

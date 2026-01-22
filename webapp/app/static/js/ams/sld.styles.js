@@ -26,6 +26,10 @@ ams.SLDStyles = {
 			unit = "score";
 		}
 
+		if (ams.App._suViewParams.classname == "FS") {
+			unit = "risco de espalhamento"
+		}
+
 		this.stroke = "";
 		this.fillOpacity = 1;
 		this.maxValue = maxValue;
@@ -59,8 +63,13 @@ ams.SLDStyles = {
 					prefix = "Contagem: ";
 					break;
 				case "score":
-					text = "0 (sem risco) e 1 (maior risco)"
-					prefix = "Intensidade de risco: "
+					text = "0 (sem risco) e 1 (maior risco)";
+					prefix = "Intensidade de risco: ";
+					break;
+				case "risco de espalhamento":
+					text = "pontos de risco";
+					prefix = "Contagem: ";
+					break;
 			}
 
 			if (text !== "") {

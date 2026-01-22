@@ -29,18 +29,27 @@ ams.LeafletWms = {
                     name="DETER";
                     type="deter";// used to controls
                     htmlInfo=this._formatDeterPopup(featureInfo);
-                }else if (this._isAFInfo()) {
+
+                } else if (this._isAFInfo()) {
                     name="Queimadas";
                     type="af";// used to controls
                     htmlInfo=this._formatAFPopup(featureInfo);
+
                 } else if (this._isIbamaRKInfo()) {
                     name = "Risco de Desmatamento";
                     type = "risk";
                     htmlInfo = this._formatIbamaRiskPopup(featureInfo);
+
                 } else if (this._isInpeRKInfo()) {
                     name = "Risco de Desmatamento";
                     type = "risk";
                     htmlInfo = this._formatInpeRiskPopup(featureInfo);
+
+                } else if (this._isFSInfo()) {
+                    name = "Risco de Espalhamento do Fogo";
+                    type = "fs";
+                    htmlInfo = this._formatFSPopup(featureInfo);
+
                 } else {
                     name="Unidade Espacial";
                     type="su";// used to controls
@@ -91,7 +100,8 @@ ams.LeafletWms = {
 
         '_isAFInfo': function () {
             return this._overlay.wmsParams.layers.includes(ams.Config.defaultLayers.activeFire);
-        },  
+        },
+
         '_isIbamaRKInfo': function () {
             if (ams.Config.defaultRiskFilter.source === "inpe") {
                 return false;
@@ -99,6 +109,7 @@ ams.LeafletWms = {
             var rkLayer = ams.Config.defaultLayers.ibamaRisk;
             return this._overlay.wmsParams.layers.includes(rkLayer);
         },
+
         '_isInpeRKInfo': function () {
             if (ams.Config.defaultRiskFilter.source !== "inpe") {
                 return false;
@@ -106,6 +117,11 @@ ams.LeafletWms = {
             var rkLayer = ams.Config.defaultLayers.inpeRisk;
             return this._overlay.wmsParams.layers.includes(rkLayer);
         },
+
+        '_isFSInfo': function () {
+            return this._overlay.wmsParams.layers.includes(ams.Config.defaultLayers.fireSpreadingRisk);
+        },
+
         '_updateResults': function(result, featureInfo) {
             let fProperties=featureInfo.features[0].properties;
             for (let i in fProperties) {
@@ -214,28 +230,31 @@ ams.LeafletWms = {
 
         '_createSpatialUnitInfoTable': function (result) {
             let risk=focus=deter="";
-            if(result["classname"]=="AF"){
+            if (result["classname"]=="AF"){
                 focus=""
                 + "<tr>"
                 + "<td>Focos (unidades)   </td>"
                 + "<td>" + result["counts"] + "</td>"
                 + "</tr>";
-            }
-            else if(result["classname"]=="RK"){
+            } else if(result["classname"]=="RK") {
                 risk=""
                 + "<tr>"
                 + "<td>Riscos (unidades)   </td>"
                 + "<td>" + result["counts"] + "</td>"
                 + "</tr>";    
-            }
-            else if(result["classname"]=="RI"){
+            } else if(result["classname"]=="RI") {
                 risk=""
                 + "<tr>"
                 + "<td>Risco (intensidade) </td>"
                 + "<td>" + result["score"] + "</td>"
-                + "</tr>";    
-            }
-            else {
+                + "</tr>";
+            } else if (result["classname"]=="FS") {
+                fs=""
+                + "<tr>"
+                + "<td>Risco (unidades) </td>"
+                + "<td>" + result["counts"] + "</td>"
+                + "</tr>";                
+            } else {
                 deter=""
                 + "<tr>"
                 + "<td>&#193;rea ("+result["area_unit"]+")</td>"
@@ -262,6 +281,7 @@ ams.LeafletWms = {
                 + risk
                 + focus
                 + deter
+                + fs
             +"</table>";
         },
 
@@ -312,8 +332,8 @@ ams.LeafletWms = {
                 "municipio": "",
                 "satelite": "",
                 "view_date": "",
-		"prodes_class": "",
-		"biome": ""
+		        "prodes_class": "",
+		        "biome": ""
             };
             this._updateResults(result, featureInfo);
             return this._createAFInfoTable(result);
@@ -336,6 +356,36 @@ ams.LeafletWms = {
                 + "</tr>";
             }
             table += "<tr><td colspan='2'><a target='_blank' href='"+ams.Config.AFMetadataURL+"'>Ver detalhes dos atributos</a></td></tr>";
+            table += "</table>"
+            return table;
+        },
+
+        '_formatFSPopup': function(featureInfo) {
+            let result = {
+                "view_date": "",
+		        "biome": ""
+            };
+            this._updateResults(result, featureInfo);
+            return this._createFSInfoTable(result);
+        },
+
+        '_createFSInfoTable': function(result) {
+            let table = '<table class="popup-deter-table" style="width:100%">'
+                        + "<tr>"
+                            + "<th></th>"
+                            + "<th></th>"
+                            + "</tr>";
+            for(let k in result) {
+                let v = result[k];
+                if(k.includes("view_date")) {
+                    v = this._formatDate(v);
+                }
+                table += "<tr>"
+                + "<td>" + k + "  </td>"
+                + "<td>" + (v != "null" ? v : " ") + "</td>"
+                + "</tr>";
+            }
+            table += "<tr><td colspan='2'><a target='_blank' href=''>Ver detalhes dos atributos</a></td></tr>";
             table += "</table>"
             return table;
         },

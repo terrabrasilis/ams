@@ -45,7 +45,7 @@ ams.App = {
 
     	// REMOVE ME (Debug Purposes)
         // if(ams.Auth.isAuthenticated()==false) {
-        // geoserverUrl = "http://127.0.0.1/geoserver";
+        geoserverUrl = "http://127.0.0.1/geoserver";
         // }
 
         this._wfs = new ams.Map.WFS(geoserverUrl);
@@ -340,17 +340,22 @@ ams.App = {
                 } else if(e.group.name=='INDICADOR'){// change reference layer (deter, fires or risk)?
                     ams.App._riskThreshold=0.0; // reset the risk limit so as not to interfere with the min max query
                     ams.App._indicator = e.acronym;
-                    if(e.acronym=='RI') {
+                    if (e.acronym=='RI') {
                         layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.inpeRisk;
                         ams.App._propertyName=ams.Config.propertyName.ri;
                         ams.App._riskThreshold=ams.Config.defaultRiskFilter.threshold;
                         ams.App._hasClassFilter = false;
-                    }else if(e.acronym=='AF'){
+                    } else if (e.acronym=='AF') {
                         // the reference layer should be active-fires
                         layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.activeFire;
                         ams.App._propertyName=ams.Config.propertyName.af;
                         ams.App._hasClassFilter=false;
-                    }else{
+                    } else if (e.acronym=='FS') {
+                        // the reference layer should be fire-spreading-risk
+                        layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.fireSpreadingRisk;
+                        ams.App._propertyName=ams.Config.propertyName.fs;
+                        ams.App._hasClassFilter=false;
+                    } else {
                         // the reference layer should be deter
                         layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.deter;
                         ams.App._propertyName=ams.Config.propertyName.deter;
@@ -680,6 +685,10 @@ ams.App = {
         if (indicator == 'AF') {
             ams.App._propertyName =  ams.Config.propertyName.af;
             this._setReferenceLayer(ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.activeFire);
+        
+        } else if (indicator == 'FS') {
+            ams.App._propertyName =  ams.Config.propertyName.af;
+            this._setReferenceLayer(ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.fireSpreadingRisk);
 
         } else if (indicator == 'RI') {
             ams.App._propertyName = ams.Config.propertyName.ri;
@@ -798,6 +807,17 @@ ams.App = {
 	    this._addedLayers[layerName] = layer;
     },
 
+    _buildFireSpreadingRiskLayer: function () {
+        var layerName = ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.fireSpreadingRisk;
+        var wmsOptions = this._buildWmsOptions(
+	        cqlFilter=this._appClassGroups.getCqlFilter(this._suViewParams, false)
+	    );
+	    var source = new ams.LeafletWms.Source(this._baseURL, wmsOptions, this._appClassGroups);
+	    var layer = source.getLayer(layerName);
+
+	    this._addedLayers[layerName] = layer;
+    },
+
     _buildRiskLayer: function () {
 	    var riskLayer = ams.Config.defaultLayers.inpeRisk;
         var layerName = ams.Auth.getWorkspace() + ":" + riskLayer;
@@ -843,6 +863,11 @@ ams.App = {
 
 	    if (this._referenceLayerName.includes(ams.Config.defaultLayers.inpeRisk)) {
 	        this._buildRiskLayer();
+	        return;
+	    }
+
+	    if (this._referenceLayerName.includes(ams.Config.defaultLayers.fireSpreadingRisk)) {
+	        this._buildFireSpreadingRiskLayer();
 	        return;
 	    }
     },

@@ -215,7 +215,7 @@ def get_profile(endpoint):
     except ValidationError as e:
         print(e)
         return format_validation_error(e.messages), 400
-
+    
     try:
         if params['tempUnit'] == '0d':
             return json.dumps(
