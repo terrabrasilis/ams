@@ -11,7 +11,7 @@ from . import bp as app
 from .config import Config
 from .controllers import AppConfigController
 
-from .validator import BiomeConfigSchema, PanelSchema, IndicatorsSchema, ProfileSchema, format_validation_error
+from .validator import BiomeConfigSchema, PanelSchema, IndicatorsSchema, ProfileSchema, format_validation_error, update_validators
 
 import uuid
 import time
@@ -19,6 +19,7 @@ import time
 
 @app.route('/', methods=['GET'])
 def index():
+    update_validators()
     return _render_template()
 
 
@@ -226,33 +227,41 @@ def get_profile(endpoint):
         # onlyOneLandUse = (land_use).find(',')
         count = params['landUse'].split(',')
         onlyOneLandUse = len(count) if count[0] != '' else -1
+        
+        graph_json = {
+            'FormTitle': spatial_unit_profile.form_title(),
+            'AreaPerLandUseProdes': ''            
+        }
+
+        if spatial_unit_profile._classname == 'AF':
+            graph_json.update({'AreaPerLandUseProdes': spatial_unit_profile.fig_area_per_land_use_prodes()})
 
         # to avoid unnecessary function call
         if (spatial_unit_profile._classname != 'RK' and spatial_unit_profile._classname != 'RI'):
             if (onlyOneLandUse <= 1):
-                return json.dumps(
-                    {'FormTitle': spatial_unit_profile.form_title(),
-                     'AreaPerYearTableClass': spatial_unit_profile.fig_area_by_period()}
+                graph_json.update(
+                    {'AreaPerYearTableClass': spatial_unit_profile.fig_area_by_period()}
                 )
             else:
-                return json.dumps(
-                    {'FormTitle': spatial_unit_profile.form_title(),
-                     'AreaPerLandUse': spatial_unit_profile.fig_area_per_land_use(),
-                     'AreaPerYearTableClass': spatial_unit_profile.fig_area_by_period(),
-                     'AreaPerLandUsePpcdam': spatial_unit_profile.fig_area_per_land_use_ppcdam()
-                     }
+                graph_json.update(
+                    {
+                        'AreaPerLandUse': spatial_unit_profile.fig_area_per_land_use(),
+                        'AreaPerYearTableClass': spatial_unit_profile.fig_area_by_period(),
+                        'AreaPerLandUsePpcdam': spatial_unit_profile.fig_area_per_land_use_ppcdam()
+                    }
                 )
         elif (onlyOneLandUse >= 2 and (spatial_unit_profile._classname == 'RK' or spatial_unit_profile._classname == 'RI')):
-            return json.dumps(
-                {'FormTitle': spatial_unit_profile.form_title(),
-                 'AreaPerLandUse': spatial_unit_profile.fig_area_per_land_use(),
-                 'AreaPerLandUsePpcdam': spatial_unit_profile.fig_area_per_land_use_ppcdam()
+            graph_json.update(
+                {
+                    'AreaPerLandUse': spatial_unit_profile.fig_area_per_land_use(),
+                    'AreaPerLandUsePpcdam': spatial_unit_profile.fig_area_per_land_use_ppcdam()
                 }
             )
         else:
-            return json.dumps(
+            graph_json.update(
                 {'FormTitle': 'Sem gráficos para exibir com a configuração atual.'}
             )
+        return graph_json
     except Exception as e:
         print(e)
         return "Something is wrong on the server. Please, send this error to our support service: terrabrasilis@inpe.br", 500

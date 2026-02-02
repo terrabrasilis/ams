@@ -43,6 +43,10 @@ def _load_valid_params_from_db():
 _load_valid_params_from_db()
 
 
+def update_validators():
+    _load_valid_params_from_db()
+
+
 def _validate_date(allow_empty: bool, value: str):
     if allow_empty and not len(value.strip()):
         return

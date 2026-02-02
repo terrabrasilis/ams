@@ -116,19 +116,16 @@ ams.Map = {
             return res;
         }
 
-        this.getCqlFilter = function(viewParams, useClass) {
-            useClass=(typeof useClass=='undefined')?(true):(useClass);
-            let classFilter=((useClass)?("AND ("+this._filterClasses(viewParams.classname)+")"):(""));
-            return "(view_date > " + viewParams.enddate
-                    + ") AND (view_date <= "
-                    + viewParams.startdate
-                    + ") "
-                    + classFilter;
-        }
-
         this.getGroupName = function(acronym) {
             return this._groupNamesMap[acronym];
         } 
+
+        this.getCqlFilter = function(viewParams, useClass) {
+            useClass = (typeof useClass=='undefined')? (true): (useClass);
+            let classFilter=((useClass)?("("+this._filterClasses(viewParams.classname)+")"):(""));
+	        return classFilter;
+        }
+
     },
 
     WFS: function(baseUrl) {
@@ -412,31 +409,26 @@ ams.Map = {
         this._setStaticLegends = function() {
             let baseurl = this.getURL()
             + "?REQUEST=GetLegendGraphic&FORMAT=image/png&WIDTH=20&HEIGHT=20";
-            if(ams.App._referenceLayerName.includes(ams.Config.defaultLayers.deter)){
-                let cql=ams.App._appClassGroups.getCqlFilter(ams.App._suViewParams, ams.App._hasClassFilter);
+            if (ams.App._referenceLayerName !== undefined && ams.App._referenceLayerName.includes(ams.Config.defaultLayers.deter)) {
+		        let cql = ams.App._appClassGroups.getCqlFilter(ams.App._suViewParams, ams.App._hasClassFilter);
                 let deterurl = baseurl + "&LAYER=" + ams.App._referenceLayerName
-                + "&LEGEND_OPTIONS=hideEmptyRules:true;forceLabels:on;"
-                + "&CQL_FILTER=" + cql;
+                    + "&STYLE=deter-ams"
+                    + "&LEGEND_OPTIONS="
+                    + "hideEmptyRules:true;"
+                    + "forceLabels:on;"
+                    + "&CQL_FILTER=" + cql;
                 this._wmsLegendControl.options.static.deter.url = deterurl;
                 this._wmsLegendControl.options.static.af.url=null;
                 this._wmsLegendControl.options.static.risk.url=null;
 
-            }else if(ams.App._referenceLayerName.includes(ams.Config.defaultLayers.activeFire)){
+            } else if(ams.App._referenceLayerName !== undefined && ams.App._referenceLayerName.includes(ams.Config.defaultLayers.activeFire)){
                 // here we force a different style to get the legend without 3 entries
                 let afurl = baseurl + "&LAYER=" + ams.App._referenceLayerName
-                + "&STYLE=active_fires_legend"
+                + "&STYLE=active_fires_class_legend"
                 + "&LEGEND_OPTIONS=forceLabels:on;";
                 this._wmsLegendControl.options.static.af.url = afurl;
                 this._wmsLegendControl.options.static.deter.url=null;
                 this._wmsLegendControl.options.static.risk.url=null;
-
-            }else if(ams.App._referenceLayerName.includes(ams.Config.defaultLayers.ibamaRisk)){
-                let rurl = baseurl + "&LAYER=" + ams.App._referenceLayerName
-                    + "&STYLE=risk_legend"
-                    + "&LEGEND_OPTIONS=forceLabels:on;";
-                this._wmsLegendControl.options.static.af.url = null;
-                this._wmsLegendControl.options.static.deter.url = null;
-                this._wmsLegendControl.options.static.risk.url = rurl;
 
             } else {
                 this._wmsLegendControl.options.static.af.url = null;

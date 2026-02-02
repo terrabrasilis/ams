@@ -68,9 +68,8 @@ def _get_deter_sql(
     columns = ",".join(
         [
             f"deter.{_}" for _ in [
-                "gid", "biome", "origin_gid", "classname", "quadrant", "orbitpoint", "date",
-                "sensor", "satellite", "areatotalkm", "areamunkm", "areauckm",
-                "mun", "uf", "uc", "geom", "month_year", "geocode"
+                "gid", "origin_gid", "biome", "classname", "view_date AS date",
+                "satellite", "sensor", "path_row", "area_km", "geom", "geocode"
             ]
         ]
     )
@@ -93,11 +92,10 @@ def _get_deter_sql(
         OR deter.geocode = ANY('{{{geocodes}}}')
     ) """
 
-
     sql = f'''
         SELECT {columns}
         FROM deter.{table} deter, public."{spatial_unit}" su
-        WHERE deter.date > '{start_period_date}' AND deter.date <= '{start_date}'
+        WHERE deter.view_date > '{start_period_date}' AND deter.view_date <= '{start_date}'
             AND {where_biome}
             AND {where_municipalities}
             AND su.{spatial_unit_table_id} = '{name}'
@@ -121,7 +119,7 @@ def _get_active_fires_sql(
     columns = ",".join(
         [
             f"fires.{_}" for _ in [
-                "id", "uuid", "biome", "view_date as date", "satelite", "estado", "municipio", "geom", "geocode"
+                "id", "uuid", "biome", "view_date as date", "satelite", "estado", "municipio", "geom", "geocode", "prodes_class"
             ]
         ]
     )
