@@ -16,7 +16,7 @@ var defaultConfig = {
     af: "counts", // or "counts", if reference layer is AF - Active Fire (Focos de Queimadas)
     rk: "counts", // and "counts" to risk too, because risk is trated as points as Active Fire,
     ri: "score",
-    fs: "area",
+    fs: "units",
   },
   risk:{
   },

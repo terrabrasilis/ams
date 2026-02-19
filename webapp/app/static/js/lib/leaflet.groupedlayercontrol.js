@@ -299,7 +299,11 @@ L.Control.GroupedLayers = L.Control.extend({
       var mapClassificationElement = document.querySelector('[id="leaflet-control-layers-group-' + classificationMapGroupId + '"]');
       mapClassificationElement.style.display = 'none';
       ams.PeriodHandler.remove(this._map);
-      this._handleRiskSpatialUnit(true);
+
+      if (obj.name.toLowerCase().includes('risco de desm')) {
+        this._handleRiskSpatialUnit(true);
+      }
+      
     } else {
       var mapClassificationElement = document.querySelector('[id="leaflet-control-layers-group-' + classificationMapGroupId + '"]');
       mapClassificationElement.style.display = 'block';
