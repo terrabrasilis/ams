@@ -55,8 +55,10 @@ const defaultFilters = {
 };
 
 const defaultRiskFilter = {
-  threshold: 0,
-  expirationRisk: 0
+  source: "inpe",
+  threshold: parseFloat(ams.Utils.getServerConfigParam('risk_threshold')),
+  expirationRisk: 7,
+  scaleFactor: parseFloat(ams.Utils.getServerConfigParam('risk_scale_factor'))
 };
 
 const defaultWorkspace = ams.Utils.isHomologationEnvironment()? "ams1" : "ams2";
@@ -70,13 +72,7 @@ ams.BiomeConfig["Amazônia"] = {
     // can be group's name of DETER classnames, 'DS', 'DG', 'CS' and 'MN', or 'AF' to Queimadas, or 'RI' to INPE risk
     indicator: 'DS',
   },
-  defaultRiskFilter:{
-    // used to process counts, including points where the value is greater than this threshold
-    source: "inpe",
-    threshold: parseFloat(ams.Utils.getServerConfigParam('risk_threshold')),
-    expirationRisk: 7, // The number of days to set the risk forecast due date.
-    scaleFactor: parseFloat(ams.Utils.getServerConfigParam('risk_scale_factor'))
-  }
+  defaultRiskFilter: defaultRiskFilter
 };
 
 const activeFiresLayerConfig = {

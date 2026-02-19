@@ -1143,10 +1143,6 @@ ams.App = {
             this._map.removeLayer(layer);
 	    }
 
-	    if (layerName == this._referenceLayerName) {
-	        this._referenceLayerName = null;
-	    }
-
 	    this._map.closePopup();
     },
 
