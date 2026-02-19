@@ -151,7 +151,8 @@ ams.LeafletWms = {
                 "percentage": 0,
                 "area_unit": "km²",
                 "suid": "",
-                "score": 0
+                "score": 0,
+                "units": 0,
             };
             this._updateResults(result, featureInfo);
 
@@ -229,7 +230,7 @@ ams.LeafletWms = {
         },
 
         '_createSpatialUnitInfoTable': function (result) {
-            let risk=focus=deter="";
+            let risk=focus=deter=fs="";
             if (result["classname"]=="AF"){
                 focus=""
                 + "<tr>"
@@ -251,9 +252,17 @@ ams.LeafletWms = {
             } else if (result["classname"]=="FS") {
                 fs=""
                 + "<tr>"
-                + "<td>Risco (unidades) </td>"
-                + "<td>" + result["counts"] + "</td>"
-                + "</tr>";                
+                + "<td>Pontos </td>"
+                + "<td>" + result["units"] + "</td>"
+                + "</tr>"
+                + "<tr>"
+                + "<td>&#193;rea ("+result["area_unit"]+")</td>"
+                + "<td>" + result["area"] + "</td>"
+                + "</tr>"
+                + "<tr>"
+                + "<td>Porcentagem   </td>"
+                + "<td>" + result["percentage"] + "%</td>"
+                + "</tr>";
             } else {
                 deter=""
                 + "<tr>"

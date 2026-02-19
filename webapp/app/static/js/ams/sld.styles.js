@@ -6,7 +6,7 @@ ams.SLDStyles = {
 
 		let unit = "focos";
 		if (propertyName == "area") {
-		unit = "km²"; // default if auto is disabled
+			unit = "km²"; // default if auto is disabled
 			if (ams.Config.general.area.changeunit == "auto") {
 				let diff =
 				minValue >= 0 ? maxValue - minValue : maxValue + minValue * -1;
@@ -27,7 +27,7 @@ ams.SLDStyles = {
 		}
 
 		if (ams.App._suViewParams.classname == "FS") {
-			unit = "risco de espalhamento"
+			unit = "risco de espalhamento";
 		}
 
 		this.stroke = "";
@@ -67,7 +67,7 @@ ams.SLDStyles = {
 					prefix = "Intensidade de risco: ";
 					break;
 				case "risco de espalhamento":
-					text = "pontos de risco";
+					text = "número de pontos";
 					prefix = "Contagem: ";
 					break;
 			}

@@ -62,8 +62,12 @@ class SpatialUnitProfile():
         self.default_column="area"
         self.default_col_name="Área (km²)"
 
-        if self._classname in [self._fire_classname, self._fire_spreading_risk_classname]:
+        if self._classname == self._fire_classname:
             self.default_column="counts"
+            self.default_col_name="Unidades"
+
+        if self._classname == self._fire_spreading_risk_classname:
+            self.default_column="units"
             self.default_col_name="Unidades"
 
         if(self._classname==self._risk_classname):
@@ -78,7 +82,7 @@ class SpatialUnitProfile():
 
         # standard area rounding
         self.round_factor=2
-        if(self._classname==self._fire_classname):
+        if(self._classname in [self._fire_classname, self._fire_spreading_risk_classname]):
             self.round_factor=0
 
         self._spatial_unit = params['spatialUnit']
@@ -124,7 +128,8 @@ class SpatialUnitProfile():
             ),
             'name': pd.Series(
                 ['Desmatamento','Degrada&#231;&#227;o',
-                'Corte-Seletivo','Minera&#231;&#227;o', 'Focos', 'Índice', 'Índice'],
+                'Corte-Seletivo','Minera&#231;&#227;o', 'Focos', 'Índice', 'Índice',
+                'Risco de Espalhamento do Fogo'],
                 dtype='str'),
              'color': pd.Series(['#0d0887', '#46039f', '#7201a8', '#9c179e'], dtype='str')})
         self._temporal_units = {
@@ -133,7 +138,6 @@ class SpatialUnitProfile():
             "1m": "Agregado 30 dias",
             "3m": "Agregado 90 dias",
             "1y": "Agregado 365 dias"}
-        
 
         self._temporal_unit_sql = {
             7:'''select TO_CHAR(date, 'YYYY/WW') as period,classname,sum(a.'''+self.default_column+''') as 
@@ -208,7 +212,7 @@ class SpatialUnitProfile():
     def __get_temporal_unit_sql(self, land_use_type):
         # local round factor used into SQL to read data from database
         round_factor=4
-        if(self._classname==self._fire_classname):
+        if(self._classname in [self._fire_classname, self._fire_spreading_risk_classname]):
             round_factor=0
         
         interval_val,period_unit,period_series=self.__get_period_settings()
@@ -490,6 +494,7 @@ class SpatialUnitProfile():
         temporal_unit=self._temporal_units[self._temporal_unit]
 
         datasource="do DETER"
+        
         if(self._classname==self._fire_classname):
             title=f"""Análise dos dados de <b>{indicador}</b> de Queimadas até <b>{last_date}</b>,
             {spatial_unit}{spatial_description}, para as categorias fundiárias selecionadas
@@ -507,6 +512,11 @@ class SpatialUnitProfile():
             fortnight = f"{('primeira' if risk_date.day < 15 else 'segunda')} quinzena de {format_datetime(risk_date, 'MMMM', locale='pt_BR')} de {risk_date.year}"
             title = f"""Análise dos dados de Risco de desmatamento da <b>{fortnight}</b>, {spatial_unit}{spatial_description},
             para as categorias fundiárias selecionadas, intensidade de 0 (sem risco) a 1 (maior risco)."""
+
+        elif self._classname == self._fire_spreading_risk_classname:
+            title=f"""Análise dos dados de <b>{indicador}</b> {spatial_unit}{spatial_description},
+            para as categorias fundiárias selecionadas.            
+            """
 
         else:
             title=f"""Análise dos dados de <b>{indicador}</b> {datasource} até <b>{last_date}</b>,
@@ -552,7 +562,7 @@ class SpatialUnitProfile():
         if total == 0.:
             return None
 
-        fire_or_risk = self._classname in [self._fire_classname, self._risk_classname, self._inpe_risk_classname]
+        fire_or_risk = self._classname in [self._fire_classname, self._risk_classname, self._inpe_risk_classname, self._fire_spreading_risk_classname]
 
         # generating the graphics
         graph_label = "<b>%{label}</b>"
@@ -561,10 +571,15 @@ class SpatialUnitProfile():
         graph_area_unit = km2 if self.data_unit != ha else ha
 
         graph_percent = "%{percent:.2%}"
-        _ = {self._risk_classname: "pontos de risco", self._fire_classname: "focos", self._inpe_risk_classname: "score de risco"}
+        _ = {
+            self._risk_classname: "pontos de risco",
+            self._fire_classname: "focos",
+            self._inpe_risk_classname: "score de risco",
+            self._fire_spreading_risk_classname: "pontos de risco",
+        }
         graph_indicator = _[self._classname] if self._classname in _  else "alertas"
 
-        if self._classname in [self._fire_classname, self._risk_classname]:
+        if self._classname in [self._fire_classname, self._risk_classname, self._fire_spreading_risk_classname]:
             graph_total = f"Contagem de {graph_indicator}: {total}."
         elif self._classname == self._inpe_risk_classname:
             graph_total = f"Intensidade total de risco: {total:.2f}." if self._name != "*" else ""
@@ -604,7 +619,7 @@ class SpatialUnitProfile():
         )
 
         # graph 2
-        custom_data = None if self._classname in [self._fire_classname, self._risk_classname, self._inpe_risk_classname] else (
+        custom_data = None if self._classname in [self._fire_spreading_risk_classname, self._fire_classname, self._risk_classname, self._inpe_risk_classname] else (
             df[f'Área ({graph_area_unit})'] / df[f'Área da Categoria ({graph_area_unit})']
         )
 
@@ -626,9 +641,9 @@ class SpatialUnitProfile():
         )
 
         title = f"<b>{indicator}</b> por categoria fundiária"
-        if not self._classname in [self._risk_classname, self._inpe_risk_classname]:
-            title += f"<br>no último período do <b>{unid_temp}"
-        title += f". <b>{graph_total}</b>"
+        if not self._classname in [self._risk_classname, self._inpe_risk_classname, self._fire_spreading_risk_classname]:
+            title += f" no último período do <b>{unid_temp}"
+        title += f". <br><b>{graph_total}</b><br>"
 
         fig.update_traces(
             sort=False,
@@ -697,7 +712,7 @@ class SpatialUnitProfile():
         # duplicate series to use in label chart
         df["label"]=df[self.default_col_name]
 
-        if(self._classname==self._fire_classname):
+        if(self._classname in [self._fire_classname, self._fire_spreading_risk_classname]):
             df[self.default_col_name]=df[self.default_col_name].astype(int)
             df["label"]=df["label"].astype(int).astype(str)
         else:
@@ -852,8 +867,13 @@ class SpatialUnitProfile():
         if self.data_unit == ha:
             default_col_name = default_col_name.replace(km2, ha)
     
-        fire_or_risk = self._classname in [self._fire_classname, self._risk_classname, self._inpe_risk_classname]
-        _ = {self._risk_classname: "pontos de risco", self._fire_classname: "focos", self._inpe_risk_classname: "intensidade de risco"}
+        fire_or_risk = self._classname in [self._fire_spreading_risk_classname, self._fire_classname, self._risk_classname, self._inpe_risk_classname]
+        _ = {
+            self._risk_classname: "pontos de risco",
+            self._fire_classname: "focos",
+            self._inpe_risk_classname: "intensidade de risco",
+            self._fire_spreading_risk_classname: "pontos de risco"
+        }
         graph_unit = _[self._classname] if fire_or_risk else (km2 if self.data_unit != ha else ha)
         graph_indicator = _[self._classname] if self._classname in _  else "alertas"
     
@@ -963,7 +983,12 @@ class SpatialUnitProfile():
         graph_unit =  ""
 
         graph_percent = "%{percent:.2%}"
-        _ = {self._risk_classname: "pontos de risco", self._fire_classname: "focos", self._inpe_risk_classname: "score de risco"}
+        _ = {
+            self._risk_classname: "pontos de risco",
+            self._fire_classname: "focos",
+            self._inpe_risk_classname: "score de risco",
+            self._fire_spreading_risk_classname: "pontos de risco",
+        }
         graph_indicator = _[self._classname]
 
         graph_total = f"Contagem de {graph_indicator}: {total}."

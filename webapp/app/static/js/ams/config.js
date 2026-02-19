@@ -3,7 +3,7 @@ ams.BiomeConfig={};
 
 ams.defaultSubset="Bioma";
 ams.defaultMunicipalitiesGroup="customizado";
-ams.defaultBiome="Cerrado";
+ams.defaultBiome="Amazônia";
 
 var defaultConfig = {
   terrabrasilisURL:"http://terrabrasilis.dpi.inpe.br",
@@ -16,7 +16,7 @@ var defaultConfig = {
     af: "counts", // or "counts", if reference layer is AF - Active Fire (Focos de Queimadas)
     rk: "counts", // and "counts" to risk too, because risk is trated as points as Active Fire,
     ri: "score",
-    fs: "counts",
+    fs: "area",
   },
   risk:{
   },

@@ -204,7 +204,6 @@ def get_profile(endpoint):
     if endpoint != 'spatial_unit_profile':
         return "Bad endpoint.", 404
     
-    # print(f"spatial_unit_profile __\n {request.args}")
     params = request.args.get('sData')
     params = json.loads(params) if params else {}
 
@@ -237,7 +236,7 @@ def get_profile(endpoint):
             graph_json.update({'AreaPerLandUseProdes': spatial_unit_profile.fig_area_per_land_use_prodes()})
 
         # to avoid unnecessary function call
-        if (spatial_unit_profile._classname != 'RK' and spatial_unit_profile._classname != 'RI'):
+        if (not spatial_unit_profile._classname in ['RK', 'RI', 'FS']):
             if (onlyOneLandUse <= 1):
                 graph_json.update(
                     {'AreaPerYearTableClass': spatial_unit_profile.fig_area_by_period()}
@@ -250,7 +249,7 @@ def get_profile(endpoint):
                         'AreaPerLandUsePpcdam': spatial_unit_profile.fig_area_per_land_use_ppcdam()
                     }
                 )
-        elif (onlyOneLandUse >= 2 and (spatial_unit_profile._classname == 'RK' or spatial_unit_profile._classname == 'RI')):
+        elif (onlyOneLandUse >= 2 and (spatial_unit_profile._classname in ['RK', 'RI', 'FS'])):
             graph_json.update(
                 {
                     'AreaPerLandUse': spatial_unit_profile.fig_area_per_land_use(),

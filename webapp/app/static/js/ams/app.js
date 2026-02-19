@@ -32,7 +32,6 @@ ams.App = {
     _borderLayerName: null,
 
     run: function(geoserverUrl, spatialUnits, appClassGroups) {
-
         this._spatialUnits=spatialUnits;
         this._appClassGroups=appClassGroups;
         // start land use list with default itens to use in viewparams at start App
@@ -45,7 +44,7 @@ ams.App = {
 
     	// REMOVE ME (Debug Purposes)
         // if(ams.Auth.isAuthenticated()==false) {
-        geoserverUrl = "http://127.0.0.1/geoserver";
+        // geoserverUrl = "http://127.0.0.1/geoserver";
         // }
 
         this._wfs = new ams.Map.WFS(geoserverUrl);
@@ -71,7 +70,7 @@ ams.App = {
         }
 
         this._baseURL = geoserverUrl + "/wms";
-        
+
         this._setIndicator(ams.Config.defaultFilters.indicator);
 
         var map = new L.Map("map", {
@@ -372,7 +371,7 @@ ams.App = {
 
                     if(ams.App._suViewParams.classname != e.acronym){
                         var keep_last_date = (
-                            !["RI", "RK", "AF"].includes(e.acronym) && !["RI", "RK", "AF"].includes(ams.App._suViewParams.classname)
+                            !["RI", "RK", "AF", "FS"].includes(e.acronym) && !["RI", "RK", "AF", "FS"].includes(ams.App._suViewParams.classname)
                         );
 
                         ams.App._suViewParams.classname = e.acronym;
@@ -471,8 +470,8 @@ ams.App = {
             setMunicipalityPanelMode();
         }
 
-        if (ams.Config.defaultFilters.indicator == 'RI') {
-            let obj = ams.groupControl._getControlByName("RI");
+        if (['RI', 'FS'].includes(ams.Config.defaultFilters.indicator)) {
+            let obj = ams.groupControl._getControlByName(ams.Config.defaultFilters.indicator);
             $("#ctrl" + obj.ctrlId).click();  // forcing to start risk environment
         }
 
@@ -687,7 +686,7 @@ ams.App = {
             this._setReferenceLayer(ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.activeFire);
         
         } else if (indicator == 'FS') {
-            ams.App._propertyName =  ams.Config.propertyName.af;
+            ams.App._propertyName =  ams.Config.propertyName.fs;
             this._setReferenceLayer(ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.fireSpreadingRisk);
 
         } else if (indicator == 'RI') {
@@ -1174,7 +1173,7 @@ ams.App = {
                 let profileJson = await response.json();
 
                 Plotly.purge('AreaPerYearTableClass');
-                if (profileJson['AreaPerYearTableClass'] && ams.App._indicator !== "RI") {
+                if (profileJson['AreaPerYearTableClass'] && ams.App._indicator !== "RI" && ams.App._indicator !== "FS") {
                     $('.nav-tabs a[href="#tab-year-class"]').parent().show();
                     $('.nav-tabs a[href="#tab-year-class"]').tab('show');
                     Plotly.react('AreaPerYearTableClass', JSON.parse(profileJson['AreaPerYearTableClass']), {});
@@ -1185,7 +1184,7 @@ ams.App = {
                 Plotly.purge('AreaPerLandUse');
                 if (profileJson['AreaPerLandUse'] && ams.App._landUseList.length>1) {
                     Plotly.react('AreaPerLandUse', JSON.parse(profileJson['AreaPerLandUse']), {});
-                    if (ams.App._indicator == "RI") {
+                    if (["RI", "FS"].includes(ams.App._indicator)) {
                         $('.nav-tabs a[href="#tab-landuse"]').tab('show');
                     }
                 }

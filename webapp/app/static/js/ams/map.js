@@ -314,7 +314,7 @@ ams.Map = {
             2: {"key": "1m", "value": "Agregado 30 dias"},
             3: {"key": "3m", "value": "Agregado 90 dias"},
             4: {"key": "1y", "value": "Agregado 365 dias"},
-            5: {"key": "custom", "value": "Agregado customizado"}                    
+            5: {"key": "custom", "value": "Agregado customizado"}
         };
 
         this.differeces = {
