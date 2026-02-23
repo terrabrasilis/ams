@@ -959,7 +959,7 @@ class SpatialUnitProfile():
 
         graph_total = f"Contagem de {graph_indicator}: {total}."
 
-        graph_colors = ["#658faa", "#53886e", "#90c0c9", "#c5c8ce"]
+        graph_colors = ["#d4e157", "#ffee58", "#ffc107", "#ff9800"]
 
         title1 = f'<br><b>Percentual de {graph_indicator.title()}<br>em Relação ao Total de {graph_indicator.title()}</b>'
 
