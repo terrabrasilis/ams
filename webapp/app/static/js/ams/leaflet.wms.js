@@ -30,6 +30,11 @@ ams.LeafletWms = {
                     type="deter";// used to controls
                     htmlInfo=this._formatDeterPopup(featureInfo);
 
+                } else if (this._isFTInfo()) {
+                    name="Queimadas";
+                    type="ft";// used to controls
+                    htmlInfo=this._formatFTPopup(featureInfo);
+
                 } else if (this._isAFInfo()) {
                     name="Queimadas";
                     type="af";// used to controls
@@ -100,6 +105,10 @@ ams.LeafletWms = {
 
         '_isAFInfo': function () {
             return this._overlay.wmsParams.layers.includes(ams.Config.defaultLayers.activeFire);
+        },
+
+        '_isFTInfo': function () {
+            return this._overlay.wmsParams.layers.includes(ams.Config.defaultLayers.activeFireToday);
         },
 
         '_isIbamaRKInfo': function () {
@@ -237,6 +246,12 @@ ams.LeafletWms = {
                 + "<td>Focos (unidades)   </td>"
                 + "<td>" + result["counts"] + "</td>"
                 + "</tr>";
+            } else if (result["classname"]=="FT"){
+                focus=""
+                + "<tr>"
+                + "<td>Focos (unidades)   </td>"
+                + "<td>" + result["counts"] + "</td>"
+                + "</tr>";
             } else if(result["classname"]=="RK") {
                 risk=""
                 + "<tr>"
@@ -348,6 +363,17 @@ ams.LeafletWms = {
             return this._createAFInfoTable(result);
         },
 
+        '_formatFTPopup': function(featureInfo) {
+            let result = {
+                "municipio": "",
+                "satelite": "",
+                "viewed_at": "",
+		        "biome": ""
+            };
+            this._updateResults(result, featureInfo);
+            return this._createFTInfoTable(result);
+        },
+
         '_createAFInfoTable': function(result) {
             let table = '<table class="popup-deter-table" style="width:100%">'
                         + "<tr>"
@@ -365,6 +391,27 @@ ams.LeafletWms = {
                 + "</tr>";
             }
             table += "<tr><td colspan='2'><a target='_blank' href='"+ams.Config.AFMetadataURL+"'>Ver detalhes dos atributos</a></td></tr>";
+            table += "</table>"
+            return table;
+        },
+
+        '_createFTInfoTable': function(result) {
+            let table = '<table class="popup-deter-table" style="width:100%">'
+                        + "<tr>"
+                            + "<th></th>"
+                            + "<th></th>"
+                            + "</tr>";
+            for(let k in result) {
+                let v = result[k];
+                if(k.includes("view_date")) {
+                    v = this._formatDate(v);
+                }
+                table += "<tr>"
+                + "<td>" + k + "  </td>"
+                + "<td>" + (v != "null" ? v : " ") + "</td>"
+                + "</tr>";
+            }
+            table += "<tr><td colspan='2'><a target='_blank' href='"+ams.Config.FTMetadataURL+"'>Ver detalhes dos atributos</a></td></tr>";
             table += "</table>"
             return table;
         },

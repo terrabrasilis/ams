@@ -218,6 +218,7 @@ ams.App = {
         let cglen = appClassGroups.length();
         for(var i = 0; i < cglen; i++) {
             controlGroups["INDICADOR"][appClassGroups.at(i).name] = appClassGroups.at(i).acronym;
+            controlGroups["INDICADOR"][appClassGroups.at(i).acronym] = "";
         }
 
         var temporalUnitAggregates = temporalUnits.getAggregates();
@@ -343,11 +344,16 @@ ams.App = {
                         layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.inpeRisk;
                         ams.App._propertyName=ams.Config.propertyName.ri;
                         ams.App._riskThreshold=ams.Config.defaultRiskFilter.threshold;
-                        ams.App._hasClassFilter = false;
+                        ams.App._hasClassFilter=false;
                     } else if (e.acronym=='AF') {
                         // the reference layer should be active-fires
                         layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.activeFire;
                         ams.App._propertyName=ams.Config.propertyName.af;
+                        ams.App._hasClassFilter=false;
+                    } else if (e.acronym=='FT') {
+                        // the reference layer should be active-fires-today
+                        layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.activeFireToday;
+                        ams.App._propertyName=ams.Config.propertyName.ft;
                         ams.App._hasClassFilter=false;
                     } else if (e.acronym=='FS') {
                         // the reference layer should be fire-spreading-risk
@@ -371,7 +377,7 @@ ams.App = {
 
                     if(ams.App._suViewParams.classname != e.acronym){
                         var keep_last_date = (
-                            !["RI", "RK", "AF", "FS"].includes(e.acronym) && !["RI", "RK", "AF", "FS"].includes(ams.App._suViewParams.classname)
+                            !["RI", "RK", "AF", "FS", "FT"].includes(e.acronym) && !["RI", "RK", "AF", "FS", "FT"].includes(ams.App._suViewParams.classname)
                         );
 
                         ams.App._suViewParams.classname = e.acronym;
@@ -470,9 +476,9 @@ ams.App = {
             setMunicipalityPanelMode();
         }
 
-        if (['RI', 'FS'].includes(ams.Config.defaultFilters.indicator)) {
+        if (['RI', 'FS', 'FT'].includes(ams.Config.defaultFilters.indicator)) {
             let obj = ams.groupControl._getControlByName(ams.Config.defaultFilters.indicator);
-            $("#ctrl" + obj.ctrlId).click();  // forcing to start risk environment
+            $("#ctrl" + obj.ctrlId).click();  // forcing to restart environment
         }
 
         function updatePriorization() {
@@ -684,10 +690,16 @@ ams.App = {
         if (indicator == 'AF') {
             ams.App._propertyName =  ams.Config.propertyName.af;
             this._setReferenceLayer(ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.activeFire);
+
+        } else if (indicator == 'FT') {
+            ams.App._propertyName =  ams.Config.propertyName.ft;
+            this._setReferenceLayer(ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.activeFireToday);
+            ams.App._diffOn = false;
         
         } else if (indicator == 'FS') {
             ams.App._propertyName =  ams.Config.propertyName.fs;
             this._setReferenceLayer(ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.fireSpreadingRisk);
+            ams.App._diffOn = false;
 
         } else if (indicator == 'RI') {
             ams.App._propertyName = ams.Config.propertyName.ri;
@@ -806,6 +818,17 @@ ams.App = {
 	    this._addedLayers[layerName] = layer;
     },
 
+    _buildFTLayer: function () {
+        var layerName = ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.activeFireToday;
+        var wmsOptions = this._buildWmsOptions(
+	        cqlFilter=this._appClassGroups.getCqlFilter(this._suViewParams, false)
+	    );
+	    var source = new ams.LeafletWms.Source(this._baseURL, wmsOptions, this._appClassGroups);
+	    var layer = source.getLayer(layerName);
+
+	    this._addedLayers[layerName] = layer;
+    },
+
     _buildFireSpreadingRiskLayer: function () {
         var layerName = ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.fireSpreadingRisk;
         var wmsOptions = this._buildWmsOptions(
@@ -852,6 +875,11 @@ ams.App = {
     _buildReferenceLayers: function () {
 	    if (this._referenceLayerName.includes(ams.Config.defaultLayers.deter)) {
 	        this._buildDeterLayer();
+	        return;
+	    }
+
+	    if (this._referenceLayerName.includes(ams.Config.defaultLayers.activeFireToday)) {
+	        this._buildFTLayer();
 	        return;
 	    }
 
@@ -1169,7 +1197,7 @@ ams.App = {
                 let profileJson = await response.json();
 
                 Plotly.purge('AreaPerYearTableClass');
-                if (profileJson['AreaPerYearTableClass'] && ams.App._indicator !== "RI" && ams.App._indicator !== "FS") {
+                if (profileJson['AreaPerYearTableClass'] && ams.App._indicator !== "RI" && ams.App._indicator !== "FS" && ams.App._indicator !== "FT") {
                     $('.nav-tabs a[href="#tab-year-class"]').parent().show();
                     $('.nav-tabs a[href="#tab-year-class"]').tab('show');
                     Plotly.react('AreaPerYearTableClass', JSON.parse(profileJson['AreaPerYearTableClass']), {});
@@ -1180,7 +1208,7 @@ ams.App = {
                 Plotly.purge('AreaPerLandUse');
                 if (profileJson['AreaPerLandUse'] && ams.App._landUseList.length>1) {
                     Plotly.react('AreaPerLandUse', JSON.parse(profileJson['AreaPerLandUse']), {});
-                    if (["RI", "FS"].includes(ams.App._indicator)) {
+                    if (["RI", "FS", "FT"].includes(ams.App._indicator)) {
                         $('.nav-tabs a[href="#tab-landuse"]').tab('show');
                     }
                 }

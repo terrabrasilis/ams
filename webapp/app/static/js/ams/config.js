@@ -9,14 +9,16 @@ var defaultConfig = {
   terrabrasilisURL:"http://terrabrasilis.dpi.inpe.br",
   DETERMetadataURL: "/geonetwork/srv/eng/catalog.search#/metadata/f2153c4a-915b-48a6-8658-963bdce7366c",
   AFMetadataURL: "/geonetwork/srv/eng/catalog.search#/metadata/c4b6504f-5d54-4b61-a745-4123fae873ec",
+  FTMetadataURL: "",
   spatialUnitLayers:[],// populated on App load: ams.App.run(...)
   floatDecimals: 2,// change this number to change the number of decimals to float numbers
   propertyName: {
-    deter: "area",// can be "area", if reference layer is DETER
-    af: "counts", // or "counts", if reference layer is AF - Active Fire (Focos de Queimadas)
-    rk: "counts", // and "counts" to risk too, because risk is trated as points as Active Fire,
+    deter: "area",
+    af: "counts",
+    rk: "counts",
     ri: "score",
     fs: "units",
+    ft: "counts",
   },
   risk:{
   },
@@ -34,15 +36,11 @@ var defaultConfig = {
 const defaultLayers = {
   biomeBorder:"biome_border",
   municipalitiesBorder:"municipalities_border",
-  // the layer name of DETER alerts from TerraBrasilis service
   deter: "deter-ams",
-  // the layer name of Focos de Queimadas from TerraBrasilis service
   activeFire:"active-fire",
-  // the layer name to get the last update date of available data
+  activeFireToday:"active-fire-today",
   lastDate: "last_date",
-  // the layer name of risk from INPE.
   inpeRisk: "risk-inpe-data",
-  // fire spreading risk layer
   fireSpreadingRisk: "fire-spreading-risk"
 };
 
@@ -61,7 +59,7 @@ const defaultRiskFilter = {
   scaleFactor: parseFloat(ams.Utils.getServerConfigParam('risk_scale_factor'))
 };
 
-const defaultWorkspace = ams.Utils.isHomologationEnvironment()? "ams1" : "ams2";
+const defaultWorkspace = ams.Utils.isHomologationEnvironment()? "ams1" : "ams3";
 
 // configuration by biome
 ams.BiomeConfig["Amazônia"] = {

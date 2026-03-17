@@ -80,7 +80,7 @@ ams.Map = {
             for(var i = 0; i < groups.length; i++) {
                 groups[i].acronym = groups[i].name;
                 this._groupNamesMap[groups[i].name] = groups[i].title;
-                groups[i].name = groups[i].title;
+                groups[i].name = groups[i].title + (groups[i].subtitle.length > 0? ' (' + groups[i].subtitle + ')': '');
             }
             this.groups = groups;
         }
@@ -421,6 +421,18 @@ ams.Map = {
                 this._wmsLegendControl.options.static.af.url=null;
                 this._wmsLegendControl.options.static.risk.url=null;
                 this._wmsLegendControl.options.static.fs.url=null;
+                this._wmsLegendControl.options.static.ft.url=null;
+
+            } else if (ams.App._referenceLayerName !== undefined && ams.App._referenceLayerName.includes(ams.Config.defaultLayers.activeFireToday)){
+                // here we force a different style to get the legend without 3 entries
+                let fturl = baseurl + "&LAYER=" + ams.App._referenceLayerName
+                + "&STYLE=active_fire_today_legend"
+                + "&LEGEND_OPTIONS=forceLabels:on;";
+                this._wmsLegendControl.options.static.ft.url=fturl;
+                this._wmsLegendControl.options.static.af.url=null;
+                this._wmsLegendControl.options.static.deter.url=null;
+                this._wmsLegendControl.options.static.risk.url=null;
+                this._wmsLegendControl.options.static.fs.url=null;
 
             } else if (ams.App._referenceLayerName !== undefined && ams.App._referenceLayerName.includes(ams.Config.defaultLayers.activeFire)){
                 // here we force a different style to get the legend without 3 entries
@@ -428,9 +440,10 @@ ams.Map = {
                 + "&STYLE=active_fires_class_legend"
                 + "&LEGEND_OPTIONS=forceLabels:on;";
                 this._wmsLegendControl.options.static.af.url = afurl;
+                this._wmsLegendControl.options.static.ft.url=null;
                 this._wmsLegendControl.options.static.deter.url=null;
                 this._wmsLegendControl.options.static.risk.url=null;
-                this._wmsLegendControl.options.static.fs.url=null;
+                this._wmsLegendControl.options.static.fs.url=null;                
 
             } else if (ams.App._referenceLayerName !== undefined && ams.App._referenceLayerName.includes(ams.Config.defaultLayers.fireSpreadingRisk)) {
                 // here we force a different style to get the legend without 3 entries
@@ -438,15 +451,17 @@ ams.Map = {
                 + "&STYLE=fire-spreading-risk-legend"
                 + "&LEGEND_OPTIONS=forceLabels:on;";
                 this._wmsLegendControl.options.static.fs.url = fsurl;
+                this._wmsLegendControl.options.static.ft.url=null;
                 this._wmsLegendControl.options.static.deter.url=null;
                 this._wmsLegendControl.options.static.risk.url=null;
-                this._wmsLegendControl.options.static.af.url=null;
+                this._wmsLegendControl.options.static.af.url=null;                
 
             } else {
                 this._wmsLegendControl.options.static.af.url = null;
                 this._wmsLegendControl.options.static.deter.url = null;
                 this._wmsLegendControl.options.static.risk.url = null;
                 this._wmsLegendControl.options.static.fs.url=null;
+                this._wmsLegendControl.options.static.ft.url=null;
                 this.disable();
             }
         }

@@ -249,7 +249,7 @@ def get_profile(endpoint):
                         'AreaPerLandUsePpcdam': spatial_unit_profile.fig_area_per_land_use_ppcdam()
                     }
                 )
-        elif (onlyOneLandUse >= 2 and (spatial_unit_profile._classname in ['RK', 'RI', 'FS'])):
+        elif (onlyOneLandUse >= 2 and (spatial_unit_profile._classname in ['RK', 'RI', 'FS', 'FT'])):
             graph_json.update(
                 {
                     'AreaPerLandUse': spatial_unit_profile.fig_area_per_land_use(),

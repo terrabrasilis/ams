@@ -27,7 +27,7 @@ class AppConfigController:
 
         sql = """SELECT string_agg( c1 || ',' || c2, ', ' )
 		FROM (
-			SELECT '{''name'':'''||cg.name||''', ''title'':'''||cg.title||'''' as c1,
+			SELECT '{''name'':'''||cg.name||''', ''title'':'''||cg.title||''', ''subtitle'':''''' as c1,
 			cg.orderby, '''classes'':[' || string_agg(DISTINCT ''''||c.name||'''', ',') || ']}' as c2
 			FROM public.class_group cg
                         JOIN public.class c
@@ -44,6 +44,7 @@ class AppConfigController:
         cur = self._conn.cursor()
         cur.execute(sql)
         results = cur.fetchall()
+
         return "["+results[0][0]+"]"
 
     def read_land_uses(self, land_use_type):

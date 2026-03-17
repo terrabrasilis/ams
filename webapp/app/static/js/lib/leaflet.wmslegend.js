@@ -18,6 +18,9 @@ L.Control.WMSLegend = L.Control.extend({
             },
             fs:{
                 url:''
+            },
+            ft:{
+                url:''
             }
         }
     },
@@ -37,6 +40,11 @@ L.Control.WMSLegend = L.Control.extend({
         // static active fires legend
         if (this.options.static.af.url) {
             this.createLegendImage(container,'Focos de Queimadas','Active Fires Legend',legendClassName, this.options.static.af.url);
+        }
+
+        // static active fires today legend
+        if (this.options.static.ft.url) {
+            this.createLegendImage(container,'Focos de Queimadas de Hoje','Active Fires Today Legend',legendClassName, this.options.static.ft.url);
         }
 
         // static risk legend
