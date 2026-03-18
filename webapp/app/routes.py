@@ -81,12 +81,7 @@ def _get_config(
 
     ldu = ctrl.read_land_uses(land_use_type="ams")
 
-    # incluing thresholds in the layer names
     cg = json.loads(cg.replace("'", '"'))
-    for _ in cg:
-        if _['name'] == 'RK':
-            _['title'] += f" (>= {Config.RISK_THRESHOLD:.2f})"
-            break
     cg = json.dumps(cg)
 
     bbox = ctrl.read_bbox(

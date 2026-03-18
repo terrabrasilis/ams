@@ -218,7 +218,7 @@ ams.App = {
         let cglen = appClassGroups.length();
         for(var i = 0; i < cglen; i++) {
             controlGroups["INDICADOR"][appClassGroups.at(i).name] = appClassGroups.at(i).acronym;
-            controlGroups["INDICADOR"][appClassGroups.at(i).acronym] = "";
+            controlGroups["INDICADOR"][appClassGroups.at(i).acronym] = appClassGroups.at(i).desc;
         }
 
         var temporalUnitAggregates = temporalUnits.getAggregates();

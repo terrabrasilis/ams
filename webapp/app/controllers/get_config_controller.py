@@ -27,7 +27,7 @@ class AppConfigController:
 
         sql = """SELECT string_agg( c1 || ',' || c2, ', ' )
 		FROM (
-			SELECT '{''name'':'''||cg.name||''', ''title'':'''||cg.title||''', ''subtitle'':''''' as c1,
+			SELECT '{''name'':'''||cg.name||''', ''title'':'''||cg.title||''', ''subtitle'':'''||cg.subtitle||''', ''desc'':'''||cg.description||'''' as c1,
 			cg.orderby, '''classes'':[' || string_agg(DISTINCT ''''||c.name||'''', ',') || ']}' as c2
 			FROM public.class_group cg
                         JOIN public.class c

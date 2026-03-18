@@ -81,6 +81,7 @@ ams.Map = {
                 groups[i].acronym = groups[i].name;
                 this._groupNamesMap[groups[i].name] = groups[i].title;
                 groups[i].name = groups[i].title + (groups[i].subtitle.length > 0? ' (' + groups[i].subtitle + ')': '');
+                groups[i].desc = groups[i].desc;
             }
             this.groups = groups;
         }
