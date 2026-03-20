@@ -33,9 +33,25 @@ L.Control.GroupedLayers = L.Control.extend({
         if (type=="simpleControl") {
             for (j in controlGroups[i]) {  // name
                 // console.log("i", i, "|", "j", j);
-                if(j=='defaultFilter' || j=='propertyName' || j=='type' || j == 'defaultSubset') continue;
-                // acronym, name, group, defaultFilter, overlay
-                this._addControl(controlGroups[i][j], j, i, controlGroups[i]['defaultFilter'], true, type);
+                if(j=='defaultFilter' || j=='propertyName' || j=='type' || j == 'defaultSubset' || j.length == 2) continue;
+                let acronym = controlGroups[i][j];
+                
+                // acronym, name, group, defaultFilter, overlay, values, title
+                let title = '';
+                if (i == "INDICADOR") {
+                  title = controlGroups[i][acronym];
+                }
+                  
+                this._addControl(
+                  acronym,
+                  j,
+                  i,
+                  controlGroups[i]['defaultFilter'],
+                  true,
+                  type,
+                  [],
+                  title,                  
+                );
             }
         }
 
@@ -48,6 +64,7 @@ L.Control.GroupedLayers = L.Control.extend({
                 true,
                 type,
                 controlGroups[i]['values'],
+                '',
             );
         }
     }
@@ -139,7 +156,7 @@ L.Control.GroupedLayers = L.Control.extend({
     }
   },
 
-  _addControl: function (acronym, name, group, defaultFilter, overlay, type, values) {
+  _addControl: function (acronym, name, group, defaultFilter, overlay, type, values, title) {
     var _ctrl = {
       acronym: acronym,
       name: name,
@@ -147,6 +164,7 @@ L.Control.GroupedLayers = L.Control.extend({
       overlay: overlay,
       type: type,
       values: values || [],
+      title: title || "",
     };
     _ctrl["ctrlId"]=L.Util.stamp(_ctrl);
     this._ctrls.push(_ctrl);
@@ -214,6 +232,7 @@ L.Control.GroupedLayers = L.Control.extend({
     if (userDefined) {
         inputHtml += 'data-user-defined="' + userDefined + '"';
     }
+
     inputHtml += '/>';
 
     var inputFragment = document.createElement('div');
@@ -293,13 +312,17 @@ L.Control.GroupedLayers = L.Control.extend({
     }
   },
 
-  handleRiskSelection: function (classificationMapGroupId, obj) {
-    if (obj.name.toLowerCase().includes('risco') && obj.checked) {
+  handleSelection: function (classificationMapGroupId, obj) {
+    if ((obj.name.toLowerCase().includes('risco') || obj.name.toLowerCase().includes('hoje')) && obj.checked) {
       $("#ctrl"+this._getControlByName('onPeriod').ctrlId).click();  // force onPeriod
       var mapClassificationElement = document.querySelector('[id="leaflet-control-layers-group-' + classificationMapGroupId + '"]');
       mapClassificationElement.style.display = 'none';
       ams.PeriodHandler.remove(this._map);
-      this._handleRiskSpatialUnit(true);
+
+      if (obj.name.toLowerCase().includes('risco de desm')) {
+        this._handleRiskSpatialUnit(true);
+      }
+      
     } else {
       var mapClassificationElement = document.querySelector('[id="leaflet-control-layers-group-' + classificationMapGroupId + '"]');
       mapClassificationElement.style.display = 'block';
@@ -434,9 +457,10 @@ L.Control.GroupedLayers = L.Control.extend({
     else if (obj.group.name == "INDICADOR") {
       label.appendChild(input);
       label.appendChild(name);
+      label.title = obj.title;
     
       L.DomEvent.on(input, 'click', function () {
-        this.handleRiskSelection(this.classificationMapGroupId, obj);
+        this.handleSelection(this.classificationMapGroupId, obj);
       }, this);
     }
     else{
@@ -528,11 +552,13 @@ L.Control.GroupedLayers = L.Control.extend({
         title='Alterna entre as bases de dados dos biomas disponíveis.';
         break;
       case "INDICADOR":
-        title='Aplica um filtro com base nas classes dos dados do DETER, focos do Programa Queimadas e Risco sendo:\n';
+        title='Alterna entre os indicadores disponíveis.';
+        /*
         for (let index = 0; index < ams.App._appClassGroups.groups.length; index++) {
           const group = ams.App._appClassGroups.groups[index];
           title+=' - '+group.name+': '+group.classes.join(', ')+';\n';
         }
+        */
         break;
       case "UNIDADE ESPACIAL":
         title='Alterna entre as unidades espaciais disponíveis.';

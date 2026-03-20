@@ -244,7 +244,10 @@ class ProfileSchema(Schema):
         required=True,
         validate=_validate_geocodes,
     )
-    unit = fields.Str(required=True, validate=validate.OneOf(["km²", "ha", "focos", "risco", "score"]))
+    unit = fields.Str(
+        required=True,
+        validate=validate.OneOf(["km²", "ha", "focos", "risco", "score", "risco de espalhamento"])
+    )
     riskThreshold = fields.Float(required=False)
     custom = fields.Bool(required=False)
 
