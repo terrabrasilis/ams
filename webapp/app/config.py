@@ -8,7 +8,7 @@ class Config:
     SERVER_NAME = os.environ.get('SERVER_NAME') or '127.0.0.1:5000'
     APPLICATION_ROOT = os.environ.get('APPLICATION_ROOT') or ''
     DB_URL = os.environ.get(
-        'DB_URL') or 'postgresql://postgres:p%40st9r%265Q%21eh%2B@150.163.2.129:5435/ams2_homologation'
+        'DB_URL') or 'postgresql://postgres:postgres@150.163.17.75:5444/AMS4'
     if os.path.exists(DB_URL):
         DB_URL = open(DB_URL, 'r').read()
     RISK_INPE = os.environ.get('RISK_INPE', "true").lower() == "true"
