@@ -603,17 +603,6 @@ ams.App = {
             localStorage.setItem('ams.config.general.area.changeunit', ams.Config.general.area.changeunit);
         });
 
-        $("#modal-credits-check").click(
-            function() {
-                if ($("#modal-credits-check").prop('checked')) {
-                    localStorage.setItem("ams.config.modal.noshowcredits", true);
-                } else {
-                    localStorage.removeItem("ams.config.modal.noshowcredits");
-                }
-                return true;
-            }
-        );
-
         $('#search-municipalities').on('input', function() {
             const query = $(this).val().toLowerCase();
             const $options = $('#select-municipalities option');
