@@ -604,12 +604,6 @@ ams.App = {
             }
         );
 
-        $("#show-modal-credits").click(
-            function() {
-                $("#modal-container-credits").modal();
-            }
-        );
-
         $('#search-municipalities').on('input', function() {
             const query = $(this).val().toLowerCase();
             const $options = $('#select-municipalities option');
@@ -660,10 +654,6 @@ ams.App = {
             }
             $("#threshold").val(ams.Config.general.area.threshold);
             $("#changeunit")[0].checked=ams.Config.general.area.changeunit=="auto";
-
-            if (localStorage.getItem('ams.config.modal.noshowcredits') == null) {
-                $("#modal-container-credits").modal();
-            }
 
             ams.App._populateMunicipalities();
         });
