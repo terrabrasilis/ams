@@ -158,6 +158,9 @@ ams.Date = {
 
         this.enableCustomPeriod = function() {
             $("#datepicker-end").attr("disabled", false);
+            let startDate = ams.Date.fromString(this.startdate, "yyyy-mm-dd");
+            let maxDate = new Date(startDate - 1);
+            $('#datepicker-end').datepicker("option", "maxDate", maxDate);
         }
 
         this.disableCustomPeriod = function() {

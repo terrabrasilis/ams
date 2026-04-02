@@ -55,33 +55,27 @@
                                   </a>
 				</div>
 				<ul id="navigationBarUL" class="navbar-nav navbar-right analises">
-					<li class="nav-item dropdown">
-						<a aria-expanded="true" aria-haspopup="true" class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="navbarDropdownMenuLink" role="button"> 
-							<i class="material-icons iconmobile">assignment </i><span id="analysis-sup">Novas ferramentas</span>
-						</a>
-						<div aria-labelledby="navbarDropdownMenuLink" class="dropdown-menu submenu"> 
-							<a class="dropdown-item" target="_blank" href="http://terrabrasilis.dpi.inpe.br/download/ams/ams-novas-funcionalidades.pdf" title="Abrir documento com informações detalhadas sobre as novas ferramentas."><i class="material-icons iconmenu">new_releases</i><span id="info-doc">Texto informativo</span></a>
-							<a class="dropdown-item" href="#modal-container-video" data-toggle="modal"  title="Abrir vídeo demonstrativo da Sala de Situação"><i class="material-icons iconmenu">movie</i><span id="info-media">Vídeo demonstrativo</span></a>
-						</div>
-					</li>
+				  <li class="nav-item dropdown">
+				    <a aria-expanded="true" aria-haspopup="true" class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="navbarDropdownMenuLink" role="button"> 
+				      <i class="material-icons iconmobile">assignment </i><span id="analysis-sup">Ajuda</span>
+				    </a>
+				    <div aria-labelledby="navbarDropdownMenuLink" class="dropdown-menu submenu"> 
+				      <a class="dropdown-item" target="_blank" href="https://terrabrasilis.github.io/ams-documentation/" title="Acesse a documentação completa"><i class="material-icons iconmenu">menu_book</i><span id="info-doc">Documentação</span></a>
+				      <a class="dropdown-item" href="#modal-container-menu-about" id="goto_menu-about" data-toggle="modal" title="Sobre a Sala de Situação"><i class="material-icons iconmenu">info</i><span id="about-menu">Sobre</span></a>
+				    </div>
+				  </li>
 
-					<li class="nav-item">
-						<a class="nav-link" href="#modal-container-menu-about" id="goto_menu-about" data-toggle="modal" title="Abrir sobre a Sala de Situação">
-							<span id="about-menu">Sobre</span>
-  						</a>
-					</li>
+				  <li class="nav-item">
+				    <a class="nav-link" href="#modal-container-menu-config" id="goto_menu-config" data-toggle="modal" title="Abrir as configurações do aplicativo">
+				      <span id="config-menu">Configurações</span>
+  				    </a>
+				  </li>
 
-					<li class="nav-item">
-						<a class="nav-link" href="#modal-container-menu-config" id="goto_menu-config" data-toggle="modal" title="Abrir as configurações do aplicativo">
-							<span id="config-menu">Configurações</span>
-  						</a>
-					</li>
-
-					<li class="nav-item active">
-						<a class="nav-link" target="_blank" href="http://www.inpe.br/ouvidoria/" title="Envie sugestões, perguntas, elogios ou reclamações.">
-							<span id="contactus-menu">Fale Conosco</span>
-						</a>
-					</li>
+				  <li class="nav-item active">
+				    <a class="nav-link" target="_blank" href="http://www.inpe.br/ouvidoria/" title="Envie sugestões, perguntas, elogios ou reclamações.">
+				      <span id="contactus-menu">Fale Conosco</span>
+				    </a>
+				  </li>
 				</ul>
 			</div>
 		</nav>
@@ -247,85 +241,34 @@
 				</div>
 				<!-- / modal -->
 
-                                <!-- modal credits -->
-				<div class="modal fade" id="modal-container-credits">
-				  <div class="modal-dialog modal-credits">
-				    <div class="modal-content modalinf">
-				      
-                                      <div class="modal-header fechar">
-					<button id="modal-credits-close" type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="material-icons">clear</i></button>
-				      </div>
-
-				      <div class="modal-body ">
-                                        <div>
-                                          <h5 class="modal-title boxtitletable">Desenvolvido por:</h5>
-                                          <div class="row justify-content-center">
-                                            <div class="col d-flex align-items-center justify-content-center logo">
-                                              <img src="{{ url_for('static', filename='imgs/inpe1.png') }}" alt="inpe" class="img-fluid mx-10">
-                                            </div>
-                                          </div>
-                                        </div>
-                                        <div>
-                                          <h5 class="modal-title boxtitletable">Colaboradores:</h5>
-                                          <div class="row justify-content-center">
-                                            <div class="col d-flex align-items-center justify-content-center logo">
-                                              <img src="{{ url_for('static', filename='imgs/ufmg.png') }}" alt="ufmg" class="img-fluid mx-10 maxw-150">
-                                            </div>
-                                            <div class="col d-flex align-items-center justify-content-center logo">
-                                              <img src="{{ url_for('static', filename='imgs/ibama-mma1.png') }}" alt="ibama-mma" class="img-fluid mx-10">
-                                            </div>
-                                            <div class="col d-flex align-items-center justify-content-center logo">
-                                              <img src="{{ url_for('static', filename='imgs/semas-pa1.png') }}" alt="semas-para" class="img-fluid mx-10 maxw-400">
-                                            </div>
-                                            <div class="col d-flex align-items-center justify-content-center logo">
-                                              <img src="{{ url_for('static', filename='imgs/UT-ITC-logo-RGB.png') }}" alt="itc" class="img-fluid mx-10 maxw-150">
-                                            </div>
-
-                                          </div>
-				        </div>
-                                      </div>
-
-                                      <div class="modal-footer">
-                                        <div class="checkbox">
-                                          <label>
-                                            <input id="modal-credits-check" class="modal-check" name="modal-check" type="checkbox"><span class="textoc">Não mostrar novamente.</span>
-                                          </label>
-                                        </div>
-				      </div>
-				    </div>
-				  </div>
-				</div>
-                                <!-- END modal credits -->
-
-
-                                <!-- modal window for municipalities search -->
-                                <div class="modal fade" id="modal-container-municipalities" role="dialog">
-                                  <div class="modal-dialog modal-municipalities-search">
-                                    <div class="modal-content modalinf">
-                                      <div class="modal-header fechar">
-                                        <h5 class="modal-title boxtitletable">Buscar municípios:</h5>
-                                        <button id="municipalities-search-close" type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="material-icons">clear</i></button>
-                                      </div>
-                                      <div class="modal-body">
-                                        <div class="form-group">
-                                          <input type="text" id="search-municipalities" class="form-control" placeholder="digite o nome do município para pesquisa">
-                                        </div>
-                                        <div class="form-group">
-                                          <label for="select-municipalities">Selecione os municípios:</label>
-                                          <select id="select-municipalities" class="form-control" multiple>
-                                          </select>
-                                        </div>
-										<span id="select-municipalities-msg"></span>
-                                      </div>
-                                      <div class="modal-footer modal-municipalities-footer">
-                                        <button type="button" class="btn btn-secondary" id="municipalities-search-cancel" data-dismiss="modal">Cancelar</button>
-                                        <button type="button" class="btn btn-primary" id="municipalities-search-ok" disabled="true">OK</button>
-                                        <button type="button" class="btn btn-primary" id="municipalities-search-panel" disabled="true">Sala de Situa&ccedil;&atilde;o Municipal</button>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                                <!-- END modal window for municipalities search -->
+                <!-- modal window for municipalities search -->
+                <div class="modal fade" id="modal-container-municipalities" role="dialog">
+                  <div class="modal-dialog modal-municipalities-search">
+                    <div class="modal-content modalinf">
+                      <div class="modal-header fechar">
+                        <h5 class="modal-title boxtitletable">Buscar municípios:</h5>
+                        <button id="municipalities-search-close" type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="material-icons">clear</i></button>
+                      </div>
+                      <div class="modal-body">
+                        <div class="form-group">
+                          <input type="text" id="search-municipalities" class="form-control" placeholder="digite o nome do município para pesquisa">
+                        </div>
+                        <div class="form-group">
+                          <label for="select-municipalities">Selecione os municípios:</label>
+                          <select id="select-municipalities" class="form-control" multiple>
+                          </select>
+                        </div>
+						<span id="select-municipalities-msg"></span>
+                      </div>
+                      <div class="modal-footer modal-municipalities-footer">
+                        <button type="button" class="btn btn-secondary" id="municipalities-search-cancel" data-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" id="municipalities-search-ok" disabled="true">OK</button>
+                        <button type="button" class="btn btn-primary" id="municipalities-search-panel" disabled="true">Sala de Situa&ccedil;&atilde;o Municipal</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- END modal window for municipalities search -->
 
                 <!-- chart panel -->
                 <div class="modal fade" id="modal-container-general-info"  role="dialog" aria-labelledby="general-info" aria-hidden="true">
@@ -423,19 +366,30 @@
                   </div>
                 </div>
                 <!-- End chart panel modal -->
-
-				<!--Footer-->
-				<footer class="footer">
-                                  <div class="container credits-link">
-                                    <a id="show-modal-credits" title="Desenvolvedores e colaboradores" href="javascript:void(0);" class="text-white">Créditos</a>
-                                  </div>                                  
-				  <!-- <a href="#" title="Parcerias institucionais"><i class="material-icons iconmenu">movie</i><span id="info-media">Parceiros</span></a> -->
-				  <p><a href="http://terrabrasilis.dpi.inpe.br"> TerraBrasilis</a>&nbsp;<a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Licença Creative Commons" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/80x15.png" /></a></p>
-				  <div class="version_style" id="version"></div>
-				</footer>
-				<!--/.Footer-->
 			</div>
 		</div>
+	</div>
+
+	<div class="container-fluid">
+		<!--Footer-->
+		<footer id="footer">
+			<div class="toggler-container">
+			  <svg class="toggler" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path d="M342.6 534.6C330.1 547.1 309.8 547.1 297.3 534.6L137.3 374.6C124.8 362.1 124.8 341.8 137.3 329.3C149.8 316.8 170.1 316.8 182.6 329.3L320 466.7L457.4 329.4C469.9 316.9 490.2 316.9 502.7 329.4C515.2 341.9 515.2 362.2 502.7 374.7L342.7 534.7zM502.6 182.6L342.6 342.6C330.1 355.1 309.8 355.1 297.3 342.6L137.3 182.6C124.8 170.1 124.8 149.8 137.3 137.3C149.8 124.8 170.1 124.8 182.6 137.3L320 274.7L457.4 137.4C469.9 124.9 490.2 124.9 502.7 137.4C515.2 149.9 515.2 170.2 502.7 182.7z"/></svg>
+			</div>
+			<div id="footer-content">
+			  <div id="partners">
+			  	<a href="https://www.inpe.br" target="_blank"><img height="60" src="{{ url_for('static', filename='imgs/inpe1.png') }}" alt="inpe"></a>
+			  	<a href="https://www.ufmg.br/" target="_blank"><img height="40" src="{{ url_for('static', filename='imgs/ufmg.png') }}" alt="ufmg"></a>
+			  	<a href="https://www.gov.br/ibama/pt-br" target="_blank"><img height="40" src="{{ url_for('static', filename='imgs/ibama-mma1.png') }}" alt="ibama-mma"></a>
+			  	<a href="https://www.semas.pa.gov.br/" target="_blank"><img height="80" src="{{ url_for('static', filename='imgs/semas-pa1.png') }}" alt="semas-para"></a>
+			  	<a href="https://www.utwente.nl/en/" target="_blank"><img height="40" src="{{ url_for('static', filename='imgs/UT-ITC-logo-RGB.png') }}" alt="itc"></a>
+			  </div>
+			  <div class="container credits-link">
+			  	<div class="version_style" id="version"></div>
+			  </div>                                  
+			</div>
+		</footer>
+		<!--/.Footer-->
 	</div>
 	
 	<!-- end footer and modals -->
@@ -472,7 +426,17 @@
           let base_url=document.location.protocol+'//'+document.location.hostname;
           let oauthURL = base_url+"/oauth-api/getoauthjs?"+randomNumber;
           document.writeln("<script type='text/javascript' src='"+oauthURL+"'><\/script>");
-        </script>
+
+		  $(document).ready(function () {
+			  setTimeout(() => { $(".toggler-container").click(); }, 5000)
+
+			  $(".toggler-container").on("click", function () {
+			   	  $(".toggler").toggleClass("rotate");
+			      $("#footer-content").toggleClass("closed");
+			      $("#map").toggleClass("adjust");
+			  });
+		});
+    </script>
 	<!-- Global site tag (gtag.js) - Google Analytics -->
 	<script type="text/javascript" async src="https://www.googletagmanager.com/gtag/js?id=G-VF4139FH8F"></script>
 	<script type="text/javascript" src="{{url_for('static', filename='js/ams/terrabrasilis-start.js')}}"></script>

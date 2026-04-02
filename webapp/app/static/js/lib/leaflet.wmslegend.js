@@ -15,6 +15,12 @@ L.Control.WMSLegend = L.Control.extend({
             },
             risk:{
                 url:''
+            },
+            fs:{
+                url:''
+            },
+            ft:{
+                url:''
             }
         }
     },
@@ -27,19 +33,28 @@ L.Control.WMSLegend = L.Control.extend({
         this.ll.innerText='LEGENDA';
         let container = L.DomUtil.create('div', controlClassName, this.fcontainer);
         // static deter legend
-        if(this.options.static.deter.url)
-        {
+        if (this.options.static.deter.url) {
             this.createLegendImage(container,'DETER','DETER Legend',legendClassName, this.options.static.deter.url);
         }
+
         // static active fires legend
-        if(this.options.static.af.url)
-        {
+        if (this.options.static.af.url) {
             this.createLegendImage(container,'Focos de Queimadas','Active Fires Legend',legendClassName, this.options.static.af.url);
         }
+
+        // static active fires today legend
+        if (this.options.static.ft.url) {
+            this.createLegendImage(container,'Focos de Queimadas de Hoje','Active Fires Today Legend',legendClassName, this.options.static.ft.url);
+        }
+
         // static risk legend
-        if(this.options.static.risk.url)
-        {
+        if (this.options.static.risk.url) {
             this.createLegendImage(container,'Risco de desmatamento (IBAMA)','IBAMA Risk Legend',legendClassName, this.options.static.risk.url);
+        }
+
+        // static fire spreading risk
+        if (this.options.static.fs.url) {
+            this.createLegendImage(container,'Risco de Espalhamento do Fogo', 'Fire Spreading Risk Legend', legendClassName, this.options.static.fs.url);
         }
 
         this.img = this.createLegendImage(container, ams.Map.PopupControl._prefix+ams.Map.PopupControl._text,'Spatial Unit Legend',legendClassName, this.options.uri);
