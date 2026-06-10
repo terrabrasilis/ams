@@ -9,11 +9,11 @@ ams.SLDStyles = {
 			unit = "km²"; // default if auto is disabled
 			if (ams.Config.general.area.changeunit == "auto") {
 				let diff =
-				minValue >= 0 ? maxValue - minValue : maxValue + minValue * -1;
+					minValue >= 0 ? maxValue - minValue : maxValue + minValue * -1;
 				if (diff <= ams.Config.general.area.threshold) {
-				unit = "ha";
-				minValue = minValue * 100;
-				maxValue = maxValue * 100;
+					unit = "ha";
+					minValue = minValue * 100;
+					maxValue = maxValue * 100;
 				}
 			}
 		}
@@ -28,6 +28,10 @@ ams.SLDStyles = {
 
 		if (ams.App._suViewParams.classname == "FS") {
 			unit = "risco de espalhamento";
+		}
+
+		if (ams.App._suViewParams.classname == "DR") {
+			unit = "ratio_dr";
 		}
 
 		this.stroke = "";
@@ -69,6 +73,10 @@ ams.SLDStyles = {
 				case "risco de espalhamento":
 					text = "número de pontos";
 					prefix = "Contagem: ";
+					break;
+				case "ratio_dr":
+					text = "D / V";
+					prefix = "Razão: ";
 					break;
 			}
 

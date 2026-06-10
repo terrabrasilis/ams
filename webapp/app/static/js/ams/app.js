@@ -44,32 +44,18 @@ ams.App = {
 
     	// REMOVE ME (Debug Purposes)
         // if(ams.Auth.isAuthenticated()==false) {
-        // geoserverUrl = "http://127.0.0.1/geoserver";
+        geoserverUrl = "http://127.0.0.1/geoserver";
         // }
 
         this._wfs = new ams.Map.WFS(geoserverUrl);
 	
         var ldLayerName = ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.lastDate;
 
-	    var temporalUnits = new ams.Map.TemporalUnits();
-        this._dateControl = new ams.Date.DateController();
-
-	    let lastDateDynamic = this._wfs.getLastDate(ldLayerName);
-        lastDateDynamic = lastDateDynamic?lastDateDynamic:this._spatialUnits.getDefault().last_date;
-        ams.PeriodHandler.setMaxDate(lastDateDynamic);
-
-        let startDate = ams.Config.startDate;
-        let tempUnit = ams.Config.tempUnit;
-        this._currentTemporalAggregate = temporalUnits.getAggregates()[0].key;
-
-        if (startDate && ams.Date.isAfter(lastDateDynamic, startDate) && tempUnit !== "custom") {
-            ams.App._dateControl.setPeriod(startDate, tempUnit);
-            this._currentTemporalAggregate = tempUnit;
-        } else {            
-            ams.App._dateControl.setPeriod(lastDateDynamic, this._currentTemporalAggregate);
-        }
-
+        var temporalUnits = new ams.Map.TemporalUnits();
+    
         this._baseURL = geoserverUrl + "/wms";
+
+        this._initDateController(ams.Config.defaultFilters.indicator, ldLayerName, temporalUnits);
 
         this._setIndicator(ams.Config.defaultFilters.indicator);
 
@@ -263,7 +249,7 @@ ams.App = {
         ams.Utils.handleRiskIndicator();
 
         // Adding period control over map
-        ams.PeriodHandler.init(map);
+        this._initPeriodHandler();
 
         // Adding control layer over map
         this._addControlLayer();
@@ -340,6 +326,9 @@ ams.App = {
                 } else if(e.group.name=='INDICADOR'){// change reference layer (deter, fires or risk)?
                     ams.App._riskThreshold=0.0; // reset the risk limit so as not to interfere with the min max query
                     ams.App._indicator = e.acronym;
+
+                    ams.App._updatePeriodHandler(e.acronym);
+
                     if (e.acronym=='RI') {
                         layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.inpeRisk;
                         ams.App._propertyName=ams.Config.propertyName.ri;
@@ -360,6 +349,19 @@ ams.App = {
                         layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.fireSpreadingRisk;
                         ams.App._propertyName=ams.Config.propertyName.fs;
                         ams.App._hasClassFilter=false;
+                    } else if (e.acronym=='AI') {
+                        layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.dummy;
+                        ams.App._propertyName=ams.Config.propertyName.ai;
+                        ams.App._hasClassFilter=false;
+                    } else if (e.acronym=='AD') {
+                        layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.dummy;
+                        ams.App._propertyName=ams.Config.propertyName.ad;
+                        ams.App._hasClassFilter=false;
+                    } else if (e.acronym=='DR') {
+                        layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.dummy;
+                        ams.App._propertyName=ams.Config.propertyName.dr;
+                        ams.App._hasClassFilter=false;
+
                     } else {
                         // the reference layer should be deter
                         layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.deter;
@@ -377,7 +379,8 @@ ams.App = {
 
                     if(ams.App._suViewParams.classname != e.acronym){
                         var keep_last_date = (
-                            !["RI", "RK", "AF", "FS", "FT"].includes(e.acronym) && !["RI", "RK", "AF", "FS", "FT"].includes(ams.App._suViewParams.classname)
+                            !["RI", "RK", "AF", "FS", "FT", "AI", "AD", "DR"].includes(e.acronym) &&
+                            !["RI", "RK", "AF", "FS", "FT", "AI", "AD", "DR"].includes(ams.App._suViewParams.classname)
                         );
 
                         ams.App._suViewParams.classname = e.acronym;
@@ -386,19 +389,26 @@ ams.App = {
                         ams.App._priorViewParams.updatePropertyName(ams.App._propertyName);
                         ams.App._suViewParams.updateRiskThreshold(ams.App._riskThreshold);
                         ams.App._priorViewParams.updateRiskThreshold(ams.App._riskThreshold);
-                        // try update the last date for new classname
-                        let lastDateDynamic = ams.App._wfs.getLastDate(ldLayerName);
-                        lastDateDynamic = lastDateDynamic? lastDateDynamic : ams.App._spatialUnits.getDefault().last_date;
-                        ams.PeriodHandler.setMaxDate(lastDateDynamic);
+                        
+                        if (!ams.ProdesPeriodHandler.isEnabled()) {
+                            // try update the last date for new classname
+                            let lastDateDynamic = ams.App._wfs.getLastDate(ldLayerName);
+                            lastDateDynamic = lastDateDynamic? lastDateDynamic : ams.App._spatialUnits.getDefault().last_date;
+                            ams.PeriodHandler.setMaxDate(lastDateDynamic);
 
-                        if (keep_last_date) {
-                            lastDateDynamic = ams.Date.getMin(ams.App._dateControl.startdate, lastDateDynamic);
+                            if (keep_last_date) {
+                                lastDateDynamic = ams.Date.getMin(ams.App._dateControl.startdate, lastDateDynamic);
+                            }
+
+                            ams.App._dateControl.setPeriod(lastDateDynamic, ams.App._currentTemporalAggregate, "start");
+                            ams.PeriodHandler.changeDate(ams.App._dateControl.startdate);
+                        } else {
+                            ams.ProdesPeriodHandler.update();
                         }
 
-                        ams.App._dateControl.setPeriod(lastDateDynamic, ams.App._currentTemporalAggregate, "start");
-                        ams.PeriodHandler.changeDate(ams.App._dateControl.startdate);
-                        needUpdateSuLayers=false; //no need because the changeDate Internally invokes layer update
+                        needUpdateSuLayers = false;
                     }
+                    
                 }else if(e.group.name=='CATEGORIA FUNDIÁRIA'){
                     let luid=+e.acronym;
                     if(e.inputtype=='checkbox'){
@@ -508,13 +518,15 @@ ams.App = {
             conf["className"]=ams.App._suViewParams.classname;
             conf["spatialUnit"]=ams.Config.biome;
             conf["startDate"]=ams.App._dateControl.startdate;
+            conf["endDate"]=ams.App._dateControl.enddate;
             conf["tempUnit"]=ams.App._currentTemporalAggregate;
+            conf["prodes"]=ams.App._prodesMode(ams.App._indicator);
 
             if (conf["tempUnit"] === "custom") {
                 conf["tempUnit"] = ams.App._dateControl.customDays + "d";
                 conf["custom"] = true;
             }
-            
+
             conf["suName"]=ams.Config.biome;
             conf["landUse"]=ams.App._landUseList.join(',');
 
@@ -663,6 +675,69 @@ ams.App = {
 	    return layerName.includes(ams.Config.defaultLayers.deter);
     },
 
+    _prodesMode: function (indicator) {
+        return ams.Config.prodesIndicators.includes(indicator);
+    },
+
+    _initDateController: function (indicator, ldLayerName, temporalUnits) {
+        this._dateControl = new ams.Date.DateController();
+
+        // last date
+	    let lastDateDynamic = this._wfs.getLastDate(ldLayerName);
+        lastDateDynamic = lastDateDynamic?lastDateDynamic:this._spatialUnits.getDefault().last_date;
+
+        // period handler
+        ams.PeriodHandler.setMaxDate(lastDateDynamic);
+
+        // dates
+        let startDate = ams.Config.startDate;
+        let tempUnit = ams.Config.tempUnit;
+
+        this._currentTemporalAggregate = temporalUnits.getAggregates()[0].key;
+
+        if (startDate && ams.Date.isAfter(lastDateDynamic, startDate) && tempUnit !== "custom") {
+            ams.App._dateControl.setPeriod(startDate, tempUnit);
+            this._currentTemporalAggregate = tempUnit;
+        } else {            
+            ams.App._dateControl.setPeriod(lastDateDynamic, this._currentTemporalAggregate);
+        }
+    },
+
+    _initPeriodHandler: function () {
+        this._updatePeriodHandler(ams.App._indicator);
+    },
+
+    _updatePeriodHandler: function (indicator) {
+        if (['FT', 'RI', 'FS'].includes(indicator)) {
+            // thre is no period handler
+            ams.PeriodHandler.remove(this._map);
+            ams.ProdesPeriodHandler.remove(this._map);
+            return;
+        }
+
+        if (!this._prodesMode(indicator)) {
+            ams.ProdesPeriodHandler.remove(this._map);
+
+            if (ams.PeriodHandler.isEnabled()) {
+                return;
+            }
+            
+            ams.PeriodHandler.init(this._map);
+            return;            
+        }
+
+        ams.PeriodHandler.remove(this._map);
+
+        ams.ProdesPeriodHandler.init(
+            this._map,
+            ams.Config.prodesMinYear,
+            ams.Config.prodesMaxYear,
+            null,
+            null,
+            indicator,
+        );
+    },
+
     _setIndicator: function (indicator) {
         ams.App._indicator = indicator;
 
@@ -683,6 +758,21 @@ ams.App = {
         } else if (indicator == 'RI') {
             ams.App._propertyName = ams.Config.propertyName.ri;
             this._setReferenceLayer(ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.inpeRisk);
+            ams.App._diffOn = false;
+
+        } else if (indicator == 'AI') {
+            ams.App._propertyName = ams.Config.propertyName.ai;
+            this._setReferenceLayer(ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.dummy);
+            ams.App._diffOn = false;
+
+        } else if (indicator == 'AD') {
+            ams.App._propertyName = ams.Config.propertyName.ad;
+            this._setReferenceLayer(ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.dummy);
+            ams.App._diffOn = false;
+
+        } else if (indicator == 'DR') {
+            ams.App._propertyName = ams.Config.propertyName.dr;
+            this._setReferenceLayer(ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.dummy);
             ams.App._diffOn = false;
 
         } else {
@@ -831,6 +921,18 @@ ams.App = {
 	    this._addedLayers[layerName] = layer;
     },
 
+    _buildDummyLayer: function () {
+	    var dummyLayer = ams.Config.defaultLayers.dummy;
+        var layerName = ams.Auth.getWorkspace() + ":" + dummyLayer;
+        var wmsOptions = this._buildWmsOptions(
+            cqlFilter=this._appClassGroups.getCqlFilter(this._suViewParams, false)
+	    );
+        var source = new ams.LeafletWms.Source(this._baseURL, wmsOptions, this._appClassGroups);
+	    var layer = source.getLayer(layerName);
+
+	    this._addedLayers[layerName] = layer;
+    },
+
     _buildBorderLayer: function () {
         var onlyWmsBase = {
             identify: false,
@@ -876,6 +978,11 @@ ams.App = {
 	        this._buildFireSpreadingRiskLayer();
 	        return;
 	    }
+
+        if (this._referenceLayerName.includes(ams.Config.defaultLayers.dummy)) {
+            this._buildDummyLayer();
+            return;
+        }
     },
 
     _loadReferenceLayer: function () {
@@ -1190,11 +1297,15 @@ ams.App = {
                     if (["RI", "FS", "FT"].includes(ams.App._indicator)) {
                         $('.nav-tabs a[href="#tab-landuse"]').tab('show');
                     }
+                } else {
+                    $('.nav-tabs a[href="#tab-landuse"]').parent().hide();
                 }
 
                 Plotly.purge('AreaPerLandUsePpcdam');
                 if (profileJson['AreaPerLandUsePpcdam'] && ams.App._landUseList.length>1) {
                     Plotly.react('AreaPerLandUsePpcdam', JSON.parse(profileJson['AreaPerLandUsePpcdam']), {});
+                } else {
+                    $('.nav-tabs a[href="#tab-landuse-ppcdam"]').parent().hide();
                 }
                 
                 Plotly.purge('AreaPerLandUseProdes');

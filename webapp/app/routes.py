@@ -88,6 +88,8 @@ def _get_config(
         subset=subset, biome=biome, municipalities_group=municipalities_group, geocodes=geocodes
     )
 
+    prodes_years = ctrl.read_prodes_years()
+
     return {
         'geoserver_url': Config.GEOSERVER_URL,
         'appBiome': biome,
@@ -112,6 +114,8 @@ def _get_config(
         'end_date': end_date,
         'temp_unit': temp_unit,
         'classname': classname,
+        'prodesMinYear': prodes_years[0],
+        'prodesMaxYear': prodes_years[1],
     }
 
 
@@ -216,6 +220,7 @@ def get_profile(endpoint):
                 {'FormTitle': 'Sem gráficos para exibir com a configuração atual.'}
             )
 
+
         spatial_unit_profile = SpatialUnitProfile(Config, params)
 
         # onlyOneLandUse = (land_use).find(',')
@@ -232,7 +237,7 @@ def get_profile(endpoint):
 
         # to avoid unnecessary function call
         if (not spatial_unit_profile._classname in ['RK', 'RI', 'FS']):
-            if (onlyOneLandUse <= 1):
+            if (onlyOneLandUse <= 1 or spatial_unit_profile._classname == 'DR'):
                 graph_json.update(
                     {'AreaPerYearTableClass': spatial_unit_profile.fig_area_by_period()}
                 )

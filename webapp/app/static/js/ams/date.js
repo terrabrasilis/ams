@@ -154,6 +154,8 @@ ams.Date = {
             this.prevdate = this.toUTCDate(prevdate);
 
             this.enableCustomPeriod();
+
+            console.log('date', this.startdate, this.enddate);
         }
 
         this.enableCustomPeriod = function() {

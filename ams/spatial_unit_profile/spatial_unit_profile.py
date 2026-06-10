@@ -43,6 +43,9 @@ class SpatialUnitProfile():
         self._fire_classname = "AF"
         self._fire_today_classname = "FT"
         self._fire_spreading_risk_classname = "FS"
+        self._annual_increment = "AI"
+        self._accumulated_deforestation = "AD"
+        self._deforestation_ratio = "DR"
 
         self._config = config
 
@@ -53,8 +56,8 @@ class SpatialUnitProfile():
         self._classname = params['className']
         self._risk_threshold = 0
 
-        self._custom = 'custom' in params
-
+        self._custom = 'custom' in params or params['prodes']
+        
         self._municipalities_group = params['municipalitiesGroup']
 
         self._geocodes = params['geocodes']
@@ -81,6 +84,10 @@ class SpatialUnitProfile():
             self.default_column="score"
             self.default_col_name="Score"
 
+        if(self._classname==self._deforestation_ratio):
+            self.default_column="ratio"
+            self.default_col_name="Razão"
+
         # standard area rounding
         self.round_factor=2
         if(self._classname in [self._fire_classname, self._fire_today_classname, self._fire_spreading_risk_classname]):
@@ -93,6 +100,21 @@ class SpatialUnitProfile():
         self._start_date = params['startDate']
         self._temporal_unit = params['tempUnit']
         self._start_period_date = self.get_prev_date_temporal_unit(temporal_unit=self._temporal_unit)
+
+        self._prodes = params["prodes"]
+
+        if self._prodes:
+            start = datetime.strptime(params['startDate'], '%Y-%m-%d')
+            end = datetime.strptime(params['endDate'], '%Y-%m-%d')
+            self._start_period_date = end
+            self._temporal_unit = f"{(start - end).days}d"
+            self.prodes_start = start.year
+            self.prodes_end = end.year + 1
+            self.prodes_period = (
+                f"{self.prodes_end} a {self.prodes_start}"
+                if (self.prodes_start - self.prodes_end > 0) else self.prodes_end
+            )
+
         self._name=params['suName'].replace('|',' ')
         if(self._name==self._appBiome):
             self._name = '*'
@@ -125,6 +147,9 @@ class SpatialUnitProfile():
                     self._inpe_risk_classname,
                     self._fire_spreading_risk_classname,
                     self._fire_today_classname,
+                    self._annual_increment,
+                    self._accumulated_deforestation,
+                    self._deforestation_ratio,
                 ],
                 dtype='str'
             ),
@@ -132,7 +157,10 @@ class SpatialUnitProfile():
                 ['Desmatamento','Degrada&#231;&#227;o',
                 'Corte-Seletivo','Minera&#231;&#227;o', 'Focos', 'Índice', 'Índice',
                 'Risco de Espalhamento do Fogo',
-                'Focos de Hoje'],
+                'Focos de Hoje',
+                'Incremento Anual de Desmatamento',
+                'Desmatamento Acumulado',
+                'D/V'],
                 dtype='str'),
              'color': pd.Series(['#0d0887', '#46039f', '#7201a8', '#9c179e'], dtype='str')})
         self._temporal_units = {
@@ -218,19 +246,34 @@ class SpatialUnitProfile():
         if(self._classname in [self._fire_classname, self._fire_today_classname, self._fire_spreading_risk_classname]):
             round_factor=0
         
-        interval_val,period_unit,period_series=self.__get_period_settings()
-        calendar=f"""
-            SELECT
-                ((ld::date - interval '{interval_val} {period_unit}') + interval '1 day')::date as fd,
-                ld::date as ld
-            FROM generate_series(
-                ('{self._start_date}'::date - interval '{period_series} {period_unit}')::date,
-                date '{self._start_date}',
-                interval '{interval_val} {period_unit}'
-            ) AS t(ld)
-            ORDER BY 1 DESC
-            LIMIT {self._query_limit}
-        """
+        if not self._prodes:
+            interval_val,period_unit,period_series=self.__get_period_settings()
+            calendar=f"""
+                SELECT
+                    ((ld::date - interval '{interval_val} {period_unit}') + interval '1 day')::date as fd,
+                    ld::date as ld,
+                    0 as year
+                FROM generate_series(
+                    ('{self._start_date}'::date - interval '{period_series} {period_unit}')::date,
+                    date '{self._start_date}',
+                    interval '{interval_val} {period_unit}'
+                ) AS t(ld)
+                ORDER BY 1 DESC
+                LIMIT {self._query_limit}
+            """
+        else:
+            calendar = f"""
+                SELECT
+                    make_date(y, 1, 1) AS fd,
+                    make_date(y, 12, 31) AS ld,
+                    y as year
+                FROM (
+                    SELECT DISTINCT EXTRACT(YEAR FROM date)::int AS y
+                    FROM states_land_use
+		            WHERE classname = '{self._classname}'
+                ) years
+                ORDER BY y
+            """
 
         land_use_type_suffix = "" if land_use_type == "ams" else f"_{land_use_type}"
 
@@ -254,6 +297,17 @@ class SpatialUnitProfile():
             OR a.geocode = ANY('{{{self._geocodes}}}')
         ) """
 
+        col = f"sum(a.{self.default_column})"
+
+        if self._classname == self._deforestation_ratio:
+            col = f"""
+                COALESCE(
+                    SUM(a.counts)::double precision
+                    / NULLIF(SUM(a.counts2)::double precision, 0),
+                    0
+                )
+            """
+
         group_by_periods=f"""
             WITH calendar AS (
                 {calendar}
@@ -261,7 +315,7 @@ class SpatialUnitProfile():
             bar_chart AS (
                 SELECT
                     (calendar.fd || '/' || calendar.ld) as period,
-                    ROUND(sum(a.{self.default_column})::numeric,{round_factor}) as resultsum
+                    ROUND({col}::numeric,{round_factor}) as resultsum
                 FROM
                     calendar,
                     "{self._spatial_unit}_land_use{land_use_type_suffix}" a
@@ -283,7 +337,8 @@ class SpatialUnitProfile():
             )
             SELECT
                 TO_CHAR(cd.fd::date, 'dd/mm/yyyy')|| '-' ||TO_CHAR(cd.ld::date, 'dd/mm/yyyy') as period,
-                cd.fd as firstday, COALESCE(bc.resultsum,0) as resultsum
+                cd.fd as firstday, COALESCE(bc.resultsum,0) as resultsum,
+                cd.year as year
             FROM
                 calendar cd LEFT JOIN bar_chart bc
                     ON (cd.fd || '/' || cd.ld)=bc.period
@@ -312,7 +367,7 @@ class SpatialUnitProfile():
 
     def __area_by_period(self, land_use_type: str):
         df = self.resultset_as_dataframe(self.__get_temporal_unit_sql(land_use_type=land_use_type))
-        df.columns = ['Período', 'Data de referência', self.default_col_name]
+        df.columns = ['Período', 'Data de referência', self.default_col_name, 'Ano']
         return df
     
     def read_land_uses(self, land_use_type):
@@ -525,7 +580,21 @@ class SpatialUnitProfile():
             title=f"""Análise dos dados de <b>{indicador}</b>,
             {spatial_unit}{spatial_description}, para as categorias fundiárias selecionadas.            
             """
+        
+        elif self._classname == self._annual_increment:
+            title=f"""Análise dos dados de <b>incremento anual de desmatamento</b> do PRODES <b>{self.prodes_period}</b>,
+            {spatial_unit}{spatial_description}, para as categorias fundiárias selecionadas.
+            """
 
+        elif self._classname == self._accumulated_deforestation:
+            title=f"""Análise dos dados de <b>desmatamento acumulado</b> do PRODES <b>{self.prodes_period}</b>,
+            {spatial_unit}{spatial_description}, para as categorias fundiárias selecionadas.
+            """
+
+        elif self._classname == self._deforestation_ratio:
+            title=f"""Análise da razão entre o <b>desmatamento acumulado</b> e a <b>vegetação natural disponível</b> do
+            PRODES <b>{self.prodes_period}</b>, {spatial_unit}{spatial_description}, para as categorias fundiárias selecionadas.
+            """
         else:
             title=f"""Análise dos dados de <b>{indicador}</b> {datasource} até <b>{last_date}</b>,
             {spatial_unit}{spatial_description}, para as categorias fundiárias selecionadas
@@ -585,6 +654,8 @@ class SpatialUnitProfile():
             self._fire_today_classname: "focos",
             self._inpe_risk_classname: "score de risco",
             self._fire_spreading_risk_classname: "pontos de risco",
+            self._annual_increment: "incremento anual de desmatamento",
+            self._accumulated_deforestation: "desmatamento acumulado",
         }
         graph_indicator = _[self._classname] if self._classname in _  else "alertas"
 
@@ -604,7 +675,7 @@ class SpatialUnitProfile():
         title1 = f'<i>Informação fundiária de referência</i><br><b>Percentual da Área da Categoria<br>n{graph_spatial_unit}</b>'
 
         if self._classname != self._inpe_risk_classname:
-            title2 = f'<i>Informação dinâmica</i><br><b>Percentual de {graph_indicator.title()}<br>em Relação ao Total de {graph_indicator.title()}</b>'
+            title2 = f'<i>Informação dinâmica</i><br><b>Percentual de <br>{graph_indicator.title()}<br>em Relação ao Total</b>'
         else:
             title2 = f'<i>Informação dinâmica</i><br><b>Percentual da Intensidade Total de Risco<br>por Categoria Fundiária</b>'
 
@@ -650,9 +721,15 @@ class SpatialUnitProfile():
         )
 
         title = f"<b>{indicator}</b> por categoria fundiária"
-        if not self._classname in [self._risk_classname, self._inpe_risk_classname, self._fire_spreading_risk_classname, self._fire_today_classname]:
+        if not self._classname in [
+            self._annual_increment, self._risk_classname, self._inpe_risk_classname,
+            self._fire_spreading_risk_classname, self._fire_today_classname,
+            self._accumulated_deforestation,
+        ]:
             title += f" no último período do <b>{unid_temp}"
-        title += f". <br><b>{graph_total}</b><br>"
+        elif self._prodes:
+            title += f" do PRODES <b>{self.prodes_period}</b>"
+        title += f". <br><b>{graph_total}</b>"
 
         fig.update_traces(
             sort=False,
@@ -678,7 +755,7 @@ class SpatialUnitProfile():
                 l=0,
                 r=0,
                 b=10,
-                t=140,
+                t=180,
                 pad=1
             )
         )        
@@ -687,12 +764,18 @@ class SpatialUnitProfile():
         return graphJSON
 
     def fig_area_by_period(self):
-
         def getIndexes(df):
+            index=[]*len(df['Data de referência'])
+
+            if self._prodes:
+                for i, row in enumerate(df.itertuples(), start=0):
+                    if self.prodes_end <= row.Ano <= self.prodes_start:
+                        index.append(i)
+                return index
+
             refDate=df.tail(1).values[0][1]
             prev=refDate.strftime('%Y-%m')
-
-            index=[]*len(df['Data de referência'])
+            
             for i in range(len(df['Data de referência'])-1,-1,-1):
                 if prev == (df['Data de referência'][i]).strftime('%Y-%m'):
                     index.append(i)
@@ -702,21 +785,28 @@ class SpatialUnitProfile():
         land_use_type = "ams"
 
         df = self.__area_by_period(land_use_type=land_use_type)
-        
+
         # set bar colors
-        color_discrete_sequence = ['#71a68c'] * len(df)
+        color_discrete_sequence = ['#b7acad'] * len(df)
         # highlight the bars
         color_change_items = getIndexes(df)
         for i in color_change_items:
-            color_discrete_sequence[i] = '#b7acad'
+            color_discrete_sequence[i] = '#71a68c'
 
         indicador=self._classes.loc[self._classes['code'] == self._classname].iloc[0]['name']
         unid_temp=self._temporal_units[self._temporal_unit]
-        chart_title=f"""Evolução temporal de <b>{indicador}</b> para os períodos do
-        <br><b>{unid_temp}</b> (limitado aos últimos {self._query_limit} períodos)."""
+
+        if not self._prodes:
+            chart_title=f"""Evolução temporal de <b>{indicador}</b> para os períodos do
+            <br><b>{unid_temp}</b> (limitado aos últimos {self._query_limit} períodos)."""
+        elif self._classname in [self._accumulated_deforestation, self._annual_increment]:
+            chart_title=f"""Evolução temporal do <b>{indicador}</b> do PRODES."""
+        else:
+            chart_title=f"""Evolução temporal da  razão <b>desmatamento acumulado / vegetação natural disponível."""
 
         cto=df['Data de referência'].to_list()
         df['Data de referência']=df['Data de referência'].apply(self.formatDate)
+        df['Ano'] = df['Ano'].astype(str)
         
         # duplicate series to use in label chart
         df["label"]=df[self.default_col_name]
@@ -737,11 +827,17 @@ class SpatialUnitProfile():
             df["label"] = df["label"].mask(df["label"]>=100, df["label"].round(0))
             df["label"] = df["label"].astype(str).apply(lambda x: re.sub( r'\.0$', '', x) )
 
-        fig = px.bar(df, x='Data de referência', y=self.default_col_name, title=chart_title,
-                     category_orders = {'Data de referência': cto},
-                     color='Data de referência',
+        x_col = 'Ano' if self._prodes else 'Data de referência'
+        x_title = 'Ano Prodes' if self._prodes else 'Data de início de cada período'
+
+        if self._prodes:
+            df = df[[x_col, self.default_col_name, 'label']]
+
+        fig = px.bar(df, x=x_col, y=self.default_col_name, title=chart_title,
+                     category_orders = {x_col: cto},
+                     color=x_col,
                      color_discrete_sequence=color_discrete_sequence,
-                     hover_data=["Período"])
+        )
 
         offset_annotation = df[self.default_col_name].max() * 0.03
         fig.update_layout(
@@ -755,7 +851,7 @@ class SpatialUnitProfile():
                 ticks='outside',
                 type='category',
                 tickangle=45,
-                title_text="Data de início de cada período"),
+                title_text=x_title),
             showlegend=False,
             hovermode="x unified",
             margin=dict(
@@ -770,8 +866,12 @@ class SpatialUnitProfile():
                 for x, total, totall in zip(df.index, df[self.default_col_name], df["label"])
             ]
         )
+
+        ymin = df[self.default_col_name].min()
+        ymax = df[self.default_col_name].max()
+
         fig.update_yaxes(
-            rangemode= "tozero",
+            range=[ymin * 0.98, ymax * 1.02],
             linecolor='#000',
             tickcolor='#C0C0C0',
             ticks='outside'

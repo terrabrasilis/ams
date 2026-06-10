@@ -19,6 +19,9 @@ var defaultConfig = {
     ri: "score",
     fs: "units",
     ft: "counts",
+    ai: "area",
+    ad: "area",
+    dr: "ratio"
   },
   risk:{
   },
@@ -28,8 +31,9 @@ var defaultConfig = {
       threshold: 2 // if the absolute area value is less than threshold, the unit will be changed to ha
     },
     authenticationClientId: "terrabrasilis-apps",
-    authenticationResourceRole: "terrabrasilis-user"   
-  }
+    authenticationResourceRole: "terrabrasilis-user"
+  },
+  prodesIndicators: ["AI", "AD", "DR"]  
 };
 
 // default definitions
@@ -41,7 +45,11 @@ const defaultLayers = {
   activeFireToday:"active-fire-today",
   lastDate: "last_date",
   inpeRisk: "risk-inpe-data",
-  fireSpreadingRisk: "fire-spreading-risk"
+  fireSpreadingRisk: "fire-spreading-risk",
+  annualIncrease: "dummy",
+  accumulatedDeforestation: "dummy",
+  deforestationRatio: "dummy",
+  dummy: "dummy",
 };
 
 const defaultFilters = {
@@ -59,7 +67,7 @@ const defaultRiskFilter = {
   scaleFactor: parseFloat(ams.Utils.getServerConfigParam('risk_scale_factor'))
 };
 
-const defaultWorkspace = ams.Utils.isHomologationEnvironment()? "ams1" : "ams3";
+const defaultWorkspace = ams.Utils.isHomologationEnvironment()? "ams3" : "ams3";
 
 // configuration by biome
 ams.BiomeConfig["Amazônia"] = {
@@ -68,7 +76,7 @@ ams.BiomeConfig["Amazônia"] = {
   defaultFilters: {
     ...defaultFilters,
     // can be group's name of DETER classnames, 'DS', 'DG', 'CS' and 'MN', or 'AF' to Queimadas, or 'RI' to INPE risk
-    indicator: 'DS',
+    indicator: 'DS', // 'AD', //'AI',//'DS', 
   },
   defaultRiskFilter: defaultRiskFilter
 };

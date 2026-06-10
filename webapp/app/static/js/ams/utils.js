@@ -77,6 +77,9 @@ ams.Utils = {
     ams.Config.endDate = generalConfig.end_date;
     ams.Config.tempUnit = generalConfig.temp_unit;
 
+    ams.Config.prodesMinYear = generalConfig.prodesMinYear;
+    ams.Config.prodesMaxYear = generalConfig.prodesMaxYear;
+
     var classGroups = JSON.parse(generalConfig.deter_class_groups.replace(/'/g,"\""));
 
     if (generalConfig.classname) {

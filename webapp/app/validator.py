@@ -181,7 +181,7 @@ class PanelSchema(Schema):
         value = data["tempUnit"]
         if not (
             value[:-1].isdigit() and value[-1] == "d" if "custom" in data else
-            value in ["7d", "15d", "1m", "3m", "1y"]
+            value in ["7d", "15d", "1m", "3m", "1y", "custom"]
         ):
             raise ValidationError(f"tempUnit ({value})", "tempUnit")
 
@@ -229,6 +229,7 @@ class ProfileSchema(Schema):
     className = fields.Str(required=True, validate=validate.OneOf(VALID_PARMS_FROM_DB["classname"]))
     spatialUnit = fields.Str(required=True, validate=validate.OneOf(VALID_PARMS_FROM_DB["spatialUnit"]))
     startDate = fields.Str(required=True, validate=partial(_validate_date, False))
+    endDate = fields.Str(required=True, validate=partial(_validate_date, False))
     tempUnit = fields.Str(required=True)    
     suName = fields.Str(required=True, validate=_validate_suname)
     landUse = fields.Str(required=True, validate=_validate_landuse)
@@ -246,10 +247,11 @@ class ProfileSchema(Schema):
     )
     unit = fields.Str(
         required=True,
-        validate=validate.OneOf(["km²", "ha", "focos", "risco", "score", "risco de espalhamento"])
+        validate=validate.OneOf(["km²", "ha", "focos", "risco", "score", "risco de espalhamento", "ratio_dr"])
     )
     riskThreshold = fields.Float(required=False)
     custom = fields.Bool(required=False)
+    prodes = fields.Bool(required=False)
 
     @validates_schema
     def _validate_others(self, data, **kwargs):
