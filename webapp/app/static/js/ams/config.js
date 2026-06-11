@@ -21,7 +21,7 @@ var defaultConfig = {
     ft: "counts",
     ai: "area",
     ad: "area",
-    dr: "ratio"
+    iv: "ratio"
   },
   risk:{
   },
@@ -33,7 +33,7 @@ var defaultConfig = {
     authenticationClientId: "terrabrasilis-apps",
     authenticationResourceRole: "terrabrasilis-user"
   },
-  prodesIndicators: ["AI", "AD", "DR"]  
+  prodesIndicators: ["AI", "AD", "IV"]
 };
 
 // default definitions
@@ -67,7 +67,7 @@ const defaultRiskFilter = {
   scaleFactor: parseFloat(ams.Utils.getServerConfigParam('risk_scale_factor'))
 };
 
-const defaultWorkspace = ams.Utils.isHomologationEnvironment()? "ams1" : "ams1";
+const defaultWorkspace = ams.Utils.isHomologationEnvironment()? "ams3" : "ams3";
 
 // configuration by biome
 ams.BiomeConfig["Amazônia"] = {
@@ -76,7 +76,7 @@ ams.BiomeConfig["Amazônia"] = {
   defaultFilters: {
     ...defaultFilters,
     // can be group's name of DETER classnames, 'DS', 'DG', 'CS' and 'MN', or 'AF' to Queimadas, or 'RI' to INPE risk
-    indicator: 'DS', // 'AD', //'AI',//'DS', 
+    indicator: 'DS',
   },
   defaultRiskFilter: defaultRiskFilter
 };

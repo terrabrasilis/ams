@@ -30,7 +30,7 @@ ams.SLDStyles = {
 			unit = "risco de espalhamento";
 		}
 
-		if (ams.App._suViewParams.classname == "DR") {
+		if (ams.App._suViewParams.classname == "IV") {
 			unit = "ratio_dr";
 		}
 
@@ -75,8 +75,8 @@ ams.SLDStyles = {
 					prefix = "Contagem: ";
 					break;
 				case "ratio_dr":
-					text = "D / V";
-					prefix = "Razão: ";
+					text = "vegetação remanescente desmatada";
+					prefix = "Percentual: ";
 					break;
 			}
 

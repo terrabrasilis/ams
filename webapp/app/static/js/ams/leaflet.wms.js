@@ -242,7 +242,7 @@ ams.LeafletWms = {
         },
 
         '_createSpatialUnitInfoTable': function (result) {
-            let risk=focus=deter=fs="";
+            let risk=focus=deter=fs=iv="";
             if (result["classname"]=="AF"){
                 focus=""
                 + "<tr>"
@@ -281,6 +281,16 @@ ams.LeafletWms = {
                 + "<td>Porcentagem   </td>"
                 + "<td>" + result["percentage"] + "%</td>"
                 + "</tr>";
+            } else if (result["classname"]=="IV") {
+                iv=""
+                + "<tr>"
+                + "<td>&#193;rea Desmatada ("+result["area_unit"]+")</td>"
+                + "<td>" + result["area"] + "</td>"
+                + "</tr>"
+                + "<tr>"
+                + "<td>Vegetação Desmatada   </td>"
+                + "<td>" + result["ratio"] + "%</td>"
+                + "</tr>";
             } else {
                 deter=""
                 + "<tr>"
@@ -291,14 +301,6 @@ ams.LeafletWms = {
                 + "<td>Porcentagem   </td>"
                 + "<td>" + result["percentage"] + "%</td>"
                 + "</tr>";
-
-                if (result["classname"]=="DR") {
-                    deter += ""
-                    + "<tr>"
-                    + "<td>Razão (D/V)   </td>"
-                    + "<td>" + result["ratio"] + "</td>"
-                    + "</tr>";
-                }
             }
 
             return '<table class="popup-spatial-unit-table">'
@@ -318,6 +320,7 @@ ams.LeafletWms = {
                 + focus
                 + deter
                 + fs
+                + iv
             +"</table>";
         },
 

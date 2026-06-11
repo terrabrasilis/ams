@@ -45,7 +45,7 @@ class SpatialUnitProfile():
         self._fire_spreading_risk_classname = "FS"
         self._annual_increment = "AI"
         self._accumulated_deforestation = "AD"
-        self._deforestation_ratio = "DR"
+        self._deforestation_ratio = "IV"
 
         self._config = config
 
@@ -86,7 +86,7 @@ class SpatialUnitProfile():
 
         if(self._classname==self._deforestation_ratio):
             self.default_column="ratio"
-            self.default_col_name="Razão"
+            self.default_col_name="percentual"
 
         # standard area rounding
         self.round_factor=2
@@ -160,7 +160,7 @@ class SpatialUnitProfile():
                 'Focos de Hoje',
                 'Incremento Anual de Desmatamento',
                 'Desmatamento Acumulado',
-                'D/V'],
+                'Vegetação Remanescente Desmatada'],
                 dtype='str'),
              'color': pd.Series(['#0d0887', '#46039f', '#7201a8', '#9c179e'], dtype='str')})
         self._temporal_units = {
@@ -303,9 +303,14 @@ class SpatialUnitProfile():
             col = f"""
                 COALESCE(
                     SUM(a.counts)::double precision
-                    / NULLIF(SUM(a.counts2)::double precision, 0),
+                    /
+                    NULLIF(
+                        SUM(a.counts)::double precision +
+                        SUM(a.counts2)::double precision,
+                        0
+                    ) * 100.,
                     0
-                )
+            )
             """
 
         group_by_periods=f"""
@@ -592,7 +597,7 @@ class SpatialUnitProfile():
             """
 
         elif self._classname == self._deforestation_ratio:
-            title=f"""Análise da razão entre o <b>desmatamento acumulado</b> e a <b>vegetação natural disponível</b> do
+            title=f"""Análise do percentual de <b>vegetação remanescente desmatada</b> do
             PRODES <b>{self.prodes_period}</b>, {spatial_unit}{spatial_description}, para as categorias fundiárias selecionadas.
             """
         else:
@@ -802,7 +807,7 @@ class SpatialUnitProfile():
         elif self._classname in [self._accumulated_deforestation, self._annual_increment]:
             chart_title=f"""Evolução temporal do <b>{indicador}</b> do PRODES."""
         else:
-            chart_title=f"""Evolução temporal da  razão <b>desmatamento acumulado / vegetação natural disponível."""
+            chart_title=f"""Evolução temporal do percentual de <b>vegetação remanescente desmatada</b>."""
 
         cto=df['Data de referência'].to_list()
         df['Data de referência']=df['Data de referência'].apply(self.formatDate)
@@ -982,10 +987,12 @@ class SpatialUnitProfile():
             self._fire_classname: "focos",
             self._fire_today_classname: "focos",
             self._inpe_risk_classname: "intensidade de risco",
-            self._fire_spreading_risk_classname: "pontos de risco"
+            self._fire_spreading_risk_classname: "pontos de risco",
+            self._annual_increment: "incremento anual de desmatamento",
+            self._accumulated_deforestation: "desmatamento acumulado",
         }
         graph_unit = _[self._classname] if fire_or_risk else (km2 if self.data_unit != ha else ha)
-        graph_indicator = _[self._classname] if self._classname in _  else "alertas"
+        graph_indicator = _[self._classname] if self._classname in _ else "alertas"
     
         df = self.classname_area_per_land_use_ppcdam()
 

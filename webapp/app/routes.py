@@ -236,8 +236,8 @@ def get_profile(endpoint):
             graph_json.update({'AreaPerLandUseProdes': spatial_unit_profile.fig_area_per_land_use_prodes()})
 
         # to avoid unnecessary function call
-        if (not spatial_unit_profile._classname in ['RK', 'RI', 'FS']):
-            if (onlyOneLandUse <= 1 or spatial_unit_profile._classname == 'DR'):
+        if (not spatial_unit_profile._classname in ['RK', 'RI', 'FS', 'FT']):
+            if (onlyOneLandUse <= 1 or spatial_unit_profile._classname == 'IV'):
                 graph_json.update(
                     {'AreaPerYearTableClass': spatial_unit_profile.fig_area_by_period()}
                 )

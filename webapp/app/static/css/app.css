@@ -32,11 +32,26 @@ html, body {
   font: 12px/1.5 'Roboto', "Helvetica Neue", Arial, Helvetica, sans-serif !important;
 }
 .leaflet-popup-content{
-  min-width: 220px !important;
+  min-width: 320px !important;
 }
 .popup-spatial-unit-table {
   width: 100%;
-  white-space: nowrap;
+  table-layout: fixed;
+}
+.popup-spatial-unit-table th,
+.popup-spatial-unit-table td {
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+.popup-spatial-unit-table th:first-child,
+.popup-spatial-unit-table td:first-child {
+  width: 42%;
+  min-width: 120px;
+}
+.popup-spatial-unit-table th:last-child,
+.popup-spatial-unit-table td:last-child {
+  width: 58%;
+  min-width: 140px;
 }
 .popup-spatial-unit-table tr:nth-child(even) {
   background-color: #dcedc8;

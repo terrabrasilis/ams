@@ -357,9 +357,9 @@ ams.App = {
                         layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.dummy;
                         ams.App._propertyName=ams.Config.propertyName.ad;
                         ams.App._hasClassFilter=false;
-                    } else if (e.acronym=='DR') {
+                    } else if (e.acronym=='IV') {
                         layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.dummy;
-                        ams.App._propertyName=ams.Config.propertyName.dr;
+                        ams.App._propertyName=ams.Config.propertyName.iv;
                         ams.App._hasClassFilter=false;
 
                     } else {
@@ -770,8 +770,8 @@ ams.App = {
             this._setReferenceLayer(ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.dummy);
             ams.App._diffOn = false;
 
-        } else if (indicator == 'DR') {
-            ams.App._propertyName = ams.Config.propertyName.dr;
+        } else if (indicator == 'IV') {
+            ams.App._propertyName = ams.Config.propertyName.iv;
             this._setReferenceLayer(ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.dummy);
             ams.App._diffOn = false;
 
@@ -1282,38 +1282,39 @@ ams.App = {
             if (response&&response.ok) {
                 let profileJson = await response.json();
 
+                $('.nav-tabs a[href="#tab-year-class"]').parent().hide();
+                $('.nav-tabs a[href="#tab-landuse"]').parent().hide();
+                $('.nav-tabs a[href="#tab-landuse-ppcdam"]').parent().hide();
+                $('.nav-tabs a[href="#tab-landuse-prodes"]').parent().hide();
+
                 Plotly.purge('AreaPerYearTableClass');
-                if (profileJson['AreaPerYearTableClass'] && ams.App._indicator !== "RI" && ams.App._indicator !== "FS" && ams.App._indicator !== "FT") {
+                if (profileJson['AreaPerYearTableClass']) {
                     $('.nav-tabs a[href="#tab-year-class"]').parent().show();
-                    $('.nav-tabs a[href="#tab-year-class"]').tab('show');
                     Plotly.react('AreaPerYearTableClass', JSON.parse(profileJson['AreaPerYearTableClass']), {});
-                } else {
-                    $('.nav-tabs a[href="#tab-year-class"]').parent().hide();
                 }
 
                 Plotly.purge('AreaPerLandUse');
                 if (profileJson['AreaPerLandUse'] && ams.App._landUseList.length>1) {
+                    $('.nav-tabs a[href="#tab-landuse"]').parent().show();
                     Plotly.react('AreaPerLandUse', JSON.parse(profileJson['AreaPerLandUse']), {});
-                    if (["RI", "FS", "FT"].includes(ams.App._indicator)) {
-                        $('.nav-tabs a[href="#tab-landuse"]').tab('show');
-                    }
-                } else {
-                    $('.nav-tabs a[href="#tab-landuse"]').parent().hide();
                 }
 
                 Plotly.purge('AreaPerLandUsePpcdam');
                 if (profileJson['AreaPerLandUsePpcdam'] && ams.App._landUseList.length>1) {
+                    $('.nav-tabs a[href="#tab-landuse-ppcdam"]').parent().show();
                     Plotly.react('AreaPerLandUsePpcdam', JSON.parse(profileJson['AreaPerLandUsePpcdam']), {});
-                } else {
-                    $('.nav-tabs a[href="#tab-landuse-ppcdam"]').parent().hide();
                 }
                 
                 Plotly.purge('AreaPerLandUseProdes');
                 if (profileJson['AreaPerLandUseProdes']) {
                     $('.nav-tabs a[href="#tab-landuse-prodes"]').parent().show();
                     Plotly.react('AreaPerLandUseProdes', JSON.parse(profileJson['AreaPerLandUseProdes']), {});
+                }
+
+                if (["RI", "FS", "FT"].includes(ams.App._indicator)) {
+                    $('.nav-tabs a[href="#tab-landuse"]').tab('show');
                 } else {
-                    $('.nav-tabs a[href="#tab-landuse-prodes"]').parent().hide();
+                    $('.nav-tabs a[href="#tab-year-class"]').tab('show');
                 }
 
                 document.getElementById("txt3a").innerHTML = profileJson['FormTitle'];
