@@ -59,7 +59,7 @@ const defaultRiskFilter = {
   scaleFactor: parseFloat(ams.Utils.getServerConfigParam('risk_scale_factor'))
 };
 
-const defaultWorkspace = ams.Utils.isHomologationEnvironment()? "ams1" : "ams1";
+const defaultWorkspace = ams.Utils.isHomologationEnvironment()? "ams1" : "ams3";
 
 // configuration by biome
 ams.BiomeConfig["Amazônia"] = {
