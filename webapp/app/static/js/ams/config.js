@@ -21,7 +21,8 @@ var defaultConfig = {
     ft: "counts",
     ai: "area",
     ad: "area",
-    iv: "ratio"
+    iv: "ratio",
+    av: "ratio"
   },
   risk:{
   },
@@ -33,7 +34,7 @@ var defaultConfig = {
     authenticationClientId: "terrabrasilis-apps",
     authenticationResourceRole: "terrabrasilis-user"
   },
-  prodesIndicators: ["AI", "AD", "IV"]
+  prodesIndicators: ["AI", "AD", "IV", 'AV']
 };
 
 // default definitions
@@ -67,7 +68,7 @@ const defaultRiskFilter = {
   scaleFactor: parseFloat(ams.Utils.getServerConfigParam('risk_scale_factor'))
 };
 
-const defaultWorkspace = ams.Utils.isHomologationEnvironment()? "ams3" : "ams3";
+const defaultWorkspace = ams.Utils.isHomologationEnvironment()? "ams1" : "ams3";
 
 // configuration by biome
 ams.BiomeConfig["Amazônia"] = {

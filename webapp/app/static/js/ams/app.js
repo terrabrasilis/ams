@@ -44,7 +44,7 @@ ams.App = {
 
     	// REMOVE ME (Debug Purposes)
         // if(ams.Auth.isAuthenticated()==false) {
-        geoserverUrl = "http://127.0.0.1/geoserver";
+        // geoserverUrl = "http://127.0.0.1/geoserver";
         // }
 
         this._wfs = new ams.Map.WFS(geoserverUrl);
@@ -361,6 +361,10 @@ ams.App = {
                         layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.dummy;
                         ams.App._propertyName=ams.Config.propertyName.iv;
                         ams.App._hasClassFilter=false;
+                    } else if (e.acronym=='AV') {
+                        layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.dummy;
+                        ams.App._propertyName=ams.Config.propertyName.av;
+                        ams.App._hasClassFilter=false;
 
                     } else {
                         // the reference layer should be deter
@@ -379,8 +383,8 @@ ams.App = {
 
                     if(ams.App._suViewParams.classname != e.acronym){
                         var keep_last_date = (
-                            !["RI", "RK", "AF", "FS", "FT", "AI", "AD", "DR"].includes(e.acronym) &&
-                            !["RI", "RK", "AF", "FS", "FT", "AI", "AD", "DR"].includes(ams.App._suViewParams.classname)
+                            !["RI", "RK", "AF", "FS", "FT", "AI", "AD", "IV", "AV"].includes(e.acronym) &&
+                            !["RI", "RK", "AF", "FS", "FT", "AI", "AD", "IV", "AV"].includes(ams.App._suViewParams.classname)
                         );
 
                         ams.App._suViewParams.classname = e.acronym;
@@ -772,6 +776,11 @@ ams.App = {
 
         } else if (indicator == 'IV') {
             ams.App._propertyName = ams.Config.propertyName.iv;
+            this._setReferenceLayer(ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.dummy);
+            ams.App._diffOn = false;
+
+        } else if (indicator == 'AV') {
+            ams.App._propertyName = ams.Config.propertyName.av;
             this._setReferenceLayer(ams.Auth.getWorkspace() + ":" + ams.Config.defaultLayers.dummy);
             ams.App._diffOn = false;
 

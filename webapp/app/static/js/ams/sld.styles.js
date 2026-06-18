@@ -34,6 +34,10 @@ ams.SLDStyles = {
 			unit = "ratio_dr";
 		}
 
+		if (ams.App._suViewParams.classname == "AV") {
+			unit = "ratio_av";
+		}
+
 		this.stroke = "";
 		this.fillOpacity = 1;
 		this.maxValue = maxValue;
@@ -76,6 +80,10 @@ ams.SLDStyles = {
 					break;
 				case "ratio_dr":
 					text = "vegetação remanescente desmatada";
+					prefix = "Percentual: ";
+					break;
+				case "ratio_av":
+					text = "vegetação original desmatada";
 					prefix = "Percentual: ";
 					break;
 			}

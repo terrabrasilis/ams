@@ -45,7 +45,8 @@ class SpatialUnitProfile():
         self._fire_spreading_risk_classname = "FS"
         self._annual_increment = "AI"
         self._accumulated_deforestation = "AD"
-        self._deforestation_ratio = "IV"
+        self._increase_deforestation_ratio = "IV"
+        self._accumulated_deforestation_ratio = "AV"
 
         self._config = config
 
@@ -84,7 +85,7 @@ class SpatialUnitProfile():
             self.default_column="score"
             self.default_col_name="Score"
 
-        if(self._classname==self._deforestation_ratio):
+        if(self._classname in [self._increase_deforestation_ratio, self._accumulated_deforestation_ratio]):
             self.default_column="ratio"
             self.default_col_name="percentual"
 
@@ -149,7 +150,8 @@ class SpatialUnitProfile():
                     self._fire_today_classname,
                     self._annual_increment,
                     self._accumulated_deforestation,
-                    self._deforestation_ratio,
+                    self._increase_deforestation_ratio,
+                    self._accumulated_deforestation_ratio,
                 ],
                 dtype='str'
             ),
@@ -160,7 +162,9 @@ class SpatialUnitProfile():
                 'Focos de Hoje',
                 'Incremento Anual de Desmatamento',
                 'Desmatamento Acumulado',
-                'Vegetação Remanescente Desmatada'],
+                'Vegetação Remanescente Desmatada',
+                'Vegetação Original Desmatada',
+                ],
                 dtype='str'),
              'color': pd.Series(['#0d0887', '#46039f', '#7201a8', '#9c179e'], dtype='str')})
         self._temporal_units = {
@@ -299,13 +303,26 @@ class SpatialUnitProfile():
 
         col = f"sum(a.{self.default_column})"
 
-        if self._classname == self._deforestation_ratio:
+        if self._classname == self._increase_deforestation_ratio:
             col = f"""
                 COALESCE(
                     SUM(a.counts)::double precision
                     /
                     NULLIF(
                         SUM(a.counts)::double precision +
+                        SUM(a.counts2)::double precision,
+                        0
+                    ) * 100.,
+                    0
+            )
+            """
+        
+        if self._classname == self._accumulated_deforestation_ratio:
+            col = f"""
+                COALESCE(
+                    SUM(a.counts)::double precision
+                    /
+                    NULLIF(
                         SUM(a.counts2)::double precision,
                         0
                     ) * 100.,
@@ -596,8 +613,12 @@ class SpatialUnitProfile():
             {spatial_unit}{spatial_description}, para as categorias fundiárias selecionadas.
             """
 
-        elif self._classname == self._deforestation_ratio:
+        elif self._classname == self._increase_deforestation_ratio:
             title=f"""Análise do percentual de <b>vegetação remanescente desmatada</b> do
+            PRODES <b>{self.prodes_period}</b>, {spatial_unit}{spatial_description}, para as categorias fundiárias selecionadas.
+            """
+        elif self._classname == self._accumulated_deforestation_ratio:
+            title=f"""Análise do percentual de <b>vegetação original desmatada</b> do
             PRODES <b>{self.prodes_period}</b>, {spatial_unit}{spatial_description}, para as categorias fundiárias selecionadas.
             """
         else:
@@ -806,8 +827,10 @@ class SpatialUnitProfile():
             <br><b>{unid_temp}</b> (limitado aos últimos {self._query_limit} períodos)."""
         elif self._classname in [self._accumulated_deforestation, self._annual_increment]:
             chart_title=f"""Evolução temporal do <b>{indicador}</b> do PRODES."""
-        else:
+        elif self._classname == self._increase_deforestation_ratio:
             chart_title=f"""Evolução temporal do percentual de <b>vegetação remanescente desmatada</b>."""
+        else:
+            chart_title=f"""Evolução temporal do percentual de <b>vegetação original desmatada</b>."""
 
         cto=df['Data de referência'].to_list()
         df['Data de referência']=df['Data de referência'].apply(self.formatDate)
@@ -876,7 +899,7 @@ class SpatialUnitProfile():
         ymax = df[self.default_col_name].max()
 
         fig.update_yaxes(
-            range=[ymin * 0.98, ymax * 1.02],
+            range=[ymin * 0.95, ymax * 1.05],
             linecolor='#000',
             tickcolor='#C0C0C0',
             ticks='outside'

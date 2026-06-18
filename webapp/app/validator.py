@@ -247,7 +247,7 @@ class ProfileSchema(Schema):
     )
     unit = fields.Str(
         required=True,
-        validate=validate.OneOf(["km²", "ha", "focos", "risco", "score", "risco de espalhamento", "ratio_dr"])
+        validate=validate.OneOf(["km²", "ha", "focos", "risco", "score", "risco de espalhamento", "ratio_dr", "ratio_av"])
     )
     riskThreshold = fields.Float(required=False)
     custom = fields.Bool(required=False)

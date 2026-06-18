@@ -126,7 +126,7 @@ def get_config(endpoint):
     
     # print(f"/biome/config __\n{request.args}")
     schema = BiomeConfigSchema()
-    
+
     try:
         schema.load(request.args)
     except ValidationError as e:
@@ -220,7 +220,6 @@ def get_profile(endpoint):
                 {'FormTitle': 'Sem gráficos para exibir com a configuração atual.'}
             )
 
-
         spatial_unit_profile = SpatialUnitProfile(Config, params)
 
         # onlyOneLandUse = (land_use).find(',')
@@ -237,7 +236,7 @@ def get_profile(endpoint):
 
         # to avoid unnecessary function call
         if (not spatial_unit_profile._classname in ['RK', 'RI', 'FS', 'FT']):
-            if (onlyOneLandUse <= 1 or spatial_unit_profile._classname == 'IV'):
+            if (onlyOneLandUse <= 1 or spatial_unit_profile._classname in ['IV', 'AV']):
                 graph_json.update(
                     {'AreaPerYearTableClass': spatial_unit_profile.fig_area_by_period()}
                 )

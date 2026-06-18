@@ -281,7 +281,7 @@ ams.LeafletWms = {
                 + "<td>Porcentagem   </td>"
                 + "<td>" + result["percentage"] + "%</td>"
                 + "</tr>";
-            } else if (result["classname"]=="IV") {
+            } else if (['IV', 'AV'].includes(result["classname"])) {
                 iv=""
                 + "<tr>"
                 + "<td>&#193;rea Desmatada ("+result["area_unit"]+")</td>"
