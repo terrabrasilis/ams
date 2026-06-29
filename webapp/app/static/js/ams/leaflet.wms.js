@@ -162,6 +162,7 @@ ams.LeafletWms = {
                 "suid": "",
                 "score": 0,
                 "units": 0,
+                "ratio": 0,
             };
             this._updateResults(result, featureInfo);
 
@@ -182,7 +183,9 @@ ams.LeafletWms = {
             conf["className"]=ams.App._suViewParams.classname;
             conf["spatialUnit"]=ams.App._currentSULayerName.split(":")[1];
             conf["startDate"]=ams.App._dateControl.startdate;
+            conf["endDate"]=ams.App._dateControl.enddate;
             conf["tempUnit"]=ams.App._currentTemporalAggregate;
+            conf["prodes"]=ams.App._prodesMode(ams.App._indicator);
 
             if (conf["tempUnit"] === "custom") {
                 conf["tempUnit"] = ams.App._dateControl.customDays + "d";
@@ -239,7 +242,7 @@ ams.LeafletWms = {
         },
 
         '_createSpatialUnitInfoTable': function (result) {
-            let risk=focus=deter=fs="";
+            let risk=focus=deter=fs=iv="";
             if (result["classname"]=="AF"){
                 focus=""
                 + "<tr>"
@@ -278,6 +281,16 @@ ams.LeafletWms = {
                 + "<td>Porcentagem   </td>"
                 + "<td>" + result["percentage"] + "%</td>"
                 + "</tr>";
+            } else if (['IV', 'AV'].includes(result["classname"])) {
+                iv=""
+                + "<tr>"
+                + "<td>&#193;rea Desmatada ("+result["area_unit"]+")</td>"
+                + "<td>" + result["area"] + "</td>"
+                + "</tr>"
+                + "<tr>"
+                + "<td>Vegetação Desmatada   </td>"
+                + "<td>" + result["ratio"] + "%</td>"
+                + "</tr>";
             } else {
                 deter=""
                 + "<tr>"
@@ -289,6 +302,7 @@ ams.LeafletWms = {
                 + "<td>" + result["percentage"] + "%</td>"
                 + "</tr>";
             }
+
             return '<table class="popup-spatial-unit-table">'
                 + "<tr>"
                 + "<th>Nome</th>"
@@ -306,6 +320,7 @@ ams.LeafletWms = {
                 + focus
                 + deter
                 + fs
+                + iv
             +"</table>";
         },
 

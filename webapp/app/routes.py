@@ -88,6 +88,8 @@ def _get_config(
         subset=subset, biome=biome, municipalities_group=municipalities_group, geocodes=geocodes
     )
 
+    prodes_years = ctrl.read_prodes_years()
+
     return {
         'geoserver_url': Config.GEOSERVER_URL,
         'appBiome': biome,
@@ -112,6 +114,8 @@ def _get_config(
         'end_date': end_date,
         'temp_unit': temp_unit,
         'classname': classname,
+        'prodesMinYear': prodes_years[0],
+        'prodesMaxYear': prodes_years[1],
     }
 
 
@@ -122,7 +126,7 @@ def get_config(endpoint):
     
     # print(f"/biome/config __\n{request.args}")
     schema = BiomeConfigSchema()
-    
+
     try:
         schema.load(request.args)
     except ValidationError as e:
@@ -231,8 +235,8 @@ def get_profile(endpoint):
             graph_json.update({'AreaPerLandUseProdes': spatial_unit_profile.fig_area_per_land_use_prodes()})
 
         # to avoid unnecessary function call
-        if (not spatial_unit_profile._classname in ['RK', 'RI', 'FS']):
-            if (onlyOneLandUse <= 1):
+        if (not spatial_unit_profile._classname in ['RK', 'RI', 'FS', 'FT']):
+            if (onlyOneLandUse <= 1 or spatial_unit_profile._classname in ['IV', 'AV']):
                 graph_json.update(
                     {'AreaPerYearTableClass': spatial_unit_profile.fig_area_by_period()}
                 )

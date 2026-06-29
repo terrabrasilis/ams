@@ -358,3 +358,17 @@ class AppConfigController:
         return results
 
 
+    def read_prodes_years(self):
+        """
+        Gets the prodes years interval.
+        """
+        sql = f"""
+            SELECT EXTRACT(YEAR from MIN(date)) as min_year, EXTRACT(YEAR from MAX(date)) as max_year
+            FROM public.states_land_use
+            WHERE classname in ('AI', 'AD', 'IV', 'AV');
+        """
+
+        cur = self._conn.cursor()
+        cur.execute(sql)
+        return cur.fetchone()
+     

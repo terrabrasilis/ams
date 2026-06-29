@@ -313,7 +313,7 @@ L.Control.GroupedLayers = L.Control.extend({
   },
 
   handleSelection: function (classificationMapGroupId, obj) {
-    if ((obj.name.toLowerCase().includes('risco') || obj.name.toLowerCase().includes('hoje')) && obj.checked) {
+    if ((obj.name.toLowerCase().includes('risco') || obj.name.toLowerCase().includes('hoje') || obj.name.toLowerCase().includes('prodes')) && obj.checked) {
       $("#ctrl"+this._getControlByName('onPeriod').ctrlId).click();  // force onPeriod
       var mapClassificationElement = document.querySelector('[id="leaflet-control-layers-group-' + classificationMapGroupId + '"]');
       mapClassificationElement.style.display = 'none';
