@@ -671,9 +671,90 @@ ams.App = {
             $("#changeunit")[0].checked=ams.Config.general.area.changeunit=="auto";
 
             ams.App._populateMunicipalities();
+
+            ams.App._rebuildIndicatorPanel();
+
         });
 
     }, // end of run method
+
+    _rebuildIndicatorPanel: function () {
+        var container = $("#leaflet-control-layers-group-1");
+
+        var title = container.find(
+            ".leaflet-control-layers-group-label"
+        );
+        
+        title.after(`
+            <div class="indicator-tabs">
+                <div class="indicator-tab active" data-target="deter">
+                    DETER
+                </div>
+                <div class="indicator-tab" data-target="prodes">
+                    PRODES
+                </div>
+                <div class="indicator-tab" data-target="queimadas">
+                    QUEIMADAS
+                </div>
+                <div class="indicator-tab" data-target="outros">
+                    OUTROS
+                </div>
+            </div>
+            <div id="deter" class="indicator-content active"></div>
+            <div id="prodes" class="indicator-content"></div>
+            <div id="queimadas"   class="indicator-content"></div>
+            <div id="outros" class="indicator-content"></div>
+        `);
+
+        container.find("> label").not(".leaflet-control-layers-group-label").each(function() {
+            var span = $(this).find("span");
+            var text = span.text();
+            if (text.includes("(DETER)")) {
+                span.text(text.replace("(DETER)", ""));
+                $("#deter").append(this);
+            } else if (text.includes("(PRODES)")) {
+                span.text(text.replace("(PRODES)", ""));
+                $("#prodes").append(this);  
+            } else if (text.includes("(Queimadas)")) {
+                span.text(text.replace("(Queimadas)", ""));
+                $("#queimadas").append(this);
+            } else {
+                $("#outros").append(this);
+            }
+        });
+
+        $(".indicator-content").each(function() {
+	        if ($(this).children().length > 1 || ams.Auth.isAuthenticated()) {
+		        return;
+	        }
+
+            if ($(this).children().length == 0 ||
+                $(this).find("label > span").text().toLowerCase().includes("risco de desmatamento")) {
+		        $(".indicator-tab[data-target='" + this.id + "']").hide();
+		        $(this).hide();
+	        }
+        });
+
+        var activeContent = container
+            .find("input[type='radio']:checked")
+            .closest("label")
+            .parent();
+
+        if (activeContent.length > 0) {
+            $(".indicator-tab").removeClass("active");
+            $(".indicator-content").removeClass("active");
+            activeContent.addClass("active");
+            $(".indicator-tab[data-target='" + activeContent.attr("id") + "']")
+            .addClass("active");
+        }
+
+        $(".indicator-tab").click(function() {
+            $(".indicator-tab").removeClass("active");
+            $(this).addClass("active");
+            $(".indicator-content").removeClass("active");
+            $("#" + $(this).data("target")).addClass("active");
+        });
+    },
 
     _isDeterLayer: function (layerName) {
 	    return layerName.includes(ams.Config.defaultLayers.deter);

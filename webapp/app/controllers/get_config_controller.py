@@ -365,7 +365,7 @@ class AppConfigController:
         sql = f"""
             SELECT EXTRACT(YEAR from MIN(date)) as min_year, EXTRACT(YEAR from MAX(date)) as max_year
             FROM public.states_land_use
-            WHERE classname in ('AI', 'AD', 'DR');
+            WHERE classname in ('AI', 'AD', 'IV', 'AV');
         """
 
         cur = self._conn.cursor()

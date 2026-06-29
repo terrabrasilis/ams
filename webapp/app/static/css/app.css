@@ -128,3 +128,64 @@ input.threshold{
   display: flex;
   visibility: hidden;
 }
+
+
+.indicator-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    margin: 6px 0 8px 0;
+    border-bottom: 1px solid #dddddd;
+}
+
+.indicator-tab {
+    padding: 4px 10px;
+    cursor: pointer;
+    font: 12px/1.5 'Roboto', "Helvetica Neue", Arial, Helvetica, sans-serif;
+    background: #f8f9fa;
+    color: #555;
+    border: 1px solid #dddddd;
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    transition: background-color 0.15s;
+}
+
+.indicator-tab:hover {
+    background: #ebfbeb;
+}
+
+.indicator-tab.active {
+    background: #108d6f;
+    color: white;
+    font-weight: bold;
+    border-color: #108d6f;
+}
+
+.indicator-content {
+    display: none;
+    margin-top: 4px;
+}
+
+.indicator-content.active {
+    display: block;
+}
+
+.indicator-content label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    margin-bottom: 4px;
+}
+
+.indicator-content label input {
+    flex-shrink: 0;
+    margin: 0;
+}
+
+.indicator-content label span {
+    display: inline-block;
+    max-width: 150px;
+    white-space: normal !important;
+    line-height: 1.3;
+}
