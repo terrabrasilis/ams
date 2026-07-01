@@ -37,15 +37,24 @@ ams.ProdesPeriodHandler = {
     },
 
     remove: function (map) {
+        if (!this._enabled) {
+            return;
+        }
+
         if (this._control) {
             map.removeControl(this._control);
             this._control = null;
         }
+
+        // disable custom period
+        const startDate = this._startYear-1 + '-12-31';
+        ams.App._dateControl.setPeriod(startDate, "7d");
+
         this._map = null;
         this._enabled = false;
         this._selection = null;
         this._startYear = null;
-        this._endYear = null;
+        this._endYear = null;        
     },
 
     isEnabled: function () {

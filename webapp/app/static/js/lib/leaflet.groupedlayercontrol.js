@@ -317,8 +317,6 @@ L.Control.GroupedLayers = L.Control.extend({
       $("#ctrl"+this._getControlByName('onPeriod').ctrlId).click();  // force onPeriod
       var mapClassificationElement = document.querySelector('[id="leaflet-control-layers-group-' + classificationMapGroupId + '"]');
       mapClassificationElement.style.display = 'none';
-      ams.PeriodHandler.remove(this._map);
-
       if (obj.name.toLowerCase().includes('risco de desm')) {
         this._handleRiskSpatialUnit(true);
       }
@@ -326,7 +324,6 @@ L.Control.GroupedLayers = L.Control.extend({
     } else {
       var mapClassificationElement = document.querySelector('[id="leaflet-control-layers-group-' + classificationMapGroupId + '"]');
       mapClassificationElement.style.display = 'block';
-      ams.PeriodHandler.init(this._map);
       this._handleRiskSpatialUnit(false);
     }
   },
