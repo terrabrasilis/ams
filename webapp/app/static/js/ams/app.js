@@ -802,11 +802,6 @@ ams.App = {
 
         if (!this._prodesMode(indicator)) {
             ams.ProdesPeriodHandler.remove(this._map);
-
-            if (ams.PeriodHandler.isEnabled()) {
-                return;
-            }
-            
             ams.PeriodHandler.init(this._map);
             return;            
         }
