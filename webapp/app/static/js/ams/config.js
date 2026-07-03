@@ -70,18 +70,6 @@ const defaultRiskFilter = {
 
 const defaultWorkspace = ams.Utils.isHomologationEnvironment()? "ams1" : "ams3";
 
-// configuration by biome
-ams.BiomeConfig["Amazônia"] = {
-  defaultWorkspace: defaultWorkspace,
-  defaultLayers: defaultLayers,
-  defaultFilters: {
-    ...defaultFilters,
-    // can be group's name of DETER classnames, 'DS', 'DG', 'CS' and 'MN', or 'AF' to Queimadas, or 'RI' to INPE risk
-    indicator: 'DS',
-  },
-  defaultRiskFilter: defaultRiskFilter
-};
-
 const activeFiresLayerConfig = {
   defaultWorkspace: defaultWorkspace,
   defaultLayers: defaultLayers,
@@ -92,11 +80,22 @@ const activeFiresLayerConfig = {
   defaultRiskFilter: defaultRiskFilter
 };
 
-ams.BiomeConfig["Amazônia"] = {...ams.BiomeConfig["Amazônia"], ...defaultConfig};
-ams.BiomeConfig["Cerrado"] = {...activeFiresLayerConfig, ...defaultConfig};
-ams.BiomeConfig["Pantanal"] = {...activeFiresLayerConfig, ...defaultConfig};
+const deterLayerConfig = {
+  defaultWorkspace: defaultWorkspace,
+  defaultLayers: defaultLayers,
+  defaultFilters: {
+    ...defaultFilters,
+    indicator: 'DS',
+  },
+  defaultRiskFilter: defaultRiskFilter
+};
+
+ams.BiomeConfig["Amazônia"] = {...deterLayerConfig, ...defaultConfig};
+ams.BiomeConfig["Cerrado"] = {...deterLayerConfig, ...defaultConfig};
+ams.BiomeConfig["Pantanal"] = {...deterLayerConfig, ...defaultConfig};
 ams.BiomeConfig["Caatinga"] = {...activeFiresLayerConfig, ...defaultConfig};
 ams.BiomeConfig["Pampa"] = {...activeFiresLayerConfig, ...defaultConfig};
 ams.BiomeConfig["Mata Atlântica"] = {...activeFiresLayerConfig, ...defaultConfig};
 ams.BiomeConfig["ALL"] = {...activeFiresLayerConfig, ...defaultConfig};
 ams.BiomeConfig["all"] = {...activeFiresLayerConfig, ...defaultConfig};
+ams.BiomeConfig["allBiomes"] = {...deterLayerConfig, ...defaultConfig};

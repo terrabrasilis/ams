@@ -565,8 +565,13 @@ class SpatialUnitProfile():
         last_date=self.format_date(self._start_date)
 
         if self._name == '*':
-            spatial_unit = 'para todo o bioma' if self._municipalities_group == 'ALL' else self._get_customized_description()
-            spatial_description = f" ({self._appBiome})" if self._municipalities_group == 'ALL' else ""
+            if self._municipalities_group == 'ALL':
+                spatial_unit = 'para todos os biomas' if self._appBiome == 'ALL' else 'para todo o bioma'
+                spatial_description = "" if self._appBiome == 'ALL' else f" ({self._appBiome})"
+            else:
+                spatial_unit = self._get_customized_description()
+                spatial_description = f" ({self._appBiome})" if self._municipalities_group == 'ALL' else ""
+
         else:
             spatial_unit = f"com recorte na unidade espacial <b>{self._name}</b>"
             spatial_description = f" ({self._tableinfo[self._spatial_unit]['description']})"

@@ -79,11 +79,11 @@ ams.SLDStyles = {
 					prefix = "Contagem: ";
 					break;
 				case "ratio_dr":
-					text = "vegetação remanescente desmatada";
+					text = "incremento anual/vegetação remanescente";
 					prefix = "Percentual: ";
 					break;
 				case "ratio_av":
-					text = "vegetação original desmatada";
+					text = "desmatamento acumulado/vegetação original";
 					prefix = "Percentual: ";
 					break;
 			}

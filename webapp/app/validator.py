@@ -196,6 +196,7 @@ class IndicatorsSchema(Schema):
     className = fields.Str(required=True, validate=validate.OneOf(VALID_PARMS_FROM_DB["classname"]))
     spatialUnit = fields.Str(required=True, validate=validate.OneOf(VALID_PARMS_FROM_DB["spatialUnit"]))
     startDate = fields.Str(required=True, validate=partial(_validate_date, False))
+    endDate = fields.Str(required=False, validate=partial(_validate_date, False))
     tempUnit = fields.Str(required=True)
     custom = fields.Bool(required=False)
     suName = fields.Str(required=True, validate=_validate_suname)
@@ -210,6 +211,7 @@ class IndicatorsSchema(Schema):
     )
     isAuthenticated = fields.Bool(required=False)
     filenamePrefix=fields.Str(required=True, validate=_validate_prefix)
+    prodes = fields.Bool(required=False)
 
     @validates_schema
     def _validate_others(self, data, **kwargs):
