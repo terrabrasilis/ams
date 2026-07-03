@@ -372,7 +372,9 @@ L.Control.GroupedLayers = L.Control.extend({
     L.DomEvent.on(select, 'focus', this._onSelectFocus, this);
 
     for (let p of obj.values) {
-        select.appendChild(this._createSubsetSelectOption(p, p, p === obj.defaultFilter));
+        let text = p;
+        let value = (p.toLowerCase() === "todos"? "ALL" : p);
+        select.appendChild(this._createSubsetSelectOption(text, value, value === obj.defaultFilter));
     }
       
     if (obj.overlay) {

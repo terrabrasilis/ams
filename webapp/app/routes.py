@@ -55,8 +55,8 @@ def _get_config(
         return {}
     
     biomes = ctrl.read_biomes()  # all biomes
-
-    selected_geocodes = geocodes.split(",")
+    selected_geocodes = geocodes.split(",") if geocodes else [""]
+    cg = ctrl.read_class_groups(biomes=["ALL"])
 
     if subset == "Bioma":
         selected_biomes = json.dumps([biome])
@@ -74,10 +74,14 @@ def _get_config(
                 else ""
             )
         )
-        mbiomes = ctrl.read_municipalities_biome(geocodes=
-            selected_geocodes if municipalities_group == "customizado" else ctrl.read_municipalities_geocode(municipality_group=municipalities_group)
-        )
-        cg = ctrl.read_class_groups(biomes=mbiomes)
+
+        if municipalities_group != "ALL":
+            mbiomes = ctrl.read_municipalities_biome(
+                geocodes=
+                selected_geocodes if municipalities_group == "customizado" else ctrl.read_municipalities_geocode(municipality_group=municipalities_group
+                                                                                                                 )
+            )
+            cg = ctrl.read_class_groups(biomes=mbiomes)
 
     ldu = ctrl.read_land_uses(land_use_type="ams")
 
@@ -149,7 +153,7 @@ def get_config(endpoint):
 
         if not conf:
             return "Erro no carregamento do config.", 500
-
+        
         return json.dumps(conf)
 
     except Exception as e:

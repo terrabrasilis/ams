@@ -117,7 +117,7 @@ class AppConfigController:
         sql = "SELECT biome from public.biome"
         cur = self._conn.cursor()
         cur.execute(sql)
-        results = [_[0] for _ in cur.fetchall()]
+        results = [_[0] for _ in cur.fetchall()] + ["Todos"]
 
         return json.dumps(results)
 
@@ -255,7 +255,8 @@ class AppConfigController:
         Gets the layer bounding box.
         """
         sql = ""
-        if subset == "Bioma":
+        if subset == "Bioma" or municipalities_group == "ALL":
+            condition = f"WHERE biome='{biome}'" if biome.lower() != "all" else ""
             sql = f"""
                 SELECT
                     ST_XMin(ST_Extent(geom)) AS xmin,
@@ -263,7 +264,7 @@ class AppConfigController:
                     ST_YMin(ST_Extent(geom)) AS ymin,
                     ST_YMax(ST_Extent(geom)) AS ymax
                 FROM public.biome_border
-                WHERE biome='{biome}';
+                {condition};
             """
         else:
             sql = f"""
@@ -272,7 +273,7 @@ class AppConfigController:
                     ST_XMax(ST_Extent(mun.geometry)) AS xmax,
                     ST_YMin(ST_Extent(mun.geometry)) AS ymin,
                     ST_YMax(ST_Extent(mun.geometry)) AS ymax
-                FROM public.municipalities mun
+                            FROM public.municipalities mun
                 WHERE mun.geocode = ANY(
                     SELECT geocode
                     FROM public.municipalities_group_members mgm
@@ -281,7 +282,7 @@ class AppConfigController:
                         FROM public.municipalities_group mg
                         WHERE mg.name='{municipalities_group}'
                     )
-                ) OR mun.geocode = ANY('{{{geocodes}}}');
+                ) OR mun.geocode = ANY('{{{geocodes}}}');               
             """
 
         cur = self._conn.cursor()

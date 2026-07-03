@@ -49,11 +49,12 @@ ams.Utils = {
 
     // set map div to available height
     ams.Utils.setMapHeight();
-
     // config
     var biome = generalConfig.appBiome.split(",")[0];
+    var municipalitiesGroup = generalConfig.selected_municipalities_group;
+    var configKey = biome.toLowerCase() == "all" && municipalitiesGroup.toLowerCase() == "all"? "allBiomes": biome;
 
-    ams.Config = ams.BiomeConfig[biome];
+    ams.Config = ams.BiomeConfig[configKey];
 
     ams.Config.allBiomes = JSON.parse(generalConfig.biomes.replace(/'/g,"\""));
     ams.Config.allMunicipalitiesGroup = JSON.parse(generalConfig.municipalities_group.replace(/'/g,"\""));
@@ -201,7 +202,8 @@ ams.Utils = {
       }
 
       if (!classname.length) {
-        classname = ams.BiomeConfig[selectedBiome].defaultFilters.indicator;
+        var configKey = selectedBiome == "ALL" && selectedMunicipalitiesGroup == "customizado"? "allBiomes": selectedBiome;
+        classname = ams.BiomeConfig[configKey].defaultFilters.indicator;
       }
 
       const loadConfig = new Promise((resolve, reject) => {

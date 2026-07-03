@@ -242,33 +242,34 @@ ams.LeafletWms = {
         },
 
         '_createSpatialUnitInfoTable': function (result) {
-            let risk=focus=deter=fs=iv="";
+            let data="";
+	    
             if (result["classname"]=="AF"){
-                focus=""
+                data=""
                 + "<tr>"
                 + "<td>Focos (unidades)   </td>"
                 + "<td>" + result["counts"] + "</td>"
                 + "</tr>";
             } else if (result["classname"]=="FT"){
-                focus=""
+                data=""
                 + "<tr>"
                 + "<td>Focos (unidades)   </td>"
                 + "<td>" + result["counts"] + "</td>"
                 + "</tr>";
             } else if(result["classname"]=="RK") {
-                risk=""
+                data=""
                 + "<tr>"
                 + "<td>Riscos (unidades)   </td>"
                 + "<td>" + result["counts"] + "</td>"
                 + "</tr>";    
             } else if(result["classname"]=="RI") {
-                risk=""
+                data=""
                 + "<tr>"
                 + "<td>Risco (intensidade) </td>"
                 + "<td>" + result["score"] + "</td>"
                 + "</tr>";
             } else if (result["classname"]=="FS") {
-                fs=""
+                data=""
                 + "<tr>"
                 + "<td>Pontos </td>"
                 + "<td>" + result["units"] + "</td>"
@@ -281,18 +282,28 @@ ams.LeafletWms = {
                 + "<td>Porcentagem   </td>"
                 + "<td>" + result["percentage"] + "%</td>"
                 + "</tr>";
-            } else if (['IV', 'AV'].includes(result["classname"])) {
-                iv=""
+            } else if (result["classname"]=="IV") {
+		        data=""
                 + "<tr>"
-                + "<td>&#193;rea Desmatada ("+result["area_unit"]+")</td>"
+                + "<td>Incremento anual ("+result["area_unit"]+")</td>"
                 + "<td>" + result["area"] + "</td>"
                 + "</tr>"
                 + "<tr>"
-                + "<td>Vegetação Desmatada   </td>"
+                + "<td>Porcentagem   </td>"
                 + "<td>" + result["ratio"] + "%</td>"
                 + "</tr>";
-            } else {
-                deter=""
+	    } else if (result["classname"]=="AV") {
+		        data=""
+                + "<tr>"
+                + "<td>Desmatamento acumulado ("+result["area_unit"]+")</td>"
+                + "<td>" + result["area"] + "</td>"
+                + "</tr>"
+                + "<tr>"
+                + "<td>Porcentagem   </td>"
+                + "<td>" + result["ratio"] + "%</td>"
+                + "</tr>";
+	    } else {
+                data=""
                 + "<tr>"
                 + "<td>&#193;rea ("+result["area_unit"]+")</td>"
                 + "<td>" + result["area"] + "</td>"
@@ -316,11 +327,7 @@ ams.LeafletWms = {
                 + "<td>Classe   </td>"
                 + "<td>" + this._formatClassName(result["classname"]) + "</td>"
                 + "</tr>"
-                + risk
-                + focus
-                + deter
-                + fs
-                + iv
+                + data
             +"</table>";
         },
 
