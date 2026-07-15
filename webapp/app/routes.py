@@ -247,7 +247,18 @@ def get_profile(endpoint):
         
         profile = _create_profile(params=params, db_url=Config.DB_URL)
 
-        return profile.build_figs()
+        figs = profile.build_figs()
+
+        count = sum(
+            [1 for key, value in figs.items() if key != "FormTitle" and value is not None]
+        )
+
+        if count == 0:
+            return json.dumps(
+                {'FormTitle': 'Sem gráficos para exibir com a configuração atual.'}
+            )
+
+        return figs
     
     except Exception as e:
         print(e)

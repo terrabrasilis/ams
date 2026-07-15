@@ -624,7 +624,7 @@ class Profile:
         dfr.rename(columns=columns, inplace=True)
         self._column_name = self._column_name.replace(self.UNIT_KM2, self.UNIT_HA)
         for _, col in columns.items():
-            dfr[col] = dfr
+            dfr[col] = dfr[col] * 100
         return dfr
     
     def _get_chart_by_landuse_indicator(self):
@@ -679,16 +679,16 @@ class Profile:
         dfr.update(dfr.select_dtypes(include=['float']).fillna(0.0))
         dfr = dfr.round({col: 0 if col=="Unidades" else 2 for col in dfr.select_dtypes(include=['float']).columns})
         dfr = dfr.sort_values(by=['Prioridade'], ascending=True)
-       
+
         # converting to ha
-        if self._unit == self.UNIT_HA:
+        if self._unit == self.UNIT_HA and self._column == "area":
             dfr = self._to_ha(dfr=dfr)
 
         total = dfr[self._column_name].sum()
 
         if total == 0.:
             return None
-
+        
         graph_label = "<b>%{label}</b>"
         graph_value = "%{value}"
         graph_percent = "%{percent:.2%}"
@@ -804,7 +804,7 @@ class Profile:
 
         dfr = self._build_indicator_by_landuse_dataframe(land_use_type=land_use_type)
 
-        if self._unit == self.UNIT_HA:
+        if self._unit == self.UNIT_HA and self._column == "area":
             dfr = self._to_ha(dfr=dfr)
 
         # including all categories
@@ -1290,7 +1290,6 @@ class ActiveFiresProfile(UnitsProfile):
         geocodes: str,
         start_date: str,
         end_date: str,
-        unit: str,
     ):
         super().__init__(
             db_url=db_url,
@@ -1306,7 +1305,7 @@ class ActiveFiresProfile(UnitsProfile):
             geocodes=geocodes,
             start_date=start_date,
             end_date=end_date,
-            unit=unit,
+            unit="focos",
         )
 
     def _get_indicator_name(self):
@@ -1526,7 +1525,6 @@ class FireToday(UnitsProfile):
         geocodes: str,
         start_date: str,
         end_date: str,
-        unit: str,
     ):
         super().__init__(
             db_url=db_url,
@@ -1542,7 +1540,7 @@ class FireToday(UnitsProfile):
             geocodes=geocodes,
             start_date=start_date,
             end_date=end_date,
-            unit=unit,
+            unit="focos"
         )
 
     def _get_chart_description(self, spatial_unit: str, spatial_description: str):
