@@ -4,7 +4,9 @@ import os
 from marshmallow import ValidationError
 
 from ams.save_indicators import prepare_indicators_to_save
-from ams.spatial_unit_profile import SpatialUnitProfile
+
+from ams.spatial_unit_profile.profile import create_profile
+
 from flask import render_template, request, send_file, g, jsonify
 
 from . import bp as app
@@ -201,6 +203,25 @@ def set_municipality_panel_mode():
             params={"error-msg": "Ocorreu um erro no servidor ao carregar a sala de situação municipal."}
         )
 
+def _create_profile(params: dict, db_url: str):
+    kwargs = {
+        "db_url": db_url,
+        "classname": params["className"],
+        "spatial_unit": params["spatialUnit"],
+        "biome": params["targetbiome"],
+        "land_use": params["landUse"],
+        "temporal_unit": params["tempUnit"],
+        "start_date": params["startDate"],
+        "end_date": params["endDate"],
+        "custom": "custom" in params,
+        "municipalities_group": params["municipalitiesGroup"],
+        "geocodes": params["geocodes"],
+        "name": params["suName"],
+        "unit": params["unit"],
+    }
+
+    return create_profile(params["className"], **kwargs)
+
 
 @app.route('/callback/<endpoint>', methods=['GET'])
 def get_profile(endpoint):
@@ -223,51 +244,15 @@ def get_profile(endpoint):
             return json.dumps(
                 {'FormTitle': 'Sem gráficos para exibir com a configuração atual.'}
             )
-
-        spatial_unit_profile = SpatialUnitProfile(Config, params)
-
-        # onlyOneLandUse = (land_use).find(',')
-        count = params['landUse'].split(',')
-        onlyOneLandUse = len(count) if count[0] != '' else -1
         
-        graph_json = {
-            'FormTitle': spatial_unit_profile.form_title(),
-            'AreaPerLandUseProdes': ''            
-        }
+        profile = _create_profile(params=params, db_url=Config.DB_URL)
 
-        if spatial_unit_profile._classname == 'AF':
-            graph_json.update({'AreaPerLandUseProdes': spatial_unit_profile.fig_area_per_land_use_prodes()})
-
-        # to avoid unnecessary function call
-        if (not spatial_unit_profile._classname in ['RK', 'RI', 'FS', 'FT']):
-            if (onlyOneLandUse <= 1 or spatial_unit_profile._classname in ['IV', 'AV']):
-                graph_json.update(
-                    {'AreaPerYearTableClass': spatial_unit_profile.fig_area_by_period()}
-                )
-            else:
-                graph_json.update(
-                    {
-                        'AreaPerLandUse': spatial_unit_profile.fig_area_per_land_use(),
-                        'AreaPerYearTableClass': spatial_unit_profile.fig_area_by_period(),
-                        'AreaPerLandUsePpcdam': spatial_unit_profile.fig_area_per_land_use_ppcdam()
-                    }
-                )
-        elif (onlyOneLandUse >= 2 and (spatial_unit_profile._classname in ['RK', 'RI', 'FS', 'FT'])):
-            graph_json.update(
-                {
-                    'AreaPerLandUse': spatial_unit_profile.fig_area_per_land_use(),
-                    'AreaPerLandUsePpcdam': spatial_unit_profile.fig_area_per_land_use_ppcdam()
-                }
-            )
-        else:
-            graph_json.update(
-                {'FormTitle': 'Sem gráficos para exibir com a configuração atual.'}
-            )
-        return graph_json
+        return profile.build_figs()
+    
     except Exception as e:
         print(e)
         return "Something is wrong on the server. Please, send this error to our support service: terrabrasilis@inpe.br", 500
- 
+
 
 @app.route('/indicators', methods=['GET'])
 def get_indicators():
