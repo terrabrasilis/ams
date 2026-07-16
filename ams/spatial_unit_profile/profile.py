@@ -272,11 +272,10 @@ class Profile:
         """
     
     def _add_chart_by_period_labe_columnl(self, dfr: pd.DataFrame):
+        if self._unit == self.UNIT_HA:
+            dfr = self._to_ha(dfr=dfr)
+
         dfr["label"] = dfr[self._column_name]
-        
-        if self._unit == "ha":
-            dfr[self._column_name] = dfr[self._column_name] * 100
-            dfr["label"] = dfr["label"]*100
 
         # apply rounding factor to normalize values
         dfr[self._column_name] = dfr[self._column_name].round(self._round_factor)
@@ -543,6 +542,9 @@ class Profile:
         return dfr    
     
     def build_fig_by_period(self, json_format: bool=True):
+        # reset column name to database unit
+        self._column_name = self._column_name.replace(self.UNIT_HA, self.UNIT_KM2)
+
         land_use_type = "ams"
 
         dfr = self._build_indicator_period_dataframe(land_use_type=land_use_type)
@@ -668,6 +670,9 @@ class Profile:
         raise NotImplementedError(f"you have to implement this method ({inspect.stack()[0][3]}).")
    
     def build_fig_by_landuse(self, json_format: bool=True):
+        # reset column name to database unit
+        self._column_name = self._column_name.replace(self.UNIT_HA, self.UNIT_KM2)
+
         label = "Categoria Fundiária"
         land_use_type = "ams"
 
@@ -785,7 +790,6 @@ class Profile:
         return json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
     
     def _build_landuse_ppcdam_dataframe(self):
-        default_col_name = self._column_name
         land_use_type = "ppcdam"
         car = "CAR"
         ccar = "com CAR"
@@ -806,6 +810,8 @@ class Profile:
 
         if self._unit == self.UNIT_HA and self._column == "area":
             dfr = self._to_ha(dfr=dfr)
+
+        default_col_name = self._column_name
 
         # including all categories
         dfr = dfr.set_index(cf)
@@ -839,6 +845,9 @@ class Profile:
         return f" - {graph_custom_data0}<extra></extra>"
 
     def build_fig_by_landuse_ppcdam(self, json_format: bool=True):
+        # reset column name to database unit
+        self._column_name = self._column_name.replace(self.UNIT_HA, self.UNIT_KM2)
+
         label_abbr = {
             'Terra indígena': 'TI',
             'Unidade de conservação': 'UC',
@@ -858,7 +867,6 @@ class Profile:
         _text_abbr = lambda lbls: [label_abbr.get(_, _) for _ in lbls]
     
         # column names and constants
-        default_col_name = self._column_name
         uso = "Total"
         ccar = "com CAR"
         scar = "sem CAR"
@@ -869,12 +877,11 @@ class Profile:
         sc = "scaled"
         pe = "percentage"
 
-        if self._unit == self.UNIT_HA:
-            default_col_name = default_col_name.replace(self.UNIT_KM2, self.UNIT_HA)
-    
-        graph_unit = self._get_chart_by_landuse_unit()
-    
         dfr = self._build_landuse_ppcdam_dataframe()
+
+        default_col_name = self._column_name
+
+        graph_unit = self._get_chart_by_landuse_unit()
 
         if dfr["total"][0] == 0.:
             return None
@@ -1100,7 +1107,7 @@ class AreaProfile(Profile):
             biome=biome,
             land_use=land_use,
             column="area",
-            column_name=f"Área ({unit})",
+            column_name=f"Área (km²)",
             round_factor=2,
             temporal_unit=temporal_unit,
             custom=custom,
@@ -1270,7 +1277,7 @@ class DeterProfile(AreaProfile):
     def build_figs(self):
         res = super().build_figs()
         res["AreaPerYearTableClass"] = self.build_fig_by_period()
-        res["AreaPerLandUse"] = self.build_fig_by_landuse()        
+        res["AreaPerLandUse"] = self.build_fig_by_landuse()
         res["AreaPerLandUsePpcdam"] = self.build_fig_by_landuse_ppcdam()
         return res
 
