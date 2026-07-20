@@ -6,6 +6,7 @@ ams.PeriodHandler = {
     _previousdate: null,// used to display date information
     _control: null,
     _maxdate: null,
+    _enabled: false,
 
     init: function(map){
         this._updatePeriodInfo();// gets start date from App configuration and injects here
@@ -17,6 +18,8 @@ ams.PeriodHandler = {
         
         this._control.addTo(map);
         this._control._setDatepicker(options);
+
+        this._enabled = true;
     },
 
     remove: function(map) {
@@ -24,6 +27,7 @@ ams.PeriodHandler = {
             map.removeControl(this._control);
             this._control=null;
         }
+        this._enabled = false;
     },
 
     /**
@@ -89,5 +93,10 @@ ams.PeriodHandler = {
     nextPeriod: function(){
         ams.App._dateControl.toNext();
         this.changeDate();
-    }
+    },
+
+    isEnabled: function () {
+        return this._enabled;
+    },
+
 };

@@ -4,7 +4,9 @@ import os
 from marshmallow import ValidationError
 
 from ams.save_indicators import prepare_indicators_to_save
-from ams.spatial_unit_profile import SpatialUnitProfile
+
+from ams.spatial_unit_profile.profile import create_profile
+
 from flask import render_template, request, send_file, g, jsonify
 
 from . import bp as app
@@ -55,8 +57,8 @@ def _get_config(
         return {}
     
     biomes = ctrl.read_biomes()  # all biomes
-
-    selected_geocodes = geocodes.split(",")
+    selected_geocodes = geocodes.split(",") if geocodes else [""]
+    cg = ctrl.read_class_groups(biomes=["ALL"])
 
     if subset == "Bioma":
         selected_biomes = json.dumps([biome])
@@ -74,10 +76,14 @@ def _get_config(
                 else ""
             )
         )
-        mbiomes = ctrl.read_municipalities_biome(geocodes=
-            selected_geocodes if municipalities_group == "customizado" else ctrl.read_municipalities_geocode(municipality_group=municipalities_group)
-        )
-        cg = ctrl.read_class_groups(biomes=mbiomes)
+
+        if municipalities_group != "ALL":
+            mbiomes = ctrl.read_municipalities_biome(
+                geocodes=
+                selected_geocodes if municipalities_group == "customizado" else ctrl.read_municipalities_geocode(municipality_group=municipalities_group
+                                                                                                                 )
+            )
+            cg = ctrl.read_class_groups(biomes=mbiomes)
 
     ldu = ctrl.read_land_uses(land_use_type="ams")
 
@@ -87,6 +93,8 @@ def _get_config(
     bbox = ctrl.read_bbox(
         subset=subset, biome=biome, municipalities_group=municipalities_group, geocodes=geocodes
     )
+
+    prodes_years = ctrl.read_prodes_years()
 
     return {
         'geoserver_url': Config.GEOSERVER_URL,
@@ -112,6 +120,8 @@ def _get_config(
         'end_date': end_date,
         'temp_unit': temp_unit,
         'classname': classname,
+        'prodesMinYear': prodes_years[0],
+        'prodesMaxYear': prodes_years[1],
     }
 
 
@@ -122,7 +132,7 @@ def get_config(endpoint):
     
     # print(f"/biome/config __\n{request.args}")
     schema = BiomeConfigSchema()
-    
+
     try:
         schema.load(request.args)
     except ValidationError as e:
@@ -145,7 +155,7 @@ def get_config(endpoint):
 
         if not conf:
             return "Erro no carregamento do config.", 500
-
+        
         return json.dumps(conf)
 
     except Exception as e:
@@ -193,6 +203,25 @@ def set_municipality_panel_mode():
             params={"error-msg": "Ocorreu um erro no servidor ao carregar a sala de situação municipal."}
         )
 
+def _create_profile(params: dict, db_url: str):
+    kwargs = {
+        "db_url": db_url,
+        "classname": params["className"],
+        "spatial_unit": params["spatialUnit"],
+        "biome": params["targetbiome"],
+        "land_use": params["landUse"],
+        "temporal_unit": params["tempUnit"],
+        "start_date": params["startDate"],
+        "end_date": params["endDate"],
+        "custom": "custom" in params,
+        "municipalities_group": params["municipalitiesGroup"],
+        "geocodes": params["geocodes"],
+        "name": params["suName"],
+        "unit": params["unit"],
+    }
+
+    return create_profile(params["className"], **kwargs)
+
 
 @app.route('/callback/<endpoint>', methods=['GET'])
 def get_profile(endpoint):
@@ -215,51 +244,26 @@ def get_profile(endpoint):
             return json.dumps(
                 {'FormTitle': 'Sem gráficos para exibir com a configuração atual.'}
             )
-
-        spatial_unit_profile = SpatialUnitProfile(Config, params)
-
-        # onlyOneLandUse = (land_use).find(',')
-        count = params['landUse'].split(',')
-        onlyOneLandUse = len(count) if count[0] != '' else -1
         
-        graph_json = {
-            'FormTitle': spatial_unit_profile.form_title(),
-            'AreaPerLandUseProdes': ''            
-        }
+        profile = _create_profile(params=params, db_url=Config.DB_URL)
 
-        if spatial_unit_profile._classname == 'AF':
-            graph_json.update({'AreaPerLandUseProdes': spatial_unit_profile.fig_area_per_land_use_prodes()})
+        figs = profile.build_figs()
 
-        # to avoid unnecessary function call
-        if (not spatial_unit_profile._classname in ['RK', 'RI', 'FS']):
-            if (onlyOneLandUse <= 1):
-                graph_json.update(
-                    {'AreaPerYearTableClass': spatial_unit_profile.fig_area_by_period()}
-                )
-            else:
-                graph_json.update(
-                    {
-                        'AreaPerLandUse': spatial_unit_profile.fig_area_per_land_use(),
-                        'AreaPerYearTableClass': spatial_unit_profile.fig_area_by_period(),
-                        'AreaPerLandUsePpcdam': spatial_unit_profile.fig_area_per_land_use_ppcdam()
-                    }
-                )
-        elif (onlyOneLandUse >= 2 and (spatial_unit_profile._classname in ['RK', 'RI', 'FS', 'FT'])):
-            graph_json.update(
-                {
-                    'AreaPerLandUse': spatial_unit_profile.fig_area_per_land_use(),
-                    'AreaPerLandUsePpcdam': spatial_unit_profile.fig_area_per_land_use_ppcdam()
-                }
-            )
-        else:
-            graph_json.update(
+        count = sum(
+            [1 for key, value in figs.items() if key != "FormTitle" and value is not None]
+        )
+
+        if count == 0:
+            return json.dumps(
                 {'FormTitle': 'Sem gráficos para exibir com a configuração atual.'}
             )
-        return graph_json
+
+        return figs
+    
     except Exception as e:
         print(e)
         return "Something is wrong on the server. Please, send this error to our support service: terrabrasilis@inpe.br", 500
- 
+
 
 @app.route('/indicators', methods=['GET'])
 def get_indicators():

@@ -313,12 +313,10 @@ L.Control.GroupedLayers = L.Control.extend({
   },
 
   handleSelection: function (classificationMapGroupId, obj) {
-    if ((obj.name.toLowerCase().includes('risco') || obj.name.toLowerCase().includes('hoje')) && obj.checked) {
+    if ((obj.name.toLowerCase().includes('risco') || obj.name.toLowerCase().includes('hoje') || obj.name.toLowerCase().includes('prodes')) && obj.checked) {
       $("#ctrl"+this._getControlByName('onPeriod').ctrlId).click();  // force onPeriod
       var mapClassificationElement = document.querySelector('[id="leaflet-control-layers-group-' + classificationMapGroupId + '"]');
       mapClassificationElement.style.display = 'none';
-      ams.PeriodHandler.remove(this._map);
-
       if (obj.name.toLowerCase().includes('risco de desm')) {
         this._handleRiskSpatialUnit(true);
       }
@@ -326,7 +324,6 @@ L.Control.GroupedLayers = L.Control.extend({
     } else {
       var mapClassificationElement = document.querySelector('[id="leaflet-control-layers-group-' + classificationMapGroupId + '"]');
       mapClassificationElement.style.display = 'block';
-      ams.PeriodHandler.init(this._map);
       this._handleRiskSpatialUnit(false);
     }
   },
@@ -375,7 +372,9 @@ L.Control.GroupedLayers = L.Control.extend({
     L.DomEvent.on(select, 'focus', this._onSelectFocus, this);
 
     for (let p of obj.values) {
-        select.appendChild(this._createSubsetSelectOption(p, p, p === obj.defaultFilter));
+        let text = p;
+        let value = (p.toLowerCase() === "todos"? "ALL" : p);
+        select.appendChild(this._createSubsetSelectOption(text, value, value === obj.defaultFilter));
     }
       
     if (obj.overlay) {

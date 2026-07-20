@@ -1,1 +1,1 @@
-from .spatial_unit_profile import SpatialUnitProfile
+from .profile import create_profile
