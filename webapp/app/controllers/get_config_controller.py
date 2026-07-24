@@ -1,3 +1,4 @@
+from collections import defaultdict
 from psycopg2 import connect
 from datetime import datetime
 
@@ -118,6 +119,30 @@ class AppConfigController:
         cur = self._conn.cursor()
         cur.execute(sql)
         results = [_[0] for _ in cur.fetchall()] + ["Todos"]
+
+        return json.dumps(results)
+
+    def read_classname_biomes(self):
+        """
+        Gets the classname biome from database.
+        """
+        sql = """
+            SELECT cg.name, cc.biome
+            FROM public.class cc
+            JOIN public.class_group cg ON cg.id=cc.group_id
+            GROUP BY cg.name, biome
+            ORDER BY cg.name;
+        """
+
+        cur = self._conn.cursor()
+        cur.execute(sql)
+
+        results = defaultdict(list)
+
+        for classname, biome in cur.fetchall():
+            results[classname].append(biome)
+
+        results = dict(results)
 
         return json.dumps(results)
 

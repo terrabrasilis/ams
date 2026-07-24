@@ -108,6 +108,7 @@ def _get_config(
         'states_group': ctrl.read_municipalities_group(gtype="state", customized=False),
         'selected_subset': subset,
         'selected_biomes': selected_biomes,
+        'classname_biomes': ctrl.read_classname_biomes(),
         'selected_municipalities_group': municipalities_group,
         'selected_geocodes': json.dumps(selected_geocodes),
         'all_municipalities': ctrl.read_municipalities(biomes=json.loads(biomes)),
