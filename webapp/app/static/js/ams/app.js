@@ -548,10 +548,19 @@ ams.App = {
             let clickCtrlFun=function(e){
                 if(ams.App._landUseList.length==0){
                     ams.App._resetMap("O filtro deve incluir ao menos uma categoria fundiária. A solicitação não foi concluída.");
-                }else{
-                    ams.App._updateSpatialUnitLayer();
-                    // apply change filters on reference layer
-                    ams.App._updateReferenceLayer();
+                } else {
+		    	    if (ams.App._getLayerByName(ams.App._getLayerPrefix())) {
+			            ams.App._updateSpatialUnitLayer();		
+		            } else {
+			            ams.App._addSpatialUnitLayer(ams.App._getLayerPrefix(), ams.App._propertyName);
+		            }
+                    
+		            if (ams.App._getLayerByName(ams.App._referenceLayerName)) {
+			            ams.App._updateReferenceLayer();
+		            } else {
+			            ams.App._buildReferenceLayers();
+			            ams.App._loadReferenceLayer();
+		            }
                 }
                 window.setTimeout(()=>{$("#loading_data_info").css('display','none');},500);
             };
