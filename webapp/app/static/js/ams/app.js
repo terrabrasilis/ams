@@ -706,14 +706,14 @@ ams.App = {
                 <div class="indicator-tab" data-target="queimadas">
                     QUEIMADAS
                 </div>
-                <div class="indicator-tab" data-target="outros">
-                    OUTROS
+                <div class="indicator-tab" data-target="riscos">
+                    RISCOS
                 </div>
             </div>
             <div id="deter" class="indicator-content active"></div>
             <div id="prodes" class="indicator-content"></div>
             <div id="queimadas"   class="indicator-content"></div>
-            <div id="outros" class="indicator-content"></div>
+            <div id="riscos" class="indicator-content"></div>
         `);
 
         container.find("> label").not(".leaflet-control-layers-group-label").each(function() {
@@ -729,7 +729,7 @@ ams.App = {
                 span.text(text.replace("(Queimadas)", ""));
                 $("#queimadas").append(this);
             } else {
-                $("#outros").append(this);
+                $("#riscos").append(this);
             }
         });
 

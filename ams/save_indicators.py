@@ -153,6 +153,53 @@ def _get_active_fires_sql(
     return sql
 
 
+def _get_active_fires_today_sql(
+    biomes,
+    municipalities_group,
+    geocodes,
+    spatial_unit,
+    start_date,
+    start_period_date,
+    spatial_unit_table_id,
+    name,
+):
+    columns = ",".join(
+        [
+            f"fires.{_}" for _ in [
+                "id", "uuid", "biome", "view_date as date", "satelite", "municipio", "geom", "geocode"
+            ]
+        ]
+    )
+
+    where_biome = f"('{biomes}' = 'ALL' OR fires.biome = ANY ('{{{biomes}}}'))"
+
+    where_municipalities = f""" (
+        '{municipalities_group}' = 'ALL' OR fires.geocode =
+        ANY(
+            SELECT geocode
+            FROM public.municipalities_group_members mgm
+            WHERE mgm.group_id = (
+                SELECT mg.id
+                FROM public.municipalities_group mg
+                WHERE mg.name='{municipalities_group}'
+            )
+        )
+        OR fires.geocode = ANY('{{{geocodes}}}')
+    ) """
+
+    sql = f'''
+        SELECT {columns}
+        FROM fires.active_fires_today fires, public."{spatial_unit}" su
+        WHERE fires.view_date > '{start_period_date}' AND fires.view_date <= '{start_date}'
+            AND {where_biome}
+            AND {where_municipalities}
+            AND su.{spatial_unit_table_id} = '{name}'
+            AND ST_Within(fires.geom, su.geometry);
+    '''
+
+    return sql
+
+
 def prepare_indicators_to_save(
     dburl: str,
     is_authenticated: bool,
@@ -200,8 +247,19 @@ def prepare_indicators_to_save(
             spatial_unit_table_id=spatial_unit_table_id,
             name=name,
         )
-    else:
+    elif classname == "AF":
         indicators_sql = _get_active_fires_sql(
+            biomes=biomes,
+            municipalities_group=municipalities_group,
+            geocodes=geocodes,
+            start_date=start_date,
+            start_period_date=start_period_date,
+            spatial_unit=spatial_unit,
+            spatial_unit_table_id=spatial_unit_table_id,
+            name=name,
+        )
+    else:
+        indicators_sql = _get_active_fires_today_sql(
             biomes=biomes,
             municipalities_group=municipalities_group,
             geocodes=geocodes,
