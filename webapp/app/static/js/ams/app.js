@@ -136,7 +136,7 @@ ams.App = {
 
 	    // Loading borderLayer
 	    this._borderLayerName = ams.Auth.getWorkspace() + ":" + ((this._subset == "Bioma") ? ams.Config.defaultLayers.biomeBorder : ams.Config.defaultLayers.municipalitiesBorder);
-	    this._loadBorderLayer();
+	    this._updateBorderLayer(this._indicator);
 	
         // ---------------------------------------------------------------------------------
         // this structure is used into leaflet.groupedlayercontrol.js to create controls for filters panel...
@@ -328,6 +328,7 @@ ams.App = {
                     ams.App._indicator = e.acronym;
 
                     ams.App._updatePeriodHandler(e.acronym);
+                    ams.App._updateBorderLayer(e.acronym);
 
                     if (e.acronym=='RI') {
                         layerToAdd=ams.Auth.getWorkspace()+":"+ams.Config.defaultLayers.inpeRisk;
@@ -547,10 +548,19 @@ ams.App = {
             let clickCtrlFun=function(e){
                 if(ams.App._landUseList.length==0){
                     ams.App._resetMap("O filtro deve incluir ao menos uma categoria fundiária. A solicitação não foi concluída.");
-                }else{
-                    ams.App._updateSpatialUnitLayer();
-                    // apply change filters on reference layer
-                    ams.App._updateReferenceLayer();
+                } else {
+		    	    if (ams.App._getLayerByName(ams.App._getLayerPrefix())) {
+			            ams.App._updateSpatialUnitLayer();		
+		            } else {
+			            ams.App._addSpatialUnitLayer(ams.App._getLayerPrefix(), ams.App._propertyName);
+		            }
+                    
+		            if (ams.App._getLayerByName(ams.App._referenceLayerName)) {
+			            ams.App._updateReferenceLayer();
+		            } else {
+			            ams.App._buildReferenceLayers();
+			            ams.App._loadReferenceLayer();
+		            }
                 }
                 window.setTimeout(()=>{$("#loading_data_info").css('display','none');},500);
             };
@@ -696,14 +706,14 @@ ams.App = {
                 <div class="indicator-tab" data-target="queimadas">
                     QUEIMADAS
                 </div>
-                <div class="indicator-tab" data-target="outros">
-                    OUTROS
+                <div class="indicator-tab" data-target="riscos">
+                    RISCOS
                 </div>
             </div>
             <div id="deter" class="indicator-content active"></div>
             <div id="prodes" class="indicator-content"></div>
             <div id="queimadas"   class="indicator-content"></div>
-            <div id="outros" class="indicator-content"></div>
+            <div id="riscos" class="indicator-content"></div>
         `);
 
         container.find("> label").not(".leaflet-control-layers-group-label").each(function() {
@@ -719,7 +729,7 @@ ams.App = {
                 span.text(text.replace("(Queimadas)", ""));
                 $("#queimadas").append(this);
             } else {
-                $("#outros").append(this);
+                $("#riscos").append(this);
             }
         });
 
@@ -1018,11 +1028,11 @@ ams.App = {
 	    this._addedLayers[layerName] = layer;
     },
 
-    _buildBorderLayer: function () {
+    _buildBorderLayer: function (biomes) {
         var onlyWmsBase = {
             identify: false,
             "viewparams": (
-                "biomes:" + this._biomes.join('\\,') + ";" +
+                "biomes:" + biomes.join('\\,') + ";" +
                 "municipality_group_name:" + this._municipalitiesGroup + ";" +
                 "geocodes:" + this._geocodes.join('\\,')
             )
@@ -1032,10 +1042,29 @@ ams.App = {
         return source.getLayer(this._borderLayerName);
     },
 
-    _loadBorderLayer: function () {
-	    var layer = this._buildBorderLayer();
+    _loadBorderLayer: function (biomes) {
+        var layer = this._buildBorderLayer(biomes);
 	    this._borderLayer = layer;
 	    this._loadLayer(layer);
+        this._addedLayers[this._borderLayerName] = layer;
+    },
+
+    _updateBorderLayer: function(indicator) {
+        var biomes = this._biomes,
+            forceReload = false;
+
+        if (this._borderLayerName.includes(ams.Config.defaultLayers.biomeBorder) &&
+            this._subset.toLowerCase() == "bioma" &&
+            this._biomes.includes("ALL")) {
+            biomes = ams.Config.appIndicatorBiomes[indicator];
+            forceReload = true;
+        }
+
+        if (forceReload) {
+            this._removeLayer(this._borderLayerName);
+        }
+
+        this._loadBorderLayer(biomes);
     },
 
     _buildReferenceLayers: function () {

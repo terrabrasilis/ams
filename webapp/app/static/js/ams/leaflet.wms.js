@@ -216,8 +216,8 @@ ams.LeafletWms = {
                     + JSON.stringify(viewConfig)
                     + ')>Perfil</button>';
 
-                if (["DS", "DG", "CS", "MN", "AF"].includes(classname)) {
-                    let buttonName =  (classname === "AF") ? "Salvar focos" : "Salvar alertas";
+                if (["DS", "DG", "CS", "MN", "AF", "FT"].includes(classname)) {
+                    let buttonName =  (["AF", "FT"].includes(classname)) ? "Salvar focos" : "Salvar alertas";
                     buttons +=
                         '<button class="btn btn-primary-p btn-success" style="margin:1px" onclick=ams.App.saveIndicators('  // see app.js
                         + JSON.stringify(viewConfig)
