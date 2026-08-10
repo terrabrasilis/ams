@@ -27,7 +27,7 @@ ams.Auth = {
 	evaluate: function() {
 	    this.gsAuthSuffix=( (this.isAuthenticated())?("_auth"):("") );
 	    // set the appropriate workspace name if it is homologation environment
-	    this.gsHomologationSuffix=( (ams.Utils.isHomologationEnvironment())?('h'):('h') );
+	    this.gsHomologationSuffix=( (ams.Utils.isHomologationEnvironment())?('h'):('') );
 	},
 
   /**
