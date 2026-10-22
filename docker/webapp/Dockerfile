@@ -10,7 +10,7 @@ LABEL author="Andre Carvalho"
 LABEL author.email="andre.carvalho@inpe.br"
 LABEL description="AMS - Amazon Situation Room"
 
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONUNBUFFERED=1
 
 #-------------Application Specific Stuff ----------------------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
