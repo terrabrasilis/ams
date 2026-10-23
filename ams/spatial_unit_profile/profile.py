@@ -922,7 +922,7 @@ class Profile:
         # assert len(values) == len(labels) == len(parents) == len(custom_values) == len(custom_labels) == len(colors)
     
         title = "<b>Análise da distribuição do indicador<br>no período em relação ao CAR</b><br>"
-        title += "<i>CAR refere-se às imóveis rurais autodeclarados do Cadastro Ambiental Rural</i>"
+        title += "<i>CAR refere-se aos imóveis rurais autodeclarados do Cadastro Ambiental Rural</i>"
     
         graph_custom_data0 = "%{customdata[0]}"
         graph_custom_data1 = "%{customdata[1]}"
